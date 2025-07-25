@@ -19,14 +19,9 @@
 # in the templates via {{ site.myvariable }}.
 
 title: Brasil em Números
-email: seu-email@example.com
-description: >- # A descrição do seu site.
-  Você pode editar esta linha no _config.yml.
-  Ela aparecerá no cabeçalho do seu documento (para resultados de busca do Google)
-  e na descrição do seu site no feed.xml.
-baseurl: "/" # o subdiretório do seu site, ex: /blog
-url: "https://www.brasilemnumeros.ong.br" # o hostname base e protocolo para seu site.
-twitter_username: jekyllrb # opcional
+description: Uma plataforma dedicada a fornecer dados e informações sobre o Brasil.
+baseurl: "/" 
+url: "https://www.brasilemnumeros.ong.br" 
 github_username:  brasilemnumeros
 
 # Build settings

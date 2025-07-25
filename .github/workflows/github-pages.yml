@@ -30,8 +30,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - name: Checkout
         uses: actions/checkout@v4
+      - run: npm install
+      - run: npx -y @tailwindcss/cli -i ./assets/css/main.css -o ./assets/css/main.dist.css
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5

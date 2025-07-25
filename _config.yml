@@ -24,8 +24,8 @@ description: >- # A descrição do seu site.
   Você pode editar esta linha no _config.yml.
   Ela aparecerá no cabeçalho do seu documento (para resultados de busca do Google)
   e na descrição do seu site no feed.xml.
-baseurl: "/brasilemnumeros" # o subdiretório do seu site, ex: /blog
-url: "https://brasilemnumeros.github.io" # o hostname base e protocolo para seu site.
+baseurl: "/" # o subdiretório do seu site, ex: /blog
+url: "https://www.brasilemnumeros.ong.br" # o hostname base e protocolo para seu site.
 twitter_username: jekyllrb # opcional
 github_username:  brasilemnumeros
 

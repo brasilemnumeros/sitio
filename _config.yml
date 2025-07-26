@@ -1,8 +1,8 @@
 title: Brasil em Números
 description: Uma plataforma dedicada a fornecer dados e informações sobre o Brasil.
-baseurl: "/" 
-url: "https://www.brasilemnumeros.ong.br" 
-github_username:  brasilemnumeros
+baseurl: "/"
+url: "https://www.brasilemnumeros.ong.br"
+github_username: brasilemnumeros
 
 exclude:
   - Gemfile
@@ -11,4 +11,3 @@ exclude:
   - CNAME
   - package.json
   - package-lock.json
-

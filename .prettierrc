@@ -1,0 +1,13 @@
+{
+  "plugins": ["@shopify/prettier-plugin-liquid", "prettier-plugin-tailwindcss"],
+  "tailwindStylesheet": "./assets/css/main.css",
+  "overrides": [
+    {
+      "files": ["_includes/*.html", "_layouts/*.html", "*.html"],
+      "options": {
+        "parser": "liquid-html",
+        "singleAttributePerLine": false
+      }
+    }
+  ]
+}

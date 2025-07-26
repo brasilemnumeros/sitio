@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="{{ page.lang | default: site.lang | default: "en" }}">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ "/assets/css/main.dist.css" | relative_url }}">
+  </head>
+
+  <body class="flex min-h-screen flex-col">
+    <main class="flex-grow">
+      {{ content }}
+    </main>
+    {% include footer.html %}
+  </body>
+</html>

@@ -1,0 +1,176 @@
+---
+layout: default
+title: Home
+---
+<button id="theme-toggle" style="position: fixed; top: 10px; right: 10px; z-index: 999;">Mudar Tema</button>
+
+<div class="chart-container">
+  <canvas id="chart"></canvas>
+</div>
+
+<script>
+  (async function () {
+    // Fetch data from external file
+    const response = await fetch('/data.json');
+    const jsonData = await response.json();
+    const chartData = jsonData.data;
+    const currentYear = new Date().getFullYear();
+    const labels = chartData.map((item) => item.year);
+
+    const governmentPeriods = [
+      { name: 'FHC (PSDB)', start: 1995, end: 2002.99, color: 'rgba(0, 56, 168, 0.7)' }, // PSDB Blue
+      { name: 'Lula (PT)', start: 2003, end: 2010.99, color: 'rgba(222, 41, 16, 0.7)' }, // PT Red
+      { name: 'Dilma (PT)', start: 2011, end: 2016.6, color: 'rgba(255, 112, 112, 0.7)' }, // Lighter PT Red
+      { name: 'Temer (MDB)', start: 2016.61, end: 2018.99, color: 'rgba(255, 215, 0, 0.7)' }, // MDB Yellow
+      { name: 'Bolsonaro (PSL/PL)', start: 2019, end: 2022.99, color: 'rgba(0, 154, 68, 0.7)' }, // PSL/PL Green
+      { name: 'Lula (PT)', start: 2023, end: currentYear, color: 'rgba(255, 165, 0, 0.7)' }, // Lighter PT Orange
+    ];
+
+    // Create a dataset for each government period
+    const datasets = governmentPeriods.map((period) => {
+      // We need to find the data points that fall within the period.
+      // To make the line continuous, we also need the last point of the previous period.
+      const startIndex = chartData.findIndex((item) => item.year >= period.start);
+      let periodData = chartData.filter((item) => item.year >= period.start && item.year <= period.end);
+
+      // Add the last point from the previous period to connect the line segments
+      if (startIndex > 0) {
+        periodData.unshift(chartData[startIndex - 1]);
+      }
+
+      return {
+        label: period.name,
+        data: periodData.map((item) => ({ x: item.year, y: item.rate })),
+        borderColor: period.color,
+        backgroundColor: period.color,
+        fill: false,
+        tension: 0.1,
+        borderWidth: 3,
+        pointRadius: 2,
+        pointHoverRadius: 5,
+      };
+    });
+
+    // Create annotations for government period boundaries
+    const annotations = {};
+    governmentPeriods.forEach((period, index) => {
+      if (index > 0) {
+        annotations['label' + index] = {
+          type: 'label',
+          xValue: (governmentPeriods[index - 1].start + period.start) / 2,
+          yValue: 14, // Adjust Y position as needed
+          content: [governmentPeriods[index - 1].name],
+          font: {
+            size: 14,
+          },
+          color: governmentPeriods[index - 1].color,
+        };
+      }
+    });
+    // Add label for the last period
+    const lastPeriod = governmentPeriods[governmentPeriods.length - 1];
+    annotations['label_last'] = {
+      type: 'label',
+      xValue: (lastPeriod.start + lastPeriod.end) / 2,
+      yValue: 14, // Adjust Y position as needed
+      content: [lastPeriod.name],
+      font: {
+        size: 14,
+      },
+      color: lastPeriod.color,
+    };
+
+    annotations['fhc'] = {
+      type: 'box',
+      xMin: '1995',
+      xMax: '2003',
+      backgroundColor: 'rgba(255, 99, 132, 0.15)',
+      label: { content: 'FHC', enabled: true, position: 'start' }
+    };
+    annotations['lula1'] = {
+      type: 'box',
+      xMin: '2003',
+      xMax: '2011',
+      backgroundColor: 'rgba(54, 162, 235, 0.15)',
+      label: { content: 'Lula', enabled: true, position: 'start' }
+    };
+    annotations['dilma'] = {
+      type: 'box',
+      xMin: '2011',
+      xMax: '2016',
+      backgroundColor: 'rgba(255, 206, 86, 0.15)',
+      label: { content: 'Dilma', enabled: true, position: 'start' }
+    };
+    annotations['temer'] = {
+      type: 'box',
+      xMin: '2016',
+      xMax: '2019',
+      backgroundColor: 'rgba(75, 192, 192, 0.15)',
+      label: { content: 'Temer', enabled: true, position: 'start' }
+    };
+    annotations['bolsonaro'] = {
+      type: 'box',
+      xMin: '2019',
+      xMax: '2023',
+      backgroundColor: 'rgba(153, 102, 255, 0.15)',
+      label: { content: 'Bolsonaro', enabled: true, position: 'start' }
+    };
+    annotations['lula2'] = {
+      type: 'box',
+      xMin: '2023',
+      xMax: currentYear.toString(),
+      backgroundColor: 'rgba(255, 159, 64, 0.15)',
+      label: { content: 'Lula', enabled: true, position: 'start' }
+    };
+
+    const ctx = document.getElementById('chart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        // labels are not needed here as x is numeric
+        datasets: datasets,
+      },
+      options: {
+        plugins: {
+          legend: {
+            display: false, // Hiding the legend as labels are on the chart
+          },
+          annotation: {
+            annotations: annotations,
+          },
+          title: {
+            display: true,
+            text: jsonData.indicatorName,
+            font: {
+              size: 18,
+            },
+          },
+        },
+        scales: {
+          x: {
+            type: 'linear',
+            position: 'bottom',
+            min: 1995,
+            max: 2025,
+            title: {
+              display: true,
+              text: 'Ano',
+            },
+          },
+          y: {
+            beginAtZero: false,
+            title: {
+              display: true,
+              text: 'Taxa (%)',
+            },
+          },
+        },
+      },
+    });
+  })();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.min.js"
+></script>
+<script src="{{ "/assets/js/theme-switcher.js" | relative_url }}"></script>

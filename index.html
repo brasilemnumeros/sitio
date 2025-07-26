@@ -2,17 +2,83 @@
 layout: default
 title: Home
 ---
-<button id="theme-toggle" style="position: fixed; top: 10px; right: 10px; z-index: 999;">Mudar Tema</button>
+<div class="w-full overflow-x-hidden">
+  <button
+    id="theme-toggle"
+    class="fixed top-2.5 right-2.5 z-50 rounded-lg bg-gray-200 p-3 text-gray-800 shadow-lg transition-all duration-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+    aria-label="Alternar tema"
+  >
+    <!-- Moon icon (visible in light mode) -->
+    <svg id="moon-icon" class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+      <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+    </svg>
+    <!-- Sun icon (visible in dark mode) -->
+    <svg id="sun-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+      <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
+    </svg>
+  </button>
 
-<div class="chart-container">
-  <canvas id="chart"></canvas>
+  <div class="my-4 text-center">
+    <div class="flex items-center justify-center gap-3">
+      <label for="indicator-selector" class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+        Selecione o Indicador:
+      </label>
+      <select
+        id="indicator-selector"
+        class="inline-block rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500"
+      >
+        <option value="unemployment-data.json">📈 Taxa de Desemprego</option>
+        <option value="inflation-data.json">💰 Taxa de Inflação (IPCA)</option>
+        <option value="gdp-data.json">🏭 PIB per Capita (variação % anual)</option>
+        <option value="selic-data.json">🏦 Taxa SELIC</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="chart-container w-full bg-white shadow-lg dark:bg-gray-800">
+    <div id="loading-indicator" class="hidden py-12 text-center">
+      <div class="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
+      <p class="mt-2 text-gray-600 dark:text-gray-400">Carregando dados...</p>
+    </div>
+    <canvas id="chart" class="h-auto min-h-[400px] w-full sm:min-h-[500px] lg:min-h-[600px]"></canvas>
+  </div>
 </div>
 
 <script>
-  (async function () {
-    // Fetch data from external file
-    const response = await fetch('/data.json');
-    const jsonData = await response.json();
+  let chart; // Global variable to store the chart instance
+
+  async function loadData(dataFile) {
+    try {
+      // Show loading indicator
+      const loadingIndicator = document.getElementById('loading-indicator');
+      const chartCanvas = document.getElementById('chart');
+
+      loadingIndicator.classList.remove('hidden');
+      chartCanvas.style.opacity = '0.3';
+
+      const response = await fetch('/data/' + dataFile);
+      const jsonData = await response.json();
+
+      // Hide loading indicator
+      loadingIndicator.classList.add('hidden');
+      chartCanvas.style.opacity = '1';
+
+      return jsonData;
+    } catch (error) {
+      console.error('Error loading data:', error);
+
+      // Hide loading indicator on error
+      const loadingIndicator = document.getElementById('loading-indicator');
+      const chartCanvas = document.getElementById('chart');
+
+      loadingIndicator.classList.add('hidden');
+      chartCanvas.style.opacity = '1';
+
+      return null;
+    }
+  }
+
+  function createChart(jsonData) {
     const chartData = jsonData.data;
     const currentYear = new Date().getFullYear();
     const labels = chartData.map((item) => item.year);
@@ -26,39 +92,38 @@ title: Home
       { name: 'Lula (PT)', start: 2023, end: currentYear, color: 'rgba(255, 165, 0, 0.7)' }, // Lighter PT Orange
     ];
 
-    // Create a dataset for each government period
-    const datasets = governmentPeriods.map((period) => {
-      // We need to find the data points that fall within the period.
-      // To make the line continuous, we also need the last point of the previous period.
-      const startIndex = chartData.findIndex((item) => item.year >= period.start);
-      let periodData = chartData.filter((item) => item.year >= period.start && item.year <= period.end);
-
-      // Add the last point from the previous period to connect the line segments
-      if (startIndex > 0) {
-        periodData.unshift(chartData[startIndex - 1]);
-      }
-
-      return {
-        label: period.name,
-        data: periodData.map((item) => ({ x: item.year, y: item.rate })),
-        borderColor: period.color,
-        backgroundColor: period.color,
-        fill: false,
-        tension: 0.1,
-        borderWidth: 3,
-        pointRadius: 2,
-        pointHoverRadius: 5,
-      };
-    });
+    // Create a single dataset with all data points
+    const allDataPoints = chartData.map((item) => ({ x: item.year, y: item.rate }));
+    
+    const datasets = [{
+      label: jsonData.indicatorName,
+      data: allDataPoints,
+      borderColor: 'rgba(59, 130, 246, 0.8)', // Blue color
+      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      fill: false,
+      tension: 0.1,
+      borderWidth: 3,
+      pointRadius: 3,
+      pointHoverRadius: 6,
+      pointBackgroundColor: 'rgba(59, 130, 246, 0.8)',
+      pointBorderColor: 'rgba(255, 255, 255, 0.8)',
+      pointBorderWidth: 2,
+    }];
 
     // Create annotations for government period boundaries
     const annotations = {};
+    
+    // Calculate middle Y value for better vertical centering
+    const minRate = Math.min(...chartData.map((d) => d.rate));
+    const maxRate = Math.max(...chartData.map((d) => d.rate));
+    const middleY = (minRate + maxRate) / 2;
+    
     governmentPeriods.forEach((period, index) => {
       if (index > 0) {
         annotations['label' + index] = {
           type: 'label',
           xValue: (governmentPeriods[index - 1].start + period.start) / 2,
-          yValue: 14, // Adjust Y position as needed
+          yValue: middleY, // Center vertically
           content: [governmentPeriods[index - 1].name],
           font: {
             size: 14,
@@ -72,7 +137,7 @@ title: Home
     annotations['label_last'] = {
       type: 'label',
       xValue: (lastPeriod.start + lastPeriod.end) / 2,
-      yValue: 14, // Adjust Y position as needed
+      yValue: middleY, // Center vertically
       content: [lastPeriod.name],
       font: {
         size: 14,
@@ -85,46 +150,62 @@ title: Home
       xMin: '1995',
       xMax: '2003',
       backgroundColor: 'rgba(255, 99, 132, 0.15)',
-      label: { content: 'FHC', enabled: true, position: 'start' }
+      label: { content: 'FHC', enabled: true, position: 'start' },
     };
     annotations['lula1'] = {
       type: 'box',
       xMin: '2003',
       xMax: '2011',
       backgroundColor: 'rgba(54, 162, 235, 0.15)',
-      label: { content: 'Lula', enabled: true, position: 'start' }
+      label: { content: 'Lula', enabled: true, position: 'start' },
     };
     annotations['dilma'] = {
       type: 'box',
       xMin: '2011',
       xMax: '2016',
       backgroundColor: 'rgba(255, 206, 86, 0.15)',
-      label: { content: 'Dilma', enabled: true, position: 'start' }
+      label: { content: 'Dilma', enabled: true, position: 'start' },
     };
     annotations['temer'] = {
       type: 'box',
       xMin: '2016',
       xMax: '2019',
       backgroundColor: 'rgba(75, 192, 192, 0.15)',
-      label: { content: 'Temer', enabled: true, position: 'start' }
+      label: { content: 'Temer', enabled: true, position: 'start' },
     };
     annotations['bolsonaro'] = {
       type: 'box',
       xMin: '2019',
       xMax: '2023',
       backgroundColor: 'rgba(153, 102, 255, 0.15)',
-      label: { content: 'Bolsonaro', enabled: true, position: 'start' }
+      label: { content: 'Bolsonaro', enabled: true, position: 'start' },
     };
     annotations['lula2'] = {
       type: 'box',
       xMin: '2023',
       xMax: currentYear.toString(),
       backgroundColor: 'rgba(255, 159, 64, 0.15)',
-      label: { content: 'Lula', enabled: true, position: 'start' }
+      label: { content: 'Lula', enabled: true, position: 'start' },
     };
 
+    // Get unit based on indicator name
+    let yAxisTitle = 'Taxa (%)';
+    if (jsonData.indicatorName.includes('PIB')) {
+      yAxisTitle = 'Variação (%)';
+    } else if (jsonData.indicatorName.includes('SELIC')) {
+      yAxisTitle = 'Taxa (%)';
+    } else if (jsonData.indicatorName.includes('Inflação')) {
+      yAxisTitle = 'Taxa (%)';
+    }
+
     const ctx = document.getElementById('chart').getContext('2d');
-    new Chart(ctx, {
+
+    // Destroy existing chart if it exists
+    if (chart) {
+      chart.destroy();
+    }
+
+    chart = new Chart(ctx, {
       type: 'line',
       data: {
         // labels are not needed here as x is numeric
@@ -156,16 +237,67 @@ title: Home
               display: true,
               text: 'Ano',
             },
+            ticks: {
+              callback: function(value) {
+                return Math.round(value); // Remove decimais e separadores de milhar
+              }
+            },
           },
           y: {
             beginAtZero: false,
             title: {
               display: true,
-              text: 'Taxa (%)',
+              text: yAxisTitle,
             },
           },
         },
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: {
+            top: 20,
+            bottom: 20,
+            left: 10,
+            right: 40,
+          },
+        },
+        interaction: {
+          intersect: false,
+          mode: 'index',
+        },
+        elements: {
+          point: {
+            hoverRadius: 8,
+          },
+        },
       },
+    });
+  }
+
+  async function updateChart(dataFile) {
+    const jsonData = await loadData(dataFile);
+    if (jsonData) {
+      createChart(jsonData);
+    }
+  }
+
+  // Initialize the page
+  (async function () {
+    // Load initial data (unemployment by default)
+    await updateChart('unemployment-data.json');
+
+    // Add event listener to the selector
+    const selector = document.getElementById('indicator-selector');
+    selector.addEventListener('change', function (event) {
+      // Add visual feedback when changing
+      selector.classList.add('animate-pulse');
+
+      updateChart(event.target.value).then(() => {
+        // Remove pulse animation after update
+        setTimeout(() => {
+          selector.classList.remove('animate-pulse');
+        }, 300);
+      });
     });
   })();
 </script>
@@ -173,4 +305,3 @@ title: Home
 <script
   src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.min.js"
 ></script>
-<script src="{{ "/assets/js/theme-switcher.js" | relative_url }}"></script>

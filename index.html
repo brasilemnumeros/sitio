@@ -27,10 +27,10 @@ title: Home
         id="indicator-selector"
         class="inline-block rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500"
       >
+        <option value="selic-data.json">🏦 Taxa SELIC Mensal (%)</option>  
         <option value="unemployment-data.json">📈 Taxa de Desemprego</option>
         <option value="inflation-data.json">💰 Taxa de Inflação (IPCA)</option>
         <option value="gdp-data.json">🏭 PIB per Capita (variação % anual)</option>
-        <option value="selic-data.json">🏦 Taxa SELIC</option>
       </select>
     </div>
   </div>
@@ -93,7 +93,10 @@ title: Home
     ];
 
     // Create a single dataset with all data points
-    const allDataPoints = chartData.map((item) => ({ x: item.year, y: item.rate }));
+    const allDataPoints = chartData.map((item) => ({ 
+      x: item.date || item.year, 
+      y: item.rate 
+    }));
     
     const datasets = [{
       label: jsonData.indicatorName,
@@ -147,43 +150,43 @@ title: Home
 
     annotations['fhc'] = {
       type: 'box',
-      xMin: '1995',
-      xMax: '2003',
+      xMin: '1995-01-01',
+      xMax: '2003-01-01',
       backgroundColor: 'rgba(255, 99, 132, 0.15)',
       label: { content: 'FHC', enabled: true, position: 'start' },
     };
     annotations['lula1'] = {
       type: 'box',
-      xMin: '2003',
-      xMax: '2011',
+      xMin: '2003-01-01',
+      xMax: '2011-01-01',
       backgroundColor: 'rgba(54, 162, 235, 0.15)',
       label: { content: 'Lula', enabled: true, position: 'start' },
     };
     annotations['dilma'] = {
       type: 'box',
-      xMin: '2011',
-      xMax: '2016',
+      xMin: '2011-01-01',
+      xMax: '2016-08-01',
       backgroundColor: 'rgba(255, 206, 86, 0.15)',
       label: { content: 'Dilma', enabled: true, position: 'start' },
     };
     annotations['temer'] = {
       type: 'box',
-      xMin: '2016',
-      xMax: '2019',
+      xMin: '2016-08-01',
+      xMax: '2019-01-01',
       backgroundColor: 'rgba(75, 192, 192, 0.15)',
       label: { content: 'Temer', enabled: true, position: 'start' },
     };
     annotations['bolsonaro'] = {
       type: 'box',
-      xMin: '2019',
-      xMax: '2023',
+      xMin: '2019-01-01',
+      xMax: '2023-01-01',
       backgroundColor: 'rgba(153, 102, 255, 0.15)',
       label: { content: 'Bolsonaro', enabled: true, position: 'start' },
     };
     annotations['lula2'] = {
       type: 'box',
-      xMin: '2023',
-      xMax: currentYear.toString(),
+      xMin: '2023-01-01',
+      xMax: '2025-12-31',
       backgroundColor: 'rgba(255, 159, 64, 0.15)',
       label: { content: 'Lula', enabled: true, position: 'start' },
     };
@@ -226,21 +229,32 @@ title: Home
               size: 18,
             },
           },
+          tooltip: {
+            callbacks: {
+              title: function(context) {
+                const date = new Date(context[0].parsed.x);
+                return date.toLocaleDateString('pt-BR', { 
+                  year: 'numeric', 
+                  month: 'long' 
+                });
+              }
+            }
+          },
         },
         scales: {
           x: {
-            type: 'linear',
-            position: 'bottom',
-            min: 1995,
-            max: 2025,
+            type: 'time',
+            time: {
+              unit: 'year',
+              displayFormats: {
+                year: 'yyyy'
+              }
+            },
+            min: '1995-01-01',
+            max: '2025-12-31',
             title: {
               display: true,
               text: 'Ano',
-            },
-            ticks: {
-              callback: function(value) {
-                return Math.round(value); // Remove decimais e separadores de milhar
-              }
             },
           },
           y: {
@@ -284,7 +298,7 @@ title: Home
   // Initialize the page
   (async function () {
     // Load initial data (unemployment by default)
-    await updateChart('unemployment-data.json');
+    await updateChart('selic-mensal.json');
 
     // Add event listener to the selector
     const selector = document.getElementById('indicator-selector');
@@ -302,6 +316,7 @@ title: Home
   })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script
   src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.min.js"
 ></script>

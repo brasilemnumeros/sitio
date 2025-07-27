@@ -27,7 +27,7 @@ title: Home
         id="indicator-selector"
         class="inline-block rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500"
       >
-        <option value="selic-mensal.json">🏦 Taxa SELIC Mensal (%)</option>  
+        <!-- Options will be populated dynamically -->
       </select>
     </div>
   </div>
@@ -43,6 +43,52 @@ title: Home
 
 <script>
   let chart; // Global variable to store the chart instance
+  let indicatorsConfig; // Global variable to store indicators configuration
+
+  async function loadIndicatorsConfig() {
+    try {
+      const baseUrl = 'https://raw.githubusercontent.com/brasilemnumeros/dados/refs/heads/main/';
+      const response = await fetch(baseUrl + 'indicators.json');
+      const config = await response.json();
+      return config;
+    } catch (error) {
+      console.error('Error loading indicators config:', error);
+      // Fallback to default configuration if loading fails
+      return {
+        indicators: [
+          {
+            id: "selic-mensal",
+            name: "🏦 Taxa SELIC Mensal (%)",
+            filename: "selic-mensal.json",
+            description: "Taxa básica de juros da economia brasileira"
+          }
+        ],
+        defaultIndicator: "selic-mensal"
+      };
+    }
+  }
+
+  function populateSelector(config) {
+    const selector = document.getElementById('indicator-selector');
+    
+    // Clear existing options
+    selector.innerHTML = '';
+    
+    // Add options from configuration
+    config.indicators.forEach(indicator => {
+      const option = document.createElement('option');
+      option.value = indicator.filename;
+      option.textContent = indicator.name;
+      option.title = indicator.description; // Add description as tooltip
+      selector.appendChild(option);
+    });
+    
+    // Set default selection
+    const defaultIndicator = config.indicators.find(ind => ind.id === config.defaultIndicator);
+    if (defaultIndicator) {
+      selector.value = defaultIndicator.filename;
+    }
+  }
 
   async function loadData(dataFile) {
     try {
@@ -295,8 +341,16 @@ title: Home
 
   // Initialize the page
   (async function () {
-    // Load initial data (unemployment by default)
-    await updateChart('selic-mensal.json');
+    // Load indicators configuration first
+    indicatorsConfig = await loadIndicatorsConfig();
+    
+    // Populate the selector with indicators
+    populateSelector(indicatorsConfig);
+    
+    // Load initial data using the default indicator
+    const defaultIndicator = indicatorsConfig.indicators.find(ind => ind.id === indicatorsConfig.defaultIndicator);
+    const initialFile = defaultIndicator ? defaultIndicator.filename : 'selic-mensal.json';
+    await updateChart(initialFile);
 
     // Add event listener to the selector
     const selector = document.getElementById('indicator-selector');

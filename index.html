@@ -127,15 +127,6 @@ title: Home
     const currentYear = new Date().getFullYear();
     const labels = chartData.map((item) => item.year);
 
-    const governmentPeriods = [
-      { name: 'FHC (PSDB)', start: 1995, end: 2002.99, color: 'rgba(0, 56, 168, 0.7)' }, // PSDB Blue
-      { name: 'Lula (PT)', start: 2003, end: 2010.99, color: 'rgba(222, 41, 16, 0.7)' }, // PT Red
-      { name: 'Dilma (PT)', start: 2011, end: 2016.6, color: 'rgba(255, 112, 112, 0.7)' }, // Lighter PT Red
-      { name: 'Temer (MDB)', start: 2016.61, end: 2018.99, color: 'rgba(255, 215, 0, 0.7)' }, // MDB Yellow
-      { name: 'Bolsonaro (PSL/PL)', start: 2019, end: 2022.99, color: 'rgba(0, 154, 68, 0.7)' }, // PSL/PL Green
-      { name: 'Lula (PT)', start: 2023, end: currentYear, color: 'rgba(255, 165, 0, 0.7)' }, // Lighter PT Orange
-    ];
-
     // Create a single dataset with all data points
     const allDataPoints = chartData.map((item) => ({ 
       x: item.date || item.year, 
@@ -160,90 +151,144 @@ title: Home
     // Create annotations for government period boundaries
     const annotations = {};
     
-    // Calculate middle Y value for better vertical centering
-    const minRate = Math.min(...chartData.map((d) => d.rate));
-    const maxRate = Math.max(...chartData.map((d) => d.rate));
-    const middleY = (minRate + maxRate) / 2;
-    
-    governmentPeriods.forEach((period, index) => {
-      if (index > 0) {
-        annotations['label' + index] = {
-          type: 'label',
-          xValue: (governmentPeriods[index - 1].start + period.start) / 2,
-          yValue: middleY, // Center vertically
-          content: [governmentPeriods[index - 1].name],
-          font: {
-            size: 14,
-          },
-          color: governmentPeriods[index - 1].color,
-        };
-      }
-    });
-    // Add label for the last period
-    const lastPeriod = governmentPeriods[governmentPeriods.length - 1];
-    annotations['label_last'] = {
-      type: 'label',
-      xValue: (lastPeriod.start + lastPeriod.end) / 2,
-      yValue: middleY, // Center vertically
-      content: [lastPeriod.name],
-      font: {
-        size: 14,
-      },
-      color: lastPeriod.color,
-    };
-
-    annotations['fhc'] = {
+    // Background boxes for government periods
+    annotations['fhc_box'] = {
       type: 'box',
       xMin: '1995-01-01',
       xMax: '2003-01-01',
-      backgroundColor: 'rgba(255, 99, 132, 0.15)',
-      label: { content: 'FHC', enabled: true, position: 'start' },
+      backgroundColor: 'rgba(255, 99, 132, 0.1)',
+      borderColor: 'rgba(255, 99, 132, 0.3)',
+      borderWidth: 1,
     };
-    annotations['lula1'] = {
+    annotations['lula1_box'] = {
       type: 'box',
       xMin: '2003-01-01',
       xMax: '2011-01-01',
-      backgroundColor: 'rgba(54, 162, 235, 0.15)',
-      label: { content: 'Lula', enabled: true, position: 'start' },
+      backgroundColor: 'rgba(54, 162, 235, 0.1)',
+      borderColor: 'rgba(54, 162, 235, 0.3)',
+      borderWidth: 1,
     };
-    annotations['dilma'] = {
+    annotations['dilma_box'] = {
       type: 'box',
       xMin: '2011-01-01',
       xMax: '2016-08-01',
-      backgroundColor: 'rgba(255, 206, 86, 0.15)',
-      label: { content: 'Dilma', enabled: true, position: 'start' },
+      backgroundColor: 'rgba(255, 206, 86, 0.1)',
+      borderColor: 'rgba(255, 206, 86, 0.3)',
+      borderWidth: 1,
     };
-    annotations['temer'] = {
+    annotations['temer_box'] = {
       type: 'box',
       xMin: '2016-08-01',
       xMax: '2019-01-01',
-      backgroundColor: 'rgba(75, 192, 192, 0.15)',
-      label: { content: 'Temer', enabled: true, position: 'start' },
+      backgroundColor: 'rgba(75, 192, 192, 0.1)',
+      borderColor: 'rgba(75, 192, 192, 0.3)',
+      borderWidth: 1,
     };
-    annotations['bolsonaro'] = {
+    annotations['bolsonaro_box'] = {
       type: 'box',
       xMin: '2019-01-01',
       xMax: '2023-01-01',
-      backgroundColor: 'rgba(153, 102, 255, 0.15)',
-      label: { content: 'Bolsonaro', enabled: true, position: 'start' },
+      backgroundColor: 'rgba(153, 102, 255, 0.1)',
+      borderColor: 'rgba(153, 102, 255, 0.3)',
+      borderWidth: 1,
     };
-    annotations['lula2'] = {
+    annotations['lula2_box'] = {
       type: 'box',
       xMin: '2023-01-01',
       xMax: '2025-12-31',
-      backgroundColor: 'rgba(255, 159, 64, 0.15)',
-      label: { content: 'Lula', enabled: true, position: 'start' },
+      backgroundColor: 'rgba(255, 159, 64, 0.1)',
+      borderColor: 'rgba(255, 159, 64, 0.3)',
+      borderWidth: 1,
     };
 
-    // Get unit based on indicator name
-    let yAxisTitle = 'Taxa (%)';
-    if (jsonData.indicatorName.includes('PIB')) {
-      yAxisTitle = 'Variação (%)';
-    } else if (jsonData.indicatorName.includes('SELIC')) {
-      yAxisTitle = 'Taxa (%)';
-    } else if (jsonData.indicatorName.includes('Inflação')) {
-      yAxisTitle = 'Taxa (%)';
-    }
+    // Text labels for government periods
+    annotations['fhc_label'] = {
+      type: 'label',
+      xValue: '1999-01-01',
+      yValue: 'max',
+      content: ['FHC'],
+      backgroundColor: 'rgba(255, 99, 132, 0.4)',
+      color: 'white',
+      font: {
+        size: 12,
+        weight: 'bold'
+      },
+      padding: 4,
+      borderRadius: 4,
+    };
+    annotations['lula1_label'] = {
+      type: 'label',
+      xValue: '2007-01-01',
+      yValue: 'max',
+      content: ['Lula'],
+      backgroundColor: 'rgba(54, 162, 235, 0.4)',
+      color: 'white',
+      font: {
+        size: 12,
+        weight: 'bold'
+      },
+      padding: 4,
+      borderRadius: 4,
+    };
+    annotations['dilma_label'] = {
+      type: 'label',
+      xValue: '2013-09-01',
+      yValue: 'max',
+      content: ['Dilma'],
+      backgroundColor: 'rgba(255, 206, 86, 0.4)',
+      color: 'black',
+      font: {
+        size: 12,
+        weight: 'bold'
+      },
+      padding: 4,
+      borderRadius: 4,
+    };
+    annotations['temer_label'] = {
+      type: 'label',
+      xValue: '2017-09-01',
+      yValue: 'max',
+      content: ['Temer'],
+      backgroundColor: 'rgba(75, 192, 192, 0.4)',
+      color: 'white',
+      font: {
+        size: 12,
+        weight: 'bold'
+      },
+      padding: 4,
+      borderRadius: 4,
+    };
+    annotations['bolsonaro_label'] = {
+      type: 'label',
+      xValue: '2021-01-01',
+      yValue: 'max',
+      content: ['Bolsonaro'],
+      backgroundColor: 'rgba(153, 102, 255, 0.4)',
+      color: 'white',
+      font: {
+        size: 12,
+        weight: 'bold'
+      },
+      padding: 4,
+      borderRadius: 4,
+    };
+    annotations['lula2_label'] = {
+      type: 'label',
+      xValue: '2024-01-01',
+      yValue: 'max',
+      content: ['Lula'],
+      backgroundColor: 'rgba(255, 159, 64, 0.4)',
+      color: 'white',
+      font: {
+        size: 12,
+        weight: 'bold'
+      },
+      padding: 4,
+      borderRadius: 4,
+    };
+
+    // Get unit from JSON data or use default
+    let yAxisTitle = jsonData.yAxisTitle || 'Taxa (%)';
 
     const ctx = document.getElementById('chart').getContext('2d');
 

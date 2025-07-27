@@ -27,10 +27,7 @@ title: Home
         id="indicator-selector"
         class="inline-block rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500"
       >
-        <option value="selic-data.json">🏦 Taxa SELIC Mensal (%)</option>  
-        <option value="unemployment-data.json">📈 Taxa de Desemprego</option>
-        <option value="inflation-data.json">💰 Taxa de Inflação (IPCA)</option>
-        <option value="gdp-data.json">🏭 PIB per Capita (variação % anual)</option>
+        <option value="selic-mensal.json">🏦 Taxa SELIC Mensal (%)</option>  
       </select>
     </div>
   </div>
@@ -56,7 +53,8 @@ title: Home
       loadingIndicator.classList.remove('hidden');
       chartCanvas.style.opacity = '0.3';
 
-      const response = await fetch('/data/' + dataFile);
+      const baseUrl = 'https://raw.githubusercontent.com/brasilemnumeros/dados/refs/heads/main/';
+      const response = await fetch(baseUrl + dataFile);
       const jsonData = await response.json();
 
       // Hide loading indicator

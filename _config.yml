@@ -4,6 +4,9 @@ baseurl: "/"
 url: "https://www.brasilemnumeros.ong.br"
 github_username: brasilemnumeros
 
+plugins:
+  - jekyll-analytics
+
 exclude:
   - Gemfile
   - Gemfile.lock
@@ -11,3 +14,5 @@ exclude:
   - CNAME
   - package.json
   - package-lock.json
+
+google_analytics: G-N4CFQ7CL1S

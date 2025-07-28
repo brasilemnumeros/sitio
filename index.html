@@ -3,36 +3,21 @@ layout: default
 title: Home
 ---
 <div class="w-full overflow-x-hidden">
-  <button
-    id="theme-toggle"
-    class="fixed top-2.5 right-2.5 z-50 rounded-lg bg-gray-200 p-3 text-gray-800 shadow-lg transition-all duration-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-    aria-label="Alternar tema"
-  >
-    <!-- Moon icon (visible in light mode) -->
-    <svg id="moon-icon" class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-      <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
-    </svg>
-    <!-- Sun icon (visible in dark mode) -->
-    <svg id="sun-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-      <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
-    </svg>
-  </button>
-
   <div class="my-4 text-center">
     <div class="flex items-center justify-center gap-3">
-      <label for="indicator-selector" class="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+      <label for="indicator-selector" class="text-sm font-medium whitespace-nowrap text-gray-700 dark:text-gray-300">
         Selecione o Indicador:
       </label>
       <select
         id="indicator-selector"
-        class="inline-block rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500"
+        class="inline-block rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500"
       >
         <!-- Options will be populated dynamically -->
       </select>
     </div>
   </div>
 
-  <div class="chart-container w-full bg-white shadow-lg dark:bg-gray-800">
+  <div class="chart-container w-full bg-white shadow-lg dark:bg-gray-800 px-4">
     <div id="loading-indicator" class="hidden py-12 text-center">
       <div class="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
       <p class="mt-2 text-gray-600 dark:text-gray-400">Carregando dados...</p>
@@ -57,34 +42,34 @@ title: Home
       return {
         indicators: [
           {
-            id: "selic-mensal",
-            name: "🏦 Taxa SELIC Mensal (%)",
-            filename: "selic-mensal.json",
-            description: "Taxa básica de juros da economia brasileira"
-          }
+            id: 'selic-mensal',
+            name: '🏦 Taxa SELIC Mensal (%)',
+            filename: 'selic-mensal.json',
+            description: 'Taxa básica de juros da economia brasileira',
+          },
         ],
-        defaultIndicator: "selic-mensal"
+        defaultIndicator: 'selic-mensal',
       };
     }
   }
 
   function populateSelector(config) {
     const selector = document.getElementById('indicator-selector');
-    
+
     // Clear existing options
     selector.innerHTML = '';
-    
+
     // Add options from configuration
-    config.indicators.forEach(indicator => {
+    config.indicators.forEach((indicator) => {
       const option = document.createElement('option');
       option.value = indicator.filename;
       option.textContent = indicator.name;
       option.title = indicator.description; // Add description as tooltip
       selector.appendChild(option);
     });
-    
+
     // Set default selection
-    const defaultIndicator = config.indicators.find(ind => ind.id === config.defaultIndicator);
+    const defaultIndicator = config.indicators.find((ind) => ind.id === config.defaultIndicator);
     if (defaultIndicator) {
       selector.value = defaultIndicator.filename;
     }
@@ -128,29 +113,31 @@ title: Home
     const labels = chartData.map((item) => item.year);
 
     // Create a single dataset with all data points
-    const allDataPoints = chartData.map((item) => ({ 
-      x: item.date || item.year, 
-      y: item.rate 
+    const allDataPoints = chartData.map((item) => ({
+      x: item.date || item.year,
+      y: item.rate,
     }));
-    
-    const datasets = [{
-      label: jsonData.indicatorName,
-      data: allDataPoints,
-      borderColor: 'rgba(59, 130, 246, 0.8)', // Blue color
-      backgroundColor: 'rgba(59, 130, 246, 0.1)',
-      fill: false,
-      tension: 0.1,
-      borderWidth: 3,
-      pointRadius: 3,
-      pointHoverRadius: 6,
-      pointBackgroundColor: 'rgba(59, 130, 246, 0.8)',
-      pointBorderColor: 'rgba(255, 255, 255, 0.8)',
-      pointBorderWidth: 2,
-    }];
+
+    const datasets = [
+      {
+        label: jsonData.indicatorName,
+        data: allDataPoints,
+        borderColor: 'rgba(59, 130, 246, 0.8)', // Blue color
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        fill: false,
+        tension: 0.1,
+        borderWidth: 3,
+        pointRadius: 3,
+        pointHoverRadius: 6,
+        pointBackgroundColor: 'rgba(59, 130, 246, 0.8)',
+        pointBorderColor: 'rgba(255, 255, 255, 0.8)',
+        pointBorderWidth: 2,
+      },
+    ];
 
     // Create annotations for government period boundaries
     const annotations = {};
-    
+
     // Background boxes for government periods
     annotations['fhc_box'] = {
       type: 'box',
@@ -211,7 +198,7 @@ title: Home
       color: 'white',
       font: {
         size: 12,
-        weight: 'bold'
+        weight: 'bold',
       },
       padding: 4,
       borderRadius: 4,
@@ -225,7 +212,7 @@ title: Home
       color: 'white',
       font: {
         size: 12,
-        weight: 'bold'
+        weight: 'bold',
       },
       padding: 4,
       borderRadius: 4,
@@ -239,7 +226,7 @@ title: Home
       color: 'black',
       font: {
         size: 12,
-        weight: 'bold'
+        weight: 'bold',
       },
       padding: 4,
       borderRadius: 4,
@@ -253,7 +240,7 @@ title: Home
       color: 'white',
       font: {
         size: 12,
-        weight: 'bold'
+        weight: 'bold',
       },
       padding: 4,
       borderRadius: 4,
@@ -267,7 +254,7 @@ title: Home
       color: 'white',
       font: {
         size: 12,
-        weight: 'bold'
+        weight: 'bold',
       },
       padding: 4,
       borderRadius: 4,
@@ -281,7 +268,7 @@ title: Home
       color: 'white',
       font: {
         size: 12,
-        weight: 'bold'
+        weight: 'bold',
       },
       padding: 4,
       borderRadius: 4,
@@ -320,14 +307,14 @@ title: Home
           },
           tooltip: {
             callbacks: {
-              title: function(context) {
+              title: function (context) {
                 const date = new Date(context[0].parsed.x);
-                return date.toLocaleDateString('pt-BR', { 
-                  year: 'numeric', 
-                  month: 'long' 
+                return date.toLocaleDateString('pt-BR', {
+                  year: 'numeric',
+                  month: 'long',
                 });
-              }
-            }
+              },
+            },
           },
         },
         scales: {
@@ -336,8 +323,8 @@ title: Home
             time: {
               unit: 'year',
               displayFormats: {
-                year: 'yyyy'
-              }
+                year: 'yyyy',
+              },
             },
             min: '1995-01-01',
             max: '2025-12-31',
@@ -388,12 +375,12 @@ title: Home
   (async function () {
     // Load indicators configuration first
     indicatorsConfig = await loadIndicatorsConfig();
-    
+
     // Populate the selector with indicators
     populateSelector(indicatorsConfig);
-    
+
     // Load initial data using the default indicator
-    const defaultIndicator = indicatorsConfig.indicators.find(ind => ind.id === indicatorsConfig.defaultIndicator);
+    const defaultIndicator = indicatorsConfig.indicators.find((ind) => ind.id === indicatorsConfig.defaultIndicator);
     const initialFile = defaultIndicator ? defaultIndicator.filename : 'selic-mensal.json';
     await updateChart(initialFile);
 
@@ -413,7 +400,9 @@ title: Home
   })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"
+></script>
 <script
   src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation/dist/chartjs-plugin-annotation.min.js"
 ></script>

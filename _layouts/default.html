@@ -8,10 +8,12 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="{{ "/assets/css/main.dist.css" | relative_url }}">
+    {% seo %}
   </head>
 
   <body class="flex min-h-screen flex-col">
-    <main class="flex-grow">
+    {% include nav.html %}
+    <main class="flex-grow{% unless page.title == "Home" %} container mx-auto px-6 py-8 max-w-4xl prose prose-lg prose-slate dark:prose-invert{% endunless %}">
       {{ content }}
     </main>
     {% include footer.html %}

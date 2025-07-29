@@ -4,13 +4,13 @@ title: Início
 ---
 <div class="w-full overflow-x-hidden">
   <div class="my-4 text-center">
-    <div class="flex items-center justify-center gap-3">
+    <div class="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
       <label for="indicator-selector" class="text-sm font-medium whitespace-nowrap text-gray-700 dark:text-gray-100">
         Selecione o Indicador:
       </label>
       <select
         id="indicator-selector"
-        class="inline-block rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500"
+        class="w-full max-w-xs rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500 sm:inline-block sm:w-auto"
       >
         <!-- Options will be populated dynamically -->
       </select>
@@ -25,7 +25,7 @@ title: Início
     <canvas id="chart" class="h-auto min-h-[400px] w-full sm:min-h-[500px] lg:min-h-[600px]"></canvas>
   </div>
   <div class="mt-3 mb-4 text-center">
-    <p id="data-source" class="text-sm text-gray-600 dark:text-gray-200">
+    <p id="data-source" class="text-sm">
       <span class="font-medium">Fonte:</span> <span id="source-name">Banco Central do Brasil</span>
     </p>
   </div>
@@ -251,7 +251,7 @@ title: Início
       yValue: 'max',
       content: ['Dilma'],
       backgroundColor: 'rgba(255, 206, 86, 0.4)',
-      color: 'black',
+      color: isDark ? '#1f2937' : '#6b7280', // Escuro no modo escuro, cinza suave no modo claro
       font: {
         size: 12,
         weight: 'bold',
@@ -476,6 +476,11 @@ title: Início
             chart.options.scales.y.title.color = isDark ? '#f9fafb' : '#1f2937';
             chart.options.scales.y.ticks.color = isDark ? '#d1d5db' : '#374151';
             chart.options.scales.y.grid.color = isDark ? '#4b5563' : '#e5e7eb';
+            
+            // Update Dilma label color based on theme
+            if (chart.options.plugins.annotation.annotations.dilma_label) {
+              chart.options.plugins.annotation.annotations.dilma_label.color = isDark ? '#1f2937' : '#6b7280';
+            }
             
             // Update the chart
             chart.update('none');

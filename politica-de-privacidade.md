@@ -5,9 +5,10 @@ title: Política de Privacidade
 
 # Política de Privacidade
 
-<small>*Última atualização: 27 de julho de 2025*</small>
+<small>_Última atualização: 27 de julho de 2025_</small>
 
 ### 1. Nosso Compromisso com a Privacidade
+
 O site Brasil em Números (www.brasilemnumeros.ong.br) leva a sua privacidade a sério e está comprometido em proteger os dados dos seus visitantes. Esta Política de Privacidade descreve, de forma transparente, como tratamos as informações coletadas durante sua visita, em total conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018) do Brasil.
 
 **Ao utilizar nosso site, você declara estar ciente das práticas descritas neste documento.**
@@ -25,10 +26,11 @@ No entanto, para viabilizar a análise de desempenho e melhorar a experiência e
 - Fonte de tráfego (como você chegou ao nosso site).
 
 ### 3. Finalidade do Tratamento de Dados
+
 As informações coletadas via Google Analytics são utilizadas exclusivamente para fins estatísticos e analíticos, com os seguintes objetivos:
 
 - Entender como os visitantes utilizam nosso site e quais conteúdos são mais relevantes;
-- Medir a popularidade dos indicadores e gráficos para orientar futuras publicações;  
+- Medir a popularidade dos indicadores e gráficos para orientar futuras publicações;
 - Melhorar o conteúdo, a usabilidade e a performance técnica do site;
 - Gerar relatórios internos de audiência, sem qualquer identificação individual dos usuários.
 

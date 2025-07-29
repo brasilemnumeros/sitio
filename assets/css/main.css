@@ -34,16 +34,16 @@ html:not(.dark) .prose {
   color: #1f2937 !important;
 }
 
-html:not(.dark) .prose h1, 
-html:not(.dark) .prose h2, 
-html:not(.dark) .prose h3, 
-html:not(.dark) .prose h4, 
-html:not(.dark) .prose h5, 
+html:not(.dark) .prose h1,
+html:not(.dark) .prose h2,
+html:not(.dark) .prose h3,
+html:not(.dark) .prose h4,
+html:not(.dark) .prose h5,
 html:not(.dark) .prose h6 {
   color: #111827 !important;
 }
 
-html:not(.dark) .prose p, 
+html:not(.dark) .prose p,
 html:not(.dark) .prose li {
   color: #374151 !important;
 }

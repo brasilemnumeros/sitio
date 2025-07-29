@@ -108,7 +108,53 @@ html.dark #loading-indicator p {
     color: #f3f4f6 !important;
   }
   
+  html.dark .prose h1,
+  html.dark .prose h2,
+  html.dark .prose h3,
+  html.dark .prose h4,
+  html.dark .prose h5,
+  html.dark .prose h6 {
+    color: #f9fafb !important; /* Even lighter for headings */
+  }
+  
+  html.dark .prose p,
+  html.dark .prose li {
+    color: #f3f4f6 !important;
+  }
+  
+  html.dark .prose strong {
+    color: #f9fafb !important;
+  }
+  
+  html.dark .prose a {
+    color: #60a5fa !important; /* Light blue for better contrast */
+  }
+  
   html.dark label {
     color: #f3f4f6 !important;
+  }
+  
+  /* Direct heading elements for better contrast */
+  html.dark h1,
+  html.dark h2,
+  html.dark h3,
+  html.dark h4,
+  html.dark h5,
+  html.dark h6 {
+    color: #f9fafb !important;
+  }
+  
+  /* Direct strong and link elements */
+  html.dark strong,
+  html.dark b {
+    color: #f9fafb !important;
+  }
+  
+  html.dark a {
+    color: #60a5fa !important; /* Light blue for better contrast */
+  }
+  
+  html.dark a:hover {
+    color: #93c5fd !important; /* Even lighter blue on hover */
   }
 }

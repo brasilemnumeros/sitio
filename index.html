@@ -414,14 +414,14 @@ title: Início
       const selectedOption = event.target.options[event.target.selectedIndex];
       const indicatorName = selectedOption.textContent;
       const indicatorFile = event.target.value;
-      
+
       // Send GTM event
       if (typeof dataLayer !== 'undefined') {
         dataLayer.push({
-          'event': 'indicator_selected',
-          'indicator_name': indicatorName,
-          'indicator_file': indicatorFile,
-          'event_category': 'chart_interaction'
+          event: 'indicator_selected',
+          indicator_name: indicatorName,
+          indicator_file: indicatorFile,
+          event_category: 'chart_interaction',
         });
       }
 

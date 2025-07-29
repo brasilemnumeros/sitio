@@ -11,7 +11,7 @@ title: Blog
         <a href="{{ post.url }}">{{ post.title }}</a>
       </h3>
       <small
-        ><em>{{ post.date | date: '%d de %B de %Y' }}</em></small
+        ><em>{{ post.date | date_to_string }}</em></small
       >
     </li>
   {% endfor %}

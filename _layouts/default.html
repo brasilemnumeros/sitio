@@ -1,9 +1,6 @@
 <!doctype html>
 <html lang="{{ page.lang | default: site.lang | default: "en" }}">
   <head>
-    {% if site.google_analytics and jekyll.environment == 'production' %}
-      {% include analytics.html %}
-    {% endif %}
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,6 +14,10 @@
       {{ content }}
     </main>
     {% include footer.html %}
+    <script src="{{ "/assets/js/theme-switcher.js" | relative_url }}"></script>
+    {% if site.google_analytics %}
+      {% include cookie-consent.html %}
+      {% include analytics.html %}
+    {% endif %}
   </body>
-  <script src="{{ "/assets/js/theme-switcher.js" | relative_url }}"></script>
 </html>

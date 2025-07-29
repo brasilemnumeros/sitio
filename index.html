@@ -5,7 +5,7 @@ title: Início
 <div class="w-full overflow-x-hidden">
   <div class="my-4 text-center">
     <div class="flex items-center justify-center gap-3">
-      <label for="indicator-selector" class="text-sm font-medium whitespace-nowrap text-gray-700 dark:text-gray-300">
+      <label for="indicator-selector" class="text-sm font-medium whitespace-nowrap text-gray-700 dark:text-gray-100">
         Selecione o Indicador:
       </label>
       <select
@@ -20,12 +20,12 @@ title: Início
   <div class="chart-container w-full bg-white px-4 shadow-lg dark:bg-gray-800">
     <div id="loading-indicator" class="hidden py-12 text-center">
       <div class="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
-      <p class="mt-2 text-gray-600 dark:text-gray-400">Carregando dados...</p>
+      <p class="mt-2 text-gray-600 dark:text-gray-200">Carregando dados...</p>
     </div>
     <canvas id="chart" class="h-auto min-h-[400px] w-full sm:min-h-[500px] lg:min-h-[600px]"></canvas>
   </div>
   <div class="mt-3 mb-4 text-center">
-    <p id="data-source" class="text-sm text-gray-600 dark:text-gray-400">
+    <p id="data-source" class="text-sm text-gray-600 dark:text-gray-200">
       <span class="font-medium">Fonte:</span> <span id="source-name">Banco Central do Brasil</span>
     </p>
   </div>

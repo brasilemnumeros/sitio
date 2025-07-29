@@ -97,3 +97,18 @@ html.dark label {
 html.dark #loading-indicator p {
   color: #9ca3af !important;
 }
+
+/* Enhanced mobile dark mode contrast */
+@media (max-width: 768px) {
+  html.dark body {
+    color: #f3f4f6 !important; /* Lighter text for better contrast on mobile */
+  }
+  
+  html.dark .prose {
+    color: #f3f4f6 !important;
+  }
+  
+  html.dark label {
+    color: #f3f4f6 !important;
+  }
+}

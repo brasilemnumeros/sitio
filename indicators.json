@@ -3,14 +3,14 @@
     {
       "id": "selic-acum-12m",
       "name": "🏦 Taxa Selic Acumulada (12 meses) (%)",
-      "datafile": "https://raw.githubusercontent.com/brasilemnumeros/dados/refs/heads/main/selic-mensal.json",
+      "datafile": "https://raw.githubusercontent.com/brasilemnumeros/dados/refs/heads/main/selic/selic-acum-12m.json",
       "description": "Taxa básica de juros da economia brasileira definida pelo Banco Central, acumulada nos últimos 12 meses",
       "source": "Banco Central do Brasil"
     },
     {
       "id": "ipca-acum-12m",
       "name": "📈 IPCA Acumulada (12 meses) (%)",
-      "datafile": "/data/ipca-acum-12m.json",
+      "datafile": "https://raw.githubusercontent.com/brasilemnumeros/dados/refs/heads/main/ipca/ipca-acum-12m.json",
       "description": "Variação acumulada do Índice de Preços ao Consumidor Amplo (IPCA) em 12 meses",
       "source": "Instituto Brasileiro de Geografia e Estatística (IBGE)"
     }

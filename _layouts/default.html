@@ -13,7 +13,7 @@
 
   <body class="flex min-h-screen flex-col">
     {% include nav.html %}
-    <main class="flex-grow{% unless page.title == "Home" %} container mx-auto px-6 py-8 max-w-4xl prose prose-lg prose-slate dark:prose-invert{% endunless %}">
+    <main class="flex-grow{% unless page.title == "Início" %} container mx-auto px-6 py-8 max-w-4xl prose prose-lg prose-slate dark:prose-invert{% endunless %}">
       {{ content }}
     </main>
     {% include footer.html %}

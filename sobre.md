@@ -1,9 +1,9 @@
 ---
 layout: default
-title: About
+title: Sobre o Brasil em Números
 ---
 
-# Quem somos
+# Sobre o Brasil em Números
 
 O **Brasil em Números** é um projeto de código aberto, independente e apartidário, nascido de um objetivo central: **democratizar o acesso à informação pública**.
 

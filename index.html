@@ -131,6 +131,15 @@ title: Início
     const currentYear = new Date().getFullYear();
     const labels = chartData.map((item) => item.year);
 
+    // Check if dark mode is active
+    const isDark = document.documentElement.classList.contains('dark');
+    
+    // Define colors based on theme
+    const titleColor = isDark ? '#f9fafb' : '#1f2937';
+    const axisLabelColor = isDark ? '#f9fafb' : '#1f2937';
+    const ticksColor = isDark ? '#d1d5db' : '#374151';
+    const gridColor = isDark ? '#4b5563' : '#e5e7eb';
+
     // Create a single dataset with all data points
     const allDataPoints = chartData.map((item) => ({
       x: item.date || item.year,
@@ -323,6 +332,7 @@ title: Início
             font: {
               size: 18,
             },
+            color: titleColor,
           },
           tooltip: {
             callbacks: {
@@ -350,6 +360,13 @@ title: Início
             title: {
               display: true,
               text: 'Ano',
+              color: axisLabelColor,
+            },
+            ticks: {
+              color: ticksColor,
+            },
+            grid: {
+              color: gridColor,
             },
           },
           y: {
@@ -357,6 +374,13 @@ title: Início
             title: {
               display: true,
               text: yAxisTitle,
+              color: axisLabelColor,
+            },
+            ticks: {
+              color: ticksColor,
+            },
+            grid: {
+              color: gridColor,
             },
           },
         },
@@ -431,6 +455,39 @@ title: Início
           selector.classList.remove('animate-pulse');
         }, 300);
       });
+    });
+
+    // Add observer for theme changes to update chart colors
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.attributeName === 'class') {
+          // Theme changed, update chart if it exists
+          if (chart) {
+            const isDark = document.documentElement.classList.contains('dark');
+            
+            // Update title color
+            chart.options.plugins.title.color = isDark ? '#f9fafb' : '#1f2937';
+            
+            // Update axes colors
+            chart.options.scales.x.title.color = isDark ? '#f9fafb' : '#1f2937';
+            chart.options.scales.x.ticks.color = isDark ? '#d1d5db' : '#374151';
+            chart.options.scales.x.grid.color = isDark ? '#4b5563' : '#e5e7eb';
+            
+            chart.options.scales.y.title.color = isDark ? '#f9fafb' : '#1f2937';
+            chart.options.scales.y.ticks.color = isDark ? '#d1d5db' : '#374151';
+            chart.options.scales.y.grid.color = isDark ? '#4b5563' : '#e5e7eb';
+            
+            // Update the chart
+            chart.update('none');
+          }
+        }
+      });
+    });
+    
+    // Start observing theme changes
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class']
     });
   })();
 </script>

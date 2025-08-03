@@ -17,12 +17,12 @@ title: Início
     </div>
   </div>
 
-  <div class="chart-container w-full bg-white px-4 shadow-lg dark:bg-gray-800">
+  <div class="chart-container w-full bg-white px-4 shadow-lg dark:bg-gray-800" id="chart-container">
     <div id="loading-indicator" class="hidden py-12 text-center">
       <div class="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
       <p class="mt-2 text-gray-600 dark:text-gray-200">Carregando dados...</p>
     </div>
-    <canvas id="chart" class="h-auto min-h-[400px] w-full sm:min-h-[500px] lg:min-h-[600px]"></canvas>
+    <canvas id="chart" class="h-full w-full"></canvas>
   </div>
   <div class="mt-3 mb-4 text-center">
     <p id="data-source" class="text-sm">
@@ -34,6 +34,26 @@ title: Início
 <script>
   let chart; // Global variable to store the chart instance
   let indicatorsConfig; // Global variable to store indicators configuration
+
+  // Function to calculate and set optimal chart height
+  function setChartHeight() {
+    const chartContainer = document.getElementById('chart-container');
+    const containerRect = chartContainer.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const footerHeight = 100; // Estimated footer height + some padding
+    
+    // Calculate available height from current position to bottom of viewport
+    const availableHeight = viewportHeight - containerRect.top - footerHeight;
+    
+    // Set minimum and maximum heights
+    const minHeight = 400;
+    const maxHeight = 800;
+    
+    // Calculate optimal height
+    const optimalHeight = Math.max(minHeight, Math.min(maxHeight, availableHeight));
+    
+    chartContainer.style.height = optimalHeight + 'px';
+  }
 
   async function loadIndicatorsConfig() {
     try {
@@ -126,10 +146,13 @@ title: Início
     }
   }
 
-  function createChart(jsonData) {
+  function createChart(jsonData, indicatorName = null) {
     const chartData = jsonData.data;
     const currentYear = new Date().getFullYear();
     const labels = chartData.map((item) => item.year);
+
+    // Use the provided indicatorName or fallback to jsonData.indicatorName
+    const chartTitle = indicatorName || jsonData.indicatorName;
 
     // Check if dark mode is active
     const isDark = document.documentElement.classList.contains('dark');
@@ -148,7 +171,7 @@ title: Início
 
     const datasets = [
       {
-        label: jsonData.indicatorName,
+        label: chartTitle,
         data: allDataPoints,
         borderColor: 'rgba(59, 130, 246, 0.8)', // Blue color
         backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -328,7 +351,7 @@ title: Início
           },
           title: {
             display: true,
-            text: jsonData.indicatorName,
+            text: chartTitle,
             font: {
               size: 18,
             },
@@ -384,7 +407,6 @@ title: Início
             },
           },
         },
-        responsive: true,
         maintainAspectRatio: false,
         layout: {
           padding: {
@@ -410,13 +432,29 @@ title: Início
   async function updateChart(dataFile) {
     const jsonData = await loadData(dataFile);
     if (jsonData) {
-      createChart(jsonData);
-      updateDataSource(dataFile);
+      // Small delay to let the fade-out complete
+      setTimeout(() => {
+        // Find the indicator name from the config
+        const indicator = indicatorsConfig.indicators.find(ind => ind.datafile === dataFile);
+        const indicatorName = indicator ? indicator.name : jsonData.indicatorName;
+        
+        // Pass the indicator name to createChart
+        createChart(jsonData, indicatorName);
+        updateDataSource(dataFile);
+        
+        // Show canvas again after chart is created
+        requestAnimationFrame(() => {
+          canvas.style.opacity = '1';
+        });
+      }, 150);
     }
   }
 
   // Initialize the page
   (async function () {
+    // Set initial chart height
+    setChartHeight();
+    
     // Load indicators configuration first
     indicatorsConfig = await loadIndicatorsConfig();
 
@@ -425,12 +463,17 @@ title: Início
 
     // Load initial data using the default indicator
     const defaultIndicator = indicatorsConfig.indicators.find((ind) => ind.id === indicatorsConfig.defaultIndicator);
-    const initialFile = defaultIndicator ? defaultIndicator.datafile : 'selic-mensal.json';
+    const initialFile = defaultIndicator ? defaultIndicator.datafile : '/data/selic-acum-12m.json';
     await updateChart(initialFile);
 
     // Add event listener to the selector
     const selector = document.getElementById('indicator-selector');
     selector.addEventListener('change', function (event) {
+      // Hide canvas during chart rebuild with smooth transition
+      const canvas = document.getElementById('chart');
+      canvas.style.transition = 'opacity 0s ease-in-out';
+      canvas.style.opacity = '0';
+      
       // Add visual feedback when changing
       selector.classList.add('animate-pulse');
 
@@ -493,6 +536,14 @@ title: Início
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ['class']
+    });
+    
+    // Add window resize listener to adjust chart height
+    window.addEventListener('resize', () => {
+      setChartHeight();
+      if (chart) {
+        chart.resize();
+      }
     });
   })();
 </script>

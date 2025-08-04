@@ -3,21 +3,7 @@ layout: default
 title: Início
 ---
 <div class="w-full overflow-x-hidden">
-  <div class="my-4 text-center">
-    <div class="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-      <label for="indicator-selector" class="text-sm font-medium whitespace-nowrap text-gray-700 dark:text-gray-100">
-        Selecione o Indicador:
-      </label>
-      <select
-        id="indicator-selector"
-        class="w-full max-w-xs rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500 sm:inline-block sm:w-auto"
-      >
-        <!-- Options will be populated dynamically -->
-      </select>
-    </div>
-  </div>
-
-  <div class="chart-container w-full bg-white px-4 shadow-lg dark:bg-gray-800" id="chart-container">
+  <div class="chart-container w-full bg-white px-4 shadow-lg dark:bg-gray-700" id="chart-container">
     <div id="loading-indicator" class="hidden py-12 text-center">
       <div class="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
       <p class="mt-2 text-gray-600 dark:text-gray-200">Carregando dados...</p>
@@ -473,7 +459,7 @@ title: Início
       const canvas = document.getElementById('chart');
       canvas.style.transition = 'opacity 0s ease-in-out';
       canvas.style.opacity = '0';
-      
+
       // Add visual feedback when changing
       selector.classList.add('animate-pulse');
 

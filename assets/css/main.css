@@ -1,111 +1,28 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 @plugin "@tailwindcss/typography";
 
-/* Light mode explicit styles to ensure proper display */
-html:not(.dark) .chart-container {
-  background-color: #ffffff !important;
-}
+/* Essential custom styles - only what Tailwind can't handle easily */
 
-html:not(.dark) #indicator-selector {
-  background-color: #ffffff !important;
-  color: #111827 !important;
-  border-color: #d1d5db !important;
-}
-
-html:not(.dark) #indicator-selector option {
-  background-color: #ffffff !important;
-  color: #111827 !important;
-}
-
-html:not(.dark) #theme-toggle {
-  background-color: #e5e7eb !important;
-  color: #1f2937 !important;
-}
-
-html:not(.dark) #theme-toggle:hover {
-  background-color: #d1d5db !important;
-}
-
-html:not(.dark) label {
-  color: #374151 !important;
-}
-
-html:not(.dark) .prose {
-  color: #1f2937 !important;
-}
-
-html:not(.dark) .prose h1,
-html:not(.dark) .prose h2,
-html:not(.dark) .prose h3,
-html:not(.dark) .prose h4,
-html:not(.dark) .prose h5,
-html:not(.dark) .prose h6 {
-  color: #111827 !important;
-}
-
-html:not(.dark) .prose p,
-html:not(.dark) .prose li {
-  color: #374151 !important;
-}
-
-html:not(.dark) .prose strong {
-  color: #111827 !important;
-}
-
-html:not(.dark) .prose a {
-  color: #1d4ed8 !important;
-}
-
-/* Dark mode styles - fallback case */
-html.dark {
-  color-scheme: dark;
+/* Subtle background hierarchy - better than pure white */
+html:not(.dark) body {
+  background-color: #f8fafc;
+  color: #1f2937; /* Darker text for better contrast */
 }
 
 html.dark body {
-  background-color: #1f2937;
-  color: #f9fafb;
+  background-color: #1f2937; /* Darker background for dark mode */
+  color: #f9fafb; /* Light text color for dark mode */
 }
 
-html.dark .chart-container {
-  background-color: #374151 !important;
+html:not(.dark) footer {
+  background-color: #f1f5f9; /* Slightly different from body */
 }
 
-html.dark #indicator-selector {
-  background-color: #374151 !important;
-  color: #f9fafb !important;
-  border-color: #4b5563 !important;
-}
-
-html.dark #indicator-selector option {
-  background-color: #374151 !important;
-  color: #f9fafb !important;
-}
-
-html.dark #theme-toggle {
-  background-color: #374151 !important;
-  color: #f9fafb !important;
-}
-
-html.dark #theme-toggle:hover {
-  background-color: #4b5563 !important;
-}
-
-html.dark label {
-  color: #d1d5db !important;
-}
-
-html.dark #loading-indicator p {
-  color: #9ca3af !important;
-}
-
-/* Enhanced mobile dark mode contrast */
+/* Typography plugin overrides for better dark mode contrast */
 @media (max-width: 768px) {
-  html.dark body {
-    color: #f3f4f6 !important; /* Lighter text for better contrast on mobile */
-  }
-  
   html.dark .prose {
-    color: #f3f4f6 !important;
+    color: #f3f4f6; /* Better mobile contrast */
   }
   
   html.dark .prose h1,
@@ -114,47 +31,14 @@ html.dark #loading-indicator p {
   html.dark .prose h4,
   html.dark .prose h5,
   html.dark .prose h6 {
-    color: #f9fafb !important; /* Even lighter for headings */
-  }
-  
-  html.dark .prose p,
-  html.dark .prose li {
-    color: #f3f4f6 !important;
-  }
-  
-  html.dark .prose strong {
-    color: #f9fafb !important;
+    color: #f9fafb;
   }
   
   html.dark .prose a {
-    color: #60a5fa !important; /* Light blue for better contrast */
+    color: #60a5fa;
   }
   
-  html.dark label {
-    color: #f3f4f6 !important;
-  }
-  
-  /* Direct heading elements for better contrast */
-  html.dark h1,
-  html.dark h2,
-  html.dark h3,
-  html.dark h4,
-  html.dark h5,
-  html.dark h6 {
-    color: #f9fafb !important;
-  }
-  
-  /* Direct strong and link elements */
-  html.dark strong,
-  html.dark b {
-    color: #f9fafb !important;
-  }
-  
-  html.dark a {
-    color: #60a5fa !important; /* Light blue for better contrast */
-  }
-  
-  html.dark a:hover {
-    color: #93c5fd !important; /* Even lighter blue on hover */
+  html.dark .prose a:hover {
+    color: #93c5fd;
   }
 }

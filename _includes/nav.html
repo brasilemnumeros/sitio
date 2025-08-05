@@ -1,51 +1,55 @@
-<nav class="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 {% if page.title == 'Início' %}grid grid-cols-3 items-center{% else %}flex items-center justify-center{% endif %} p-2.5">
+<nav class="fixed top-0 right-0 left-0 z-50 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 {% if page.title == 'Início' %}grid grid-cols-3 items-center{% else %}flex items-center justify-center{% endif %} p-2.5">
   <!-- Logo -->
-  <a href="{{ '/' | relative_url }}" class="flex items-center gap-3 {% if page.title == 'Início' %}justify-self-start{% endif %}">
-    <img 
-      src="{{ '/assets/img/logo.svg' | relative_url }}" 
-      alt="Brasil em Números" 
+  <a
+    href="{{ '/' | relative_url }}"
+    class="flex items-center gap-3 {% if page.title == 'Início' %}justify-self-start{% endif %}"
+  >
+    <img
+      src="{{ '/assets/img/logo.svg' | relative_url }}"
+      alt="Brasil em Números"
       class="h-9 w-auto transition-all duration-200 hover:scale-105"
     >
-    <span class="font-bold text-lg whitespace-nowrap text-gray-800 dark:text-gray-300 {% if page.title == 'Início' %}hidden sm:inline{% else %}inline{% endif %}">
+    <span class="text-lg font-bold whitespace-nowrap text-gray-800 dark:text-gray-300 {% if page.title == 'Início' %}hidden sm:inline{% else %}inline{% endif %}">
       Brasil em Números
     </span>
   </a>
 
   {% if page.title == 'Início' %}
-  <!-- Seletor de Indicadores (Centro) -->
-  <div class="flex items-center gap-2 sm:gap-3 justify-self-center">
-    <label for="indicator-selector" class="text-sm font-medium whitespace-nowrap text-gray-700 dark:text-gray-300 hidden sm:inline">
-      Indicador:
-    </label>
-    <select
-      id="indicator-selector"
-      class="w-58 sm:w-auto rounded-md border border-gray-300 bg-white px-2 py-2 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500 sm:px-3"
-    >
-      <!-- Options will be populated dynamically -->
-    </select>
-  </div>
+    <!-- Seletor de Indicadores (Centro) -->
+    <div class="flex items-center gap-2 justify-self-center sm:gap-3">
+      <label
+        for="indicator-selector"
+        class="hidden text-sm font-medium whitespace-nowrap text-gray-700 sm:inline dark:text-gray-300"
+      >
+        Indicador:
+      </label>
+      <select
+        id="indicator-selector"
+        class="w-58 rounded-md border border-gray-300 bg-white px-2 py-2 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-auto sm:px-3 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500"
+      >
+        <!-- Options will be populated dynamically -->
+      </select>
+    </div>
   {% endif %}
 
-  {% if page.title == 'Início' %}
-  <!-- Botão de tema (Direita) -->
+  <!-- Botão de tema -->
   <button
     id="theme-toggle"
-    class="justify-self-end rounded-lg bg-gray-200 p-3 text-gray-800 shadow-lg transition-all duration-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+    class="{% if page.title == 'Início' %}justify-self-end {% else %}absolute top-2.5 right-2.5 {% endif %}p-2.5 rounded-lg bg-gray-200 text-gray-800 shadow-lg transition-all duration-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
     aria-label="Alternar tema"
   >
-  {% else %}
-  <button
-    id="theme-toggle"
-    class="absolute top-2.5 right-2.5 rounded-lg bg-gray-200 p-2.5 text-gray-800 shadow-lg transition-all duration-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-    aria-label="Alternar tema"
-  >
-  {% endif %}
     <!-- Moon icon (visible in light mode) -->
     <svg id="moon-icon" class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
       <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
     </svg>
     <!-- Sun icon (visible in dark mode) -->
-    <svg id="sun-icon" class="hidden h-4 w-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      id="sun-icon"
+      class="hidden h-4 w-4"
+      fill="currentColor"
+      viewBox="0 0 20 20"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
     </svg>
   </button>

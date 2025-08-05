@@ -27,17 +27,17 @@ title: Início
     const containerRect = chartContainer.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
     const footerHeight = 100; // Estimated footer height + some padding
-    
+
     // Calculate available height from current position to bottom of viewport
     const availableHeight = viewportHeight - containerRect.top - footerHeight;
-    
+
     // Set minimum and maximum heights
     const minHeight = 400;
     const maxHeight = 800;
-    
+
     // Calculate optimal height
     const optimalHeight = Math.max(minHeight, Math.min(maxHeight, availableHeight));
-    
+
     chartContainer.style.height = optimalHeight + 'px';
   }
 
@@ -142,7 +142,7 @@ title: Início
 
     // Check if dark mode is active
     const isDark = document.documentElement.classList.contains('dark');
-    
+
     // Define colors based on theme
     const titleColor = isDark ? '#f9fafb' : '#1f2937';
     const axisLabelColor = isDark ? '#f9fafb' : '#1f2937';
@@ -421,13 +421,13 @@ title: Início
       // Small delay to let the fade-out complete
       setTimeout(() => {
         // Find the indicator name from the config
-        const indicator = indicatorsConfig.indicators.find(ind => ind.datafile === dataFile);
+        const indicator = indicatorsConfig.indicators.find((ind) => ind.datafile === dataFile);
         const indicatorName = indicator ? indicator.name : jsonData.indicatorName;
-        
+
         // Pass the indicator name to createChart
         createChart(jsonData, indicatorName);
         updateDataSource(dataFile);
-        
+
         // Show canvas again after chart is created
         requestAnimationFrame(() => {
           canvas.style.opacity = '1';
@@ -440,7 +440,7 @@ title: Início
   (async function () {
     // Set initial chart height
     setChartHeight();
-    
+
     // Load indicators configuration first
     indicatorsConfig = await loadIndicatorsConfig();
 
@@ -472,7 +472,7 @@ title: Início
       if (typeof gtag !== 'undefined') {
         gtag('event', 'indicator_selected', {
           indicator_name: indicatorName,
-          indicator_file: indicatorFile
+          indicator_file: indicatorFile,
         });
       }
 
@@ -485,43 +485,43 @@ title: Início
     });
 
     // Add observer for theme changes to update chart colors
-    const observer = new MutationObserver(function(mutations) {
-      mutations.forEach(function(mutation) {
+    const observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (mutation) {
         if (mutation.attributeName === 'class') {
           // Theme changed, update chart if it exists
           if (chart) {
             const isDark = document.documentElement.classList.contains('dark');
-            
+
             // Update title color
             chart.options.plugins.title.color = isDark ? '#f9fafb' : '#1f2937';
-            
+
             // Update axes colors
             chart.options.scales.x.title.color = isDark ? '#f9fafb' : '#1f2937';
             chart.options.scales.x.ticks.color = isDark ? '#d1d5db' : '#374151';
             chart.options.scales.x.grid.color = isDark ? '#4b5563' : '#e5e7eb';
-            
+
             chart.options.scales.y.title.color = isDark ? '#f9fafb' : '#1f2937';
             chart.options.scales.y.ticks.color = isDark ? '#d1d5db' : '#374151';
             chart.options.scales.y.grid.color = isDark ? '#4b5563' : '#e5e7eb';
-            
+
             // Update Dilma label color based on theme
             if (chart.options.plugins.annotation.annotations.dilma_label) {
               chart.options.plugins.annotation.annotations.dilma_label.color = isDark ? '#1f2937' : '#6b7280';
             }
-            
+
             // Update the chart
             chart.update('none');
           }
         }
       });
     });
-    
+
     // Start observing theme changes
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ['class']
+      attributeFilter: ['class'],
     });
-    
+
     // Add window resize listener to adjust chart height
     window.addEventListener('resize', () => {
       setChartHeight();

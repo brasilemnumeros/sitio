@@ -24,7 +24,7 @@ html:not(.dark) footer {
   html.dark .prose {
     color: #f3f4f6; /* Better mobile contrast */
   }
-  
+
   html.dark .prose h1,
   html.dark .prose h2,
   html.dark .prose h3,
@@ -33,11 +33,11 @@ html:not(.dark) footer {
   html.dark .prose h6 {
     color: #f9fafb;
   }
-  
+
   html.dark .prose a {
     color: #60a5fa;
   }
-  
+
   html.dark .prose a:hover {
     color: #93c5fd;
   }

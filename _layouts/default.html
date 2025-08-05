@@ -15,7 +15,7 @@
     </main>
     {% include footer.html %}
     <script src="{{ "/assets/js/theme-switcher.js" | relative_url }}"></script>
-    {% if site.google_analytics and jekyll.environment == "production" %}
+    {% if site.google_analytics and jekyll.environment == 'production' %}
       {% include cookie-consent.html %}
       {% include analytics.html %}
     {% endif %}

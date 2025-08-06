@@ -10,11 +10,57 @@
 
   <body class="flex min-h-screen flex-col">
     {% include nav.html %}
+
     <main class="flex-grow {% if page.title == "Início" %}pt-15{% else %}pt-24{% endif %}{% unless page.title == "Início" %} container mx-auto px-6 py-8 max-w-4xl prose prose-lg prose-slate dark:prose-invert{% endunless %}">
       {{ content }}
     </main>
     {% include footer.html %}
     <script src="{{ "/assets/js/theme-switcher.js" | relative_url }}"></script>
+
+    <!-- Fixed Feedback Button -->
+    <a
+      href="https://github.com/brasilemnumeros/sitio/discussions/new?category=general"
+      target="_blank"
+      rel="noopener noreferrer"
+      id="feedback-btn"
+      class="fixed top-1/2 -right-25 z-50  min-w-16 -translate-y-1/2 -rotate-90 transform touch-pan-x rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 px-4 py-2.5 text-xs font-bold tracking-wide whitespace-nowrap text-white no-underline shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-600 hover:to-blue-800 md:px-5 md:py-3 md:text-sm lg:-right-30 lg:hover:-right-23 dark:from-indigo-600 dark:to-indigo-800 dark:hover:from-indigo-700 dark:hover:to-indigo-900"
+      aria-label="Arraste para a esquerda (mobile) ou passe o mouse para enviar feedback"
+    >
+      💬 Quer comentar algo?
+    </a>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        const btn = document.getElementById('feedback-btn');
+        let startX = 0;
+        let currentX = 0;
+        let isDragging = false;
+
+        // Only touch events for mobile
+        btn.addEventListener('touchstart', handleTouchStart, { passive: false });
+        btn.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+        function handleTouchStart(e) {
+          startX = e.touches[0].clientX;
+          isDragging = true;
+        }
+
+        function handleTouchMove(e) {
+          if (!isDragging) return;
+          e.preventDefault();
+
+          currentX = e.touches[0].clientX;
+          const diffX = startX - currentX;
+
+          if (diffX > 10) {
+            // Small threshold for swipe left detection
+            btn.style.transition = 'all 0.3s ease';
+            btn.style.right = '-4.8rem'; // Just enough to show the button (equivalent to -right-23)
+          }
+        }
+      });
+    </script>
+
     {% if site.google_analytics and jekyll.environment == 'production' %}
       {% include cookie-consent.html %}
       {% include analytics.html %}

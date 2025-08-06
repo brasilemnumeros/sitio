@@ -9,7 +9,7 @@
       alt="Brasil em Números"
       class="h-9 w-auto transition-all duration-200 hover:scale-105"
     >
-    <span class="text-lg font-bold whitespace-nowrap text-gray-800 dark:text-gray-300 {% if page.title == 'Início' %}hidden sm:inline{% else %}inline{% endif %}">
+    <span class="text-lg font-bold text-gray-800 sm:leading-none md:leading-none dark:text-gray-300 {% if page.title == 'Início' %}hidden sm:inline{% else %}inline{% endif %}">
       Brasil em Números
     </span>
   </a>
@@ -19,13 +19,13 @@
     <div class="flex items-center gap-2 justify-self-center sm:gap-3">
       <label
         for="indicator-selector"
-        class="hidden text-sm font-medium whitespace-nowrap text-gray-700 sm:inline dark:text-gray-300"
+        class="hidden text-sm font-medium whitespace-nowrap text-gray-700 lg:inline dark:text-gray-300"
       >
         Indicador:
       </label>
       <select
         id="indicator-selector"
-        class="w-58 rounded-md border border-gray-300 bg-white px-2 py-2 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-auto sm:px-3 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500"
+        class="w-58 rounded-md border border-gray-300 bg-white px-2 py-2 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-auto sm:px-3 lg:w-auto dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500"
       >
         <!-- Options will be populated dynamically -->
       </select>

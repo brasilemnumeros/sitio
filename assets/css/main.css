@@ -46,3 +46,8 @@ html:not(.dark) footer {
 .ss-btn {
   font-size: 16px; /* Fix social share button height overriden by .prose-lg class */
 }
+
+.shk-player {
+  position: static !important;
+  height: auto !important;
+}

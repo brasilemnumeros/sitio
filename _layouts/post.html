@@ -4,7 +4,96 @@ layout: default
 <h1>{{ page.title }}</h1>
 <p>{{ page.date | date_to_string }}</p>
 
+{% if page.audio %}
+  <!-- Podcast Disclaimer -->
+  <div class="my-6 border-l-4 border-blue-400 bg-blue-50 p-4 dark:border-blue-400 dark:bg-blue-900/20">
+    <div class="flex items-center">
+      <div class="flex-shrink-0">
+        <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <div class="ml-3">
+        <p class="text-sm text-blue-700 dark:text-blue-300">
+          <strong>🎧 Versão Podcast:</strong> Prefere escutar? Este post também está disponível em formato de áudio logo
+          abaixo!
+        </p>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<!-- Podcast Player -->
+<div id="podcast-player" class="rounded-lg bg-gray-200 dark:bg-gray-600">
+  <div class="shk-player" data-src="{{ page.audio }}"></div>
+</div>
+
 {{ content }}
+
+{% if page.audio %}
+  <script
+    src="https://cdn.jsdelivr.net/npm/shikwasa@2.2.1/dist/shikwasa.min.js"
+  ></script>
+  <link
+    href="https://cdn.jsdelivr.net/npm/shikwasa@2.2.1/dist/style.min.css"
+    rel="stylesheet"
+  >
+
+  <script>
+    const { Player } = window.Shikwasa;
+
+    // Function to get inverted theme
+    function getTheme() {
+      const isDarkMode = document.documentElement.classList.contains('dark');
+      return isDarkMode ? 'dark' : 'light';
+    }
+
+    // Initialize player with inverted theme
+    const player = new Player({
+      container: () => document.querySelector('.shk-player'),
+      audio: {
+        title: '{{ page.title }}',
+        artist: 'Brasil em Números',
+        src: '{{ page.audio }}',
+      },
+      fixed: {
+        type: 'static',
+      },
+      theme: document.documentElement.classList.contains('dark') ? 'light' : 'dark',
+    });
+
+    // Watch for theme changes and update player
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          const newTheme = getTheme();
+          // Recreate player with new theme
+          const container = document.querySelector('.shk-player');
+          container.innerHTML = ''; // Clear container
+
+          const newPlayer = new Player({
+            container: () => container,
+            audio: {
+              title: '{{ page.title }}',
+              artist: 'Brasil em Números',
+              src: '{{ page.audio }}',
+            },
+            fixed: {
+              type: 'static',
+            },
+            theme: newTheme,
+          });
+        }
+      });
+    });
+
+    // Start observing theme changes
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+  </script>
+{% endif %}
 
 <div
   class="ss-box ss-circle ss-grow my-10 mb-10 text-center"

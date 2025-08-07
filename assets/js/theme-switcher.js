@@ -31,12 +31,28 @@ document.addEventListener("DOMContentLoaded", function () {
         localStorage.setItem("theme", "light");
         if (moonIcon) moonIcon.classList.remove("hidden");
         if (sunIcon) sunIcon.classList.add("hidden");
+
+        // Send GTM event for theme change
+        if (typeof gtag !== "undefined") {
+          gtag("event", "theme_changed", {
+            theme_name: "light",
+            previous_theme: "dark",
+          });
+        }
       } else {
         // Switch to dark mode
         html.classList.add("dark");
         localStorage.setItem("theme", "dark");
         if (moonIcon) moonIcon.classList.add("hidden");
         if (sunIcon) sunIcon.classList.remove("hidden");
+
+        // Send GTM event for theme change
+        if (typeof gtag !== "undefined") {
+          gtag("event", "theme_changed", {
+            theme_name: "dark",
+            previous_theme: "light",
+          });
+        }
       }
     });
   }

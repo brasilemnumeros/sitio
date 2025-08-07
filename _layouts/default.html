@@ -61,7 +61,7 @@
       });
     </script>
 
-    {% if site.google_analytics and jekyll.environment == 'production' %}
+    {% if site.google_analytics %}
       {% include cookie-consent.html %}
       {% include analytics.html %}
     {% endif %}

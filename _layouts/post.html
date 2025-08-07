@@ -62,6 +62,28 @@ layout: default
       theme: document.documentElement.classList.contains('dark') ? 'light' : 'dark',
     });
 
+    // Track audio play events
+    player.on('play', () => {
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'audio_play', {
+          audio_title: '{{ page.title | escape }}',
+          audio_url: '{{ page.audio }}',
+          page_url: window.location.href,
+        });
+      }
+    });
+
+    // Track audio pause events
+    player.on('pause', () => {
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'audio_pause', {
+          audio_title: '{{ page.title | escape }}',
+          audio_url: '{{ page.audio }}',
+          page_url: window.location.href,
+        });
+      }
+    });
+
     // Watch for theme changes and update player
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
@@ -82,6 +104,27 @@ layout: default
               type: 'static',
             },
             theme: newTheme,
+          });
+
+          // Re-add event listeners for the new player
+          newPlayer.on('play', () => {
+            if (typeof gtag !== 'undefined') {
+              gtag('event', 'audio_play', {
+                audio_title: '{{ page.title | escape }}',
+                audio_url: '{{ page.audio }}',
+                page_url: window.location.href,
+              });
+            }
+          });
+
+          newPlayer.on('pause', () => {
+            if (typeof gtag !== 'undefined') {
+              gtag('event', 'audio_pause', {
+                audio_title: '{{ page.title | escape }}',
+                audio_url: '{{ page.audio }}',
+                page_url: window.location.href,
+              });
+            }
           });
         }
       });

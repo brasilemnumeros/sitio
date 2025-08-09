@@ -13,7 +13,7 @@ title: Início
   </div>
   <div class="mt-3 mb-4 text-center">
     <p id="data-source" class="text-sm">
-      <span class="font-medium">Fonte:</span> <span id="source-name">Banco Central do Brasil</span>
+      <span class="font-medium">Fonte(s):</span> <span id="source-name">Banco Central do Brasil</span>
     </p>
   </div>
 </div>
@@ -122,43 +122,24 @@ title: Início
   function updateDataSource(selectedFiles) {
     const sourceElement = document.getElementById('source-name');
     if (!sourceElement) return;
-    
-    // Support both single file and multiple files
+
     const filesArray = Array.isArray(selectedFiles) ? selectedFiles : [selectedFiles];
-    
-    // Collect unique sources
     const sources = new Set();
-    
-    filesArray.forEach(selectedFile => {
-      // First try to get source from indicators config
-      if (window.indicatorsData && window.indicatorsData.indicators) {
-        const indicator = window.indicatorsData.indicators.find(ind => ind.datafile === selectedFile);
+
+    if (window.indicatorsConfig && window.indicatorsConfig.indicators) {
+      filesArray.forEach(selectedFile => {
+        const indicator = window.indicatorsConfig.indicators.find(ind => ind.datafile === selectedFile);
         if (indicator && indicator.source) {
           sources.add(indicator.source);
-          return;
         }
-      }
-      
-      // Fallback to hardcoded mapping if config not available
-      const sourceMap = {
-        'https://brasilemnumeros.github.io/dados/selic/selic-acum-12m.json': 'Banco Central do Brasil',
-        'https://brasilemnumeros.github.io/dados/ipca/ipca-acum-12m.json': 'Instituto Brasileiro de Geografia e Estatística (IBGE)',
-        '/data/selic-acum-12m.json': 'Banco Central do Brasil',
-        '/data/ipca-acum-12m.json': 'Instituto Brasileiro de Geografia e Estatística (IBGE)'
-      };
-      
-      const source = sourceMap[selectedFile] || 'Banco Central do Brasil';
-      sources.add(source);
-    });
-    
-    // Display sources
+      });
+    }
+
     const sourcesArray = Array.from(sources);
-    if (sourcesArray.length === 1) {
-      sourceElement.textContent = sourcesArray[0];
-    } else if (sourcesArray.length > 1) {
+    if (sourcesArray.length > 0) {
       sourceElement.textContent = sourcesArray.join(' | ');
     } else {
-      sourceElement.textContent = 'Banco Central do Brasil';
+      sourceElement.textContent = 'Fonte não disponível';
     }
   }
 
@@ -577,8 +558,8 @@ title: Início
             createChart(validData, finalNames);
           }
           
-          // Update data source (use first indicator for now)
-          updateDataSource(filesArray[0]);
+          // Update data source
+          updateDataSource(filesArray);
           
           // Restore canvas opacity
           if (canvas) {

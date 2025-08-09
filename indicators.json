@@ -12,7 +12,7 @@
       "name": "📈 IPCA Acumulada (12 meses) (%)",
       "datafile": "https://brasilemnumeros.github.io/dados/ipca/ipca-acum-12m.json",
       "description": "Variação acumulada do Índice de Preços ao Consumidor Amplo (IPCA) em 12 meses",
-      "source": "Instituto Brasileiro de Geografia e Estatística (IBGE)"
+      "source": "Banco Central do Brasil"
     }
   ],
   "defaultIndicator": "selic-acum-12m"

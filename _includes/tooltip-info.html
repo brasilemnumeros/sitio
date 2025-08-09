@@ -5,12 +5,12 @@
     // Toggle tooltip on mobile
     const tooltip = $event.currentTarget.querySelector('.tooltip-content');
     const isVisible = !tooltip.classList.contains('invisible');
-    
+
     // Hide all other tooltips first
     document.querySelectorAll('.tooltip-content').forEach(t => {
       t.classList.add('invisible', 'opacity-0');
     });
-    
+
     // Toggle current tooltip
     if (!isVisible) {
       // Reset any previous positioning
@@ -18,19 +18,19 @@
       tooltip.style.right = '';
       tooltip.style.top = '';
       tooltip.style.transform = '';
-      
+
       // Calculate position relative to icon
       const iconRect = $event.currentTarget.getBoundingClientRect();
       const tooltipEl = tooltip;
-      
+
       // Position tooltip above the icon
       const top = iconRect.top - 60; // Give more space above
       tooltipEl.style.top = Math.max(10, top) + 'px'; // Ensure it doesn't go above viewport
-      
+
       // For horizontal positioning, use a safer approach
       const viewportWidth = window.innerWidth;
       const iconCenter = iconRect.left + iconRect.width / 2;
-      
+
       // Use CSS to center and let it auto-adjust
       if (iconCenter < viewportWidth / 3) {
         // Icon is on left side - align tooltip to left
@@ -46,10 +46,10 @@
         tooltipEl.style.right = 'auto';
         tooltipEl.style.transform = 'translateX(-50%)';
       }
-      
+
       tooltip.classList.remove('invisible', 'opacity-0');
       tooltip.classList.add('visible', 'opacity-100');
-      
+
       // Auto-hide after 4 seconds on mobile
       setTimeout(() => {
         tooltip.classList.add('invisible', 'opacity-0');
@@ -58,11 +58,17 @@
     }
   "
 >
-  <svg class="h-5 w-5 text-gray-400 hover:text-gray-600 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <svg
+    class="h-5 w-5 cursor-help text-gray-400 hover:text-gray-600"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    xmlns="http://www.w3.org/2000/svg"
+  >
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.546-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
   </svg>
   <div
-    class="tooltip-content invisible opacity-0 group-hover:visible group-hover:opacity-100 fixed z-[60] max-w-[calc(100vw-20px)] w-80 px-3 py-2 text-xs text-white bg-blue-600 rounded-lg shadow-lg transition-all duration-200 pointer-events-none"
+    class="tooltip-content pointer-events-none invisible fixed z-[60] w-80 max-w-[calc(100vw-20px)] rounded-lg bg-blue-600 px-3 py-2 text-xs text-white opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100"
     @vue:mounted="
       // Set default hover position
       $el.style.left = '50%';
@@ -72,6 +78,8 @@
   >
     <div class="text-center" v-text="indicator.description"></div>
     <!-- Tooltip arrow -->
-    <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-blue-600"></div>
+    <div
+      class="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 transform border-t-4 border-r-4 border-l-4 border-transparent border-t-blue-600"
+    ></div>
   </div>
 </div>

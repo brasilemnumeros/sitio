@@ -2,49 +2,45 @@
 @custom-variant dark (&:where(.dark, .dark *));
 @plugin "@tailwindcss/typography";
 
-/* Essential custom styles - only what Tailwind can't handle easily */
+/* Custom styles - apenas o que o Tailwind não consegue lidar */
 
-/* Subtle background hierarchy - better than pure white */
+/* Hierarquia sutil de fundo */
 html:not(.dark) body {
-  background-color: #f8fafc;
-  color: #1f2937; /* Darker text for better contrast */
+  background-color: #f8fafc; /* slate-50 */
+  color: #1f2937; /* gray-800 */
 }
 
 html.dark body {
-  background-color: #1f2937; /* Darker background for dark mode */
-  color: #f9fafb; /* Light text color for dark mode */
+  background-color: #1f2937; /* gray-800 */
+  color: #f9fafb; /* gray-50 */
 }
 
 html:not(.dark) footer {
-  background-color: #f1f5f9; /* Slightly different from body */
+  background-color: #f1f5f9; /* slate-100 */
 }
 
-/* Typography plugin overrides for better dark mode contrast */
+/* Melhor contraste para modo escuro no mobile */
 @media (max-width: 768px) {
   html.dark .prose {
-    color: #f3f4f6; /* Better mobile contrast */
+    color: #f3f4f6; /* gray-200 */
   }
 
-  html.dark .prose h1,
-  html.dark .prose h2,
-  html.dark .prose h3,
-  html.dark .prose h4,
-  html.dark .prose h5,
-  html.dark .prose h6 {
-    color: #f9fafb;
+  html.dark .prose :is(h1, h2, h3, h4, h5, h6) {
+    color: #f9fafb; /* gray-50 */
   }
 
   html.dark .prose a {
-    color: #60a5fa;
+    color: #60a5fa; /* blue-400 */
   }
 
   html.dark .prose a:hover {
-    color: #93c5fd;
+    color: #93c5fd; /* blue-300 */
   }
 }
 
+/* Correções específicas para componentes */
 .ss-btn {
-  font-size: 16px; /* Fix social share button height overriden by .prose-lg class */
+  font-size: 16px; /* Corrige altura dos botões de compartilhamento social */
 }
 
 .shk-player {

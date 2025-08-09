@@ -1,59 +1,121 @@
-// Theme toggle functionality
-document.addEventListener("DOMContentLoaded", function () {
-  const themeToggle = document.getElementById("theme-toggle");
-  const moonIcon = document.getElementById("moon-icon");
-  const sunIcon = document.getElementById("sun-icon");
-  const html = document.documentElement;
+/**
+ * Theme Switcher - Gerencia alteração entre modo claro e escuro
+ */
 
-  // Check for saved theme preference or default to dark mode
-  const savedTheme = localStorage.getItem("theme");
-  const systemPrefersDark = window.matchMedia(
-    "(prefers-color-scheme: dark)",
-  ).matches;
+class ThemeSwitcher {
+  // Constantes da classe
+  static ELEMENTS = {
+    TOGGLE: "theme-toggle",
+    MOON_ICON: "moon-icon",
+    SUN_ICON: "sun-icon",
+  };
 
-  // Default to dark mode if no preference is saved
-  if (savedTheme === "light") {
-    html.classList.remove("dark");
-    if (moonIcon) moonIcon.classList.remove("hidden");
-    if (sunIcon) sunIcon.classList.add("hidden");
-  } else {
-    // Default case: dark mode
-    html.classList.add("dark");
-    if (moonIcon) moonIcon.classList.add("hidden");
-    if (sunIcon) sunIcon.classList.remove("hidden");
+  static THEMES = {
+    LIGHT: "light",
+    DARK: "dark",
+  };
+
+  static CSS_CLASSES = {
+    DARK: "dark",
+    HIDDEN: "hidden",
+  };
+
+  constructor() {
+    this.html = document.documentElement;
+    this.themeToggle = null;
+    this.moonIcon = null;
+    this.sunIcon = null;
   }
 
-  if (themeToggle) {
-    themeToggle.addEventListener("click", function () {
-      if (html.classList.contains("dark")) {
-        // Switch to light mode
-        html.classList.remove("dark");
-        localStorage.setItem("theme", "light");
-        if (moonIcon) moonIcon.classList.remove("hidden");
-        if (sunIcon) sunIcon.classList.add("hidden");
-
-        // Send GTM event for theme change
-        if (typeof gtag !== "undefined") {
-          gtag("event", "theme_changed", {
-            theme_name: "light",
-            previous_theme: "dark",
-          });
-        }
-      } else {
-        // Switch to dark mode
-        html.classList.add("dark");
-        localStorage.setItem("theme", "dark");
-        if (moonIcon) moonIcon.classList.add("hidden");
-        if (sunIcon) sunIcon.classList.remove("hidden");
-
-        // Send GTM event for theme change
-        if (typeof gtag !== "undefined") {
-          gtag("event", "theme_changed", {
-            theme_name: "dark",
-            previous_theme: "light",
-          });
-        }
-      }
-    });
+  // Inicializa o theme switcher
+  initialize() {
+    this.cacheElements();
+    this.setInitialTheme();
+    this.attachEventListeners();
   }
+
+  // Armazena referências dos elementos
+  cacheElements() {
+    this.themeToggle = document.getElementById(ThemeSwitcher.ELEMENTS.TOGGLE);
+    this.moonIcon = document.getElementById(ThemeSwitcher.ELEMENTS.MOON_ICON);
+    this.sunIcon = document.getElementById(ThemeSwitcher.ELEMENTS.SUN_ICON);
+  }
+
+  // Define tema inicial baseado na preferência salva
+  setInitialTheme() {
+    const savedTheme = localStorage.getItem("theme");
+    const systemPrefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
+
+    // Padrão para modo escuro se nenhuma preferência salva
+    const shouldUseDarkMode = savedTheme
+      ? savedTheme === ThemeSwitcher.THEMES.DARK
+      : true;
+
+    this.applyTheme(
+      shouldUseDarkMode
+        ? ThemeSwitcher.THEMES.DARK
+        : ThemeSwitcher.THEMES.LIGHT,
+    );
+  }
+
+  // Aplica o tema especificado
+  applyTheme(theme) {
+    const isDark = theme === ThemeSwitcher.THEMES.DARK;
+
+    // Atualiza classe CSS
+    this.html.classList.toggle(ThemeSwitcher.CSS_CLASSES.DARK, isDark);
+
+    // Atualiza ícones
+    this.updateIcons(isDark);
+
+    // Salva preferência
+    localStorage.setItem("theme", theme);
+  }
+
+  // Atualiza visibilidade dos ícones
+  updateIcons(isDark) {
+    if (!this.moonIcon || !this.sunIcon) return;
+
+    this.moonIcon.classList.toggle(ThemeSwitcher.CSS_CLASSES.HIDDEN, isDark);
+    this.sunIcon.classList.toggle(ThemeSwitcher.CSS_CLASSES.HIDDEN, !isDark);
+  }
+
+  // Alterna entre temas
+  toggleTheme() {
+    const isDark = this.html.classList.contains(ThemeSwitcher.CSS_CLASSES.DARK);
+    const newTheme = isDark
+      ? ThemeSwitcher.THEMES.LIGHT
+      : ThemeSwitcher.THEMES.DARK;
+    const previousTheme = isDark
+      ? ThemeSwitcher.THEMES.DARK
+      : ThemeSwitcher.THEMES.LIGHT;
+
+    this.applyTheme(newTheme);
+    this.trackThemeChange(newTheme, previousTheme);
+  }
+
+  // Envia evento para GTM
+  trackThemeChange(newTheme, previousTheme) {
+    if (typeof gtag !== "undefined") {
+      gtag("event", "theme_changed", {
+        theme_name: newTheme,
+        previous_theme: previousTheme,
+      });
+    }
+  }
+
+  // Anexa event listeners
+  attachEventListeners() {
+    if (this.themeToggle) {
+      this.themeToggle.addEventListener("click", () => this.toggleTheme());
+    }
+  }
+}
+
+// Inicializa quando DOM estiver pronto
+document.addEventListener("DOMContentLoaded", () => {
+  const themeSwitcher = new ThemeSwitcher();
+  themeSwitcher.initialize();
 });

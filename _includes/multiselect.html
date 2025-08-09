@@ -19,12 +19,15 @@
     <!-- Custom multiselect button -->
     <button
       @click="isOpen = !isOpen"
-      class="w-[calc(100vw-140px)] sm:w-60 sm:max-w-[calc(100vw-350px)] md:min-w-80 md:w-80 rounded-md border border-gray-300 bg-white px-2 py-2 text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500 text-left"
+      class="w-[calc(100vw-140px)] rounded-md border border-gray-300 bg-white px-2 py-2 text-left text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-60 sm:max-w-[calc(100vw-350px)] md:w-80 md:min-w-80 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500"
     >
-      <div class="flex items-center justify-between w-full">
+      <div class="flex w-full items-center justify-between">
         <span class="truncate pr-2">
           <span v-if="selectedIndicators.length === 0" class="text-gray-400">Selecione indicadores</span>
-          <span v-else-if="selectedIndicators.length === 1" v-text="selectedIndicators[0].replace(/^[🏦📈]\s/, '')"></span>
+          <span
+            v-else-if="selectedIndicators.length === 1"
+            v-text="selectedIndicators[0].replace(/^[🏦📈]\s/, '')"
+          ></span>
           <span v-else v-text="selectedIndicators.length + ' indicadores'"></span>
         </span>
         <span class="flex-shrink-0">▼</span>
@@ -35,7 +38,7 @@
     <div
       v-show="isOpen"
       id="indicator-dropdown"
-      class="absolute z-50 w-[calc(100vw-140px)] sm:w-60 sm:max-w-[calc(100vw-350px)] md:w-80 mt-1 bg-white border border-gray-300 rounded-md shadow-lg dark:bg-gray-800 dark:border-gray-600 max-h-60 overflow-y-auto left-0 sm:left-auto"
+      class="absolute left-0 z-50 mt-1 max-h-60 w-[calc(100vw-140px)] overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg sm:left-auto sm:w-60 sm:max-w-[calc(100vw-350px)] md:w-80 dark:border-gray-600 dark:bg-gray-800"
     >
       <!-- Para mobile, ajustar posição se necessário -->
       <div
@@ -54,7 +57,7 @@
       ></div>
 
       <!-- Indicadores Econômicos -->
-      <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
+      <div class="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400">
         Indicadores Econômicos
       </div>
 
@@ -78,26 +81,37 @@
           }
           window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap);
         "
-        class="px-3 py-2 pl-6 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white flex items-center justify-between"
+        class="flex cursor-pointer items-center justify-between px-3 py-2 pl-6 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
       >
         <div class="flex-grow">
           <span v-text="indicator.name" class="block"></span>
-          <span v-if="indicator.granularity" v-text="indicator.granularity" class="block text-xs text-gray-500 dark:text-gray-400"></span>
+          <span
+            v-if="indicator.granularity"
+            v-text="indicator.granularity"
+            class="block text-xs text-gray-500 dark:text-gray-400"
+          ></span>
         </div>
         <div class="flex items-center">
           {% include tooltip-info.html %}
-          <span :class="{'opacity-0': !selectedIndicators.includes(indicator.name)}" class="w-5 text-center font-bold text-blue-500">✓</span>
+          <span
+            :class="{'opacity-0': !selectedIndicators.includes(indicator.name)}"
+            class="w-5 text-center font-bold text-blue-500"
+            >✓</span
+          >
         </div>
       </div>
 
       <!-- Clear all button -->
-      <div v-if="selectedIndicators.length > 0" class="border-t border-gray-200 dark:border-gray-600 p-3 bg-gray-50 dark:bg-gray-700">
+      <div
+        v-if="selectedIndicators.length > 0"
+        class="border-t border-gray-200 bg-gray-50 p-3 dark:border-gray-600 dark:bg-gray-700"
+      >
         <button
           @click="
             selectedIndicators = [];
             window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, true);
           "
-          class="w-full text-xs text-red-600 hover:text-red-800 dark:text-red-400 font-medium py-2 px-3 rounded border border-red-200 hover:border-red-300 dark:border-red-800 dark:hover:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+          class="w-full rounded border border-red-200 px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-800 dark:border-red-800 dark:text-red-400 dark:hover:border-red-700 dark:hover:bg-red-900/20"
         >
           🗑️ Limpar todos
         </button>

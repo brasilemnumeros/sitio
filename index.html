@@ -2,7 +2,6 @@
 layout: default
 title: Início
 ---
-
 <div class="w-full overflow-x-hidden">
   <div class="chart-container w-full bg-white px-4 shadow-lg dark:bg-gray-700" id="chart-container">
     <div id="loading-indicator" class="hidden py-12 text-center">
@@ -65,44 +64,44 @@ title: Início
       chart.destroy();
       chart = null;
     }
-    
+
     // Clear the canvas
     const canvas = document.getElementById('chart');
     if (canvas) {
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
-    
+
     // Update data source to show empty state
     const sourceElement = document.getElementById('source-name');
     if (sourceElement) {
       sourceElement.textContent = 'Selecione um indicador para visualizar os dados';
     }
-    
+
     console.log('Chart cleared');
   }
 
   function populateSelector(config) {
     // Setup global function for multiselect communication
-    window.updateChartsFromMultiselect = function(selectedIndicators, indicatorMap, forceClear = false) {
+    window.updateChartsFromMultiselect = function (selectedIndicators, indicatorMap, forceClear = false) {
       console.log('Selected indicators:', selectedIndicators, 'Force clear:', forceClear);
-      
+
       if (selectedIndicators.length === 0 || forceClear) {
         // Se nenhum selecionado OU force clear, limpar o gráfico
         console.log('No indicators selected or force clear - clearing chart');
         clearChart();
         return;
       }
-      
+
       // Preparar arrays de arquivos e nomes
-      const dataFiles = selectedIndicators.map(indicator => indicatorMap[indicator]).filter(Boolean);
+      const dataFiles = selectedIndicators.map((indicator) => indicatorMap[indicator]).filter(Boolean);
       const indicatorNames = selectedIndicators.slice(); // Copy array
-      
+
       if (dataFiles.length === 0) {
         console.error('No valid data files found for selected indicators');
         return;
       }
-      
+
       // Atualizar gráfico com múltiplos indicadores
       if (dataFiles.length === 1) {
         console.log('Single indicator selected:', indicatorNames[0]);
@@ -112,10 +111,10 @@ title: Início
         updateChart(dataFiles, indicatorNames);
       }
     };
-    
+
     // Store config globally for other functions to use
     window.indicatorsConfig = config;
-    
+
     return config;
   }
 
@@ -127,8 +126,8 @@ title: Início
     const sources = new Set();
 
     if (window.indicatorsConfig && window.indicatorsConfig.indicators) {
-      filesArray.forEach(selectedFile => {
-        const indicator = window.indicatorsConfig.indicators.find(ind => ind.datafile === selectedFile);
+      filesArray.forEach((selectedFile) => {
+        const indicator = window.indicatorsConfig.indicators.find((ind) => ind.datafile === selectedFile);
         if (indicator && indicator.source) {
           sources.add(indicator.source);
         }
@@ -199,12 +198,12 @@ title: Início
 
     // Color palette for multiple indicators
     const colorPalette = [
-      'rgba(59, 130, 246, 0.8)',   // Blue
-      'rgba(239, 68, 68, 0.8)',    // Red
-      'rgba(34, 197, 94, 0.8)',    // Green
-      'rgba(168, 85, 247, 0.8)',   // Purple
-      'rgba(249, 115, 22, 0.8)',   // Orange
-      'rgba(236, 72, 153, 0.8)',   // Pink
+      'rgba(59, 130, 246, 0.8)', // Blue
+      'rgba(239, 68, 68, 0.8)', // Red
+      'rgba(34, 197, 94, 0.8)', // Green
+      'rgba(168, 85, 247, 0.8)', // Purple
+      'rgba(249, 115, 22, 0.8)', // Orange
+      'rgba(236, 72, 153, 0.8)', // Pink
     ];
 
     // Create datasets for each indicator
@@ -212,7 +211,7 @@ title: Início
       const chartData = jsonData.data;
       const indicatorName = namesArray[index] || jsonData.indicatorName;
       const color = colorPalette[index % colorPalette.length];
-      
+
       const allDataPoints = chartData.map((item) => ({
         x: item.date || item.year,
         y: item.rate,
@@ -239,19 +238,19 @@ title: Início
     const getGranularityForIndicator = (indicatorName, dataArray, index) => {
       // Try to find granularity from indicators config
       if (window.indicatorsConfig?.indicators) {
-        const indicator = window.indicatorsConfig.indicators.find(ind => 
-          ind.name === indicatorName || ind.name.includes(indicatorName.replace(/^[🏦📈]\s/, ''))
+        const indicator = window.indicatorsConfig.indicators.find(
+          (ind) => ind.name === indicatorName || ind.name.includes(indicatorName.replace(/^[🏦📈]\s/, '')),
         );
         if (indicator && indicator.granularity) {
           return indicator.granularity;
         }
       }
-      
+
       // Try to get from data
       if (dataArray[index] && dataArray[index].granularity) {
         return dataArray[index].granularity;
       }
-      
+
       return null;
     };
 
@@ -462,56 +461,59 @@ title: Início
                   month: 'long',
                 });
               },
-              label: function(context) {
+              label: function (context) {
                 return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}%`;
               },
             },
-            filter: function(tooltipItem) {
+            filter: function (tooltipItem) {
               return tooltipItem.datasetIndex !== undefined;
             },
-            external: function(context) {
+            external: function (context) {
               // Custom positioning for mobile devices
               const tooltip = context.tooltip;
               if (!tooltip || tooltip.opacity === 0) {
                 return;
               }
-              
+
               const chart = context.chart;
               const canvas = chart.canvas;
               const canvasRect = canvas.getBoundingClientRect();
-              
+
               // Check if we're on mobile (viewport width < 768px)
               const isMobile = window.innerWidth < 768;
-              
+
               if (isMobile && tooltip.dataPoints && tooltip.dataPoints.length > 0) {
-                const tooltipEl = document.getElementById('chartjs-tooltip') || (() => {
-                  const div = document.createElement('div');
-                  div.id = 'chartjs-tooltip';
-                  div.className = 'absolute z-50 bg-gray-800 text-white text-xs rounded px-2 py-1 pointer-events-none transform -translate-x-1/2 -translate-y-full';
-                  document.body.appendChild(div);
-                  return div;
-                })();
-                
+                const tooltipEl =
+                  document.getElementById('chartjs-tooltip') ||
+                  (() => {
+                    const div = document.createElement('div');
+                    div.id = 'chartjs-tooltip';
+                    div.className =
+                      'absolute z-50 bg-gray-800 text-white text-xs rounded px-2 py-1 pointer-events-none transform -translate-x-1/2 -translate-y-full';
+                    document.body.appendChild(div);
+                    return div;
+                  })();
+
                 // Set tooltip content
                 if (tooltip.title && tooltip.body) {
                   const title = tooltip.title[0] || '';
-                  const body = tooltip.body.map(b => b.lines[0]).join('<br>');
+                  const body = tooltip.body.map((b) => b.lines[0]).join('<br>');
                   tooltipEl.innerHTML = `<div class="font-medium">${title}</div><div>${body}</div>`;
                 }
-                
+
                 // Position tooltip
                 const position = Chart.helpers.getRelativePosition(tooltip.dataPoints[0].element, chart);
                 const left = canvasRect.left + window.pageXOffset + position.x;
                 let top = canvasRect.top + window.pageYOffset + position.y - 10;
-                
+
                 // Ensure tooltip stays within viewport
                 const tooltipRect = tooltipEl.getBoundingClientRect();
                 const viewportWidth = window.innerWidth;
                 const padding = 10;
-                
+
                 // Adjust horizontal position
                 let adjustedLeft = Math.max(padding, Math.min(left, viewportWidth - tooltipRect.width - padding));
-                
+
                 // Adjust vertical position if too close to top
                 if (top < padding) {
                   top = canvasRect.top + window.pageYOffset + position.y + 10;
@@ -519,7 +521,7 @@ title: Início
                 } else {
                   tooltipEl.className = tooltipEl.className.replace('translate-y-0', '-translate-y-full');
                 }
-                
+
                 tooltipEl.style.left = adjustedLeft + 'px';
                 tooltipEl.style.top = top + 'px';
                 tooltipEl.style.opacity = '1';
@@ -557,7 +559,7 @@ title: Início
             beginAtZero: false,
             title: {
               display: true,
-              text: isMultipleIndicators ? (dataArray[0].yAxisTitle || 'Taxa (%)') : yAxisTitle,
+              text: isMultipleIndicators ? dataArray[0].yAxisTitle || 'Taxa (%)' : yAxisTitle,
               color: axisLabelColor,
             },
             ticks: {
@@ -567,25 +569,26 @@ title: Início
               color: gridColor,
             },
           },
-          ...(isMultipleIndicators && datasets.length > 1 && {
-            y1: {
-              type: 'linear',
-              display: true,
-              position: 'right',
-              beginAtZero: false,
-              title: {
+          ...(isMultipleIndicators &&
+            datasets.length > 1 && {
+              y1: {
+                type: 'linear',
                 display: true,
-                text: dataArray[1]?.yAxisTitle || 'Taxa (%)',
-                color: axisLabelColor,
+                position: 'right',
+                beginAtZero: false,
+                title: {
+                  display: true,
+                  text: dataArray[1]?.yAxisTitle || 'Taxa (%)',
+                  color: axisLabelColor,
+                },
+                ticks: {
+                  color: ticksColor,
+                },
+                grid: {
+                  drawOnChartArea: false,
+                },
               },
-              ticks: {
-                color: ticksColor,
-              },
-              grid: {
-                drawOnChartArea: false,
-              },
-            }
-          }),
+            }),
         },
         maintainAspectRatio: false,
         layout: {
@@ -614,22 +617,22 @@ title: Início
     const isMultipleFiles = Array.isArray(dataFiles);
     const filesArray = isMultipleFiles ? dataFiles : [dataFiles];
     const namesArray = isMultipleFiles ? indicatorNames : [indicatorNames];
-    
+
     // Add visual feedback during chart update
     const canvas = document.getElementById('chart');
     if (canvas) {
       canvas.style.transition = 'opacity 0.3s ease-in-out';
       canvas.style.opacity = '0.3';
     }
-    
+
     try {
       // Load all data files in parallel
-      const jsonDataPromises = filesArray.map(file => loadData(file));
+      const jsonDataPromises = filesArray.map((file) => loadData(file));
       const jsonDataArray = await Promise.all(jsonDataPromises);
-      
+
       // Filter out null responses (failed loads)
-      const validData = jsonDataArray.filter(data => data !== null);
-      
+      const validData = jsonDataArray.filter((data) => data !== null);
+
       if (validData.length > 0) {
         // Small delay to let the fade-out complete
         setTimeout(() => {
@@ -638,7 +641,7 @@ title: Início
             if (namesArray && namesArray[index]) {
               return namesArray[index];
             }
-            
+
             // Try to find name from config
             const dataFile = filesArray[index];
             const indicator = window.indicatorsConfig?.indicators?.find((ind) => ind.datafile === dataFile);
@@ -651,10 +654,10 @@ title: Início
           } else {
             createChart(validData, finalNames);
           }
-          
+
           // Update data source
           updateDataSource(filesArray);
-          
+
           // Restore canvas opacity
           if (canvas) {
             canvas.style.opacity = '1';
@@ -690,7 +693,7 @@ title: Início
     // Load initial data using the default indicator
     const defaultIndicator = indicatorsConfig.indicators.find((ind) => ind.id === indicatorsConfig.defaultIndicator);
     const initialFile = defaultIndicator ? defaultIndicator.datafile : '/data/selic-acum-12m.json';
-    
+
     // Always load the default chart on page load
     await updateChart(initialFile);
 

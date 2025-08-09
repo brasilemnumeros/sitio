@@ -19,68 +19,69 @@
     <script src="https://unpkg.com/petite-vue" defer init></script>
 
     <script>
-    // Global variables for indicators
-    window.indicatorsData = null;
-    window.multiselectScope = null;
+      // Global variables for indicators
+      window.indicatorsData = null;
+      window.multiselectScope = null;
 
-    // Load indicators configuration
-    async function loadIndicatorsForMultiselect() {
-      try {
-        let baseUrl = '{% if jekyll.environment == "development" %}http://localhost:4000{% else %}{{ site.url }}{% endif %}';
-        if (baseUrl.endsWith('/')) {
-          baseUrl = baseUrl.slice(0, -1);
+      // Load indicators configuration
+      async function loadIndicatorsForMultiselect() {
+        try {
+          let baseUrl =
+            '{% if jekyll.environment == "development" %}http://localhost:4000{% else %}{{ site.url }}{% endif %}';
+          if (baseUrl.endsWith('/')) {
+            baseUrl = baseUrl.slice(0, -1);
+          }
+          const response = await fetch(baseUrl + '/indicators.json');
+          window.indicatorsData = await response.json();
+
+          // Initialize multiselect after data is loaded
+          if (window.multiselectScope) {
+            initializeMultiselectWithData();
+          }
+        } catch (error) {
+          console.error('Error loading indicators for multiselect:', error);
         }
-        const response = await fetch(baseUrl + '/indicators.json');
-        window.indicatorsData = await response.json();
-        
-        // Initialize multiselect after data is loaded
-        if (window.multiselectScope) {
-          initializeMultiselectWithData();
-        }
-      } catch (error) {
-        console.error('Error loading indicators for multiselect:', error);
       }
-    }
 
-    // Initialize multiselect with loaded data
-    function initializeMultiselectWithData() {
-      if (!window.indicatorsData || !window.multiselectScope) return;
-      
-      const config = window.indicatorsData;
-      const defaultIndicator = config.indicators.find(ind => ind.id === config.defaultIndicator);
-      
-      // Update multiselect scope with real data
-      window.multiselectScope.indicators = config.indicators;
-      // Start with default indicator selected
-      window.multiselectScope.selectedIndicators = defaultIndicator ? [defaultIndicator.name] : [];
-      
-      // Create indicator map
-      const indicatorMap = {};
-      config.indicators.forEach(ind => {
-        indicatorMap[ind.name] = ind.datafile;
+      // Initialize multiselect with loaded data
+      function initializeMultiselectWithData() {
+        if (!window.indicatorsData || !window.multiselectScope) return;
+
+        const config = window.indicatorsData;
+        const defaultIndicator = config.indicators.find((ind) => ind.id === config.defaultIndicator);
+
+        // Update multiselect scope with real data
+        window.multiselectScope.indicators = config.indicators;
+        // Start with default indicator selected
+        window.multiselectScope.selectedIndicators = defaultIndicator ? [defaultIndicator.name] : [];
+
+        // Create indicator map
+        const indicatorMap = {};
+        config.indicators.forEach((ind) => {
+          indicatorMap[ind.name] = ind.datafile;
+        });
+        window.multiselectScope.indicatorMap = indicatorMap;
+      }
+
+      // Load indicators when DOM is ready
+      document.addEventListener('DOMContentLoaded', loadIndicatorsForMultiselect);
+
+      // Click-outside functionality for indicator multiselect
+      document.addEventListener('click', function (event) {
+        const container = document.getElementById('indicator-multiselect-container');
+        const dropdown = document.getElementById('indicator-dropdown');
+        const button = container?.querySelector('button');
+
+        // Verifica se o dropdown existe e está visível
+        const isDropdownVisible = dropdown && dropdown.offsetHeight > 0 && dropdown.offsetWidth > 0;
+
+        if (container && !container.contains(event.target) && isDropdownVisible) {
+          // Simula clique no botão para fechar
+          if (button) {
+            button.click();
+          }
+        }
       });
-      window.multiselectScope.indicatorMap = indicatorMap;
-    }
-
-    // Load indicators when DOM is ready
-    document.addEventListener('DOMContentLoaded', loadIndicatorsForMultiselect);
-
-    // Click-outside functionality for indicator multiselect
-    document.addEventListener('click', function(event) {
-      const container = document.getElementById('indicator-multiselect-container');
-      const dropdown = document.getElementById('indicator-dropdown');
-      const button = container?.querySelector('button');
-      
-      // Verifica se o dropdown existe e está visível
-      const isDropdownVisible = dropdown && dropdown.offsetHeight > 0 && dropdown.offsetWidth > 0;
-      
-      if (container && !container.contains(event.target) && isDropdownVisible) {
-        // Simula clique no botão para fechar
-        if (button) {
-          button.click();
-        }
-      }
-    });
     </script>
 
     <!-- Fixed Feedback Button -->

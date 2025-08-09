@@ -236,9 +236,40 @@ title: Início
     });
 
     // Chart title - combine names for multiple indicators
-    const chartTitle = isMultipleIndicators && namesArray.length > 1
-      ? `Comparação: ${namesArray.map(name => name.replace(/^[🏦📈]\s/, '')).join(' vs ')}`
-      : (namesArray[0] || 'Indicador');
+    const getGranularityForIndicator = (indicatorName, dataArray, index) => {
+      // Try to find granularity from indicators config
+      if (window.indicatorsConfig?.indicators) {
+        const indicator = window.indicatorsConfig.indicators.find(ind => 
+          ind.name === indicatorName || ind.name.includes(indicatorName.replace(/^[🏦📈]\s/, ''))
+        );
+        if (indicator && indicator.granularity) {
+          return indicator.granularity;
+        }
+      }
+      
+      // Try to get from data
+      if (dataArray[index] && dataArray[index].granularity) {
+        return dataArray[index].granularity;
+      }
+      
+      return null;
+    };
+
+    let finalTitle;
+    if (isMultipleIndicators && namesArray.length > 1) {
+      // For multiple indicators, show each with its granularity
+      const indicatorsWithGranularity = namesArray.map((name, index) => {
+        const cleanName = name.replace(/^[🏦📈]\s/, '');
+        const granularity = getGranularityForIndicator(name, dataArray, index);
+        return granularity ? `${cleanName} (${granularity})` : cleanName;
+      });
+      finalTitle = `Comparação: ${indicatorsWithGranularity.join(' vs ')}`;
+    } else {
+      // For single indicator, show with granularity if available
+      const cleanName = (namesArray[0] || 'Indicador').replace(/^[🏦📈]\s/, '');
+      const granularity = getGranularityForIndicator(namesArray[0], dataArray, 0);
+      finalTitle = granularity ? `${cleanName} (${granularity})` : cleanName;
+    }
 
     // Create annotations for government period boundaries
     const annotations = {};
@@ -412,13 +443,17 @@ title: Início
           },
           title: {
             display: true,
-            text: chartTitle,
+            text: finalTitle,
             font: {
               size: 18,
             },
             color: titleColor,
           },
           tooltip: {
+            position: 'nearest',
+            xAlign: 'center',
+            yAlign: 'top',
+            caretPadding: 10,
             callbacks: {
               title: function (context) {
                 const date = new Date(context[0].parsed.x);
@@ -430,6 +465,65 @@ title: Início
               label: function(context) {
                 return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}%`;
               },
+            },
+            filter: function(tooltipItem) {
+              return tooltipItem.datasetIndex !== undefined;
+            },
+            external: function(context) {
+              // Custom positioning for mobile devices
+              const tooltip = context.tooltip;
+              if (!tooltip || tooltip.opacity === 0) {
+                return;
+              }
+              
+              const chart = context.chart;
+              const canvas = chart.canvas;
+              const canvasRect = canvas.getBoundingClientRect();
+              
+              // Check if we're on mobile (viewport width < 768px)
+              const isMobile = window.innerWidth < 768;
+              
+              if (isMobile && tooltip.dataPoints && tooltip.dataPoints.length > 0) {
+                const tooltipEl = document.getElementById('chartjs-tooltip') || (() => {
+                  const div = document.createElement('div');
+                  div.id = 'chartjs-tooltip';
+                  div.className = 'absolute z-50 bg-gray-800 text-white text-xs rounded px-2 py-1 pointer-events-none transform -translate-x-1/2 -translate-y-full';
+                  document.body.appendChild(div);
+                  return div;
+                })();
+                
+                // Set tooltip content
+                if (tooltip.title && tooltip.body) {
+                  const title = tooltip.title[0] || '';
+                  const body = tooltip.body.map(b => b.lines[0]).join('<br>');
+                  tooltipEl.innerHTML = `<div class="font-medium">${title}</div><div>${body}</div>`;
+                }
+                
+                // Position tooltip
+                const position = Chart.helpers.getRelativePosition(tooltip.dataPoints[0].element, chart);
+                const left = canvasRect.left + window.pageXOffset + position.x;
+                let top = canvasRect.top + window.pageYOffset + position.y - 10;
+                
+                // Ensure tooltip stays within viewport
+                const tooltipRect = tooltipEl.getBoundingClientRect();
+                const viewportWidth = window.innerWidth;
+                const padding = 10;
+                
+                // Adjust horizontal position
+                let adjustedLeft = Math.max(padding, Math.min(left, viewportWidth - tooltipRect.width - padding));
+                
+                // Adjust vertical position if too close to top
+                if (top < padding) {
+                  top = canvasRect.top + window.pageYOffset + position.y + 10;
+                  tooltipEl.className = tooltipEl.className.replace('-translate-y-full', 'translate-y-0');
+                } else {
+                  tooltipEl.className = tooltipEl.className.replace('translate-y-0', '-translate-y-full');
+                }
+                
+                tooltipEl.style.left = adjustedLeft + 'px';
+                tooltipEl.style.top = top + 'px';
+                tooltipEl.style.opacity = '1';
+              }
             },
           },
         },

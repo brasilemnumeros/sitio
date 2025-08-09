@@ -71,7 +71,10 @@
               "
               class="px-3 py-2 pl-6 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white flex items-center justify-between"
             >
-              <span v-text="indicator.name"></span>
+                            <div>
+                <span v-text="indicator.name" class="block"></span>
+                <span v-if="indicator.granularity" v-text="indicator.granularity" class="block text-xs text-gray-500 dark:text-gray-400"></span>
+              </div>
               <span v-if="selectedIndicators.includes(indicator.name)" class="text-blue-500 font-bold">✓</span>
             </div>
             

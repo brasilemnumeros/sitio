@@ -28,7 +28,18 @@
       <div class="relative">
         <div v-scope="{ selectedIndicators: [], isOpen: false, indicators: [], indicatorMap: {} }" 
              id="indicator-multiselect-container"
-             @vue:mounted="window.multiselectScope = $data">
+             @vue:mounted="
+               window.multiselectScope = $data;
+               // Add global click listener to close tooltips on mobile
+               document.addEventListener('touchstart', (e) => {
+                 if (!e.target.closest('.tooltip-container')) {
+                   document.querySelectorAll('.tooltip-content').forEach(t => {
+                     t.classList.add('invisible', 'opacity-0');
+                     t.classList.remove('visible', 'opacity-100');
+                   });
+                 }
+               });
+             ">
           <!-- Custom multiselect button -->
           <button 
             @click="isOpen = !isOpen"
@@ -45,7 +56,19 @@
           </button>
           
           <!-- Dropdown options -->
-          <div v-show="isOpen" id="indicator-dropdown" class="absolute z-50 w-80 mt-1 bg-white border border-gray-300 rounded-md shadow-lg dark:bg-gray-800 dark:border-gray-600 max-h-60 overflow-y-auto">
+                    <!-- Dropdown options -->
+          <div v-show="isOpen" id="indicator-dropdown" class="absolute z-50 w-80 mt-1 bg-white border border-gray-300 rounded-md shadow-lg dark:bg-gray-800 dark:border-gray-600 max-h-60 overflow-y-auto left-0 sm:left-auto">
+            <!-- Para mobile, ajustar posição se necessário -->
+            <div class="sm:hidden" v-if="isOpen" @vue:mounted="
+              const dropdown = $el.parentElement;
+              const rect = dropdown.getBoundingClientRect();
+              if (rect.bottom > window.innerHeight) {
+                dropdown.style.top = 'auto';
+                dropdown.style.bottom = '100%';
+                dropdown.style.marginTop = '0';
+                dropdown.style.marginBottom = '4px';
+              }
+            "></div>
             <!-- Indicadores Econômicos -->
             <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
               Indicadores Econômicos
@@ -71,11 +94,82 @@
               "
               class="px-3 py-2 pl-6 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-white flex items-center justify-between"
             >
-                            <div>
+              <div class="flex-grow">
                 <span v-text="indicator.name" class="block"></span>
                 <span v-if="indicator.granularity" v-text="indicator.granularity" class="block text-xs text-gray-500 dark:text-gray-400"></span>
               </div>
-              <span v-if="selectedIndicators.includes(indicator.name)" class="text-blue-500 font-bold">✓</span>
+              <div class="flex items-center">
+                <div class="tooltip-container group relative mr-2 flex items-center" @click.stop="
+                  // Toggle tooltip on mobile
+                  const tooltip = $event.currentTarget.querySelector('.tooltip-content');
+                  const isVisible = !tooltip.classList.contains('invisible');
+                  
+                  // Hide all other tooltips first
+                  document.querySelectorAll('.tooltip-content').forEach(t => {
+                    t.classList.add('invisible', 'opacity-0');
+                  });
+                  
+                  // Toggle current tooltip
+                  if (!isVisible) {
+                    // Reset any previous positioning
+                    tooltip.style.left = '';
+                    tooltip.style.right = '';
+                    tooltip.style.top = '';
+                    tooltip.style.transform = '';
+                    
+                    // Calculate position relative to icon
+                    const iconRect = $event.currentTarget.getBoundingClientRect();
+                    const tooltipEl = tooltip;
+                    
+                    // Position tooltip above the icon
+                    const top = iconRect.top - 60; // Give more space above
+                    tooltipEl.style.top = Math.max(10, top) + 'px'; // Ensure it doesn't go above viewport
+                    
+                    // For horizontal positioning, use a safer approach
+                    const viewportWidth = window.innerWidth;
+                    const iconCenter = iconRect.left + iconRect.width / 2;
+                    
+                    // Use CSS to center and let it auto-adjust
+                    if (iconCenter < viewportWidth / 3) {
+                      // Icon is on left side - align tooltip to left
+                      tooltipEl.style.left = '10px';
+                      tooltipEl.style.right = 'auto';
+                    } else if (iconCenter > (viewportWidth * 2/3)) {
+                      // Icon is on right side - align tooltip to right
+                      tooltipEl.style.right = '10px';
+                      tooltipEl.style.left = 'auto';
+                    } else {
+                      // Icon is in center - center the tooltip
+                      tooltipEl.style.left = '50%';
+                      tooltipEl.style.right = 'auto';
+                      tooltipEl.style.transform = 'translateX(-50%)';
+                    }
+                    
+                    tooltip.classList.remove('invisible', 'opacity-0');
+                    tooltip.classList.add('visible', 'opacity-100');
+                    
+                    // Auto-hide after 4 seconds on mobile
+                    setTimeout(() => {
+                      tooltip.classList.add('invisible', 'opacity-0');
+                      tooltip.classList.remove('visible', 'opacity-100');
+                    }, 4000);
+                  }
+                ">
+                  <svg class="h-5 w-5 text-gray-400 hover:text-gray-600 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.546-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <div class="tooltip-content invisible opacity-0 group-hover:visible group-hover:opacity-100 fixed z-[60] max-w-[calc(100vw-20px)] w-80 px-3 py-2 text-xs text-white bg-gray-800 rounded-lg shadow-lg transition-all duration-200 pointer-events-none"
+                       @vue:mounted="
+                         // Set default hover position
+                         $el.style.left = '50%';
+                         $el.style.top = '60px';
+                         $el.style.transform = 'translateX(-50%)';
+                       ">
+                    <div class="text-center" v-text="indicator.description"></div>
+                    <!-- Tooltip arrow -->
+                    <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-800"></div>
+                  </div>
+                </div>
+                <span :class="{'opacity-0': !selectedIndicators.includes(indicator.name)}" class="w-5 text-center font-bold text-blue-500">✓</span>
+              </div>
             </div>
             
             <!-- Clear all button -->
@@ -118,3 +212,4 @@
     </svg>
   </button>
 </nav>
+

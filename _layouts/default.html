@@ -18,86 +18,8 @@
     {% include footer.html %}
 
     <!-- Core Scripts -->
-    <script src="{{ "/assets/js/theme-switcher.js" | relative_url }}"></script>
-    <script src="https://unpkg.com/petite-vue" defer init></script>
-
-    <!-- Multiselect Configuration Script -->
-    <script>
-      class MultiselectManager {
-        static async initialize() {
-          try {
-            const baseUrl =
-              '{% if jekyll.environment == "development" %}http://localhost:4000{% else %}{{ site.url }}{% endif %}';
-            const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-
-            const response = await fetch(`${cleanBaseUrl}/indicators.json`);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-            window.indicatorsData = await response.json();
-
-            // Wait for Vue to be ready and multiselect scope to be available
-            if (window.multiselectScope) {
-              MultiselectManager.populateMultiselect();
-            } else {
-              // If Vue scope is not ready yet, wait for it
-              const waitForScope = setInterval(() => {
-                if (window.multiselectScope) {
-                  clearInterval(waitForScope);
-                  MultiselectManager.populateMultiselect();
-                }
-              }, 100);
-
-              // Timeout after 5 seconds to avoid infinite waiting
-              setTimeout(() => clearInterval(waitForScope), 5000);
-            }
-          } catch (error) {
-            console.error('Error loading indicators for multiselect:', error);
-          }
-        }
-
-        static populateMultiselect() {
-          if (!window.indicatorsData?.indicators || !window.multiselectScope) {
-            console.warn('Indicators data or multiselect scope not available');
-            return;
-          }
-
-          const { indicators, defaultIndicator } = window.indicatorsData;
-          const defaultInd = indicators.find((ind) => ind.id === defaultIndicator);
-
-          // Update the Vue scope
-          window.multiselectScope.indicators = indicators;
-          window.multiselectScope.selectedIndicators = defaultInd ? [defaultInd.name] : [];
-          window.multiselectScope.indicatorMap = indicators.reduce((map, ind) => {
-            map[ind.name] = ind.datafile;
-            return map;
-          }, {});
-
-          console.log('Multiselect populated with indicators:', indicators.length);
-        }
-
-        static setupClickOutside() {
-          document.addEventListener('click', (event) => {
-            const container = document.getElementById('indicator-multiselect-container');
-            const dropdown = document.getElementById('indicator-dropdown');
-
-            if (!container || !dropdown) return;
-
-            const isVisible = dropdown.offsetHeight > 0 && dropdown.offsetWidth > 0;
-            const clickedOutside = !container.contains(event.target);
-
-            if (clickedOutside && isVisible) {
-              container.querySelector('button')?.click();
-            }
-          });
-        }
-      }
-
-      // Initialize when DOM is ready
-      document.addEventListener('DOMContentLoaded', () => {
-        MultiselectManager.initialize();
-        MultiselectManager.setupClickOutside();
-      });
-    </script>
+    <script defer src="{{ "/assets/js/theme-switcher.js" | relative_url }}"></script>
+    <script defer src="{{ "/assets/js/feedback-button.js" | relative_url }}"></script>
 
     <!-- Feedback Button -->
     <a
@@ -110,46 +32,6 @@
     >
       💬 Quer comentar algo?
     </a>
-
-    <!-- Feedback Button Mobile Swipe -->
-    <script>
-      class FeedbackButtonManager {
-        static initialize() {
-          const btn = document.getElementById('feedback-btn');
-          if (!btn) return;
-
-          let startX = 0;
-          let isDragging = false;
-
-          btn.addEventListener(
-            'touchstart',
-            (e) => {
-              startX = e.touches[0].clientX;
-              isDragging = true;
-            },
-            { passive: true },
-          );
-
-          btn.addEventListener(
-            'touchmove',
-            (e) => {
-              if (!isDragging) return;
-
-              const currentX = e.touches[0].clientX;
-              const diffX = startX - currentX;
-
-              if (diffX > 10) {
-                btn.style.transition = 'all 0.3s ease';
-                btn.style.right = '-4.8rem';
-              }
-            },
-            { passive: true },
-          );
-        }
-      }
-
-      document.addEventListener('DOMContentLoaded', FeedbackButtonManager.initialize);
-    </script>
 
     <!-- Analytics -->
     {% if site.google_analytics and jekyll.environment == 'production' %}
@@ -168,9 +50,9 @@
       ></script>
 
       <!-- Custom Chart Scripts -->
-      <script src="{{ '/assets/js/chart-manager.js' | relative_url }}"></script>
-      <script src="{{ '/assets/js/chart-creator.js' | relative_url }}"></script>
-      <script src="{{ '/assets/js/chart-integration.js' | relative_url }}"></script>
+      <script defer src="{{ '/assets/js/chart-manager.js' | relative_url }}"></script>
+      <script defer src="{{ '/assets/js/chart-creator.js' | relative_url }}"></script>
+      <script defer src="{{ '/assets/js/chart-integration.js' | relative_url }}"></script>
     {% endif %}
   </body>
 </html>

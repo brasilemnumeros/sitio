@@ -1,15 +1,15 @@
-<nav class="fixed top-0 right-0 left-0 z-50 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 {% if page.title == 'Início' %}grid grid-cols-[auto_1fr_auto] sm:grid-cols-3 items-center gap-2{% else %}flex items-center justify-center{% endif %} p-2.5">
+<nav class="fixed inset-x-0 top-0 z-50 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 {% if page.title == 'Início' %}grid grid-cols-[auto_1fr_auto] sm:grid-cols-3 items-center gap-2{% else %}flex items-center justify-center{% endif %} p-2.5">
   <!-- Logo -->
   <a
     href="{{ '/' | relative_url }}"
-    class="flex items-center gap-3 {% if page.title == 'Início' %}justify-self-start{% endif %}"
+    class="flex items-center gap-3 transition-all duration-200 hover:scale-105 {% if page.title == 'Início' %}justify-self-start{% endif %}"
   >
     <img
       src="{{ '/assets/img/logo.svg' | relative_url }}"
       alt="Brasil em Números"
-      class="h-9 w-auto transition-all duration-200 hover:scale-105"
+      class="h-9 w-auto"
     >
-    <span class="text-lg font-bold text-gray-800 sm:leading-none md:leading-none dark:text-gray-300 {% if page.title == 'Início' %}hidden sm:inline{% else %}inline{% endif %}">
+    <span class="text-lg font-bold text-gray-800 dark:text-gray-300 {% if page.title == 'Início' %}hidden sm:inline{% else %}inline{% endif %}">
       Brasil em Números
     </span>
   </a>
@@ -29,23 +29,18 @@
         <div
           v-scope="{ selectedIndicators: [], isOpen: false, indicators: [], indicatorMap: {} }"
           id="indicator-multiselect-container"
-          @vue:mounted="
-            window.multiselectScope = $data;
-            // Add global click listener to close tooltips on mobile
-            document.addEventListener('touchstart', (e) => {
-              if (!e.target.closest('.tooltip-container')) {
-                document.querySelectorAll('.tooltip-content').forEach(t => {
-                  t.classList.add('invisible', 'opacity-0');
-                  t.classList.remove('visible', 'opacity-100');
-                });
-              }
-            });
-          "
+          @vue:mounted="window.multiselectScope = $data"
         >
           <!-- Custom multiselect button -->
           <button
             @click="isOpen = !isOpen"
-            class="w-[calc(100vw-140px)] rounded-md border border-gray-300 bg-white px-2 py-2 text-left text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-60 sm:max-w-[calc(100vw-350px)] md:w-80 md:min-w-80 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500"
+            class="
+              w-[calc(100vw-140px)] rounded-md border border-gray-300 bg-white
+              px-2 py-2 text-left text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400
+              focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-60
+              sm:max-w-[calc(100vw-350px)] md:w-80 md:min-w-80
+              dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500
+            "
           >
             <div class="flex w-full items-center justify-between">
               <span class="truncate pr-2">
@@ -61,28 +56,17 @@
           </button>
 
           <!-- Dropdown options -->
-          <!-- Dropdown options -->
           <div
             v-show="isOpen"
             id="indicator-dropdown"
-            class="absolute left-0 z-50 mt-1 max-h-60 w-[calc(100vw-140px)] overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg sm:left-auto sm:w-60 sm:max-w-[calc(100vw-350px)] md:w-80 dark:border-gray-600 dark:bg-gray-800"
+            class="
+              absolute left-0 z-50 mt-1 max-h-60 w-[calc(100vw-140px)] overflow-y-auto
+              rounded-md border border-gray-300 bg-white shadow-lg
+              sm:left-auto sm:w-60 sm:max-w-[calc(100vw-350px)] md:w-80
+              dark:border-gray-600 dark:bg-gray-800
+            "
           >
-            <!-- Para mobile, ajustar posição se necessário -->
-            <div
-              class="sm:hidden"
-              v-if="isOpen"
-              @vue:mounted="
-                const dropdown = $el.parentElement;
-                const rect = dropdown.getBoundingClientRect();
-                if (rect.bottom > window.innerHeight) {
-                  dropdown.style.top = 'auto';
-                  dropdown.style.bottom = '100%';
-                  dropdown.style.marginTop = '0';
-                  dropdown.style.marginBottom = '4px';
-                }
-              "
-            ></div>
-            <!-- Indicadores Econômicos -->
+            <!-- Header -->
             <div class="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400">
               Indicadores Econômicos
             </div>
@@ -107,7 +91,10 @@
                 }
                 window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap);
               "
-              class="flex cursor-pointer items-center justify-between px-3 py-2 pl-6 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+              class="
+                flex cursor-pointer items-center justify-between px-3 py-2 pl-6
+                hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700
+              "
             >
               <div class="flex-grow">
                 <span v-text="indicator.name" class="block"></span>
@@ -118,58 +105,34 @@
                 ></span>
               </div>
               <div class="flex items-center">
+                <!-- Info tooltip -->
                 <div
-                  class="tooltip-container group relative mr-2 flex items-center"
+                  class="group relative mr-2 flex items-center"
                   @click.stop="
-                    // Toggle tooltip on mobile
                     const tooltip = $event.currentTarget.querySelector('.tooltip-content');
                     const isVisible = !tooltip.classList.contains('invisible');
 
-                    // Hide all other tooltips first
                     document.querySelectorAll('.tooltip-content').forEach(t => {
                       t.classList.add('invisible', 'opacity-0');
                     });
 
-                    // Toggle current tooltip
                     if (!isVisible) {
-                      // Reset any previous positioning
-                      tooltip.style.left = '';
-                      tooltip.style.right = '';
-                      tooltip.style.top = '';
-                      tooltip.style.transform = '';
-
-                      // Calculate position relative to icon
                       const iconRect = $event.currentTarget.getBoundingClientRect();
-                      const tooltipEl = tooltip;
-
-                      // Position tooltip above the icon
-                      const top = iconRect.top - 60; // Give more space above
-                      tooltipEl.style.top = Math.max(10, top) + 'px'; // Ensure it doesn't go above viewport
-
-                      // For horizontal positioning, use a safer approach
                       const viewportWidth = window.innerWidth;
                       const iconCenter = iconRect.left + iconRect.width / 2;
 
-                      // Use CSS to center and let it auto-adjust
-                      if (iconCenter < viewportWidth / 3) {
-                        // Icon is on left side - align tooltip to left
-                        tooltipEl.style.left = '10px';
-                        tooltipEl.style.right = 'auto';
-                      } else if (iconCenter > (viewportWidth * 2/3)) {
-                        // Icon is on right side - align tooltip to right
-                        tooltipEl.style.right = '10px';
-                        tooltipEl.style.left = 'auto';
-                      } else {
-                        // Icon is in center - center the tooltip
-                        tooltipEl.style.left = '50%';
-                        tooltipEl.style.right = 'auto';
-                        tooltipEl.style.transform = 'translateX(-50%)';
-                      }
+                      Object.assign(tooltip.style, {
+                        top: Math.max(10, iconRect.top - 60) + 'px',
+                        left: iconCenter < viewportWidth / 3 ? '10px' :
+                              iconCenter > (viewportWidth * 2/3) ? 'auto' : '50%',
+                        right: iconCenter > (viewportWidth * 2/3) ? '10px' : 'auto',
+                        transform: iconCenter < viewportWidth / 3 || iconCenter > (viewportWidth * 2/3) ?
+                                  '' : 'translateX(-50%)'
+                      });
 
                       tooltip.classList.remove('invisible', 'opacity-0');
                       tooltip.classList.add('visible', 'opacity-100');
 
-                      // Auto-hide after 4 seconds on mobile
                       setTimeout(() => {
                         tooltip.classList.add('invisible', 'opacity-0');
                         tooltip.classList.remove('visible', 'opacity-100');
@@ -182,21 +145,17 @@
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
                   >
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.546-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
                   <div
-                    class="tooltip-content pointer-events-none invisible fixed z-[60] w-80 max-w-[calc(100vw-20px)] rounded-lg bg-blue-600 px-3 py-2 text-xs text-white opacity-0 shadow-lg transition-all duration-200 group-hover:visible group-hover:opacity-100"
-                    @vue:mounted="
-                      // Set default hover position
-                      $el.style.left = '50%';
-                      $el.style.top = '60px';
-                      $el.style.transform = 'translateX(-50%)';
+                    class="
+                      tooltip-content pointer-events-none invisible fixed z-[60] w-80 max-w-[calc(100vw-20px)]
+                      rounded-lg bg-blue-600 px-3 py-2 text-xs text-white opacity-0 shadow-lg
+                      transition-all duration-200 group-hover:visible group-hover:opacity-100
                     "
                   >
                     <div class="text-center" v-text="indicator.description"></div>
-                    <!-- Tooltip arrow -->
                     <div
                       class="absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 transform border-t-4 border-r-4 border-l-4 border-transparent border-t-blue-600"
                     ></div>
@@ -220,7 +179,11 @@
                   selectedIndicators = [];
                   window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, true);
                 "
-                class="w-full rounded border border-red-200 px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-800 dark:border-red-800 dark:text-red-400 dark:hover:border-red-700 dark:hover:bg-red-900/20"
+                class="
+                  w-full rounded border border-red-200 px-3 py-2 text-xs font-medium text-red-600
+                  transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-800
+                  dark:border-red-800 dark:text-red-400 dark:hover:border-red-700 dark:hover:bg-red-900/20
+                "
               >
                 🗑️ Limpar todos
               </button>
@@ -234,11 +197,15 @@
   <!-- Botão de tema -->
   <button
     id="theme-toggle"
-    class="{% if page.title == 'Início' %}justify-self-end {% else %}absolute top-2.5 right-2.5 {% endif %}p-2.5 rounded-lg bg-gray-200 text-gray-800 shadow-lg transition-all duration-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
+    class="
+      {% if page.title == 'Início' %}justify-self-end{% else %}absolute top-2.5 right-2.5{% endif %}
+      rounded-lg bg-gray-200 p-2.5 text-gray-800 shadow-lg transition-all duration-200
+      hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600
+    "
     aria-label="Alternar tema"
   >
     <!-- Moon icon (visible in light mode) -->
-    <svg id="moon-icon" class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+    <svg id="moon-icon" class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
       <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
     </svg>
     <!-- Sun icon (visible in dark mode) -->
@@ -247,7 +214,6 @@
       class="hidden h-4 w-4"
       fill="currentColor"
       viewBox="0 0 20 20"
-      xmlns="http://www.w3.org/2000/svg"
     >
       <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"></path>
     </svg>

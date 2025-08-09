@@ -3,169 +3,195 @@
  */
 
 class ChartManager {
+  // Constantes da classe
+  static CHART_CONFIG = {
+    MIN_HEIGHT: 400,
+    MAX_HEIGHT: 800,
+    FOOTER_HEIGHT: 100,
+  };
+
+  static ELEMENTS = {
+    CHART_CONTAINER: "chart-container",
+    CHART_CANVAS: "chart",
+    LOADING_INDICATOR: "loading-indicator",
+    SOURCE_NAME: "source-name",
+  };
+
   constructor() {
     this.chart = null;
     this.indicatorsConfig = null;
   }
 
-  // Function to calculate and set optimal chart height
+  // Calcula e define altura otimizada do gráfico
   setChartHeight() {
-    const chartContainer = document.getElementById('chart-container');
-    const containerRect = chartContainer.getBoundingClientRect();
-    const viewportHeight = window.innerHeight;
-    const footerHeight = 100; // Estimated footer height + some padding
+    const chartContainer = document.getElementById(
+      ChartManager.ELEMENTS.CHART_CONTAINER,
+    );
+    if (!chartContainer) return;
 
-    // Calculate available height from current position to bottom of viewport
-    const availableHeight = viewportHeight - containerRect.top - footerHeight;
+    const { top } = chartContainer.getBoundingClientRect();
+    const availableHeight =
+      window.innerHeight - top - ChartManager.CHART_CONFIG.FOOTER_HEIGHT;
 
-    // Set minimum and maximum heights
-    const minHeight = 400;
-    const maxHeight = 800;
+    const optimalHeight = Math.max(
+      ChartManager.CHART_CONFIG.MIN_HEIGHT,
+      Math.min(ChartManager.CHART_CONFIG.MAX_HEIGHT, availableHeight),
+    );
 
-    // Calculate optimal height
-    const optimalHeight = Math.max(minHeight, Math.min(maxHeight, availableHeight));
-
-    chartContainer.style.height = optimalHeight + 'px';
+    chartContainer.style.height = `${optimalHeight}px`;
   }
 
-  // Load indicators configuration
+  // Carrega configuração de indicadores
   async loadIndicatorsConfig() {
     try {
-      let baseUrl = window.location.origin;
-      const response = await fetch(baseUrl + '/indicators.json');
-      const config = await response.json();
-      this.indicatorsConfig = config;
-      return config;
+      const response = await fetch(`${window.location.origin}/indicators.json`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      this.indicatorsConfig = await response.json();
+      return this.indicatorsConfig;
     } catch (error) {
-      console.error('Error loading indicators config:', error);
+      console.error("Error loading indicators config:", error);
       return {};
     }
   }
 
-  // Clear chart
+  // Limpa gráfico atual
   clearChart() {
     if (this.chart) {
       this.chart.destroy();
       this.chart = null;
     }
-    
-    const canvas = document.getElementById('chart');
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-    
-    const sourceElement = document.getElementById('source-name');
+
+    this.clearCanvas();
+    this.updateSourceDisplay("Selecione um indicador para visualizar os dados");
+  }
+
+  // Limpa canvas
+  clearCanvas() {
+    const canvas = document.getElementById(ChartManager.ELEMENTS.CHART_CANVAS);
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  // Atualiza exibição de fonte
+  updateSourceDisplay(text) {
+    const sourceElement = document.getElementById(
+      ChartManager.ELEMENTS.SOURCE_NAME,
+    );
     if (sourceElement) {
-      sourceElement.textContent = 'Selecione um indicador para visualizar os dados';
+      sourceElement.textContent = text;
     }
   }
 
-  // Load data from file
+  // Controla indicadores de carregamento
+  toggleLoadingState(isLoading) {
+    const loadingIndicator = document.getElementById(
+      ChartManager.ELEMENTS.LOADING_INDICATOR,
+    );
+    const chartCanvas = document.getElementById(
+      ChartManager.ELEMENTS.CHART_CANVAS,
+    );
+
+    if (!loadingIndicator || !chartCanvas) return;
+
+    if (isLoading) {
+      loadingIndicator.classList.remove("hidden");
+      chartCanvas.style.opacity = "0.3";
+    } else {
+      loadingIndicator.classList.add("hidden");
+      chartCanvas.style.opacity = "1";
+    }
+  }
+
+  // Carrega dados de arquivo
   async loadData(dataFile) {
     try {
-      const loadingIndicator = document.getElementById('loading-indicator');
-      const chartCanvas = document.getElementById('chart');
+      this.toggleLoadingState(true);
 
-      loadingIndicator.classList.remove('hidden');
-      chartCanvas.style.opacity = '0.3';
+      const baseUrl = dataFile.startsWith("http") ? "" : window.location.origin;
+      const response = await fetch(`${baseUrl}${dataFile}`);
 
-      let baseUrl = '';
-      if (!dataFile.startsWith('http')) {
-        baseUrl = window.location.origin;
-      }
-      const response = await fetch(baseUrl + dataFile);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
       const jsonData = await response.json();
-
-      loadingIndicator.classList.add('hidden');
-      chartCanvas.style.opacity = '1';
-
+      this.toggleLoadingState(false);
       return jsonData;
     } catch (error) {
-      console.error('Error loading data:', error);
-
-      const loadingIndicator = document.getElementById('loading-indicator');
-      const chartCanvas = document.getElementById('chart');
-
-      loadingIndicator.classList.add('hidden');
-      chartCanvas.style.opacity = '1';
-
+      console.error("Error loading data:", error);
+      this.toggleLoadingState(false);
       return null;
     }
   }
 
-  // Update data source display
+  // Atualiza exibição de fonte dos dados
   updateDataSource(selectedFiles) {
-    const sourceElement = document.getElementById('source-name');
-    if (!sourceElement) return;
-    
-    const filesArray = Array.isArray(selectedFiles) ? selectedFiles : [selectedFiles];
+    const filesArray = Array.isArray(selectedFiles)
+      ? selectedFiles
+      : [selectedFiles];
     const sources = new Set();
-    
-    filesArray.forEach(selectedFile => {
-      if (this.indicatorsConfig && this.indicatorsConfig.indicators) {
-        const indicator = this.indicatorsConfig.indicators.find(ind => ind.datafile === selectedFile);
-        if (indicator && indicator.source) {
-          sources.add(indicator.source);
-          return;
-        }
+
+    filesArray.forEach((file) => {
+      const source = this.getSourceForFile(file);
+      if (source && source !== "Fonte não disponível") {
+        sources.add(source);
       }
-      
-      const sourceMap = {
-        'https://brasilemnumeros.github.io/dados/selic/selic-acum-12m.json': 'Banco Central do Brasil',
-        'https://brasilemnumeros.github.io/dados/ipca/ipca-acum-12m.json': 'Instituto Brasileiro de Geografia e Estatística (IBGE)',
-        '/data/selic-acum-12m.json': 'Banco Central do Brasil',
-        '/data/ipca-acum-12m.json': 'Instituto Brasileiro de Geografia e Estatística (IBGE)'
-      };
-      
-      const source = sourceMap[selectedFile] || 'Banco Central do Brasil';
-      sources.add(source);
     });
-    
-    const sourcesArray = Array.from(sources);
-    if (sourcesArray.length === 1) {
-      sourceElement.textContent = sourcesArray[0];
-    } else if (sourcesArray.length > 1) {
-      sourceElement.textContent = sourcesArray.join(' | ');
-    } else {
-      sourceElement.textContent = 'Banco Central do Brasil';
-    }
+
+    const sourcesText =
+      sources.size > 0
+        ? Array.from(sources).join(" | ")
+        : "Selecione um indicador";
+
+    this.updateSourceDisplay(sourcesText);
   }
 
-  // Get granularity for indicator
-  getGranularityForIndicator(indicatorName, dataArray, index) {
+  // Obtém fonte para arquivo específico
+  getSourceForFile(file) {
+    // Busca no indicators.json
     if (this.indicatorsConfig?.indicators) {
-      const indicator = this.indicatorsConfig.indicators.find(ind => 
-        ind.name === indicatorName || ind.name.includes(indicatorName.replace(/^[🏦📈]\s/, ''))
+      const indicator = this.indicatorsConfig.indicators.find(
+        (ind) => ind.datafile === file,
       );
-      if (indicator && indicator.granularity) {
-        return indicator.granularity;
-      }
+      if (indicator?.source) return indicator.source;
     }
-    
-    if (dataArray[index] && dataArray[index].granularity) {
-      return dataArray[index].granularity;
-    }
-    
-    return null;
+
+    // Fallback genérico se não encontrar
+    return "Fonte não disponível";
   }
 
-  // Initialize chart manager
+  // Obtém granularidade para indicador
+  getGranularityForIndicator(indicatorName, dataArray, index) {
+    // Primeiro tenta encontrar na configuração
+    if (this.indicatorsConfig?.indicators) {
+      const cleanName = indicatorName.replace(/^[🏦📈]\s/, "");
+      const indicator = this.indicatorsConfig.indicators.find(
+        (ind) => ind.name === indicatorName || ind.name.includes(cleanName),
+      );
+      if (indicator?.granularity) return indicator.granularity;
+    }
+
+    // Fallback para dados do arquivo
+    return dataArray[index]?.granularity || null;
+  }
+
+  // Inicializa gerenciador de gráficos
   async initialize() {
     this.setChartHeight();
     this.indicatorsConfig = await this.loadIndicatorsConfig();
-    
-    // Add window resize listener
-    window.addEventListener('resize', () => {
-      this.setChartHeight();
-      if (this.chart) {
-        this.chart.resize();
-      }
-    });
-
+    this.setupEventListeners();
     return this.indicatorsConfig;
+  }
+
+  // Configura event listeners
+  setupEventListeners() {
+    window.addEventListener("resize", () => {
+      this.setChartHeight();
+      this.chart?.resize();
+    });
   }
 }
 
-// Export instance
+// Exporta instância global
 window.chartManager = new ChartManager();

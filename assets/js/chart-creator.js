@@ -99,6 +99,18 @@ class ChartCreator {
     this.chartManager = chartManager;
   }
 
+  // Normaliza a data para o primeiro dia do mês seguinte se for o último dia do mês
+  normalizeDate(dateString) {
+    const date = new Date(dateString); // YYYY-MM-DD é interpretado como UTC
+    const nextDay = new Date(date.getTime());
+    nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+
+    if (nextDay.getUTCDate() === 1) {
+      return nextDay.toISOString().split("T")[0];
+    }
+    return dateString;
+  }
+
   // Cria gráfico com um ou múltiplos indicadores
   createChart(jsonDataArray, indicatorNames = null) {
     const isMultipleIndicators = Array.isArray(jsonDataArray);
@@ -139,14 +151,78 @@ class ChartCreator {
 
   // Cria datasets para os indicadores
   createDatasets(dataArray, namesArray, isMultipleIndicators) {
+    // Para múltiplos indicadores, sincroniza as datas primeiro
+    if (isMultipleIndicators && dataArray.length > 1) {
+      return this.createSynchronizedDatasets(dataArray, namesArray);
+    }
+
     return dataArray.map((jsonData, index) => {
       const indicatorName = namesArray[index] || jsonData.indicatorName;
       const color =
         ChartCreator.COLOR_PALETTE[index % ChartCreator.COLOR_PALETTE.length];
 
-      const dataPoints = jsonData.data.map((item) => ({
-        x: item.date || item.year,
-        y: item.rate,
+      const dataPoints = jsonData.data
+        .filter((item) => item.rate !== null)
+        .map((item) => ({
+          x: this.normalizeDate(item.date),
+          y: item.rate,
+        }));
+
+      return {
+        label: indicatorName,
+        data: dataPoints,
+        borderColor: color,
+        backgroundColor: color.replace("0.8", "0.1"),
+        fill: false,
+        tension: 0.1,
+        borderWidth: ChartCreator.CHART_CONFIG.ANIMATION.BORDER_WIDTH,
+        pointRadius: ChartCreator.CHART_CONFIG.ANIMATION.POINT_RADIUS,
+        pointHoverRadius:
+          ChartCreator.CHART_CONFIG.ANIMATION.POINT_HOVER_RADIUS,
+        pointBackgroundColor: color,
+        pointBorderColor: "rgba(255, 255, 255, 0.8)",
+        pointBorderWidth:
+          ChartCreator.CHART_CONFIG.ANIMATION.POINT_BORDER_WIDTH,
+        yAxisID: index > 0 ? "y1" : "y",
+        spanGaps: false,
+      };
+    });
+  }
+
+  // Cria datasets sincronizados para múltiplos indicadores
+  createSynchronizedDatasets(dataArray, namesArray) {
+    // Coleta todas as datas onde qualquer indicador tem dados e ordena
+    const allDatesSet = new Set();
+    dataArray.forEach((jsonData) => {
+      jsonData.data.forEach((item) => {
+        if (item.rate !== null && item.rate !== undefined) {
+          allDatesSet.add(this.normalizeDate(item.date));
+        }
+      });
+    });
+
+    const sortedDates = Array.from(allDatesSet).sort();
+
+    // Para CADA dataset, cria um array com TODOS os pontos da linha temporal
+    // mas só inclui valores onde o indicador realmente tem dados
+    return dataArray.map((jsonData, index) => {
+      const indicatorName = namesArray[index] || jsonData.indicatorName;
+      const color =
+        ChartCreator.COLOR_PALETTE[index % ChartCreator.COLOR_PALETTE.length];
+
+      // Mapa dos dados originais
+      const dataMap = new Map();
+      jsonData.data.forEach((item) => {
+        if (item.rate !== null && item.rate !== undefined) {
+          dataMap.set(this.normalizeDate(item.date), item.rate);
+        }
+      });
+
+      // Cria array completo seguindo a sequência temporal unificada
+      // Adiciona 'null' onde não há dados para manter o alinhamento
+      const dataPoints = sortedDates.map((date) => ({
+        x: date,
+        y: dataMap.has(date) ? dataMap.get(date) : null,
       }));
 
       return {
@@ -164,7 +240,8 @@ class ChartCreator {
         pointBorderColor: "rgba(255, 255, 255, 0.8)",
         pointBorderWidth:
           ChartCreator.CHART_CONFIG.ANIMATION.POINT_BORDER_WIDTH,
-        yAxisID: isMultipleIndicators && index > 0 ? "y1" : "y",
+        yAxisID: index > 0 ? "y1" : "y",
+        spanGaps: true, // Desenha linha sobre pontos nulos
       };
     });
   }
@@ -205,7 +282,14 @@ class ChartCreator {
         ),
         maintainAspectRatio: false,
         layout: { padding: ChartCreator.CHART_CONFIG.PADDING },
-        interaction: { intersect: false, mode: "index" },
+        interaction: {
+          intersect: false,
+          mode: "index",
+        },
+        hover: {
+          mode: "index",
+          intersect: false,
+        },
         elements: {
           point: {
             hoverRadius: ChartCreator.CHART_CONFIG.ANIMATION.HOVER_RADIUS,
@@ -247,7 +331,7 @@ class ChartCreator {
   generateChartTitle(isMultipleIndicators, namesArray, dataArray) {
     if (isMultipleIndicators && namesArray.length > 1) {
       const indicatorsWithGranularity = namesArray.map((name, index) => {
-        const cleanName = name.replace(/^[🏦📈]\s/, "");
+        const cleanName = name.replace(/^[🏦📈📊]\s/, "");
         const granularity = this.chartManager.getGranularityForIndicator(
           name,
           dataArray,
@@ -258,7 +342,7 @@ class ChartCreator {
       return `Comparação: ${indicatorsWithGranularity.join(" vs ")}`;
     }
 
-    const cleanName = (namesArray[0] || "Indicador").replace(/^[🏦📈]\s/, "");
+    const cleanName = (namesArray[0] || "Indicador").replace(/^[🏦📈📊]\s/, "");
     const granularity = this.chartManager.getGranularityForIndicator(
       namesArray[0],
       dataArray,
@@ -412,7 +496,9 @@ class ChartCreator {
         min: ChartCreator.CHART_CONFIG.TIME_RANGE.MIN,
         max: ChartCreator.CHART_CONFIG.TIME_RANGE.MAX,
         title: { display: true, text: "Ano", color: themeColors.axisLabel },
-        ticks: { color: themeColors.ticks },
+        ticks: {
+          color: themeColors.ticks,
+        },
         grid: { color: themeColors.grid },
       },
       y: {

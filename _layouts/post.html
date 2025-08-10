@@ -1,8 +1,52 @@
 ---
 layout: default
 ---
-<h1>{{ page.title }}</h1>
-<p>{{ page.date | date_to_string }}</p>
+<!-- Post Header -->
+<header class="mb-8">
+  <h1 class="mb-4 text-3xl font-bold text-gray-900 dark:text-gray-100">{{ page.title }}</h1>
+
+  <div class="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+    <time datetime="{{ page.date | date_to_xmlschema }}">
+      {{ page.date | date: '%d de %B de %Y' }}
+    </time>
+
+    {% if page.categories %}
+      {% for category in page.categories %}
+        <a
+          href="/categorias/{{ category }}.html"
+          class="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
+        >
+          {% case category %}
+            {% when 'analises' %}
+              📊 <span>Análise</span>
+            {% when 'indicadores' %}
+              📈 <span>Indicador</span>
+            {% when 'noticias' %}
+              📢 <span>Notícia</span>
+            {% else %}
+              🏷️ <span>{{ category | capitalize }}</span>
+          {% endcase %}
+        </a>
+      {% endfor %}
+    {% endif %}
+
+    {% if page.audio %}
+      <span class="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-1 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+        🎧 <span>Podcast disponível</span>
+      </span>
+    {% endif %}
+  </div>
+
+  {% if page.tags %}
+    <div class="mb-4 flex flex-wrap gap-2">
+      {% for tag in page.tags %}
+        <span class="inline-block rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+          #{{ tag }}
+        </span>
+      {% endfor %}
+    </div>
+  {% endif %}
+</header>
 
 {% if page.audio %}
   <!-- Podcast Disclaimer -->

@@ -1,0 +1,99 @@
+---
+layout: default
+title: Análises
+description: Análises aprofundadas dos indicadores econômicos brasileiros
+---
+<div class="mb-8">
+  <h1 class="mb-4 text-3xl font-bold text-gray-900 dark:text-gray-100">📊 Análises</h1>
+  <p class="mb-6 text-lg text-gray-600 dark:text-gray-300">
+    Análises aprofundadas dos indicadores econômicos, suas relações e impactos na economia brasileira.
+  </p>
+
+  <!-- Navegação entre categorias -->
+  <div class="flex flex-wrap items-center gap-2 text-sm">
+    <span class="font-medium text-gray-600 dark:text-gray-400">Navegar:</span>
+
+    <a
+      href="/blog.html"
+      class="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+    >
+      📄 <span>Todos</span>
+    </a>
+
+    <span class="inline-flex items-center gap-1 rounded-md bg-blue-100 px-3 py-1.5 text-blue-900 dark:bg-blue-900/40 dark:text-blue-100">
+      📊 <span>Análises</span>
+    </span>
+
+    <a
+      href="/categorias/indicadores.html"
+      class="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-green-700 transition-colors hover:bg-green-50 hover:text-green-900 dark:text-green-300 dark:hover:bg-green-900/20 dark:hover:text-green-100"
+    >
+      📈 <span>Indicadores</span>
+    </a>
+
+    <a
+      href="/categorias/noticias.html"
+      class="inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-purple-700 transition-colors hover:bg-purple-50 hover:text-purple-900 dark:text-purple-300 dark:hover:bg-purple-900/20 dark:hover:text-purple-100"
+    >
+      📢 <span>Notícias</span>
+    </a>
+  </div>
+</div>
+
+<div class="space-y-6">
+  {% assign analises_posts = site.categories.analises %}
+  {% if analises_posts.size > 0 %}
+    {% for post in analises_posts %}
+      <article class="border-b border-gray-200 pb-6 dark:border-gray-700">
+        <div class="flex items-start justify-between">
+          <div class="flex-1">
+            <h2 class="mb-2 text-xl font-semibold">
+              <a
+                href="{{ post.url }}"
+                class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                {{ post.title }}
+              </a>
+            </h2>
+
+            <div class="mb-3 flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+              <time datetime="{{ post.date | date_to_xmlschema }}">
+                {{ post.date | date: '%d de %B de %Y' }}
+              </time>
+              {% if post.audio %}
+                <span class="flex items-center gap-1"> 🎧 <span>Podcast disponível</span> </span>
+              {% endif %}
+            </div>
+
+            {% if post.excerpt %}
+              <p class="mb-3 text-gray-600 dark:text-gray-300">
+                {{ post.excerpt | strip_html | truncatewords: 30 }}
+              </p>
+            {% endif %}
+
+            {% if post.tags %}
+              <div class="flex flex-wrap gap-2">
+                {% for tag in post.tags %}
+                  <span class="inline-block rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                    #{{ tag }}
+                  </span>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </article>
+    {% endfor %}
+  {% else %}
+    <p class="py-8 text-center text-gray-500 dark:text-gray-400">Nenhuma análise encontrada nesta categoria.</p>
+  {% endif %}
+</div>
+
+<div class="mt-8 text-center">
+  <a
+    href="/blog.html"
+    class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+  >
+    ← Voltar para o blog
+  </a>
+</div>

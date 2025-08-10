@@ -2,6 +2,8 @@
 layout: post
 title: 'Selic a 15%: Remédio para a Inflação ou "Taxaço" que Freia o Brasil?'
 audio: https://brasilemnumeros.github.io/podcasts/Selic_a_15__O_Taxa%C3%A7o_que_Desacelera_o_Brasil__Entenda_os_Impactos_no_Seu_Bolso_e_na_Economia.m4a
+categories: [analises]
+tags: [selic, politica-monetaria, economia, audio]
 ---
 
 Em julho de 2025, um número domina as manchetes e as conversas sobre economia: **a Taxa Selic, mantida em 15% ao ano pelo Banco Central.** Mas o que esse percentual realmente significa? Com base em análises de diversas fontes do mercado e da academia (como Cofeci, Unisinos, CNN, Serasa, T2 Educação, Infomoney e Portal Contábeis), mergulhamos nos impactos dessa taxa que mexe com a vida de todos os brasileiros.

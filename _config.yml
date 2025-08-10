@@ -5,6 +5,24 @@ baseurl: "/"
 url: "https://www.brasilemnumeros.ong.br"
 github_username: brasilemnumeros
 
+# Blog Categories
+blog_categories:
+  analises:
+    name: "Análises"
+    description: "Análises aprofundadas dos indicadores econômicos brasileiros"
+    icon: "📊"
+    color: "blue"
+  indicadores:
+    name: "Indicadores"
+    description: "Novidades sobre indicadores econômicos disponíveis no site"
+    icon: "📈"
+    color: "green"
+  noticias:
+    name: "Notícias"
+    description: "Novidades e atualizações do projeto Brasil em Números"
+    icon: "📢"
+    color: "purple"
+
 plugins:
   - jekyll-analytics
   - jekyll-feed

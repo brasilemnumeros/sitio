@@ -331,7 +331,7 @@ class ChartCreator {
   generateChartTitle(isMultipleIndicators, namesArray, dataArray) {
     if (isMultipleIndicators && namesArray.length > 1) {
       const indicatorsWithGranularity = namesArray.map((name, index) => {
-        const cleanName = name.replace(/^[🏦📈📊]\s/, "");
+        const cleanName = name;
         const granularity = this.chartManager.getGranularityForIndicator(
           name,
           dataArray,
@@ -342,7 +342,7 @@ class ChartCreator {
       return `Comparação: ${indicatorsWithGranularity.join(" vs ")}`;
     }
 
-    const cleanName = (namesArray[0] || "Indicador").replace(/^[🏦📈📊]\s/, "");
+    const cleanName = (namesArray[0] || "Indicador");
     const granularity = this.chartManager.getGranularityForIndicator(
       namesArray[0],
       dataArray,

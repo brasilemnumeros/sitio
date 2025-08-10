@@ -15,6 +15,14 @@
       "datafile": "https://brasilemnumeros.github.io/dados/ipca/ipca-acum-12m.json",
       "description": "Variação acumulada do Índice de Preços ao Consumidor Amplo (IPCA) em 12 meses",
       "source": "Instituto Brasileiro de Geografia e Estatística (IBGE)"
+    },
+    {
+      "id": "igpm-acum-12m",
+      "name": "📊 IGP-M (%)",
+      "granularity": "Acumulado 12 meses",
+      "datafile": "https://brasilemnumeros.github.io/dados/igp-m/igpm-acum-12m.json",
+      "description": "Variação acumulada do Índice Geral de Preços do Mercado (IGP-M) em 12 meses",
+      "source": "Banco Central do Brasil"
     }
   ],
   "defaultIndicator": "selic-acum-12m"

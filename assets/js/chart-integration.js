@@ -119,7 +119,7 @@ class ChartIntegration {
           }
 
           // Update data source
-          this.chartManager.updateDataSource(filesArray[0]);
+          this.chartManager.updateDataSource(filesArray);
 
           // Restore canvas opacity
           if (canvas) {

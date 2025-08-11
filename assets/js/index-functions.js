@@ -33,6 +33,20 @@ function populateYearSelectors() {
 
 // Função para popular seletores quando a modal abre
 function onConfigModalOpen() {
+  console.log("onConfigModalOpen called");
+  console.log("multiselectScope available:", !!window.multiselectScope);
+
+  if (window.multiselectScope) {
+    console.log(
+      "selectedIndicators in main scope:",
+      window.multiselectScope.selectedIndicators,
+    );
+    console.log(
+      "selectedIndicators length:",
+      window.multiselectScope.selectedIndicators.length,
+    );
+  }
+
   // Popular seletores de ano
   populateYearSelectors();
 }

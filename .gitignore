@@ -6,3 +6,4 @@ vendor
 node_modules
 assets/css/main.dist.css
 data/*
+.github

@@ -12,6 +12,10 @@ Em julho de 2025, um número domina as manchetes e as conversas sobre economia: 
 
 Antes de tudo, é crucial diferenciar os dois "sabores" da Selic:
 
+
+[![Selic Meta vs Selic Over](/assets/img/selic-meta-vs-selic-over.png)](/assets/img/selic-meta-vs-selic-over.png)
+
+
 - **Selic Meta:** É o alvo, a taxa oficial que o Comitê de Política Monetária (Copom) do Banco Central define a cada 45 dias. Atualmente, a meta é 15%.
 - **Selic Over (ou Efetiva):** É a taxa que realmente acontece no dia a dia, nas operações de empréstimo de curtíssimo prazo entre os bancos, que usam títulos públicos como garantia. Ela costuma ficar um pouquinho abaixo da meta. É nesta taxa que o famoso CDI se espelha.
 

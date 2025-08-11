@@ -147,17 +147,17 @@
       onclick="
         const modal = document.getElementById('config-modal');
         if (modal && window.multiselectScope) {
-          // Sync modal data with main scope before opening
-          const modalScope = modal.__vue_app?.scope;
-          if (modalScope) {
-            modalScope.selectedIndicators = window.multiselectScope.selectedIndicators || [];
-            modalScope.indicatorMap = window.multiselectScope.indicatorMap || {};
-            modalScope.yAxisConfig = window.multiselectScope.yAxisConfig || {};
-          }
-
+          // Dispara evento customizado para sincronizar dados
+          const syncEvent = new CustomEvent('sync-modal-data', {
+            detail: {
+              selectedIndicators: [...window.multiselectScope.selectedIndicators],
+              indicatorMap: {...window.multiselectScope.indicatorMap},
+              yAxisConfig: {...window.multiselectScope.yAxisConfig},
+              activeFilter: window.multiselectScope.activeFilter
+            }
+          });
+          modal.dispatchEvent(syncEvent);
           modal.classList.add('show');
-
-          // Chamar função para configurar filtros
           if (typeof onConfigModalOpen === 'function') {
             onConfigModalOpen();
           }
@@ -179,14 +179,16 @@
   v-scope="{ activeFilter: 'Todo o período', selectedIndicators: [], indicatorMap: {}, yAxisConfig: {} }"
   id="config-modal"
   class="config-modal fixed inset-0 z-50 flex items-center justify-center bg-gray-900/30"
-  @click.self="    document.getElementById('config-modal').classList.remove('show');"
+  @click.self="document.getElementById('config-modal').classList.remove('show');"
   @vue:mounted="
-    // Sync with main scope when modal opens
-    if (window.multiselectScope) {
-      selectedIndicators = window.multiselectScope.selectedIndicators || [];
-      indicatorMap = window.multiselectScope.indicatorMap || {};
-      yAxisConfig = window.multiselectScope.yAxisConfig || {};
-    }
+    // Escuta evento customizado para sincronizar dados do escopo principal
+    $el.addEventListener('sync-modal-data', (e) => {
+      const d = e.detail;
+      selectedIndicators = d.selectedIndicators || [];
+      indicatorMap = d.indicatorMap || {};
+      yAxisConfig = d.yAxisConfig || {};
+      activeFilter = d.activeFilter || 'Todo o período';
+    });
   "
 >
   <div class="mx-4 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-gray-800">
@@ -205,8 +207,10 @@
 
     <!-- Modal Content -->
     <div class="space-y-6 p-4">
+      <!-- Debug Info removido -->
+
       <!-- Y-Axis Configuration -->
-      <div v-if="selectedIndicators.length > 1">
+      <div v-if="selectedIndicators && selectedIndicators.length > 1">
         <h4 class="text-md mb-3 font-medium text-gray-900 dark:text-white">📊 Configuração dos Eixos Y</h4>
         <div class="space-y-3">
           <div
@@ -234,7 +238,7 @@
                     'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500': (yAxisConfig[indicator] || 'left') !== 'left'
                   }
                 "
-                class="border-r border-gray-300 px-3 py-2 text-sm font-medium transition-colors dark:border-gray-600"
+                class="border-r border-gray-300 px-2 py-1 text-xs font-medium transition-colors dark:border-gray-600"
                 title="Eixo Y Esquerdo"
               >
                 ⬅️ Esquerdo
@@ -254,7 +258,7 @@
                     'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500': (yAxisConfig[indicator] || 'left') !== 'right'
                   }
                 "
-                class="px-3 py-2 text-sm font-medium transition-colors"
+                class="px-2 py-1 text-xs font-medium transition-colors"
                 title="Eixo Y Direito"
               >
                 ➡️ Direito
@@ -555,3 +559,13 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Store scope globally
+  window.multiselectScope = null;
+
+  // Override the modal open function globally
+  window.onConfigModalOpen = function () {
+    console.log('onConfigModalOpen called - modal should sync via @vue:mounted');
+  };
+</script>

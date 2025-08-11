@@ -67,6 +67,15 @@ class ChartManager {
 
     this.clearCanvas();
     this.updateSourceDisplay("Selecione um indicador para visualizar os dados");
+    this.clearTitle();
+  }
+
+  // Limpa o título HTML
+  clearTitle() {
+    const titleElement = document.getElementById("chart-title");
+    if (titleElement) {
+      titleElement.textContent = "Selecione um indicador para visualizar";
+    }
   }
 
   // Limpa canvas

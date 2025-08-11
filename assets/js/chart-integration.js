@@ -100,15 +100,32 @@ class ChartIntegration {
       // Load indicators from URL
       await this.loadIndicatorsFromNames(indicatorsFromURL, config);
     } else {
-      // Load default indicator
-      const defaultIndicator = config.indicators?.find(
-        (ind) => ind.id === config.defaultIndicator,
-      );
-      const initialFile = defaultIndicator
-        ? defaultIndicator.datafile
-        : "/data/selic-acum-12m.json";
-
-      await this.updateChart(initialFile);
+      // Load random indicator instead of default
+      const availableIndicators = config.indicators || [];
+      
+      if (availableIndicators.length > 0) {
+        // Choose a random indicator
+        const randomIndex = Math.floor(Math.random() * availableIndicators.length);
+        const randomIndicator = availableIndicators[randomIndex];
+        
+        console.log(`Loading random indicator: ${randomIndicator.name}`);
+        
+        // Update multiselect to show selected indicator
+        if (window.multiselectScope) {
+          window.multiselectScope.selectedIndicators = [randomIndicator.name];
+          
+          // Set up indicator map
+          if (!window.multiselectScope.indicatorMap) {
+            window.multiselectScope.indicatorMap = {};
+          }
+          window.multiselectScope.indicatorMap[randomIndicator.name] = randomIndicator.datafile;
+        }
+        
+        await this.updateChart(randomIndicator.datafile, randomIndicator.name);
+      } else {
+        // Fallback to hardcoded default if no indicators available
+        await this.updateChart("/data/selic-acum-12m.json");
+      }
     }
 
     // Apply time range from URL if present

@@ -62,18 +62,31 @@ class ChartIntegration {
 
       // Get current time range to preserve it
       const currentTimeRange = this.getCurrentTimeRange();
-      const timeRange = (currentTimeRange.startDate || currentTimeRange.endDate) ? currentTimeRange : null;
+      const timeRange =
+        currentTimeRange.startDate || currentTimeRange.endDate
+          ? currentTimeRange
+          : null;
 
       if (dataFiles.length === 1) {
-        this.updateChartWithTimeFilter(dataFiles[0], indicatorNames[0], yAxisConfig, timeRange);
+        this.updateChartWithTimeFilter(
+          dataFiles[0],
+          indicatorNames[0],
+          yAxisConfig,
+          timeRange,
+        );
       } else {
-        this.updateChartWithTimeFilter(dataFiles, indicatorNames, yAxisConfig, timeRange);
+        this.updateChartWithTimeFilter(
+          dataFiles,
+          indicatorNames,
+          yAxisConfig,
+          timeRange,
+        );
       }
     };
 
     // Store config globally for other functions to use
     window.indicatorsConfig = config;
-    
+
     // Store integration instance globally for time filter access
     window.chartIntegration = this;
   }
@@ -100,7 +113,10 @@ class ChartIntegration {
 
     // Apply time range from URL if present
     if (timeRangeFromURL.startDate && timeRangeFromURL.endDate) {
-      this.waitForChartAndApplyTimeRange(timeRangeFromURL.startDate, timeRangeFromURL.endDate);
+      this.waitForChartAndApplyTimeRange(
+        timeRangeFromURL.startDate,
+        timeRangeFromURL.endDate,
+      );
     } else if (timeRangeFromURL.period) {
       this.waitForChartAndApplyPeriod(timeRangeFromURL.period);
     }
@@ -110,25 +126,27 @@ class ChartIntegration {
     // Wait for chart to be available
     let attempts = 0;
     const maxAttempts = 50; // 5 seconds max
-    
+
     const waitForChart = () => {
       return new Promise((resolve) => {
         const checkChart = () => {
-          const chart = window.chartInstance || (window.chartManager && window.chartManager.chart);
+          const chart =
+            window.chartInstance ||
+            (window.chartManager && window.chartManager.chart);
           if (chart && chart.options && chart.options.scales) {
             resolve(chart);
           } else if (attempts < maxAttempts) {
             attempts++;
             setTimeout(checkChart, 100);
           } else {
-            console.warn('Timeout waiting for chart to be ready');
+            console.warn("Timeout waiting for chart to be ready");
             resolve(null);
           }
         };
         checkChart();
       });
     };
-    
+
     const chart = await waitForChart();
     if (chart) {
       this.applyTimeRangeFromURL(startDate, endDate);
@@ -139,25 +157,27 @@ class ChartIntegration {
     // Wait for chart to be available
     let attempts = 0;
     const maxAttempts = 50; // 5 seconds max
-    
+
     const waitForChart = () => {
       return new Promise((resolve) => {
         const checkChart = () => {
-          const chart = window.chartInstance || (window.chartManager && window.chartManager.chart);
+          const chart =
+            window.chartInstance ||
+            (window.chartManager && window.chartManager.chart);
           if (chart && chart.options && chart.options.scales) {
             resolve(chart);
           } else if (attempts < maxAttempts) {
             attempts++;
             setTimeout(checkChart, 100);
           } else {
-            console.warn('Timeout waiting for chart to be ready');
+            console.warn("Timeout waiting for chart to be ready");
             resolve(null);
           }
         };
         checkChart();
       });
     };
-    
+
     const chart = await waitForChart();
     if (chart) {
       this.applyPeriodFromURL(period);
@@ -167,27 +187,42 @@ class ChartIntegration {
   applyTimeRangeFromURL(startDate, endDate) {
     // Apply time filter using the new method
     this.applyTimeFilter(startDate, endDate);
-    
+
     // Update UI to reflect the applied time range
     this.updateTimePeriodUI(startDate, endDate);
   }
 
   applyPeriodFromURL(period) {
-    // Find and activate the corresponding period button
-    const periodButton = document.querySelector(`[data-label="${period}"]`);
-    if (periodButton) {
-      console.log('Applying period from URL:', period);
-      periodButton.click();
+    console.log("Applying period from URL:", period);
+
+    // Handle different period formats
+    if (period === "FHC" && window.applyDateRange) {
+      window.applyDateRange("1995-01-01", "2003-01-01");
+    } else if (period === "Lula" && window.applyDateRange) {
+      window.applyDateRange("2003-01-01", "2011-01-01");
+    } else if (period === "Dilma" && window.applyDateRange) {
+      window.applyDateRange("2011-01-01", "2016-08-31");
+    } else if (period === "Temer" && window.applyDateRange) {
+      window.applyDateRange("2016-08-31", "2019-01-01");
+    } else if (period === "Bolsonaro" && window.applyDateRange) {
+      window.applyDateRange("2019-01-01", "2023-01-01");
+    } else if (period === "Lula 3" && window.applyDateRange) {
+      window.applyDateRange(
+        "2023-01-01",
+        new Date().toISOString().split("T")[0],
+      );
+    } else if (period === "last5years" && window.applyRelativePeriod) {
+      window.applyRelativePeriod(5);
+    } else if (period === "last3years" && window.applyRelativePeriod) {
+      window.applyRelativePeriod(3);
+    } else if (period.includes("-") && window.applyDateRange) {
+      // Custom period format like "2000-2025"
+      const [startYear, endYear] = period.split("-");
+      window.applyDateRange(`${startYear}-01-01`, `${endYear}-12-31`);
+    } else if (period === "all" && window.resetDateFilter) {
+      window.resetDateFilter();
     } else {
-      console.warn('Period button not found for:', period);
-      // Try to wait a bit more for DOM to be ready
-      setTimeout(() => {
-        const retryButton = document.querySelector(`[data-label="${period}"]`);
-        if (retryButton) {
-          console.log('Retry: Applying period from URL:', period);
-          retryButton.click();
-        }
-      }, 500);
+      console.warn("Unknown period format:", period);
     }
   }
 
@@ -195,10 +230,10 @@ class ChartIntegration {
     // Update custom year selectors
     const fromYear = new Date(startDate).getFullYear();
     const toYear = new Date(endDate).getFullYear();
-    
-    const fromYearSelect = document.getElementById('start-year');
-    const toYearSelect = document.getElementById('end-year');
-    
+
+    const fromYearSelect = document.getElementById("start-year");
+    const toYearSelect = document.getElementById("end-year");
+
     if (fromYearSelect) fromYearSelect.value = fromYear;
     if (toYearSelect) toYearSelect.value = toYear;
   }
@@ -348,12 +383,13 @@ class ChartIntegration {
     window.addEventListener("popstate", (event) => {
       if (event.state && event.state.indicators) {
         try {
-          const indicators = typeof event.state.indicators === 'string' 
-            ? JSON.parse(event.state.indicators) 
-            : event.state.indicators;
+          const indicators =
+            typeof event.state.indicators === "string"
+              ? JSON.parse(event.state.indicators)
+              : event.state.indicators;
           this.loadIndicatorsFromState(indicators);
         } catch (error) {
-          console.warn('Error parsing indicators from state:', error);
+          console.warn("Error parsing indicators from state:", error);
           // Fallback to URL parameters
           const indicatorsFromURL = this.getIndicatorsFromURL();
           if (indicatorsFromURL.length > 0) {
@@ -396,15 +432,15 @@ class ChartIntegration {
     const startDate = urlParams.get("start");
     const endDate = urlParams.get("end");
     const period = urlParams.get("period");
-    
+
     return { startDate, endDate, period };
   }
 
   updateURL(selectedIndicators, config = null) {
     if (!config) config = window.indicatorsConfig;
-    
+
     const url = new URL(window.location);
-    
+
     if (!selectedIndicators || selectedIndicators.length === 0) {
       // Clear indicator parameters
       url.searchParams.delete("indicators");
@@ -427,9 +463,9 @@ class ChartIntegration {
 
     // Update URL without reloading page
     window.history.replaceState(
-      { 
+      {
         indicators: JSON.stringify(selectedIndicators || []),
-        timeRange: this.getCurrentTimeRange()
+        timeRange: this.getCurrentTimeRange(),
       },
       "",
       url.toString(),
@@ -438,24 +474,24 @@ class ChartIntegration {
 
   updateTimeRangeURL(startDate = null, endDate = null, period = null) {
     const url = new URL(window.location);
-    
+
     // Clear previous time parameters
     url.searchParams.delete("start");
     url.searchParams.delete("end");
     url.searchParams.delete("period");
-    
+
     if (period) {
       url.searchParams.set("period", period);
     } else if (startDate && endDate) {
       url.searchParams.set("start", startDate);
       url.searchParams.set("end", endDate);
     }
-    
+
     // Update URL without reloading page
     window.history.replaceState(
-      { 
+      {
         indicators: JSON.stringify(this.getCurrentIndicators() || []),
-        timeRange: { startDate, endDate, period }
+        timeRange: { startDate, endDate, period },
       },
       "",
       url.toString(),
@@ -464,40 +500,46 @@ class ChartIntegration {
 
   getCurrentTimeRange() {
     // First try to get from current chart
-    const chart = window.chartInstance || (window.chartManager && window.chartManager.chart);
+    const chart =
+      window.chartInstance ||
+      (window.chartManager && window.chartManager.chart);
     if (chart && chart.options.scales && chart.options.scales.x) {
       const xScale = chart.options.scales.x;
       const hasTimeFilter = xScale.min || xScale.max;
-      
+
       if (hasTimeFilter) {
         return {
           startDate: xScale.min || null,
-          endDate: xScale.max || null
+          endDate: xScale.max || null,
         };
       }
     }
-    
+
     // Fallback: try to get from current URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const startDate = urlParams.get("start");
     const endDate = urlParams.get("end");
     const period = urlParams.get("period");
-    
+
     if (startDate && endDate) {
       return { startDate, endDate };
     }
-    
+
     if (period) {
       // Check if there's an active period button
-      const activeButton = document.querySelector('.period-btn.active');
-      if (activeButton && activeButton.dataset.start && activeButton.dataset.end) {
+      const activeButton = document.querySelector(".period-btn.active");
+      if (
+        activeButton &&
+        activeButton.dataset.start &&
+        activeButton.dataset.end
+      ) {
         return {
           startDate: activeButton.dataset.start,
-          endDate: activeButton.dataset.end
+          endDate: activeButton.dataset.end,
         };
       }
     }
-    
+
     return { startDate: null, endDate: null };
   }
 
@@ -509,7 +551,7 @@ class ChartIntegration {
   async applyTimeFilter(startDate = null, endDate = null) {
     const currentIndicators = this.getCurrentIndicators();
     const config = window.indicatorsConfig;
-    
+
     if (!currentIndicators.length || !config) {
       return;
     }
@@ -534,13 +576,28 @@ class ChartIntegration {
 
     // Load and recreate chart with time filtering
     if (dataFiles.length === 1) {
-      await this.updateChartWithTimeFilter(dataFiles[0], currentIndicators[0], yAxisConfig, timeRange);
+      await this.updateChartWithTimeFilter(
+        dataFiles[0],
+        currentIndicators[0],
+        yAxisConfig,
+        timeRange,
+      );
     } else {
-      await this.updateChartWithTimeFilter(dataFiles, currentIndicators, yAxisConfig, timeRange);
+      await this.updateChartWithTimeFilter(
+        dataFiles,
+        currentIndicators,
+        yAxisConfig,
+        timeRange,
+      );
     }
   }
 
-  async updateChartWithTimeFilter(dataFiles, indicatorNames = null, yAxisConfig = null, timeRange = null) {
+  async updateChartWithTimeFilter(
+    dataFiles,
+    indicatorNames = null,
+    yAxisConfig = null,
+    timeRange = null,
+  ) {
     const isMultipleFiles = Array.isArray(dataFiles);
     const filesArray = isMultipleFiles ? dataFiles : [dataFiles];
     const namesArray = isMultipleFiles ? indicatorNames : [indicatorNames];
@@ -577,10 +634,15 @@ class ChartIntegration {
             validData[0],
             finalNames[0],
             yAxisConfig,
-            timeRange
+            timeRange,
           );
         } else {
-          this.chartCreator.createChart(validData, finalNames, yAxisConfig, timeRange);
+          this.chartCreator.createChart(
+            validData,
+            finalNames,
+            yAxisConfig,
+            timeRange,
+          );
         }
 
         // Update data source
@@ -714,8 +776,28 @@ class ChartIntegration {
   }
 }
 
-// Initialize when DOM is ready
+// Initialize when DOM is ready and dependencies are available
 document.addEventListener("DOMContentLoaded", async () => {
+  // Wait for dependencies to be available
+  const waitForDependencies = () => {
+    return new Promise((resolve) => {
+      const checkDependencies = () => {
+        if (
+          window.chartManager &&
+          window.ChartCreator &&
+          typeof Chart !== "undefined"
+        ) {
+          resolve();
+        } else {
+          setTimeout(checkDependencies, 50);
+        }
+      };
+      checkDependencies();
+    });
+  };
+
+  await waitForDependencies();
+
   const integration = new ChartIntegration();
   await integration.initialize();
 });

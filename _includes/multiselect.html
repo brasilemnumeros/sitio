@@ -6,189 +6,552 @@
 
 <!-- Multiselect Component for Indicators -->
 <div class="flex items-center gap-2 sm:gap-3">
-  <label
+  <span
     class="hidden text-sm font-medium whitespace-nowrap text-gray-700 lg:inline dark:text-gray-300"
   >
     Indicador:
-  </label>
+  </span>
 
-  <div class="relative">
-    <div
-      v-scope="{ selectedIndicators: [], isOpen: false, indicators: [], indicatorMap: {}, yAxisConfig: {} }"
-      id="indicator-multiselect-container"
-      @vue:mounted="
-        window.multiselectScope = $data;
-        // Add global click listener to close tooltips on mobile
-        document.addEventListener('touchstart', (e) => {
-          if (!e.target.closest('.tooltip-container')) {
-            document.querySelectorAll('.tooltip-content').forEach(t => {
-              t.classList.add('invisible', 'opacity-0');
-              t.classList.remove('visible', 'opacity-100');
-            });
-          }
-        });
-      "
-    >
-      <!-- Custom multiselect button -->
-      <button
-        @click="isOpen = !isOpen"
-        class="w-[calc(100vw-140px)] rounded-md border border-gray-300 bg-white px-2 py-2 text-left text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none sm:w-60 sm:max-w-[calc(100vw-350px)] md:w-80 md:min-w-80 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500"
-      >
-        <div class="flex w-full items-center justify-between">
-          <span class="truncate pr-2">
-            <span v-if="selectedIndicators.length === 0" class="text-gray-400">Selecione indicadores</span>
-            <span
-              v-else-if="selectedIndicators.length === 1"
-              v-text="selectedIndicators[0].replace(/^[🏦📈]\s/, '')"
-            ></span>
-            <span v-else v-text="selectedIndicators.length + ' indicadores'"></span>
-          </span>
-          <span class="flex-shrink-0">▼</span>
-        </div>
-      </button>
-
-      <!-- Dropdown options -->
+  <div class="flex w-full items-center gap-2">
+    <div class="relative min-w-0 flex-grow">
       <div
-        v-show="isOpen"
-        id="indicator-dropdown"
-        class="absolute left-0 z-50 mt-1 max-h-60 w-[calc(100vw-140px)] overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg sm:left-auto sm:w-60 sm:max-w-[calc(100vw-350px)] md:w-80 dark:border-gray-600 dark:bg-gray-800"
-      >
-        <!-- Para mobile, ajustar posição se necessário -->
-        <div
-          class="sm:hidden"
-          v-if="isOpen"
-          @vue:mounted="
-            const dropdown = $el.parentElement;
-            const rect = dropdown.getBoundingClientRect();
-            if (rect.bottom > window.innerHeight) {
-              dropdown.style.top = 'auto';
-              dropdown.style.bottom = '100%';
-              dropdown.style.marginTop = '0';
-              dropdown.style.marginBottom = '4px';
-            }
-          "
-        ></div>
-
-        <!-- Indicadores Econômicos -->
-        <div class="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400">
-          Indicadores Econômicos
-        </div>
-
-        <!-- Dynamic indicator options -->
-        <div
-          v-for="indicator in indicators"
-          :key="indicator.id"
-          @click="
-            if (selectedIndicators.includes(indicator.name)) {
-              selectedIndicators = selectedIndicators.filter(v => v !== indicator.name);
-              // Remove from yAxisConfig when unselected
-              delete yAxisConfig[indicator.name];
-            } else {
-              selectedIndicators = [...selectedIndicators, indicator.name];
-              // Set default to left axis for new selections
-              yAxisConfig[indicator.name] = 'left';
-            }
-            // GTM tracking
-            if (typeof gtag !== 'undefined') {
-              gtag('event', 'indicator_selected', {
-                indicator_name: indicator.name,
-                indicator_file: indicator.datafile,
-                selection_type: 'multiselect'
+        v-scope="{ selectedIndicators: [], isOpen: false, indicators: [], indicatorMap: {}, yAxisConfig: {}, showConfig: false, activeFilter: 'Todo o período' }"
+        id="indicator-multiselect-container"
+        class="h-full"
+        @vue:mounted="
+          window.multiselectScope = $data;
+          // Ensure modal starts closed
+          $data.showConfig = false;
+          // Add global click listener to close tooltips on mobile
+          document.addEventListener('touchstart', (e) => {
+            if (!e.target.closest('.tooltip-container')) {
+              document.querySelectorAll('.tooltip-content').forEach(t => {
+                t.classList.add('invisible', 'opacity-0');
+                t.classList.remove('visible', 'opacity-100');
               });
             }
-            window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, false, yAxisConfig);
-          "
-          class="flex cursor-pointer items-center justify-between px-3 py-2 pl-6 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+          });
+        "
+      >
+        <!-- Custom multiselect button -->
+        <button
+          @click="isOpen = !isOpen"
+          class="w-full rounded-md border border-gray-300 bg-white px-2 py-2 text-left text-sm text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:hover:border-gray-500"
         >
-          <div class="flex-grow">
-            <span v-text="indicator.name" class="block"></span>
-            <span
-              v-if="indicator.granularity"
-              v-text="indicator.granularity"
-              class="block text-xs text-gray-500 dark:text-gray-400"
-            ></span>
-          </div>
-          <div class="flex items-center">
-            {% include tooltip-info.html %}
-            <span
-              :class="{'opacity-0': !selectedIndicators.includes(indicator.name)}"
-              class="w-5 text-center font-bold text-blue-500"
-              >✓</span
-            >
-          </div>
-        </div>
-
-        <!-- Clear all button -->
-        <div
-          v-if="selectedIndicators.length > 0"
-          class="border-t border-gray-200 bg-gray-50 p-3 dark:border-gray-600 dark:bg-gray-700"
-        >
-          <button
-            @click="
-              selectedIndicators = [];
-              yAxisConfig = {};
-              window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, true);
-            "
-            class="w-full rounded border border-red-200 px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-800 dark:border-red-800 dark:text-red-400 dark:hover:border-red-700 dark:hover:bg-red-900/20"
-          >
-            🗑️ Limpar todos
-          </button>
-        </div>
-
-        <!-- Y-Axis Configuration Panel -->
-        <div
-          v-if="selectedIndicators.length > 1"
-          class="border-t border-gray-200 bg-gray-50 p-3 dark:border-gray-600 dark:bg-gray-700"
-        >
-          <div class="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-400">⚙️ Configuração dos Eixos Y</div>
-          <div class="space-y-2">
-            <div
-              v-for="indicator in selectedIndicators"
-              :key="indicator"
-              class="flex items-center justify-between"
-            >
+          <div class="flex w-full items-center justify-between">
+            <span class="truncate pr-2">
+              <span v-if="selectedIndicators.length === 0" class="text-gray-400">Selecione indicadores</span>
               <span
-                class="truncate pr-2 text-xs text-gray-700 dark:text-gray-300"
-                v-text="indicator.replace(/^[🏦📈📊]\s/, '')"
+                v-else-if="selectedIndicators.length === 1"
+                v-text="selectedIndicators[0].replace(/^[🏦📈]\s/, '')"
               ></span>
-              <div class="flex rounded border border-gray-300 dark:border-gray-600">
-                <button
-                  @click="
-                    yAxisConfig[indicator] = 'left';
-                    window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, false, yAxisConfig);
-                  "
-                  :class="
-                    {
-                      'bg-blue-500 text-white': (yAxisConfig[indicator] || 'left') === 'left',
-                      'bg-white text-gray-700 hover:bg-gray-50': (yAxisConfig[indicator] || 'left') !== 'left'
-                    }
-                  "
-                  class="border-r border-gray-300 px-2 py-1 text-xs font-medium transition-colors dark:border-gray-600"
-                  title="Eixo Y Esquerdo"
-                >
-                  ⬅️
-                </button>
-                <button
-                  @click="
-                    yAxisConfig[indicator] = 'right';
-                    window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, false, yAxisConfig);
-                  "
-                  :class="
-                    {
-                      'bg-blue-500 text-white': (yAxisConfig[indicator] || 'left') === 'right',
-                      'bg-white text-gray-700 hover:bg-gray-50': (yAxisConfig[indicator] || 'left') !== 'right'
-                    }
-                  "
-                  class="px-2 py-1 text-xs font-medium transition-colors"
-                  title="Eixo Y Direito"
-                >
-                  ➡️
-                </button>
-              </div>
+              <span v-else v-text="selectedIndicators.length + ' indicadores'"></span>
+            </span>
+            <span class="flex-shrink-0">▼</span>
+          </div>
+        </button>
+
+        <!-- Dropdown options -->
+        <div
+          v-show="isOpen"
+          id="indicator-dropdown"
+          class="absolute left-0 z-50 mt-1 max-h-60 w-full min-w-80 overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800"
+        >
+          <!-- Para mobile, ajustar posição se necessário -->
+          <div
+            class="sm:hidden"
+            v-if="isOpen"
+            @vue:mounted="
+              const dropdown = $el.parentElement;
+              const rect = dropdown.getBoundingClientRect();
+              if (rect.bottom > window.innerHeight) {
+                dropdown.style.top = 'auto';
+                dropdown.style.bottom = '100%';
+                dropdown.style.marginTop = '0';
+                dropdown.style.marginBottom = '4px';
+              }
+            "
+          ></div>
+
+          <!-- Indicadores Econômicos -->
+          <div class="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400">
+            Indicadores Econômicos
+          </div>
+
+          <!-- Dynamic indicator options -->
+          <div
+            v-for="indicator in indicators"
+            :key="indicator.id"
+            @click="
+              if (selectedIndicators.includes(indicator.name)) {
+                selectedIndicators = selectedIndicators.filter(v => v !== indicator.name);
+                // Remove from yAxisConfig when unselected
+                delete yAxisConfig[indicator.name];
+              } else {
+                selectedIndicators = [...selectedIndicators, indicator.name];
+                // Set default to left axis for new selections
+                yAxisConfig[indicator.name] = 'left';
+              }
+              // GTM tracking
+              if (typeof gtag !== 'undefined') {
+                gtag('event', 'indicator_selected', {
+                  indicator_name: indicator.name,
+                  indicator_file: indicator.datafile,
+                  selection_type: 'multiselect'
+                });
+              }
+              window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, false, yAxisConfig);
+            "
+            class="flex cursor-pointer items-center justify-between px-3 py-2 pl-6 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+          >
+            <div class="flex-grow">
+              <span v-text="indicator.name" class="block"></span>
+              <span
+                v-if="indicator.granularity"
+                v-text="indicator.granularity"
+                class="block text-xs text-gray-500 dark:text-gray-400"
+              ></span>
+            </div>
+            <div class="flex items-center">
+              {% include tooltip-info.html %}
+              <span
+                :class="{'opacity-0': !selectedIndicators.includes(indicator.name)}"
+                class="w-5 text-center font-bold text-blue-500"
+                >✓</span
+              >
+            </div>
+          </div>
+
+          <!-- Clear all button -->
+          <div
+            v-if="selectedIndicators.length > 0"
+            class="border-t border-gray-200 bg-gray-50 p-3 dark:border-gray-600 dark:bg-gray-700"
+          >
+            <button
+              @click="
+                selectedIndicators = [];
+                yAxisConfig = {};
+                window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, true);
+              "
+              class="w-full rounded border border-red-200 px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-800 dark:border-red-800 dark:text-red-400 dark:hover:border-red-700 dark:hover:bg-red-900/20"
+            >
+              🗑️ Limpar todos
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuration Button -->
+    <button
+      onclick="
+        const modal = document.getElementById('config-modal');
+        if (modal && window.multiselectScope) {
+          // Sync modal data with main scope before opening
+          const modalScope = modal.__vue_app?.scope;
+          if (modalScope) {
+            modalScope.selectedIndicators = window.multiselectScope.selectedIndicators || [];
+            modalScope.indicatorMap = window.multiselectScope.indicatorMap || {};
+            modalScope.yAxisConfig = window.multiselectScope.yAxisConfig || {};
+          }
+
+          modal.classList.add('show');
+
+          // Chamar função para configurar filtros
+          if (typeof onConfigModalOpen === 'function') {
+            onConfigModalOpen();
+          }
+        }
+      "
+      class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
+      title="Configurações de filtros e eixos"
+    >
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- Configuration Modal -->
+<div
+  v-scope="{ activeFilter: 'Todo o período', selectedIndicators: [], indicatorMap: {}, yAxisConfig: {} }"
+  id="config-modal"
+  class="config-modal fixed inset-0 z-50 flex items-center justify-center bg-gray-900/30"
+  @click.self="    document.getElementById('config-modal').classList.remove('show');"
+  @vue:mounted="
+    // Sync with main scope when modal opens
+    if (window.multiselectScope) {
+      selectedIndicators = window.multiselectScope.selectedIndicators || [];
+      indicatorMap = window.multiselectScope.indicatorMap || {};
+      yAxisConfig = window.multiselectScope.yAxisConfig || {};
+    }
+  "
+>
+  <div class="mx-4 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-gray-800">
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">⚙️ Configurações</h3>
+      <button
+        onclick="              document.getElementById('config-modal').classList.remove('show');"
+        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+      >
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Modal Content -->
+    <div class="space-y-6 p-4">
+      <!-- Y-Axis Configuration -->
+      <div v-if="selectedIndicators.length > 1">
+        <h4 class="text-md mb-3 font-medium text-gray-900 dark:text-white">📊 Configuração dos Eixos Y</h4>
+        <div class="space-y-3">
+          <div
+            v-for="indicator in selectedIndicators"
+            :key="indicator"
+            class="flex items-center justify-between rounded-md bg-gray-50 p-3 dark:bg-gray-700"
+          >
+            <span
+              class="text-sm text-gray-700 dark:text-gray-300"
+              v-text="indicator.replace(/^[🏦📈📊]\s/, '')"
+            ></span>
+            <div class="flex rounded border border-gray-300 dark:border-gray-600">
+              <button
+                @click="
+                  yAxisConfig[indicator] = 'left';
+                  // Sync with main scope
+                  if (window.multiselectScope) {
+                    window.multiselectScope.yAxisConfig[indicator] = 'left';
+                  }
+                  window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, false, yAxisConfig);
+                "
+                :class="
+                  {
+                    'bg-blue-500 text-white': (yAxisConfig[indicator] || 'left') === 'left',
+                    'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500': (yAxisConfig[indicator] || 'left') !== 'left'
+                  }
+                "
+                class="border-r border-gray-300 px-3 py-2 text-sm font-medium transition-colors dark:border-gray-600"
+                title="Eixo Y Esquerdo"
+              >
+                ⬅️ Esquerdo
+              </button>
+              <button
+                @click="
+                  yAxisConfig[indicator] = 'right';
+                  // Sync with main scope
+                  if (window.multiselectScope) {
+                    window.multiselectScope.yAxisConfig[indicator] = 'right';
+                  }
+                  window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, false, yAxisConfig);
+                "
+                :class="
+                  {
+                    'bg-blue-500 text-white': (yAxisConfig[indicator] || 'left') === 'right',
+                    'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500': (yAxisConfig[indicator] || 'left') !== 'right'
+                  }
+                "
+                class="px-3 py-2 text-sm font-medium transition-colors"
+                title="Eixo Y Direito"
+              >
+                ➡️ Direito
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      <!-- Time Filters -->
+      <div>
+        <h4 class="text-md mb-3 font-medium text-gray-900 dark:text-white">📅 Filtros de Tempo</h4>
+
+        <!-- Government Periods -->
+        <div class="mb-4">
+          <h5 class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Períodos de Governo</h5>
+          <div class="grid grid-cols-2 gap-2 lg:grid-cols-3">
+            <button
+              @click="
+                if (activeFilter === 'FHC') {
+                  activeFilter = 'Todo o período';
+                  if (window.resetDateFilter) window.resetDateFilter();
+                } else {
+                  activeFilter = 'FHC';
+                  if (window.applyDateRange) window.applyDateRange('1995-01-01', '2003-01-01');
+                  if (window.chartIntegration) window.chartIntegration.updateTimeRangeURL(null, null, 'FHC');
+                }
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'FHC',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'FHC'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              FHC (1995-2002)
+            </button>
+
+            <button
+              @click="
+                activeFilter = 'Lula I';
+                if (window.applyDateRange) window.applyDateRange('2003-01-01', '2011-01-01');
+                if (window.chartIntegration) window.chartIntegration.updateTimeRangeURL(null, null, 'Lula');
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Lula I',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Lula I'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Lula (2003-2010)
+            </button>
+
+            <button
+              @click="
+                if (activeFilter === 'Dilma') {
+                  activeFilter = 'Todo o período';
+                  if (window.resetDateFilter) window.resetDateFilter();
+                } else {
+                  activeFilter = 'Dilma';
+                  if (window.applyDateRange) window.applyDateRange('2011-01-01', '2016-08-01');
+                  if (window.chartIntegration) window.chartIntegration.updateTimeRangeURL(null, null, 'Dilma');
+                }
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Dilma',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Dilma'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Dilma (2011-2016)
+            </button>
+
+            <button
+              @click="
+                if (activeFilter === 'Temer') {
+                  activeFilter = 'Todo o período';
+                  if (window.resetDateFilter) window.resetDateFilter();
+                } else {
+                  activeFilter = 'Temer';
+                  if (window.applyDateRange) window.applyDateRange('2016-08-01', '2019-01-01');
+                  if (window.chartIntegration) window.chartIntegration.updateTimeRangeURL(null, null, 'Temer');
+                }
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Temer',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Temer'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Temer (2016-2018)
+            </button>
+
+            <button
+              @click="
+                if (activeFilter === 'Bolsonaro') {
+                  activeFilter = 'Todo o período';
+                  if (window.resetDateFilter) window.resetDateFilter();
+                } else {
+                  activeFilter = 'Bolsonaro';
+                  if (window.applyDateRange) window.applyDateRange('2019-01-01', '2023-01-01');
+                  if (window.chartIntegration) window.chartIntegration.updateTimeRangeURL(null, null, 'Bolsonaro');
+                }
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Bolsonaro',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Bolsonaro'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Bolsonaro (2019-2022)
+            </button>
+
+            <button
+              @click="
+                activeFilter = 'Lula II';
+                if (window.applyDateRange) window.applyDateRange('2023-01-01', '2025-12-31');
+                if (window.chartIntegration) window.chartIntegration.updateTimeRangeURL(null, null, 'Lula 3');
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Lula II',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Lula II'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Lula II (2023-atual)
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Filters -->
+        <div class="mb-4">
+          <h5 class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Filtros Rápidos</h5>
+          <div class="grid grid-cols-2 gap-2 lg:grid-cols-3">
+            <button
+              @click="
+                if (activeFilter === 'Último ano') {
+                  activeFilter = 'Todo o período';
+                  if (window.resetDateFilter) window.resetDateFilter();
+                } else {
+                  activeFilter = 'Último ano';
+                  if (window.applyRelativePeriod) window.applyRelativePeriod(1);
+                }
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Último ano',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Último ano'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Último ano
+            </button>
+
+            <button
+              @click="
+                if (activeFilter === 'Últimos 3 anos') {
+                  activeFilter = 'Todo o período';
+                  if (window.resetDateFilter) window.resetDateFilter();
+                } else {
+                  activeFilter = 'Últimos 3 anos';
+                  if (window.applyRelativePeriod) window.applyRelativePeriod(3);
+                }
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Últimos 3 anos',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Últimos 3 anos'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Últimos 3 anos
+            </button>
+
+            <button
+              @click="
+                if (activeFilter === 'Últimos 5 anos') {
+                  activeFilter = 'Todo o período';
+                  if (window.resetDateFilter) window.resetDateFilter();
+                } else {
+                  activeFilter = 'Últimos 5 anos';
+                  if (window.applyRelativePeriod) window.applyRelativePeriod(5);
+                }
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Últimos 5 anos',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Últimos 5 anos'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Últimos 5 anos
+            </button>
+
+            <button
+              @click="
+                if (activeFilter === 'Últimos 10 anos') {
+                  activeFilter = 'Todo o período';
+                  if (window.resetDateFilter) window.resetDateFilter();
+                } else {
+                  activeFilter = 'Últimos 10 anos';
+                  if (window.applyRelativePeriod) window.applyRelativePeriod(10);
+                }
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Últimos 10 anos',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Últimos 10 anos'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Últimos 10 anos
+            </button>
+
+            <button
+              @click="
+                activeFilter = 'Todo o período';
+                if (window.resetDateFilter) window.resetDateFilter();
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Todo o período',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Todo o período'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Todo o período
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom Period -->
+        <div>
+          <h5 class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Período Personalizado</h5>
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-1">
+              <label class="text-xs text-gray-600 dark:text-gray-400">De:</label>
+              <select
+                id="start-year"
+                class="rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+              >
+                <option value="">Ano</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-1">
+              <label class="text-xs text-gray-600 dark:text-gray-400">Até:</label>
+              <select
+                id="end-year"
+                class="rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+              >
+                <option value="">Ano</option>
+              </select>
+            </div>
+            <button
+              id="apply-custom-range"
+              @click="
+                const fromYear = document.getElementById('start-year').value;
+                const toYear = document.getElementById('end-year').value;
+                if (fromYear && toYear && parseInt(fromYear) <= parseInt(toYear)) {
+                  activeFilter = fromYear + '-' + toYear;
+                  if (window.applyDateRange) window.applyDateRange(fromYear + '-01-01', toYear + '-12-31');
+                  if (window.chartIntegration) window.chartIntegration.updateTimeRangeURL(null, null, fromYear + '-' + toYear);
+                }
+              "
+              class="rounded bg-blue-600 px-3 py-1 text-xs text-white transition-colors hover:bg-blue-700 focus:bg-blue-700 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Aplicar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="flex justify-end border-t border-gray-200 p-4 dark:border-gray-700">
+      <button
+        onclick="              document.getElementById('config-modal').classList.remove('show');"
+        class="rounded-md bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+      >
+        Fechar
+      </button>
     </div>
   </div>
 </div>

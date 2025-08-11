@@ -112,7 +112,7 @@ class ChartCreator {
   }
 
   // Cria gráfico com um ou múltiplos indicadores
-  createChart(jsonDataArray, indicatorNames = null) {
+  createChart(jsonDataArray, indicatorNames = null, yAxisConfig = null) {
     const isMultipleIndicators = Array.isArray(jsonDataArray);
     const dataArray = isMultipleIndicators ? jsonDataArray : [jsonDataArray];
     const namesArray = isMultipleIndicators
@@ -126,6 +126,7 @@ class ChartCreator {
       dataArray,
       namesArray,
       isMultipleIndicators,
+      yAxisConfig,
     );
     const config = this.createChartConfig(
       datasets,
@@ -150,10 +151,19 @@ class ChartCreator {
   }
 
   // Cria datasets para os indicadores
-  createDatasets(dataArray, namesArray, isMultipleIndicators) {
+  createDatasets(
+    dataArray,
+    namesArray,
+    isMultipleIndicators,
+    yAxisConfig = null,
+  ) {
     // Para múltiplos indicadores, sincroniza as datas primeiro
     if (isMultipleIndicators && dataArray.length > 1) {
-      return this.createSynchronizedDatasets(dataArray, namesArray);
+      return this.createSynchronizedDatasets(
+        dataArray,
+        namesArray,
+        yAxisConfig,
+      );
     }
 
     return dataArray.map((jsonData, index) => {
@@ -183,14 +193,14 @@ class ChartCreator {
         pointBorderColor: "rgba(255, 255, 255, 0.8)",
         pointBorderWidth:
           ChartCreator.CHART_CONFIG.ANIMATION.POINT_BORDER_WIDTH,
-        yAxisID: index > 0 ? "y1" : "y",
+        yAxisID: "y", // Single indicator always uses left axis
         spanGaps: false,
       };
     });
   }
 
   // Cria datasets sincronizados para múltiplos indicadores
-  createSynchronizedDatasets(dataArray, namesArray) {
+  createSynchronizedDatasets(dataArray, namesArray, yAxisConfig = null) {
     // Coleta todas as datas onde qualquer indicador tem dados e ordena
     const allDatesSet = new Set();
     dataArray.forEach((jsonData) => {
@@ -209,6 +219,15 @@ class ChartCreator {
       const indicatorName = namesArray[index] || jsonData.indicatorName;
       const color =
         ChartCreator.COLOR_PALETTE[index % ChartCreator.COLOR_PALETTE.length];
+
+      // Determina qual eixo Y usar baseado na configuração
+      let yAxisID = "y"; // Default to left axis
+      if (yAxisConfig && yAxisConfig[indicatorName]) {
+        yAxisID = yAxisConfig[indicatorName] === "right" ? "y1" : "y";
+      } else {
+        // Padrão: todos os indicadores usam eixo esquerdo
+        yAxisID = "y";
+      }
 
       // Mapa dos dados originais
       const dataMap = new Map();
@@ -240,7 +259,7 @@ class ChartCreator {
         pointBorderColor: "rgba(255, 255, 255, 0.8)",
         pointBorderWidth:
           ChartCreator.CHART_CONFIG.ANIMATION.POINT_BORDER_WIDTH,
-        yAxisID: index > 0 ? "y1" : "y",
+        yAxisID: yAxisID,
         spanGaps: true, // Desenha linha sobre pontos nulos
       };
     });
@@ -518,8 +537,11 @@ class ChartCreator {
       },
     };
 
-    // Adiciona segundo eixo Y para múltiplos indicadores
-    if (isMultipleIndicators && datasets.length > 1) {
+    // Adiciona segundo eixo Y apenas se algum dataset realmente usar o eixo direito
+    const hasRightAxisDataset = datasets.some(
+      (dataset) => dataset.yAxisID === "y1",
+    );
+    if (isMultipleIndicators && hasRightAxisDataset) {
       scales.y1 = {
         type: "linear",
         display: true,

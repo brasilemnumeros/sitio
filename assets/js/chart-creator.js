@@ -118,44 +118,51 @@ class ChartCreator {
     }
 
     const filteredData = { ...jsonData };
-    
+
     if (jsonData.data && Array.isArray(jsonData.data)) {
-      filteredData.data = jsonData.data.filter(item => {
+      filteredData.data = jsonData.data.filter((item) => {
         const itemDate = new Date(item.date);
-        
+
         let include = true;
-        
+
         if (startDate) {
           const start = new Date(startDate);
           include = include && itemDate >= start;
         }
-        
+
         if (endDate) {
           const end = new Date(endDate);
           include = include && itemDate <= end;
         }
-        
+
         return include;
       });
     }
-    
+
     return filteredData;
   }
 
   // Obtém o intervalo de tempo ativo
   getActiveTimeRange() {
-    const chart = window.chartInstance || (window.chartManager && window.chartManager.chart);
+    const chart =
+      window.chartInstance ||
+      (window.chartManager && window.chartManager.chart);
     if (chart && chart.options.scales && chart.options.scales.x) {
       return {
         startDate: chart.options.scales.x.min || null,
-        endDate: chart.options.scales.x.max || null
+        endDate: chart.options.scales.x.max || null,
       };
     }
     return { startDate: null, endDate: null };
   }
 
   // Cria gráfico com um ou múltiplos indicadores
-  createChart(jsonDataArray, indicatorNames = null, yAxisConfig = null, timeRange = null) {
+  createChart(
+    jsonDataArray,
+    indicatorNames = null,
+    yAxisConfig = null,
+    timeRange = null,
+  ) {
     const isMultipleIndicators = Array.isArray(jsonDataArray);
     let dataArray = isMultipleIndicators ? jsonDataArray : [jsonDataArray];
     const namesArray = isMultipleIndicators
@@ -164,8 +171,12 @@ class ChartCreator {
 
     // Apply time filtering to data if timeRange is provided
     if (timeRange && (timeRange.startDate || timeRange.endDate)) {
-      dataArray = dataArray.map(data => 
-        this.filterDataByTimeRange(data, timeRange.startDate, timeRange.endDate)
+      dataArray = dataArray.map((data) =>
+        this.filterDataByTimeRange(
+          data,
+          timeRange.startDate,
+          timeRange.endDate,
+        ),
       );
     }
 
@@ -553,7 +564,13 @@ class ChartCreator {
   }
 
   // Configuração dos eixos
-  createScalesConfig(isMultipleIndicators, datasets, dataArray, themeColors, timeRange = null) {
+  createScalesConfig(
+    isMultipleIndicators,
+    datasets,
+    dataArray,
+    themeColors,
+    timeRange = null,
+  ) {
     const yAxisTitle = dataArray[0].yAxisTitle || "Taxa (%)";
 
     const scales = {
@@ -636,10 +653,10 @@ class ChartCreator {
     }
 
     this.chartManager.chart = new Chart(ctx, config);
-    
+
     // Expose chart instance globally for time filters
     window.chartInstance = this.chartManager.chart;
-    
+
     return this.chartManager.chart;
   }
 }

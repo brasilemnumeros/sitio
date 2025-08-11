@@ -98,9 +98,11 @@ class ChartManager {
 
     if (isLoading) {
       loadingIndicator.classList.remove("hidden");
+      loadingIndicator.classList.add("flex");
       chartCanvas.style.opacity = "0.3";
     } else {
       loadingIndicator.classList.add("hidden");
+      loadingIndicator.classList.remove("flex");
       chartCanvas.style.opacity = "1";
     }
   }

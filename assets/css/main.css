@@ -4,6 +4,14 @@
 
 /* Custom styles - apenas o que o Tailwind não consegue lidar */
 
+/* Configuration Modal */
+.config-modal {
+  display: none;
+}
+.config-modal.show {
+  display: flex !important;
+}
+
 /* Hierarquia sutil de fundo */
 html:not(.dark) body {
   background-color: #f8fafc; /* slate-50 */

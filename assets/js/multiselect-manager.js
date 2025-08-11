@@ -85,9 +85,6 @@ class MultiselectManager {
       map[ind.name] = ind.datafile;
       return map;
     }, {});
-
-    console.log("Multiselect populated with indicators:", indicators.length);
-    console.log("Selected from URL/default:", selectedIndicators);
   }
 
   static setupClickOutside() {

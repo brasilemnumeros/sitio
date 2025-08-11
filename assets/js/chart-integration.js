@@ -73,7 +73,7 @@ class ChartIntegration {
   async loadInitialChart(config) {
     // Check URL parameters first
     const indicatorsFromURL = this.getIndicatorsFromURL();
-    
+
     if (indicatorsFromURL.length > 0) {
       // Load indicators from URL
       await this.loadIndicatorsFromNames(indicatorsFromURL, config);
@@ -228,14 +228,17 @@ class ChartIntegration {
   // URL Management Methods
   setupURLManagement() {
     // Listen for browser back/forward navigation
-    window.addEventListener('popstate', (event) => {
+    window.addEventListener("popstate", (event) => {
       if (event.state && event.state.indicators) {
         this.loadIndicatorsFromState(event.state.indicators);
       } else {
         // Reload from URL parameters
         const indicatorsFromURL = this.getIndicatorsFromURL();
         if (indicatorsFromURL.length > 0) {
-          this.loadIndicatorsFromNames(indicatorsFromURL, window.indicatorsConfig);
+          this.loadIndicatorsFromNames(
+            indicatorsFromURL,
+            window.indicatorsConfig,
+          );
         }
       }
     });
@@ -243,15 +246,15 @@ class ChartIntegration {
 
   getIndicatorsFromURL() {
     const urlParams = new URLSearchParams(window.location.search);
-    const indicatorsParam = urlParams.get('indicators');
-    
+    const indicatorsParam = urlParams.get("indicators");
+
     if (!indicatorsParam) return [];
-    
+
     // Decode and split indicator IDs
     try {
-      return decodeURIComponent(indicatorsParam).split(',').filter(Boolean);
+      return decodeURIComponent(indicatorsParam).split(",").filter(Boolean);
     } catch (error) {
-      console.warn('Error parsing indicators from URL:', error);
+      console.warn("Error parsing indicators from URL:", error);
       return [];
     }
   }
@@ -261,26 +264,31 @@ class ChartIntegration {
     if (!config || !selectedIndicators || selectedIndicators.length === 0) {
       // Clear URL parameters
       const url = new URL(window.location);
-      url.searchParams.delete('indicators');
-      window.history.replaceState({}, '', url.toString());
+      url.searchParams.delete("indicators");
+      window.history.replaceState({}, "", url.toString());
       return;
     }
 
     // Convert indicator names to IDs
-    const indicatorIds = selectedIndicators.map(name => {
-      const indicator = config.indicators.find(ind => ind.name === name);
-      return indicator ? indicator.id : null;
-    }).filter(Boolean);
+    const indicatorIds = selectedIndicators
+      .map((name) => {
+        const indicator = config.indicators.find((ind) => ind.name === name);
+        return indicator ? indicator.id : null;
+      })
+      .filter(Boolean);
 
     if (indicatorIds.length > 0) {
       const url = new URL(window.location);
-      url.searchParams.set('indicators', encodeURIComponent(indicatorIds.join(',')));
-      
+      url.searchParams.set(
+        "indicators",
+        encodeURIComponent(indicatorIds.join(",")),
+      );
+
       // Update URL without reloading page
       window.history.replaceState(
-        { indicators: indicatorIds }, 
-        '', 
-        url.toString()
+        { indicators: indicatorIds },
+        "",
+        url.toString(),
       );
     }
   }
@@ -289,14 +297,16 @@ class ChartIntegration {
     if (!config || !config.indicators) return;
 
     // Convert indicator IDs to names and data files
-    const indicators = indicatorNames.map(id => {
-      return config.indicators.find(ind => ind.id === id);
-    }).filter(Boolean);
+    const indicators = indicatorNames
+      .map((id) => {
+        return config.indicators.find((ind) => ind.id === id);
+      })
+      .filter(Boolean);
 
     if (indicators.length === 0) return;
 
-    const dataFiles = indicators.map(ind => ind.datafile);
-    const names = indicators.map(ind => ind.name);
+    const dataFiles = indicators.map((ind) => ind.datafile);
+    const names = indicators.map((ind) => ind.name);
 
     // Update multiselect to reflect URL state
     if (window.multiselectScope) {
@@ -319,30 +329,30 @@ class ChartIntegration {
   }
 
   setupShareButton() {
-    const shareBtn = document.getElementById('share-url-btn');
+    const shareBtn = document.getElementById("share-url-btn");
     if (!shareBtn) return;
 
-    shareBtn.addEventListener('click', async () => {
+    shareBtn.addEventListener("click", async () => {
       try {
         const currentUrl = window.location.href;
-        
+
         // Try to use the modern Clipboard API
         if (navigator.clipboard && window.isSecureContext) {
           await navigator.clipboard.writeText(currentUrl);
         } else {
           // Fallback for older browsers or non-HTTPS
-          const textArea = document.createElement('textarea');
+          const textArea = document.createElement("textarea");
           textArea.value = currentUrl;
-          textArea.style.position = 'fixed';
-          textArea.style.left = '-999999px';
-          textArea.style.top = '-999999px';
+          textArea.style.position = "fixed";
+          textArea.style.left = "-999999px";
+          textArea.style.top = "-999999px";
           document.body.appendChild(textArea);
           textArea.focus();
           textArea.select();
-          document.execCommand('copy');
+          document.execCommand("copy");
           textArea.remove();
         }
-        
+
         // Visual feedback
         const originalText = shareBtn.innerHTML;
         shareBtn.innerHTML = `
@@ -351,18 +361,33 @@ class ChartIntegration {
           </svg>
           Copiado!
         `;
-        shareBtn.classList.add('text-green-600', 'bg-green-100', 'border-green-300');
-        shareBtn.classList.remove('text-gray-600', 'bg-gray-100', 'border-gray-300');
-        
+        shareBtn.classList.add(
+          "text-green-600",
+          "bg-green-100",
+          "border-green-300",
+        );
+        shareBtn.classList.remove(
+          "text-gray-600",
+          "bg-gray-100",
+          "border-gray-300",
+        );
+
         setTimeout(() => {
           shareBtn.innerHTML = originalText;
-          shareBtn.classList.remove('text-green-600', 'bg-green-100', 'border-green-300');
-          shareBtn.classList.add('text-gray-600', 'bg-gray-100', 'border-gray-300');
+          shareBtn.classList.remove(
+            "text-green-600",
+            "bg-green-100",
+            "border-green-300",
+          );
+          shareBtn.classList.add(
+            "text-gray-600",
+            "bg-gray-100",
+            "border-gray-300",
+          );
         }, 2000);
-        
       } catch (error) {
-        console.error('Erro ao copiar URL:', error);
-        
+        console.error("Erro ao copiar URL:", error);
+
         // Error feedback
         const originalText = shareBtn.innerHTML;
         shareBtn.innerHTML = `
@@ -371,12 +396,20 @@ class ChartIntegration {
           </svg>
           Erro
         `;
-        shareBtn.classList.add('text-red-600', 'bg-red-100', 'border-red-300');
-        
+        shareBtn.classList.add("text-red-600", "bg-red-100", "border-red-300");
+
         setTimeout(() => {
           shareBtn.innerHTML = originalText;
-          shareBtn.classList.remove('text-red-600', 'bg-red-100', 'border-red-300');
-          shareBtn.classList.add('text-gray-600', 'bg-gray-100', 'border-gray-300');
+          shareBtn.classList.remove(
+            "text-red-600",
+            "bg-red-100",
+            "border-red-300",
+          );
+          shareBtn.classList.add(
+            "text-gray-600",
+            "bg-gray-100",
+            "border-gray-300",
+          );
         }, 2000);
       }
     });

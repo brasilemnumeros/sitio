@@ -342,7 +342,7 @@ class ChartCreator {
       return `Comparação: ${indicatorsWithGranularity.join(" vs ")}`;
     }
 
-    const cleanName = (namesArray[0] || "Indicador");
+    const cleanName = namesArray[0] || "Indicador";
     const granularity = this.chartManager.getGranularityForIndicator(
       namesArray[0],
       dataArray,

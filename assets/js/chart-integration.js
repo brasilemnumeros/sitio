@@ -39,6 +39,7 @@ class ChartIntegration {
       selectedIndicators,
       indicatorMap,
       forceClear = false,
+      yAxisConfig = null,
     ) => {
       if (selectedIndicators.length === 0 || forceClear) {
         this.chartManager.clearChart();
@@ -60,9 +61,9 @@ class ChartIntegration {
       this.updateURL(selectedIndicators, config);
 
       if (dataFiles.length === 1) {
-        this.updateChart(dataFiles[0], indicatorNames[0]);
+        this.updateChart(dataFiles[0], indicatorNames[0], yAxisConfig);
       } else {
-        this.updateChart(dataFiles, indicatorNames);
+        this.updateChart(dataFiles, indicatorNames, yAxisConfig);
       }
     };
 
@@ -90,7 +91,7 @@ class ChartIntegration {
     }
   }
 
-  async updateChart(dataFiles, indicatorNames = null) {
+  async updateChart(dataFiles, indicatorNames = null, yAxisConfig = null) {
     const isMultipleFiles = Array.isArray(dataFiles);
     const filesArray = isMultipleFiles ? dataFiles : [dataFiles];
     const namesArray = isMultipleFiles ? indicatorNames : [indicatorNames];
@@ -132,9 +133,13 @@ class ChartIntegration {
 
           // Create chart with multiple datasets or single dataset
           if (validData.length === 1) {
-            this.chartCreator.createChart(validData[0], finalNames[0]);
+            this.chartCreator.createChart(
+              validData[0],
+              finalNames[0],
+              yAxisConfig,
+            );
           } else {
-            this.chartCreator.createChart(validData, finalNames);
+            this.chartCreator.createChart(validData, finalNames, yAxisConfig);
           }
 
           // Update data source

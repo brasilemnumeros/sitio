@@ -15,7 +15,7 @@
 
   <div class="relative">
     <div
-      v-scope="{ selectedIndicators: [], isOpen: false, indicators: [], indicatorMap: {} }"
+      v-scope="{ selectedIndicators: [], isOpen: false, indicators: [], indicatorMap: {}, yAxisConfig: {} }"
       id="indicator-multiselect-container"
       @vue:mounted="
         window.multiselectScope = $data;
@@ -82,8 +82,12 @@
           @click="
             if (selectedIndicators.includes(indicator.name)) {
               selectedIndicators = selectedIndicators.filter(v => v !== indicator.name);
+              // Remove from yAxisConfig when unselected
+              delete yAxisConfig[indicator.name];
             } else {
               selectedIndicators = [...selectedIndicators, indicator.name];
+              // Set default to left axis for new selections
+              yAxisConfig[indicator.name] = 'left';
             }
             // GTM tracking
             if (typeof gtag !== 'undefined') {
@@ -93,7 +97,7 @@
                 selection_type: 'multiselect'
               });
             }
-            window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap);
+            window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, false, yAxisConfig);
           "
           class="flex cursor-pointer items-center justify-between px-3 py-2 pl-6 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
         >
@@ -123,12 +127,67 @@
           <button
             @click="
               selectedIndicators = [];
+              yAxisConfig = {};
               window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, true);
             "
             class="w-full rounded border border-red-200 px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:border-red-300 hover:bg-red-50 hover:text-red-800 dark:border-red-800 dark:text-red-400 dark:hover:border-red-700 dark:hover:bg-red-900/20"
           >
             🗑️ Limpar todos
           </button>
+        </div>
+
+        <!-- Y-Axis Configuration Panel -->
+        <div
+          v-if="selectedIndicators.length > 1"
+          class="border-t border-gray-200 bg-gray-50 p-3 dark:border-gray-600 dark:bg-gray-700"
+        >
+          <div class="mb-2 text-xs font-semibold text-gray-600 dark:text-gray-400">⚙️ Configuração dos Eixos Y</div>
+          <div class="space-y-2">
+            <div
+              v-for="indicator in selectedIndicators"
+              :key="indicator"
+              class="flex items-center justify-between"
+            >
+              <span
+                class="truncate pr-2 text-xs text-gray-700 dark:text-gray-300"
+                v-text="indicator.replace(/^[🏦📈📊]\s/, '')"
+              ></span>
+              <div class="flex rounded border border-gray-300 dark:border-gray-600">
+                <button
+                  @click="
+                    yAxisConfig[indicator] = 'left';
+                    window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, false, yAxisConfig);
+                  "
+                  :class="
+                    {
+                      'bg-blue-500 text-white': (yAxisConfig[indicator] || 'left') === 'left',
+                      'bg-white text-gray-700 hover:bg-gray-50': (yAxisConfig[indicator] || 'left') !== 'left'
+                    }
+                  "
+                  class="border-r border-gray-300 px-2 py-1 text-xs font-medium transition-colors dark:border-gray-600"
+                  title="Eixo Y Esquerdo"
+                >
+                  ⬅️
+                </button>
+                <button
+                  @click="
+                    yAxisConfig[indicator] = 'right';
+                    window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, false, yAxisConfig);
+                  "
+                  :class="
+                    {
+                      'bg-blue-500 text-white': (yAxisConfig[indicator] || 'left') === 'right',
+                      'bg-white text-gray-700 hover:bg-gray-50': (yAxisConfig[indicator] || 'left') !== 'right'
+                    }
+                  "
+                  class="px-2 py-1 text-xs font-medium transition-colors"
+                  title="Eixo Y Direito"
+                >
+                  ➡️
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

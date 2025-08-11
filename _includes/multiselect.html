@@ -55,7 +55,7 @@
         <div
           v-show="isOpen"
           id="indicator-dropdown"
-          class="absolute left-0 z-50 mt-1 max-h-60 w-full min-w-64 sm:min-w-80 max-w-[calc(100vw-2rem)] overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800"
+          class="absolute left-0 z-50 mt-1 max-h-60 w-full max-w-[calc(100vw-2rem)] min-w-64 overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg sm:min-w-80 dark:border-gray-600 dark:bg-gray-800"
         >
           <!-- Para mobile, ajustar posição se necessário -->
           <div
@@ -64,7 +64,7 @@
             @vue:mounted="
               const dropdown = $el.parentElement;
               const rect = dropdown.getBoundingClientRect();
-              
+
               // Ajusta posição vertical
               if (rect.bottom > window.innerHeight) {
                 dropdown.style.top = 'auto';
@@ -72,7 +72,7 @@
                 dropdown.style.marginTop = '0';
                 dropdown.style.marginBottom = '4px';
               }
-              
+
               // Ajusta posição horizontal para não sair da tela
               if (rect.right > window.innerWidth) {
                 dropdown.style.left = 'auto';

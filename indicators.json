@@ -1,11 +1,19 @@
 {
   "indicators": [
     {
-      "id": "selic-acum-12m",
-      "name": "🏦 Taxa Selic (%)",
+      "id": "selic-meta-acum-12m",
+      "name": "🏦 Taxa Selic Meta (%)",
       "granularity": "Acumulado 12 meses",
-      "datafile": "https://brasilemnumeros.github.io/dados/selic/selic-acum-12m.json",
+      "datafile": "https://brasilemnumeros.github.io/dados/selic/selic-meta-acum-12m.json",
       "description": "Taxa básica de juros da economia brasileira definida pelo Banco Central, acumulada nos últimos 12 meses",
+      "source": "Banco Central do Brasil"
+    },
+    {
+      "id": "selic-over-acum-12m",
+      "name": "🏦 Taxa Selic Over (%)",
+      "granularity": "Acumulado 12 meses",
+      "datafile": "https://brasilemnumeros.github.io/dados/selic/selic-over-acum-12m.json",
+      "description": "Taxa de juros efetiva do mercado, acumulada nos últimos 12 meses",
       "source": "Banco Central do Brasil"
     },
     {
@@ -25,5 +33,5 @@
       "source": "Banco Central do Brasil"
     }
   ],
-  "defaultIndicator": "selic-acum-12m"
+  "defaultIndicator": "selic-meta-acum-12m"
 }

@@ -401,43 +401,59 @@ class ChartCreator {
     };
   }
 
-  // Configuração do título
+  // Configuração do título (desabilitado - usando título HTML)
   createTitleConfig(isMultipleIndicators, namesArray, dataArray, themeColors) {
-    const title = this.generateChartTitle(
-      isMultipleIndicators,
-      namesArray,
-      dataArray,
-    );
+    // Atualiza o título HTML em vez do título do Chart.js
+    this.updateHTMLTitle(isMultipleIndicators, namesArray, dataArray);
+
     return {
-      display: true,
-      text: title,
-      font: { size: 18 },
-      color: themeColors.title,
+      display: false, // Desabilita o título do Chart.js
     };
   }
 
   // Gera título do gráfico com granularidade
   generateChartTitle(isMultipleIndicators, namesArray, dataArray) {
     if (isMultipleIndicators && namesArray.length > 1) {
-      const indicatorsWithGranularity = namesArray.map((name, index) => {
-        const cleanName = name;
-        const granularity = this.chartManager.getGranularityForIndicator(
-          name,
-          dataArray,
-          index,
-        );
-        return granularity ? `${cleanName} (${granularity})` : cleanName;
-      });
-      return `Comparação: ${indicatorsWithGranularity.join(" vs ")}`;
+      // Remove granularidade, usa apenas os nomes limpos
+      const cleanNames = namesArray.map((name) => name);
+      return `Comparação: ${cleanNames.join(" vs ")}`;
     }
 
+    // Para indicador único, usa apenas o nome limpo
     const cleanName = namesArray[0] || "Indicador";
-    const granularity = this.chartManager.getGranularityForIndicator(
-      namesArray[0],
+    return cleanName;
+  }
+
+  // Atualiza o título HTML customizado
+  updateHTMLTitle(isMultipleIndicators, namesArray, dataArray) {
+    const titleElement = document.getElementById("chart-title");
+    if (!titleElement) return;
+
+    const title = this.generateChartTitle(
+      isMultipleIndicators,
+      namesArray,
       dataArray,
-      0,
     );
-    return granularity ? `${cleanName} (${granularity})` : cleanName;
+
+    if (isMultipleIndicators && namesArray.length > 1) {
+      // Para múltiplos indicadores, quebra no "vs" para melhor responsividade
+      const parts = title.split(" vs ");
+      if (parts.length > 1) {
+        const prefix = "Comparação: ";
+        const cleanTitle = title.replace(prefix, "");
+        const indicators = cleanTitle.split(" vs ");
+
+        let htmlContent = `<span class="block sm:inline">${prefix}${indicators[0]}</span>`;
+        for (let i = 1; i < indicators.length; i++) {
+          htmlContent += ` <span class="block sm:inline">vs ${indicators[i]}</span>`;
+        }
+        titleElement.innerHTML = htmlContent;
+      } else {
+        titleElement.textContent = title;
+      }
+    } else {
+      titleElement.textContent = title;
+    }
   }
 
   // Cria anotações dos períodos governamentais

@@ -20,6 +20,9 @@ class ChartManager {
   constructor() {
     this.chart = null;
     this.indicatorsConfig = null;
+
+    // Store global reference for color manager
+    window.chartManager = this;
   }
 
   // Calcula e define altura otimizada do gráfico

@@ -1,4 +1,4 @@
-<nav class="fixed inset-x-0 top-0 z-50 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 {% if page.title == 'Início' %}grid grid-cols-[auto_1fr_auto] sm:grid-cols-3 items-center gap-2{% else %}flex items-center justify-center{% endif %} p-2.5">
+<nav class="fixed inset-x-0 top-0 z-50 border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 {% if page.title == 'Início' %}grid grid-cols-[auto_1fr_auto] sm:grid-cols-3 items-center gap-1 sm:gap-2{% else %}flex items-center justify-center{% endif %} p-2 sm:p-2.5">
   <!-- Logo -->
   <a
     href="{{ '/' | relative_url }}"
@@ -16,7 +16,7 @@
 
   {% if page.title == 'Início' %}
     <!-- Seletor de Indicadores (Centro) -->
-    <div class="justify-self-center">
+    <div class="justify-self-center min-w-0 max-w-full mx-1 sm:mx-0">
       {% include multiselect.html %}
     </div>
   {% endif %}

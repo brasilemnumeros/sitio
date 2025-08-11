@@ -111,13 +111,63 @@ class ChartCreator {
     return dateString;
   }
 
+  // Filtra dados por intervalo de tempo
+  filterDataByTimeRange(jsonData, startDate = null, endDate = null) {
+    if (!startDate && !endDate) {
+      return jsonData;
+    }
+
+    const filteredData = { ...jsonData };
+    
+    if (jsonData.data && Array.isArray(jsonData.data)) {
+      filteredData.data = jsonData.data.filter(item => {
+        const itemDate = new Date(item.date);
+        
+        let include = true;
+        
+        if (startDate) {
+          const start = new Date(startDate);
+          include = include && itemDate >= start;
+        }
+        
+        if (endDate) {
+          const end = new Date(endDate);
+          include = include && itemDate <= end;
+        }
+        
+        return include;
+      });
+    }
+    
+    return filteredData;
+  }
+
+  // Obtém o intervalo de tempo ativo
+  getActiveTimeRange() {
+    const chart = window.chartInstance || (window.chartManager && window.chartManager.chart);
+    if (chart && chart.options.scales && chart.options.scales.x) {
+      return {
+        startDate: chart.options.scales.x.min || null,
+        endDate: chart.options.scales.x.max || null
+      };
+    }
+    return { startDate: null, endDate: null };
+  }
+
   // Cria gráfico com um ou múltiplos indicadores
-  createChart(jsonDataArray, indicatorNames = null, yAxisConfig = null) {
+  createChart(jsonDataArray, indicatorNames = null, yAxisConfig = null, timeRange = null) {
     const isMultipleIndicators = Array.isArray(jsonDataArray);
-    const dataArray = isMultipleIndicators ? jsonDataArray : [jsonDataArray];
+    let dataArray = isMultipleIndicators ? jsonDataArray : [jsonDataArray];
     const namesArray = isMultipleIndicators
       ? indicatorNames
       : [indicatorNames || jsonDataArray.indicatorName];
+
+    // Apply time filtering to data if timeRange is provided
+    if (timeRange && (timeRange.startDate || timeRange.endDate)) {
+      dataArray = dataArray.map(data => 
+        this.filterDataByTimeRange(data, timeRange.startDate, timeRange.endDate)
+      );
+    }
 
     const isDark = document.documentElement.classList.contains("dark");
     const themeColors = this.getThemeColors(isDark);
@@ -135,6 +185,7 @@ class ChartCreator {
       isMultipleIndicators,
       themeColors,
       isDark,
+      timeRange,
     );
 
     return this.renderChart(config);
@@ -273,6 +324,7 @@ class ChartCreator {
     isMultipleIndicators,
     themeColors,
     isDark,
+    timeRange = null,
   ) {
     return {
       type: "line",
@@ -298,6 +350,7 @@ class ChartCreator {
           datasets,
           dataArray,
           themeColors,
+          timeRange,
         ),
         maintainAspectRatio: false,
         layout: { padding: ChartCreator.CHART_CONFIG.PADDING },
@@ -500,7 +553,7 @@ class ChartCreator {
   }
 
   // Configuração dos eixos
-  createScalesConfig(isMultipleIndicators, datasets, dataArray, themeColors) {
+  createScalesConfig(isMultipleIndicators, datasets, dataArray, themeColors, timeRange = null) {
     const yAxisTitle = dataArray[0].yAxisTitle || "Taxa (%)";
 
     const scales = {
@@ -512,8 +565,6 @@ class ChartCreator {
             year: ChartCreator.CHART_CONFIG.DISPLAY_FORMAT.YEAR,
           },
         },
-        min: ChartCreator.CHART_CONFIG.TIME_RANGE.MIN,
-        max: ChartCreator.CHART_CONFIG.TIME_RANGE.MAX,
         title: { display: true, text: "Ano", color: themeColors.axisLabel },
         ticks: {
           color: themeColors.ticks,
@@ -536,6 +587,20 @@ class ChartCreator {
         grid: { color: themeColors.grid },
       },
     };
+
+    // Apply time range if provided, otherwise use default range
+    if (timeRange && (timeRange.startDate || timeRange.endDate)) {
+      if (timeRange.startDate) {
+        scales.x.min = timeRange.startDate;
+      }
+      if (timeRange.endDate) {
+        scales.x.max = timeRange.endDate;
+      }
+    } else {
+      // Use default range
+      scales.x.min = ChartCreator.CHART_CONFIG.TIME_RANGE.MIN;
+      scales.x.max = ChartCreator.CHART_CONFIG.TIME_RANGE.MAX;
+    }
 
     // Adiciona segundo eixo Y apenas se algum dataset realmente usar o eixo direito
     const hasRightAxisDataset = datasets.some(
@@ -571,6 +636,10 @@ class ChartCreator {
     }
 
     this.chartManager.chart = new Chart(ctx, config);
+    
+    // Expose chart instance globally for time filters
+    window.chartInstance = this.chartManager.chart;
+    
     return this.chartManager.chart;
   }
 }

@@ -48,19 +48,42 @@ class MultiselectManager {
     }
 
     const { indicators, defaultIndicator } = window.indicatorsData;
-    const defaultInd = indicators.find((ind) => ind.id === defaultIndicator);
+    
+    // Check for URL parameters first
+    const urlParams = new URLSearchParams(window.location.search);
+    const indicatorsParam = urlParams.get('indicators');
+    
+    let selectedIndicators = [];
+    
+    if (indicatorsParam) {
+      // Load from URL
+      try {
+        const indicatorIds = decodeURIComponent(indicatorsParam).split(',').filter(Boolean);
+        selectedIndicators = indicatorIds.map(id => {
+          const indicator = indicators.find(ind => ind.id === id);
+          return indicator ? indicator.name : null;
+        }).filter(Boolean);
+      } catch (error) {
+        console.warn('Error parsing indicators from URL:', error);
+      }
+    }
+    
+    // Fallback to default if no valid indicators from URL
+    if (selectedIndicators.length === 0) {
+      const defaultInd = indicators.find((ind) => ind.id === defaultIndicator);
+      selectedIndicators = defaultInd ? [defaultInd.name] : [];
+    }
 
     // Update the Vue scope
     window.multiselectScope.indicators = indicators;
-    window.multiselectScope.selectedIndicators = defaultInd
-      ? [defaultInd.name]
-      : [];
+    window.multiselectScope.selectedIndicators = selectedIndicators;
     window.multiselectScope.indicatorMap = indicators.reduce((map, ind) => {
       map[ind.name] = ind.datafile;
       return map;
     }, {});
 
     console.log("Multiselect populated with indicators:", indicators.length);
+    console.log("Selected from URL/default:", selectedIndicators);
   }
 
   static setupClickOutside() {

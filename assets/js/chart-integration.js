@@ -18,11 +18,17 @@ class ChartIntegration {
     // Setup multiselect functionality
     this.setupMultiselect(config);
 
-    // Load initial chart
+    // Setup URL management
+    this.setupURLManagement();
+
+    // Load initial chart (from URL or default)
     await this.loadInitialChart(config);
 
     // Setup theme observer
     this.setupThemeObserver();
+
+    // Setup share button
+    this.setupShareButton();
 
     return config;
   }
@@ -36,6 +42,7 @@ class ChartIntegration {
     ) => {
       if (selectedIndicators.length === 0 || forceClear) {
         this.chartManager.clearChart();
+        this.updateURL([]);
         return;
       }
 
@@ -49,6 +56,9 @@ class ChartIntegration {
         return;
       }
 
+      // Update URL with selected indicators
+      this.updateURL(selectedIndicators, config);
+
       if (dataFiles.length === 1) {
         this.updateChart(dataFiles[0], indicatorNames[0]);
       } else {
@@ -61,14 +71,23 @@ class ChartIntegration {
   }
 
   async loadInitialChart(config) {
-    const defaultIndicator = config.indicators?.find(
-      (ind) => ind.id === config.defaultIndicator,
-    );
-    const initialFile = defaultIndicator
-      ? defaultIndicator.datafile
-      : "/data/selic-acum-12m.json";
+    // Check URL parameters first
+    const indicatorsFromURL = this.getIndicatorsFromURL();
+    
+    if (indicatorsFromURL.length > 0) {
+      // Load indicators from URL
+      await this.loadIndicatorsFromNames(indicatorsFromURL, config);
+    } else {
+      // Load default indicator
+      const defaultIndicator = config.indicators?.find(
+        (ind) => ind.id === config.defaultIndicator,
+      );
+      const initialFile = defaultIndicator
+        ? defaultIndicator.datafile
+        : "/data/selic-acum-12m.json";
 
-    await this.updateChart(initialFile);
+      await this.updateChart(initialFile);
+    }
   }
 
   async updateChart(dataFiles, indicatorNames = null) {
@@ -203,6 +222,163 @@ class ChartIntegration {
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class"],
+    });
+  }
+
+  // URL Management Methods
+  setupURLManagement() {
+    // Listen for browser back/forward navigation
+    window.addEventListener('popstate', (event) => {
+      if (event.state && event.state.indicators) {
+        this.loadIndicatorsFromState(event.state.indicators);
+      } else {
+        // Reload from URL parameters
+        const indicatorsFromURL = this.getIndicatorsFromURL();
+        if (indicatorsFromURL.length > 0) {
+          this.loadIndicatorsFromNames(indicatorsFromURL, window.indicatorsConfig);
+        }
+      }
+    });
+  }
+
+  getIndicatorsFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const indicatorsParam = urlParams.get('indicators');
+    
+    if (!indicatorsParam) return [];
+    
+    // Decode and split indicator IDs
+    try {
+      return decodeURIComponent(indicatorsParam).split(',').filter(Boolean);
+    } catch (error) {
+      console.warn('Error parsing indicators from URL:', error);
+      return [];
+    }
+  }
+
+  updateURL(selectedIndicators, config = null) {
+    if (!config) config = window.indicatorsConfig;
+    if (!config || !selectedIndicators || selectedIndicators.length === 0) {
+      // Clear URL parameters
+      const url = new URL(window.location);
+      url.searchParams.delete('indicators');
+      window.history.replaceState({}, '', url.toString());
+      return;
+    }
+
+    // Convert indicator names to IDs
+    const indicatorIds = selectedIndicators.map(name => {
+      const indicator = config.indicators.find(ind => ind.name === name);
+      return indicator ? indicator.id : null;
+    }).filter(Boolean);
+
+    if (indicatorIds.length > 0) {
+      const url = new URL(window.location);
+      url.searchParams.set('indicators', encodeURIComponent(indicatorIds.join(',')));
+      
+      // Update URL without reloading page
+      window.history.replaceState(
+        { indicators: indicatorIds }, 
+        '', 
+        url.toString()
+      );
+    }
+  }
+
+  async loadIndicatorsFromNames(indicatorNames, config) {
+    if (!config || !config.indicators) return;
+
+    // Convert indicator IDs to names and data files
+    const indicators = indicatorNames.map(id => {
+      return config.indicators.find(ind => ind.id === id);
+    }).filter(Boolean);
+
+    if (indicators.length === 0) return;
+
+    const dataFiles = indicators.map(ind => ind.datafile);
+    const names = indicators.map(ind => ind.name);
+
+    // Update multiselect to reflect URL state
+    if (window.multiselectScope) {
+      window.multiselectScope.selectedIndicators = names;
+    }
+
+    // Load the charts
+    if (dataFiles.length === 1) {
+      await this.updateChart(dataFiles[0], names[0]);
+    } else {
+      await this.updateChart(dataFiles, names);
+    }
+  }
+
+  async loadIndicatorsFromState(indicatorIds) {
+    const config = window.indicatorsConfig;
+    if (!config) return;
+
+    await this.loadIndicatorsFromNames(indicatorIds, config);
+  }
+
+  setupShareButton() {
+    const shareBtn = document.getElementById('share-url-btn');
+    if (!shareBtn) return;
+
+    shareBtn.addEventListener('click', async () => {
+      try {
+        const currentUrl = window.location.href;
+        
+        // Try to use the modern Clipboard API
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(currentUrl);
+        } else {
+          // Fallback for older browsers or non-HTTPS
+          const textArea = document.createElement('textarea');
+          textArea.value = currentUrl;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          document.execCommand('copy');
+          textArea.remove();
+        }
+        
+        // Visual feedback
+        const originalText = shareBtn.innerHTML;
+        shareBtn.innerHTML = `
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Copiado!
+        `;
+        shareBtn.classList.add('text-green-600', 'bg-green-100', 'border-green-300');
+        shareBtn.classList.remove('text-gray-600', 'bg-gray-100', 'border-gray-300');
+        
+        setTimeout(() => {
+          shareBtn.innerHTML = originalText;
+          shareBtn.classList.remove('text-green-600', 'bg-green-100', 'border-green-300');
+          shareBtn.classList.add('text-gray-600', 'bg-gray-100', 'border-gray-300');
+        }, 2000);
+        
+      } catch (error) {
+        console.error('Erro ao copiar URL:', error);
+        
+        // Error feedback
+        const originalText = shareBtn.innerHTML;
+        shareBtn.innerHTML = `
+          <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Erro
+        `;
+        shareBtn.classList.add('text-red-600', 'bg-red-100', 'border-red-300');
+        
+        setTimeout(() => {
+          shareBtn.innerHTML = originalText;
+          shareBtn.classList.remove('text-red-600', 'bg-red-100', 'border-red-300');
+          shareBtn.classList.add('text-gray-600', 'bg-gray-100', 'border-gray-300');
+        }, 2000);
+      }
     });
   }
 }

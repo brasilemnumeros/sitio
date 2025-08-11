@@ -230,8 +230,11 @@ class ChartCreator {
 
     return dataArray.map((jsonData, index) => {
       const indicatorName = namesArray[index] || jsonData.indicatorName;
-      const color =
-        ChartCreator.COLOR_PALETTE[index % ChartCreator.COLOR_PALETTE.length];
+
+      // Use custom color manager if available, otherwise fall back to default palette
+      const color = window.getIndicatorColor
+        ? window.getIndicatorColor(indicatorName, index)
+        : ChartCreator.COLOR_PALETTE[index % ChartCreator.COLOR_PALETTE.length];
 
       const dataPoints = jsonData.data
         .filter((item) => item.rate !== null)
@@ -279,8 +282,11 @@ class ChartCreator {
     // mas só inclui valores onde o indicador realmente tem dados
     return dataArray.map((jsonData, index) => {
       const indicatorName = namesArray[index] || jsonData.indicatorName;
-      const color =
-        ChartCreator.COLOR_PALETTE[index % ChartCreator.COLOR_PALETTE.length];
+
+      // Use custom color manager if available, otherwise fall back to default palette
+      const color = window.getIndicatorColor
+        ? window.getIndicatorColor(indicatorName, index)
+        : ChartCreator.COLOR_PALETTE[index % ChartCreator.COLOR_PALETTE.length];
 
       // Determina qual eixo Y usar baseado na configuração
       let yAxisID = "y"; // Default to left axis

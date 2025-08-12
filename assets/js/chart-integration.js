@@ -714,15 +714,16 @@ class ChartIntegration {
 
     shareBtn.addEventListener("click", async () => {
       try {
-        const currentUrl = window.location.href;
+        // Build URL with current indicators instead of just using current URL
+        const shareUrl = this.buildShareUrl();
 
         // Try to use the modern Clipboard API
         if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(currentUrl);
+          await navigator.clipboard.writeText(shareUrl);
         } else {
           // Fallback for older browsers or non-HTTPS
           const textArea = document.createElement("textarea");
-          textArea.value = currentUrl;
+          textArea.value = shareUrl;
           textArea.style.position = "fixed";
           textArea.style.left = "-999999px";
           textArea.style.top = "-999999px";
@@ -793,6 +794,34 @@ class ChartIntegration {
         }, 2000);
       }
     });
+  }
+
+  buildShareUrl() {
+    const baseUrl = window.location.origin + window.location.pathname;
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // Get current selected indicators from the multiselect scope
+    if (
+      window.multiselectScope &&
+      window.multiselectScope.selectedIndicators &&
+      window.indicatorsData
+    ) {
+      // Convert indicator names back to IDs for the URL
+      const selectedIds = window.multiselectScope.selectedIndicators
+        .map((name) => {
+          const indicator = window.indicatorsData.indicators.find(
+            (ind) => ind.name === name,
+          );
+          return indicator ? indicator.id : null;
+        })
+        .filter(Boolean);
+
+      if (selectedIds.length > 0) {
+        urlParams.set("indicators", selectedIds.join(","));
+      }
+    }
+
+    return baseUrl + (urlParams.toString() ? "?" + urlParams.toString() : "");
   }
 }
 

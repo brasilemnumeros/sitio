@@ -5,7 +5,7 @@ categories: [indicadores]
 tags: [ipca, inflacao, economia]
 ---
 
-No nosso [post de lançamento]({% post_url 2025-07-27-inicio %}), falamos sobre a **Taxa Selic** e prometemos um _spoiler_: a chegada do seu principal contraponto. A espera acabou!
+No nosso [post de lançamento]({% post_url 2025-07-27-hoje-nasce-o-brasil-em-numeros %}), falamos sobre a **Taxa Selic** e prometemos um _spoiler_: a chegada do seu principal contraponto. A espera acabou!
 
 A partir de hoje, o gráfico do **IPCA acumulado nos últimos 12 meses (a nossa inflação anual)** já está no ar em nosso site!
 

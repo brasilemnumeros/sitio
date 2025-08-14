@@ -305,6 +305,7 @@ PLATFORMS
 DEPENDENCIES
   github-pages
   jekyll-feed
+  jekyll-sitemap
 
 BUNDLED WITH
    2.7.1

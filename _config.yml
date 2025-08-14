@@ -26,6 +26,7 @@ blog_categories:
 plugins:
   - jekyll-analytics
   - jekyll-feed
+  - jekyll-sitemap
 
 exclude:
   - Gemfile

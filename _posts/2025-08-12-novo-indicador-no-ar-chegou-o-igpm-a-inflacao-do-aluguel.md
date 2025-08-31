@@ -15,16 +15,16 @@ O IGP-M, calculado mensalmente pela Fundação Getúlio Vargas (FGV), é um dos 
 
 Sua composição revela o porquê de sua abrangência:
 
-* **60% - IPA (Índice de Preços ao Produtor Amplo):** Mede a variação dos preços no atacado, antes dos produtos chegarem às prateleiras. É a parte mais pesada do índice.
-* **30% - IPC (Índice de Preços ao Consumidor):** Similar ao IPCA, mede os preços para o consumidor final, mas com uma metodologia e peso diferentes.
-* **10% - INCC (Índice Nacional de Custo da Construção):** Acompanha a variação de preços de materiais, mão de obra e serviços no setor da construção civil.
+- **60% - IPA (Índice de Preços ao Produtor Amplo):** Mede a variação dos preços no atacado, antes dos produtos chegarem às prateleiras. É a parte mais pesada do índice.
+- **30% - IPC (Índice de Preços ao Consumidor):** Similar ao IPCA, mede os preços para o consumidor final, mas com uma metodologia e peso diferentes.
+- **10% - INCC (Índice Nacional de Custo da Construção):** Acompanha a variação de preços de materiais, mão de obra e serviços no setor da construção civil.
 
 ### IGP-M vs. IPCA: Qual a Diferença na Prática?
 
 Essa é a dúvida mais comum e a mais importante. A principal diferença está no "público" que cada índice mede:
 
-* **IPCA (a inflação oficial):** Mede a variação do **custo de vida** para as famílias. É a inflação que sentimos diretamente no supermercado, na gasolina e nas contas de casa.
-* **IGP-M:** Mede a variação dos preços de forma mais ampla, desde o **produtor/atacadista** até a construção civil. Por isso, ele é muito mais sensível a fatores que afetam a produção.
+- **IPCA (a inflação oficial):** Mede a variação do **custo de vida** para as famílias. É a inflação que sentimos diretamente no supermercado, na gasolina e nas contas de casa.
+- **IGP-M:** Mede a variação dos preços de forma mais ampla, desde o **produtor/atacadista** até a construção civil. Por isso, ele é muito mais sensível a fatores que afetam a produção.
 
 ### O que Faz o IGP-M Variar Tanto?
 
@@ -38,13 +38,13 @@ Por ter 60% de seu peso no atacado (IPA), o IGP-M é fortemente influenciado por
 
 ### Consequências do IGP-M Alto ou Baixo
 
-* **IGP-M Alto 📈:**
-    * **Reajuste de Contratos:** É o principal impacto sentido pelas pessoas. Contratos de aluguel, alguns planos de saúde, mensalidades escolares e tarifas de energia elétrica são frequentemente reajustados pelo IGP-M.
-    * **Pressão Futura no IPCA:** Um IGP-M alto pode ser um sinal de que, em breve, a inflação chegará ao consumidor, pois os custos maiores da indústria e do atacado tendem a ser repassados para o varejo.
+- **IGP-M Alto 📈:**
+  - **Reajuste de Contratos:** É o principal impacto sentido pelas pessoas. Contratos de aluguel, alguns planos de saúde, mensalidades escolares e tarifas de energia elétrica são frequentemente reajustados pelo IGP-M.
+  - **Pressão Futura no IPCA:** Um IGP-M alto pode ser um sinal de que, em breve, a inflação chegará ao consumidor, pois os custos maiores da indústria e do atacado tendem a ser repassados para o varejo.
 
-* **IGP-M Baixo (ou Negativo) 📉:**
-    * **Alívio nos Aluguéis:** Pode levar a reajustes menores ou até mesmo a uma redução no valor dos aluguéis e outros contratos.
-    * **Sinal de Alerta:** Um IGP-M muito baixo ou negativo, por outro lado, pode indicar uma forte desaceleração na atividade industrial e na economia como um todo.
+- **IGP-M Baixo (ou Negativo) 📉:**
+  - **Alívio nos Aluguéis:** Pode levar a reajustes menores ou até mesmo a uma redução no valor dos aluguéis e outros contratos.
+  - **Sinal de Alerta:** Um IGP-M muito baixo ou negativo, por outro lado, pode indicar uma forte desaceleração na atividade industrial e na economia como um todo.
 
 Analisar o IGP-M em conjunto com o IPCA e a Selic oferece um panorama muito mais rico e completo dos desafios e movimentos da economia brasileira.
 

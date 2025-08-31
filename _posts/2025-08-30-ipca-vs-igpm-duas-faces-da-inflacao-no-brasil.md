@@ -1,6 +1,6 @@
 ---
 layout: post
-title: 'IPCA vs. IGP-M: As Duas Faces da Inflação no Brasil'
+title: "IPCA vs. IGP-M: As Duas Faces da Inflação no Brasil"
 categories: [analises]
 tags: [igpm, inflacao, economia]
 ---
@@ -17,11 +17,11 @@ Neste artigo, vamos desvendar o DNA de cada um desses indicadores, entender por 
 
 Pense no **IPCA (Índice de Preços ao Consumidor Amplo)** como a inflação do nosso dia a dia. Calculado mensalmente pelo IBGE, ele é o termômetro oficial do custo de vida para famílias com renda de 1 a 40 salários mínimos.
 
-* **Como funciona?** Pesquisadores vão a campo e medem a variação de preço de uma cesta fixa de produtos e serviços que uma família média consome, incluindo:
-    * Alimentação (arroz, feijão, carnes)
-    * Transporte (gasolina, passagem de ônibus)
-    * Moradia (aluguel, conta de luz)
-    * Saúde, educação, vestuário e outros.
+- **Como funciona?** Pesquisadores vão a campo e medem a variação de preço de uma cesta fixa de produtos e serviços que uma família média consome, incluindo:
+  - Alimentação (arroz, feijão, carnes)
+  - Transporte (gasolina, passagem de ônibus)
+  - Moradia (aluguel, conta de luz)
+  - Saúde, educação, vestuário e outros.
 
 O IPCA é a **inflação oficial** do Brasil. É com base nele que o Banco Central define suas metas e calibra a Taxa Selic para tentar manter os preços sob controle. Quando o IPCA sobe, seu poder de compra diminui.
 
@@ -29,9 +29,9 @@ O IPCA é a **inflação oficial** do Brasil. É com base nele que o Banco Centr
 
 Já o **IGP-M (Índice Geral de Preços – Mercado)**, calculado pela Fundação Getúlio Vargas (FGV), é um animal diferente. Seu apelido de "inflação do aluguel" é famoso, mas sua verdadeira natureza é muito mais ampla. Ele é um índice composto, um verdadeiro raio-x da economia em várias etapas:
 
-* **60% - IPA (Índice de Preços ao Produtor Amplo):** Esta é a alma do IGP-M. Mede a inflação "na porta da fábrica" e "na saída da fazenda". É a variação de preços no atacado, das matérias-primas e dos produtos agropecuários e industriais, antes de chegarem ao varejo.
-* **30% - IPC (Índice de Preços ao Consumidor):** Similar ao IPCA, mede a inflação para o consumidor, mas com uma metodologia e cesta de produtos ligeiramente diferentes.
-* **10% - INCC (Índice Nacional de Custo da Construção):** Acompanha a variação dos custos de materiais, serviços e mão de obra no setor da construção civil.
+- **60% - IPA (Índice de Preços ao Produtor Amplo):** Esta é a alma do IGP-M. Mede a inflação "na porta da fábrica" e "na saída da fazenda". É a variação de preços no atacado, das matérias-primas e dos produtos agropecuários e industriais, antes de chegarem ao varejo.
+- **30% - IPC (Índice de Preços ao Consumidor):** Similar ao IPCA, mede a inflação para o consumidor, mas com uma metodologia e cesta de produtos ligeiramente diferentes.
+- **10% - INCC (Índice Nacional de Custo da Construção):** Acompanha a variação dos custos de materiais, serviços e mão de obra no setor da construção civil.
 
 ### A Raiz das Diferenças: Por Que Eles se Descolam?
 
@@ -45,11 +45,11 @@ Analisando os dados, vemos períodos de enorme divergência. Entre 2020 e 2022, 
 
 Entender essa dinâmica nos permite fazer reflexões mais profundas sobre a economia brasileira.
 
-* **Impacto no Bolso do Cidadão:** O IPCA corrói seu poder de compra no supermercado. O IGP-M, por sua vez, determina o reajuste anual do seu **aluguel**, de alguns **planos de saúde**, **mensalidades escolares** e até de **tarifas de energia**. Um IGP-M disparado, mesmo com um IPCA controlado, pode gerar um enorme aperto no orçamento de milhões de famílias.
+- **Impacto no Bolso do Cidadão:** O IPCA corrói seu poder de compra no supermercado. O IGP-M, por sua vez, determina o reajuste anual do seu **aluguel**, de alguns **planos de saúde**, **mensalidades escolares** e até de **tarifas de energia**. Um IGP-M disparado, mesmo com um IPCA controlado, pode gerar um enorme aperto no orçamento de milhões de famílias.
 
-* **O Dilema da Política Monetária:** O Banco Central usa a Taxa Selic para controlar a inflação, mas sua mira está no **IPCA**. Isso cria um paradoxo: em momentos de dólar alto, o IGP-M pode estar nas alturas, gerando uma inflação contratual severa, mas se o consumo (e o IPCA) estiverem fracos, o Banco Central pode não subir os juros. Isso gera uma percepção de que a política monetária ignora uma parte importante do sofrimento da população com a alta de preços.
+- **O Dilema da Política Monetária:** O Banco Central usa a Taxa Selic para controlar a inflação, mas sua mira está no **IPCA**. Isso cria um paradoxo: em momentos de dólar alto, o IGP-M pode estar nas alturas, gerando uma inflação contratual severa, mas se o consumo (e o IPCA) estiverem fracos, o Banco Central pode não subir os juros. Isso gera uma percepção de que a política monetária ignora uma parte importante do sofrimento da população com a alta de preços.
 
-* **Uma Cultura de Indexação:** O uso massivo do IGP-M em contratos é uma herança da nossa era de hiperinflação. Ele perpetua choques passados (como uma alta do dólar) para o futuro, criando uma "inflação inercial" que é difícil de quebrar. Fica a reflexão: dado sua volatilidade e seu descolamento da realidade do consumidor, o IGP-M ainda é o índice mais justo para reajustar contratos de longo prazo como o aluguel?
+- **Uma Cultura de Indexação:** O uso massivo do IGP-M em contratos é uma herança da nossa era de hiperinflação. Ele perpetua choques passados (como uma alta do dólar) para o futuro, criando uma "inflação inercial" que é difícil de quebrar. Fica a reflexão: dado sua volatilidade e seu descolamento da realidade do consumidor, o IGP-M ainda é o índice mais justo para reajustar contratos de longo prazo como o aluguel?
 
 ### Conclusão
 

@@ -109,9 +109,6 @@ class ChartIntegration {
           Math.random() * availableIndicators.length,
         );
         const randomIndicator = availableIndicators[randomIndex];
-
-        console.log(`Loading random indicator: ${randomIndicator.name}`);
-
         // Update multiselect to show selected indicator
         if (window.multiselectScope) {
           window.multiselectScope.selectedIndicators = [randomIndicator.name];

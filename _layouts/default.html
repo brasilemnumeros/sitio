@@ -33,11 +33,43 @@
       💬 Quer comentar algo?
     </a>
 
+    <!-- Toast convite para artigos -->
+    <div
+      id="toast-artigos"
+      class="fixed right-6 bottom-6 z-50 flex max-w-sm items-center gap-3 rounded-lg border border-gray-200 bg-gray-800 px-4 py-3 shadow-lg transition-all duration-300 dark:border-gray-700 dark:bg-white"
+      style="display:none"
+    >
+      <svg class="h-6 w-6 flex-shrink-0 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9v2a7 7 0 11-14 0V9m14 0V7a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m14 0H5m14 0a2 2 0 01-2 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2a2 2 0 012-2h10z" />
+      </svg>
+      <div class="flex-1 text-sm text-gray-100 dark:text-gray-800">
+        Confira nossos
+        <a
+          href="/blog.html"
+          id="toast-artigos-link"
+          class="text-blue-400 underline hover:text-blue-600 dark:text-blue-600 dark:hover:text-blue-800"
+          >artigos e análises</a
+        >!
+      </div>
+      <button
+        id="toast-artigos-close"
+        class="ml-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+        title="Fechar"
+        aria-label="Fechar"
+      >
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
     <!-- Analytics -->
     {% if site.google_analytics and jekyll.environment == 'production' %}
       {% include cookie-consent.html %}
       {% include analytics.html %}
     {% endif %}
+
+    <script defer src="{{ '/assets/js/toast-artigos.js' | relative_url }}"></script>
 
     <!-- Chart.js Scripts (only for chart pages) -->
     {% if page.title == 'Início' %}

@@ -162,6 +162,7 @@ class ChartCreator {
     indicatorNames = null,
     yAxisConfig = null,
     timeRange = null,
+    chartType = "line"
   ) {
     const isMultipleIndicators = Array.isArray(jsonDataArray);
     let dataArray = isMultipleIndicators ? jsonDataArray : [jsonDataArray];
@@ -197,6 +198,7 @@ class ChartCreator {
       themeColors,
       isDark,
       timeRange,
+      chartType
     );
 
     return this.renderChart(config);
@@ -228,9 +230,18 @@ class ChartCreator {
       );
     }
 
+    // Busca tipos dos indicadores
+    let chartTypes = [];
+    if (window.chartManager && window.chartManager.indicatorsConfig) {
+      chartTypes = namesArray.map(name => {
+        const ind = window.chartManager.indicatorsConfig.indicators.find(i => i.name === name);
+        return ind?.chartType || "line";
+      });
+    }
+
     return dataArray.map((jsonData, index) => {
       const indicatorName = namesArray[index] || jsonData.indicatorName;
-
+      const chartType = chartTypes[index] || "line";
       // Use custom color manager if available, otherwise fall back to default palette
       const color = window.getIndicatorColor
         ? window.getIndicatorColor(indicatorName, index)
@@ -243,12 +254,13 @@ class ChartCreator {
           y: item.rate,
         }));
 
-      return {
+      const dataset = {
         label: indicatorName,
         data: dataPoints,
+        type: chartType,
         borderColor: color,
         backgroundColor: color.replace("0.8", "0.1"),
-        fill: false,
+        fill: true,
         tension: 0.1,
         borderWidth: ChartCreator.CHART_CONFIG.ANIMATION.BORDER_WIDTH,
         pointRadius: ChartCreator.CHART_CONFIG.ANIMATION.POINT_RADIUS,
@@ -261,6 +273,13 @@ class ChartCreator {
         yAxisID: "y", // Single indicator always uses left axis
         spanGaps: false,
       };
+      // Adiciona opções específicas para barras
+      if (chartType === "bar") {
+        dataset.barThickness = 30;
+        dataset.categoryPercentage = 0.8;
+        dataset.barPercentage = 0.9;
+      }
+      return dataset;
     });
   }
 
@@ -312,9 +331,16 @@ class ChartCreator {
         y: dataMap.has(date) ? dataMap.get(date) : null,
       }));
 
-      return {
+      // Busca tipo do indicador
+      let chartType = "line";
+      if (window.chartManager && window.chartManager.indicatorsConfig) {
+        const ind = window.chartManager.indicatorsConfig.indicators.find(i => i.name === indicatorName);
+        chartType = ind?.chartType || "line";
+      }
+      const dataset = {
         label: indicatorName,
         data: dataPoints,
+        type: chartType,
         borderColor: color,
         backgroundColor: color.replace("0.8", "0.1"),
         fill: false,
@@ -330,6 +356,13 @@ class ChartCreator {
         yAxisID: yAxisID,
         spanGaps: true, // Desenha linha sobre pontos nulos
       };
+      // Adiciona opções específicas para barras
+      if (chartType === "bar") {
+        dataset.barThickness = 30;
+        dataset.categoryPercentage = 0.8;
+        dataset.barPercentage = 0.9;
+      }
+      return dataset;
     });
   }
 
@@ -342,9 +375,18 @@ class ChartCreator {
     themeColors,
     isDark,
     timeRange = null,
+    chartType = "line"
   ) {
+    // Se todos os tipos forem iguais, define type global, senão omite
+    let globalType = chartType;
+    if (Array.isArray(datasets) && datasets.length > 1) {
+      const allTypes = datasets.map(ds => ds.type);
+      globalType = allTypes.every(t => t === allTypes[0]) ? allTypes[0] : undefined;
+    }
+    // Detecta se há pelo menos um dataset do tipo 'bar'
+    const hasBar = Array.isArray(datasets) && datasets.some(ds => ds.type === 'bar');
     return {
-      type: "line",
+      ...(globalType ? { type: globalType } : {}),
       data: { datasets },
       options: {
         plugins: {
@@ -353,7 +395,7 @@ class ChartCreator {
             datasets,
             themeColors,
           ),
-          annotation: { annotations: this.createGovernmentAnnotations(isDark) },
+          annotation: { annotations: this.createGovernmentAnnotations(isDark, hasBar ? 'bar' : chartType) },
           title: this.createTitleConfig(
             isMultipleIndicators,
             namesArray,
@@ -457,24 +499,34 @@ class ChartCreator {
   }
 
   // Cria anotações dos períodos governamentais
-  createGovernmentAnnotations(isDark) {
+  createGovernmentAnnotations(isDark, chartType = "line") {
     const annotations = {};
-
     ChartCreator.GOVERNMENT_PERIODS.forEach((gov) => {
-      // Caixa de fundo
+      let xMin = gov.start;
+      let xMax = gov.end;
+      let xValue = gov.labelPos;
+      // Ajuste para gráfico de barra: desloca xMin para alinhar com o início da barra
+      if (chartType === "bar") {
+        // Subtrai 6 meses do início e do fim para alinhar o box
+        const minDate = new Date(gov.start);
+        minDate.setMonth(minDate.getMonth() - 6);
+        xMin = minDate.toISOString().slice(0, 10);
+        const maxDate = new Date(gov.end);
+        maxDate.setMonth(maxDate.getMonth() - 6);
+        xMax = maxDate.toISOString().slice(0, 10);
+        // Opcional: ajustar xValue do label se necessário
+      }
       annotations[`${gov.id}_box`] = {
         type: "box",
-        xMin: gov.start,
-        xMax: gov.end,
+        xMin,
+        xMax,
         backgroundColor: gov.color,
         borderColor: gov.border,
         borderWidth: 1,
       };
-
-      // Rótulo
       annotations[`${gov.id}_label`] = {
         type: "label",
-        xValue: gov.labelPos,
+        xValue,
         yValue: "max",
         content: [gov.label],
         backgroundColor: gov.border,
@@ -484,7 +536,6 @@ class ChartCreator {
         borderRadius: 4,
       };
     });
-
     return annotations;
   }
 
@@ -594,6 +645,7 @@ class ChartCreator {
     timeRange = null,
   ) {
     const yAxisTitle = dataArray[0].yAxisTitle || "Taxa (%)";
+    const hasBar = Array.isArray(datasets) && datasets.some(ds => ds.type === 'bar');
 
     const scales = {
       x: {
@@ -604,6 +656,7 @@ class ChartCreator {
             year: ChartCreator.CHART_CONFIG.DISPLAY_FORMAT.YEAR,
           },
         },
+        offset: hasBar,
         title: { display: true, text: "Ano", color: themeColors.axisLabel },
         ticks: {
           color: themeColors.ticks,

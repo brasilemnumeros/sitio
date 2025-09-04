@@ -2,49 +2,68 @@
   "indicators": [
     {
       "id": "selic-meta-acum-12m",
-      "name": "🏦 Taxa Selic Meta (%)",
+      "name": "Taxa Selic Meta (%)",
       "granularity": "Acumulado 12 meses",
       "datafile": "https://brasilemnumeros.github.io/dados/selic/selic-meta-acum-12m.json",
       "description": "Taxa básica de juros da economia brasileira definida pelo Banco Central, acumulada nos últimos 12 meses",
       "source": "Banco Central do Brasil",
-      "chartType": "line"
+      "chartType": "line",
+      "group": "monetary"
     },
     {
       "id": "selic-over-acum-12m",
-      "name": "🏦 Taxa Selic Over (%)",
+      "name": "Taxa Selic Over (%)",
       "granularity": "Acumulado 12 meses",
       "datafile": "https://brasilemnumeros.github.io/dados/selic/selic-over-acum-12m.json",
       "description": "Taxa de juros efetiva do mercado, acumulada nos últimos 12 meses",
       "source": "Banco Central do Brasil",
-      "chartType": "line"
+      "chartType": "line",
+      "group": "monetary"
     },
     {
       "id": "ipca-acum-12m",
-      "name": "📈 IPCA (%)",
+      "name": "IPCA (%)",
       "granularity": "Acumulado 12 meses",
       "datafile": "https://brasilemnumeros.github.io/dados/ipca/ipca-acum-12m.json",
       "description": "Variação acumulada do Índice de Preços ao Consumidor Amplo (IPCA) em 12 meses",
       "source": "Banco Central do Brasil",
-      "chartType": "line"
+      "chartType": "line",
+      "group": "inflation"
     },
     {
       "id": "igpm-acum-12m",
-      "name": "📊 IGP-M (%)",
+      "name": "IGP-M (%)",
       "granularity": "Acumulado 12 meses",
       "datafile": "https://brasilemnumeros.github.io/dados/igp-m/igpm-acum-12m.json",
       "description": "Variação acumulada do Índice Geral de Preços do Mercado (IGP-M) em 12 meses",
       "source": "Banco Central do Brasil",
-      "chartType": "line"
+      "chartType": "line",
+      "group": "inflation"
     },
     {
       "id": "pib-real-anual",
-      "name": "📊 PIB Real (%)",
+      "name": "PIB Real (%)",
       "granularity": "Anual",
       "datafile": "https://brasilemnumeros.github.io/dados/pib/pib-real-anual.json",
       "description": "Variação do Produto Interno Bruto (PIB) em termos reais, desconsiderando a inflação.",
       "source": "Banco Central do Brasil",
-      "chartType": "bar"
+      "chartType": "bar",
+      "group": "growth"
     }
   ],
+  "groups": {
+    "monetary": {
+      "name": "🏦 Política Monetária",
+      "description": "Indicadores relacionados à política monetária do Banco Central"
+    },
+    "inflation": {
+      "name": "📈 Inflação",
+      "description": "Indicadores de variação de preços na economia"
+    },
+    "growth": {
+      "name": "📊 Crescimento Econômico",
+      "description": "Indicadores de crescimento e atividade econômica"
+    }
+  },
   "defaultIndicator": "selic-meta-acum-12m"
 }

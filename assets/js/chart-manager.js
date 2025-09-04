@@ -179,7 +179,7 @@ class ChartManager {
   getGranularityForIndicator(indicatorName, dataArray, index) {
     // Primeiro tenta encontrar na configuração
     if (this.indicatorsConfig?.indicators) {
-      const cleanName = indicatorName.replace(/^[🏦📈]\s/, "");
+      const cleanName = indicatorName;
       const indicator = this.indicatorsConfig.indicators.find(
         (ind) => ind.name === indicatorName || ind.name.includes(cleanName),
       );

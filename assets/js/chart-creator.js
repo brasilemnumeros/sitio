@@ -7,7 +7,7 @@ class ChartCreator {
   static getResponsiveBarConfig() {
     const isMobile = window.innerWidth <= 768;
     const isTablet = window.innerWidth <= 1024;
-    
+
     if (isMobile) {
       return {
         barThickness: 12, // Barras mais finas no mobile

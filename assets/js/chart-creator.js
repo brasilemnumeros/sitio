@@ -3,6 +3,32 @@
  */
 
 class ChartCreator {
+  // Método para configurações responsivas de barras
+  static getResponsiveBarConfig() {
+    const isMobile = window.innerWidth <= 768;
+    const isTablet = window.innerWidth <= 1024;
+    
+    if (isMobile) {
+      return {
+        barThickness: 12, // Barras mais finas no mobile
+        categoryPercentage: 0.6,
+        barPercentage: 0.7,
+      };
+    } else if (isTablet) {
+      return {
+        barThickness: 20,
+        categoryPercentage: 0.7,
+        barPercentage: 0.8,
+      };
+    } else {
+      return {
+        barThickness: 30,
+        categoryPercentage: 0.8,
+        barPercentage: 0.9,
+      };
+    }
+  }
+
   // Configurações do gráfico
   static CHART_CONFIG = {
     TIME_RANGE: {
@@ -340,9 +366,10 @@ class ChartCreator {
       };
       // Adiciona opções específicas para barras
       if (chartType === "bar") {
-        dataset.barThickness = 30;
-        dataset.categoryPercentage = 0.8;
-        dataset.barPercentage = 0.9;
+        const barConfig = ChartCreator.getResponsiveBarConfig();
+        dataset.barThickness = barConfig.barThickness;
+        dataset.categoryPercentage = barConfig.categoryPercentage;
+        dataset.barPercentage = barConfig.barPercentage;
       }
       return dataset;
     });
@@ -488,9 +515,10 @@ class ChartCreator {
 
       // Adiciona opções específicas para barras
       if (chartType === "bar") {
-        dataset.barThickness = 30;
-        dataset.categoryPercentage = 0.8;
-        dataset.barPercentage = 0.9;
+        const barConfig = ChartCreator.getResponsiveBarConfig();
+        dataset.barThickness = barConfig.barThickness;
+        dataset.categoryPercentage = barConfig.categoryPercentage;
+        dataset.barPercentage = barConfig.barPercentage;
       }
       return dataset;
     });
@@ -644,9 +672,10 @@ class ChartCreator {
 
       // Adiciona opções específicas para barras
       if (chartType === "bar") {
-        dataset.barThickness = 30;
-        dataset.categoryPercentage = 0.8;
-        dataset.barPercentage = 0.9;
+        const barConfig = ChartCreator.getResponsiveBarConfig();
+        dataset.barThickness = barConfig.barThickness;
+        dataset.categoryPercentage = barConfig.categoryPercentage;
+        dataset.barPercentage = barConfig.barPercentage;
       }
       return dataset;
     });

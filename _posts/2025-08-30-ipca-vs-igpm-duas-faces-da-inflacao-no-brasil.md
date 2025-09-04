@@ -5,8 +5,6 @@ categories: [analises]
 tags: [igpm, inflacao, economia]
 ---
 
-# IPCA vs. IGP-M: As Duas Faces da Inflação no Brasil
-
 Quando ligamos o noticiário, a palavra "inflação" surge quase como um mantra. Mas você sabia que existem diferentes "inflações"? No Brasil, duas delas se destacam e frequentemente geram confusão: o **IPCA**, a inflação oficial que mede o custo de vida, e o **IGP-M**, a famosa "inflação do aluguel".
 
 Embora ambos meçam a variação de preços, eles raramente andam de mãos dadas. Suas diferenças contam uma história fascinante sobre a estrutura da nossa economia, sobre como os preços são formados e, o mais importante, sobre como eles impactam sua vida de maneiras distintas.

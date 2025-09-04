@@ -12,7 +12,7 @@ Em julho de 2025, um número domina as manchetes e as conversas sobre economia: 
 
 Antes de tudo, é crucial diferenciar os dois "sabores" da Selic:
 
-[![Selic Meta vs Selic Over](/assets/img/selic-meta-vs-selic-over.png)](/assets/img/selic-meta-vs-selic-over.png)
+[![Selic Meta vs Selic Over](/assets/img/selic-meta-vs-selic-over.webp)](/assets/img/selic-meta-vs-selic-over.webp)
 
 <p style="text-align: center; font-size: 0.85em; font-style: italic; margin-top: 0.5em;">
   <a href="{{ site.url }}/?indicators=selic-meta-acum-12m%2Cselic-over-acum-12m" class="text-blue-600 hover:text-blue-800 underline">Ver gráfico Selic Meta vs Selic Over</a>

@@ -40,6 +40,7 @@ class ChartIntegration {
       indicatorMap,
       forceClear = false,
       yAxisConfig = null,
+      valuesDisplayConfig = null,
     ) => {
       if (selectedIndicators.length === 0 || forceClear) {
         this.chartManager.clearChart();
@@ -73,6 +74,7 @@ class ChartIntegration {
           indicatorNames[0],
           yAxisConfig,
           timeRange,
+          valuesDisplayConfig,
         );
       } else {
         this.updateChartWithTimeFilter(
@@ -80,6 +82,7 @@ class ChartIntegration {
           indicatorNames,
           yAxisConfig,
           timeRange,
+          valuesDisplayConfig,
         );
       }
     };
@@ -255,7 +258,12 @@ class ChartIntegration {
     if (toYearSelect) toYearSelect.value = toYear;
   }
 
-  async updateChart(dataFiles, indicatorNames = null, yAxisConfig = null) {
+  async updateChart(
+    dataFiles,
+    indicatorNames = null,
+    yAxisConfig = null,
+    valuesDisplayConfig = null,
+  ) {
     const isMultipleFiles = Array.isArray(dataFiles);
     const filesArray = isMultipleFiles ? dataFiles : [dataFiles];
     const namesArray = isMultipleFiles ? indicatorNames : [indicatorNames];
@@ -309,6 +317,7 @@ class ChartIntegration {
               yAxisConfig,
               undefined,
               chartType,
+              valuesDisplayConfig,
             );
           } else {
             // Se múltiplos, usa o tipo do primeiro (padrão linha)
@@ -323,6 +332,7 @@ class ChartIntegration {
               yAxisConfig,
               undefined,
               chartType,
+              valuesDisplayConfig,
             );
           }
 
@@ -588,17 +598,16 @@ class ChartIntegration {
   async applyTimeFilter(startDate = null, endDate = null) {
     const currentIndicators = this.getCurrentIndicators();
     const config = window.indicatorsConfig;
-
     if (!currentIndicators.length || !config) {
       return;
     }
-
     // Get current Y-axis configuration
     const yAxisConfig = window.multiselectScope?.yAxisConfig || null;
-
+    // Preserve valuesDisplayConfig
+    const valuesDisplayConfig =
+      window.multiselectScope?.valuesDisplayConfig || {};
     // Store the time range for chart creation
     const timeRange = { startDate, endDate };
-
     // Get data files for current indicators
     const dataFiles = currentIndicators
       .map((name) => {
@@ -606,18 +615,17 @@ class ChartIntegration {
         return indicator ? indicator.datafile : null;
       })
       .filter(Boolean);
-
     if (dataFiles.length === 0) {
       return;
     }
-
-    // Load and recreate chart with time filtering
+    // Load and recreate chart with time filtering, always passing valuesDisplayConfig
     if (dataFiles.length === 1) {
       await this.updateChartWithTimeFilter(
         dataFiles[0],
         currentIndicators[0],
         yAxisConfig,
         timeRange,
+        valuesDisplayConfig,
       );
     } else {
       await this.updateChartWithTimeFilter(
@@ -625,6 +633,7 @@ class ChartIntegration {
         currentIndicators,
         yAxisConfig,
         timeRange,
+        valuesDisplayConfig,
       );
     }
   }
@@ -634,6 +643,7 @@ class ChartIntegration {
     indicatorNames = null,
     yAxisConfig = null,
     timeRange = null,
+    valuesDisplayConfig = null,
   ) {
     const isMultipleFiles = Array.isArray(dataFiles);
     const filesArray = isMultipleFiles ? dataFiles : [dataFiles];
@@ -672,6 +682,8 @@ class ChartIntegration {
             finalNames[0],
             yAxisConfig,
             timeRange,
+            "line",
+            valuesDisplayConfig,
           );
         } else {
           this.chartCreator.createChart(
@@ -679,6 +691,8 @@ class ChartIntegration {
             finalNames,
             yAxisConfig,
             timeRange,
+            "line",
+            valuesDisplayConfig,
           );
         }
 

@@ -3,7 +3,7 @@ layout: post
 title: "Novo Indicador no Ar: O Crescimento Real do Brasil (PIB Anual)"
 categories: [analises]
 tags: [pib, pib real, economia, crescimento economico]
-cover_image: /assets/img/pib-image-cover.webp
+image: /assets/img/pib-image-cover.webp
 ---
 
 Chegou a hora de adicionarmos ao nosso painel o indicador mais aguardado e comentado da economia: a **Taxa de Variação Anual do PIB Real**!

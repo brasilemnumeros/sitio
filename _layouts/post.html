@@ -72,10 +72,10 @@ layout: default
   <div class="shk-player" data-src="{{ page.audio }}"></div>
 </div>
 
-{% if page.cover_image %}
+{% if page.image %}
   <div class="flex justify-center">
     <img
-      src="{{ site.url }}{{ page.cover_image }}"
+      src="{{ site.url }}{{ page.image }}"
       alt="Capa do post: {{ page.title }}"
       class="mt-1 mb-1 h-auto max-w-full rounded-lg object-cover shadow"
       loading="lazy"

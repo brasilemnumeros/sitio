@@ -156,7 +156,7 @@ class ChartCreator {
     indicatorNames = null,
     yAxisConfig = null,
     timeRange = null,
-    chartType = "line"
+    chartType = "line",
   ) {
     const isMultipleIndicators = Array.isArray(jsonDataArray);
     let dataArray = isMultipleIndicators ? jsonDataArray : [jsonDataArray];
@@ -192,7 +192,7 @@ class ChartCreator {
       themeColors,
       isDark,
       timeRange,
-      chartType
+      chartType,
     );
 
     return this.renderChart(config);
@@ -218,39 +218,61 @@ class ChartCreator {
     // Para múltiplos indicadores, verifica se devem ser sincronizados ou não
     if (isMultipleIndicators && dataArray.length > 1) {
       // Verifica se todos os indicadores têm a mesma frequência
-      const frequencies = dataArray.map(data => this.detectFrequency(data));
-      const allSameFrequency = frequencies.every(freq => freq === frequencies[0]);
-      
+      const frequencies = dataArray.map((data) => this.detectFrequency(data));
+      const allSameFrequency = frequencies.every(
+        (freq) => freq === frequencies[0],
+      );
+
       // Verifica se há tipos mistos (linha + barra)
       let chartTypes = [];
       if (window.chartManager && window.chartManager.indicatorsConfig) {
-        chartTypes = namesArray.map(name => {
-          const ind = window.chartManager.indicatorsConfig.indicators.find(i => i.name === name);
+        chartTypes = namesArray.map((name) => {
+          const ind = window.chartManager.indicatorsConfig.indicators.find(
+            (i) => i.name === name,
+          );
           return ind?.chartType || "line";
         });
       }
       const hasMixedTypes = new Set(chartTypes).size > 1;
-      
-      if (allSameFrequency && frequencies[0] === 'monthly') {
+
+      if (allSameFrequency && frequencies[0] === "monthly") {
         // Se todos são mensais, usa sincronização para permitir tooltip agrupado
-        return this.createSynchronizedDatasets(dataArray, namesArray, yAxisConfig);
+        return this.createSynchronizedDatasets(
+          dataArray,
+          namesArray,
+          yAxisConfig,
+        );
       } else if (hasMixedTypes) {
         // Se há tipos mistos (linha + barra), também usa sincronização para melhor interação
-        return this.createSynchronizedDatasets(dataArray, namesArray, yAxisConfig);
+        return this.createSynchronizedDatasets(
+          dataArray,
+          namesArray,
+          yAxisConfig,
+        );
       } else if (isMultipleIndicators) {
         // Para múltiplos indicadores, sempre tenta sincronizar para tooltip unificado
-        return this.createSynchronizedDatasets(dataArray, namesArray, yAxisConfig);
+        return this.createSynchronizedDatasets(
+          dataArray,
+          namesArray,
+          yAxisConfig,
+        );
       } else {
         // Se frequências diferentes e tipos homogêneos, mantém dados separados
-        return this.createIndependentDatasets(dataArray, namesArray, yAxisConfig);
+        return this.createIndependentDatasets(
+          dataArray,
+          namesArray,
+          yAxisConfig,
+        );
       }
     }
 
     // Busca tipos dos indicadores
     let chartTypes = [];
     if (window.chartManager && window.chartManager.indicatorsConfig) {
-      chartTypes = namesArray.map(name => {
-        const ind = window.chartManager.indicatorsConfig.indicators.find(i => i.name === name);
+      chartTypes = namesArray.map((name) => {
+        const ind = window.chartManager.indicatorsConfig.indicators.find(
+          (i) => i.name === name,
+        );
         return ind?.chartType || "line";
       });
     }
@@ -258,37 +280,44 @@ class ChartCreator {
     return dataArray.map((jsonData, index) => {
       const indicatorName = namesArray[index] || jsonData.indicatorName;
       const chartType = chartTypes[index] || "line";
-      
+
       // Para gráficos de barra com dados anuais, centraliza no ano para evitar problemas de tooltip
-      const isAnnual = this.detectFrequency(jsonData) === 'annual';
-      
-      console.log(`Processing ${indicatorName}: isAnnual=${isAnnual}, chartType=${chartType}`);
-      
+      const isAnnual = this.detectFrequency(jsonData) === "annual";
+
+      console.log(
+        `Processing ${indicatorName}: isAnnual=${isAnnual}, chartType=${chartType}`,
+      );
+
       // Use custom color manager if available, otherwise fall back to default palette
       const color = window.getIndicatorColor
         ? window.getIndicatorColor(indicatorName, index)
         : ChartCreator.COLOR_PALETTE[index % ChartCreator.COLOR_PALETTE.length];
-      
+
       const dataPoints = jsonData.data
         .filter((item) => item.rate !== null)
         .map((item) => {
           let xValue = item.date;
-          
+
           // Para dados anuais, sempre centraliza no meio do ano (julho) para evitar deslocamento
           if (isAnnual) {
             // Extrai o ano diretamente da string para evitar problemas de timezone
-            const year = parseInt(item.date.split('-')[0]);
+            const year = parseInt(item.date.split("-")[0]);
             xValue = `${year}-07-01`;
-            console.log(`Converting: ${item.date} -> year: ${year} -> xValue: ${xValue}`);
+            console.log(
+              `Converting: ${item.date} -> year: ${year} -> xValue: ${xValue}`,
+            );
           }
-          
+
           return {
             x: xValue,
             y: item.rate,
           };
         });
 
-      console.log(`Final dataPoints for ${indicatorName}:`, dataPoints.slice(0, 3));
+      console.log(
+        `Final dataPoints for ${indicatorName}:`,
+        dataPoints.slice(0, 3),
+      );
 
       const dataset = {
         label: indicatorName,
@@ -321,55 +350,67 @@ class ChartCreator {
 
   // Detecta a frequência dos dados (mensal, anual, etc)
   detectFrequency(jsonData) {
-    if (!jsonData.data || jsonData.data.length < 2) return 'unknown';
-    
+    if (!jsonData.data || jsonData.data.length < 2) return "unknown";
+
     // Remove duplicatas e filtra dados válidos
     const uniqueData = [];
     const seenDates = new Set();
-    
-    jsonData.data.forEach(item => {
-      if (item.date && item.rate !== null && item.rate !== undefined && !seenDates.has(item.date)) {
+
+    jsonData.data.forEach((item) => {
+      if (
+        item.date &&
+        item.rate !== null &&
+        item.rate !== undefined &&
+        !seenDates.has(item.date)
+      ) {
         uniqueData.push(item);
         seenDates.add(item.date);
       }
     });
-    
-    if (uniqueData.length < 2) return 'unknown';
-    
+
+    if (uniqueData.length < 2) return "unknown";
+
     // Verifica se todas as datas têm o mesmo formato (todas em janeiro ou todas em julho)
     const months = new Set();
-    uniqueData.forEach(item => {
+    uniqueData.forEach((item) => {
       const date = new Date(item.date);
       months.add(date.getMonth());
     });
-    
+
     // Se todos os pontos estão no mesmo mês (janeiro ou julho), provavelmente são dados anuais
     if (months.size === 1 && (months.has(0) || months.has(6))) {
-      console.log(`Detected annual data for ${jsonData.indicatorName}: all ${uniqueData.length} unique dates in month ${Array.from(months)[0]} (January=0, July=6)`);
-      return 'annual';
+      console.log(
+        `Detected annual data for ${jsonData.indicatorName}: all ${uniqueData.length} unique dates in month ${Array.from(months)[0]} (January=0, July=6)`,
+      );
+      return "annual";
     }
-    
+
     // Calcula diferenças entre datas consecutivas usando dados únicos ordenados
     uniqueData.sort((a, b) => new Date(a.date) - new Date(b.date));
-    
+
     const intervals = [];
     for (let i = 1; i < Math.min(uniqueData.length, 10); i++) {
-      const date1 = new Date(uniqueData[i-1].date);
+      const date1 = new Date(uniqueData[i - 1].date);
       const date2 = new Date(uniqueData[i].date);
-      const diffMonths = (date2.getFullYear() - date1.getFullYear()) * 12 + 
-                        (date2.getMonth() - date1.getMonth());
+      const diffMonths =
+        (date2.getFullYear() - date1.getFullYear()) * 12 +
+        (date2.getMonth() - date1.getMonth());
       intervals.push(diffMonths);
     }
-    
+
     const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-    console.log(`Average interval for ${jsonData.indicatorName}: ${avgInterval} months (from ${intervals.length} intervals)`);
-    
+    console.log(
+      `Average interval for ${jsonData.indicatorName}: ${avgInterval} months (from ${intervals.length} intervals)`,
+    );
+
     if (avgInterval >= 11 && avgInterval <= 13) {
-      console.log(`Detected annual data for ${jsonData.indicatorName}: average interval ${avgInterval} months`);
-      return 'annual';
+      console.log(
+        `Detected annual data for ${jsonData.indicatorName}: average interval ${avgInterval} months`,
+      );
+      return "annual";
     }
-    if (avgInterval >= 0.8 && avgInterval <= 1.5) return 'monthly';
-    return 'other';
+    if (avgInterval >= 0.8 && avgInterval <= 1.5) return "monthly";
+    return "other";
   }
 
   // Cria datasets independentes (sem sincronização) para indicadores de frequências diferentes
@@ -392,35 +433,39 @@ class ChartCreator {
       // Busca tipo do indicador
       let chartType = "line";
       if (window.chartManager && window.chartManager.indicatorsConfig) {
-        const ind = window.chartManager.indicatorsConfig.indicators.find(i => i.name === indicatorName);
+        const ind = window.chartManager.indicatorsConfig.indicators.find(
+          (i) => i.name === indicatorName,
+        );
         chartType = ind?.chartType || "line";
       }
-      
+
       // Verifica se os dados são anuais
-      const isAnnual = this.detectFrequency(jsonData) === 'annual';
-      
+      const isAnnual = this.detectFrequency(jsonData) === "annual";
+
       // Cria array de dados ajustando as datas para garantir alinhamento correto
       const dataPoints = jsonData.data
         .filter((item) => item.rate !== null && item.rate !== undefined)
         .map((item) => {
           let xValue = item.date;
-          
+
           // Para dados anuais, sempre centraliza no meio do ano (julho) para evitar deslocamento
           if (isAnnual) {
             const date = new Date(item.date);
             const year = date.getFullYear();
             xValue = `${year}-07-01`;
-            
+
             // Debug: mostra a conversão
-            console.log(`Converting annual data (independent): ${item.date} (${item.rate}) -> ${xValue}`);
+            console.log(
+              `Converting annual data (independent): ${item.date} (${item.rate}) -> ${xValue}`,
+            );
           }
-          
+
           return {
             x: xValue,
             y: item.rate,
           };
         });
-      
+
       const dataset = {
         label: indicatorName,
         data: dataPoints,
@@ -440,7 +485,7 @@ class ChartCreator {
         yAxisID: yAxisID,
         spanGaps: false,
       };
-      
+
       // Adiciona opções específicas para barras
       if (chartType === "bar") {
         dataset.barThickness = 30;
@@ -453,35 +498,50 @@ class ChartCreator {
 
   // Cria datasets sincronizados para múltiplos indicadores da mesma frequência
   createSynchronizedDatasets(dataArray, namesArray, yAxisConfig = null) {
+    console.log("=== createSynchronizedDatasets called ===");
     // Coleta todas as datas onde qualquer indicador tem dados
     const allDatesSet = new Set();
-    const isAnnualData = dataArray.some(data => this.detectFrequency(data) === 'annual');
-    
+
+    // Detecta a frequência de cada dataset individualmente
+    const dataFrequencies = dataArray.map((data) => this.detectFrequency(data));
+    console.log("Data frequencies:", dataFrequencies);
+
     // Primeiro identifique todos os tipos de gráficos presentes
     let chartTypes = [];
     if (window.chartManager && window.chartManager.indicatorsConfig) {
-      chartTypes = namesArray.map(name => {
-        const ind = window.chartManager.indicatorsConfig.indicators.find(i => i.name === name);
+      chartTypes = namesArray.map((name) => {
+        const ind = window.chartManager.indicatorsConfig.indicators.find(
+          (i) => i.name === name,
+        );
         return ind?.chartType || "line";
       });
     }
-    const hasBarCharts = chartTypes.some(type => type === 'bar');
-    
+    const hasBarCharts = chartTypes.some((type) => type === "bar");
+
     dataArray.forEach((jsonData, idx) => {
       const chartType = chartTypes[idx] || "line";
-      
+      const isThisDataAnnual = dataFrequencies[idx] === "annual";
+      console.log(
+        `Processing dataset ${idx} (${namesArray[idx]}): isAnnual=${isThisDataAnnual}, chartType=${chartType}`,
+      );
+
       jsonData.data.forEach((item) => {
         if (item.rate !== null && item.rate !== undefined) {
-          if (isAnnualData) {
+          if (isThisDataAnnual) {
             // Para dados anuais, sempre centraliza no meio do ano
-            const date = new Date(item.date);
-            const year = date.getFullYear();
-            allDatesSet.add(`${year}-07-01`);
+            const year = parseInt(item.date.split("-")[0]);
+            const centeredDate = `${year}-07-01`;
+            allDatesSet.add(centeredDate);
+            console.log(`Annual data: ${item.date} -> ${centeredDate}`);
           } else {
             // Para dados mensais, normaliza para primeiro dia do mês
             const date = new Date(item.date);
-            const normalizedDate = new Date(date.getFullYear(), date.getMonth(), 1);
-            allDatesSet.add(normalizedDate.toISOString().split('T')[0]);
+            const normalizedDate = new Date(
+              date.getFullYear(),
+              date.getMonth(),
+              1,
+            );
+            allDatesSet.add(normalizedDate.toISOString().split("T")[0]);
           }
         }
       });
@@ -506,31 +566,41 @@ class ChartCreator {
 
       // Mapa dos dados originais
       const dataMap = new Map();
+      const isThisDatasetAnnual = dataFrequencies[index] === "annual";
+      console.log(
+        `Creating data map for ${indicatorName}: isAnnual=${isThisDatasetAnnual}`,
+      );
+
       jsonData.data.forEach((item) => {
         if (item.rate !== null && item.rate !== undefined) {
           // Busca tipo do indicador para este dataset
           let chartType = "line";
           if (window.chartManager && window.chartManager.indicatorsConfig) {
-            const ind = window.chartManager.indicatorsConfig.indicators.find(i => i.name === indicatorName);
+            const ind = window.chartManager.indicatorsConfig.indicators.find(
+              (i) => i.name === indicatorName,
+            );
             chartType = ind?.chartType || "line";
           }
-          
-          if (isAnnualData) {
+
+          if (isThisDatasetAnnual) {
             // Para dados anuais, sempre centraliza no meio do ano (julho) para evitar deslocamento
-            const date = new Date(item.date);
-            const year = date.getFullYear();
-            
-            // Para TODOS os dados anuais, usa data centralizada no ano (julho)
+            const year = parseInt(item.date.split("-")[0]);
             const normalizedDate = `${year}-07-01`;
             dataMap.set(normalizedDate, item.rate);
-            
-            // Debug: mostra a conversão
-            console.log(`Converting annual data (synchronized): ${item.date} (${item.rate}) -> ${normalizedDate}`);
+            console.log(
+              `Annual data (synchronized): ${item.date} (${item.rate}) -> ${normalizedDate}`,
+            );
           } else {
             // Para dados mensais, normaliza para primeiro dia do mês
             const date = new Date(item.date);
-            const normalizedDate = new Date(date.getFullYear(), date.getMonth(), 1);
-            const normalizedDateStr = normalizedDate.toISOString().split('T')[0];
+            const normalizedDate = new Date(
+              date.getFullYear(),
+              date.getMonth(),
+              1,
+            );
+            const normalizedDateStr = normalizedDate
+              .toISOString()
+              .split("T")[0];
             dataMap.set(normalizedDateStr, item.rate);
           }
         }
@@ -546,10 +616,12 @@ class ChartCreator {
       // Busca tipo do indicador
       let chartType = "line";
       if (window.chartManager && window.chartManager.indicatorsConfig) {
-        const ind = window.chartManager.indicatorsConfig.indicators.find(i => i.name === indicatorName);
+        const ind = window.chartManager.indicatorsConfig.indicators.find(
+          (i) => i.name === indicatorName,
+        );
         chartType = ind?.chartType || "line";
       }
-      
+
       const dataset = {
         label: indicatorName,
         data: dataPoints,
@@ -569,7 +641,7 @@ class ChartCreator {
         yAxisID: yAxisID,
         spanGaps: true, // Desenha linha sobre pontos nulos para dados sincronizados
       };
-      
+
       // Adiciona opções específicas para barras
       if (chartType === "bar") {
         dataset.barThickness = 30;
@@ -589,23 +661,28 @@ class ChartCreator {
     themeColors,
     isDark,
     timeRange = null,
-    chartType = "line"
+    chartType = "line",
   ) {
     // Detecta se os datasets foram sincronizados (mesma frequência) ou não
     const areSynchronized = this.detectIfSynchronized(datasets, dataArray);
-    
+
     // Se todos os tipos forem iguais, define type global, senão omite
     let globalType = chartType;
     if (Array.isArray(datasets) && datasets.length > 1) {
-      const allTypes = datasets.map(ds => ds.type);
-      globalType = allTypes.every(t => t === allTypes[0]) ? allTypes[0] : undefined;
+      const allTypes = datasets.map((ds) => ds.type);
+      globalType = allTypes.every((t) => t === allTypes[0])
+        ? allTypes[0]
+        : undefined;
     }
     // Detecta se há pelo menos um dataset do tipo 'bar'
-    const hasBar = Array.isArray(datasets) && datasets.some(ds => ds.type === 'bar');
-    
+    const hasBar =
+      Array.isArray(datasets) && datasets.some((ds) => ds.type === "bar");
+
     // Detecta se TODOS os dados são anuais (importante para a formatação do tooltip)
-    const allAnnualData = dataArray.length > 0 && dataArray.every(data => this.detectFrequency(data) === 'annual');
-    
+    const allAnnualData =
+      dataArray.length > 0 &&
+      dataArray.every((data) => this.detectFrequency(data) === "annual");
+
     // Armazena essa informação no chartManager para ser acessada pelo tooltip
     if (window.chartManager) {
       // Garante que seja um valor booleano explícito para evitar problemas de tipo
@@ -621,7 +698,12 @@ class ChartCreator {
             datasets,
             themeColors,
           ),
-          annotation: { annotations: this.createGovernmentAnnotations(isDark, hasBar ? 'bar' : chartType) },
+          annotation: {
+            annotations: this.createGovernmentAnnotations(
+              isDark,
+              hasBar ? "bar" : chartType,
+            ),
+          },
           title: this.createTitleConfig(
             isMultipleIndicators,
             namesArray,
@@ -663,17 +745,17 @@ class ChartCreator {
   // Detecta se os datasets foram sincronizados verificando se têm o mesmo número de pontos
   detectIfSynchronized(datasets, dataArray) {
     if (!Array.isArray(datasets) || datasets.length <= 1) return false;
-    
+
     // Verifica se há tipos mistos (linha + barra)
-    const types = datasets.map(ds => ds.type);
+    const types = datasets.map((ds) => ds.type);
     const hasMixedTypes = new Set(types).size > 1;
-    
+
     // Para tipos mistos, sempre usar modo index para facilitar interação
     if (hasMixedTypes) return true;
-    
+
     // Para múltiplos indicadores, sempre sincronizar para tooltip unificado
     if (datasets.length > 1) return true;
-    
+
     return false;
   }
 
@@ -776,7 +858,7 @@ class ChartCreator {
   createTooltipConfig(areSynchronized = false) {
     return {
       position: "nearest",
-      xAlign: "center", 
+      xAlign: "center",
       yAlign: "top",
       caretPadding: 10,
       mode: areSynchronized ? "index" : "nearest", // Mudando de "point" para "nearest"
@@ -788,15 +870,16 @@ class ChartCreator {
         title: (context) => {
           if (context.length === 0) return "";
           const date = new Date(context[0].parsed.x);
-          
+
           // Verifica explicitamente se todos os dados são anuais através do chartManager
-          const isAllAnnualData = window.chartManager && window.chartManager.isAnnualData === true;
-          
+          const isAllAnnualData =
+            window.chartManager && window.chartManager.isAnnualData === true;
+
           // Se TODOS os dados são anuais, sempre mostra apenas o ano
           if (isAllAnnualData) {
             return date.getFullYear().toString();
           }
-          
+
           // Para dados mensais, mostra mês e ano
           return date.toLocaleDateString("pt-BR", {
             year: "numeric",
@@ -812,7 +895,9 @@ class ChartCreator {
       },
       filter: (tooltipItem) => {
         // Só mostra itens que têm valores válidos
-        return tooltipItem.parsed.y !== null && tooltipItem.parsed.y !== undefined;
+        return (
+          tooltipItem.parsed.y !== null && tooltipItem.parsed.y !== undefined
+        );
       },
       external: this.createCustomTooltip,
     };
@@ -901,14 +986,18 @@ class ChartCreator {
     timeRange = null,
   ) {
     const yAxisTitle = dataArray[0].yAxisTitle || "Taxa (%)";
-    const hasBar = Array.isArray(datasets) && datasets.some(ds => ds.type === 'bar');
-    const hasMixedTypes = Array.isArray(datasets) && new Set(datasets.map(ds => ds.type)).size > 1;
-    
+    const hasBar =
+      Array.isArray(datasets) && datasets.some((ds) => ds.type === "bar");
+
     // Detecta se há dados anuais
-    const hasAnnualData = dataArray.some(data => this.detectFrequency(data) === 'annual');
-    
+    const hasAnnualData = dataArray.some(
+      (data) => this.detectFrequency(data) === "annual",
+    );
+
     // Detecta se TODOS os dados são anuais
-    const allAnnualData = dataArray.length > 0 && dataArray.every(data => this.detectFrequency(data) === 'annual');
+    const allAnnualData =
+      dataArray.length > 0 &&
+      dataArray.every((data) => this.detectFrequency(data) === "annual");
 
     const scales = {
       x: {
@@ -923,28 +1012,42 @@ class ChartCreator {
           // Removendo tooltipFormat para depender exclusivamente do callback
           minUnit: "year",
           // Para dados puramente anuais, não faz arredondamento para evitar gaps
-          round: allAnnualData ? false : (hasAnnualData && hasBar ? false : 'month'),
+          round: allAnnualData
+            ? false
+            : hasAnnualData && hasBar
+              ? false
+              : "month",
+          // Força o parsing de datas para sempre começar no início do ano
+          parser: false,
         },
         // Para dados anuais puros, não usa offset para evitar gaps
-        offset: allAnnualData ? false : (hasBar && !hasMixedTypes ? true : false),
+        offset: false, // Sempre false para manter linhas de grade alinhadas com labels
         title: { display: true, text: "Ano", color: themeColors.axisLabel },
         ticks: {
           color: themeColors.ticks,
           maxTicksLimit: 50,
           autoSkip: false,
-          source: 'auto',
-          callback: function(value, index, values) {
+          source: "auto",
+          // Para garantir que os ticks fiquem nos anos exatos
+          major: {
+            enabled: true,
+          },
+          callback: function (value, index, values) {
             const date = new Date(value);
             const year = date.getFullYear();
             return year;
           },
         },
-        grid: { 
+        grid: {
           color: themeColors.grid,
           display: true,
           drawBorder: true,
           drawOnChartArea: true,
           drawTicks: true,
+          // Força as linhas de grade a ficarem alinhadas com os ticks
+          offset: false,
+          // Para garantir que as linhas fiquem nos anos exatos
+          tickMarkLength: 0,
         },
       },
       y: {
@@ -977,29 +1080,31 @@ class ChartCreator {
       if (allAnnualData) {
         // Encontra a primeira e última data dos dados
         const allDates = [];
-        dataArray.forEach(data => {
-          data.data.forEach(item => {
+        dataArray.forEach((data) => {
+          data.data.forEach((item) => {
             if (item.date && item.rate !== null && item.rate !== undefined) {
               allDates.push(item.date);
             }
           });
         });
-        
+
         if (allDates.length > 0) {
           // Remove duplicatas e ordena
           const uniqueDates = [...new Set(allDates)].sort();
-          
+
           // Extrai anos diretamente das strings para evitar problemas de timezone
-          const firstYear = parseInt(uniqueDates[0].split('-')[0]);
-          const lastYear = parseInt(uniqueDates[uniqueDates.length - 1].split('-')[0]);
-          
+          const firstYear = parseInt(uniqueDates[0].split("-")[0]);
+          const lastYear = parseInt(
+            uniqueDates[uniqueDates.length - 1].split("-")[0],
+          );
+
           console.log("Annual data date range:", {
             firstDate: uniqueDates[0],
             lastDate: uniqueDates[uniqueDates.length - 1],
             firstYear,
-            lastYear
+            lastYear,
           });
-          
+
           // Para dados anuais, usa o início do primeiro ano e fim do último ano
           // para dar espaço aos dados centralizados em julho
           scales.x.min = `${firstYear}-01-01`; // Início do primeiro ano

@@ -298,24 +298,32 @@ class ChartIntegration {
           // Descobre o tipo de gráfico do(s) indicador(es)
           let chartType = "line";
           if (validData.length === 1) {
-            const indicatorObj = this.chartManager.indicatorsConfig?.indicators?.find(
-              (ind) => ind.name === finalNames[0]
-            );
+            const indicatorObj =
+              this.chartManager.indicatorsConfig?.indicators?.find(
+                (ind) => ind.name === finalNames[0],
+              );
             chartType = indicatorObj?.chartType || "line";
             this.chartCreator.createChart(
               validData[0],
               finalNames[0],
               yAxisConfig,
               undefined,
-              chartType
+              chartType,
             );
           } else {
             // Se múltiplos, usa o tipo do primeiro (padrão linha)
-            const indicatorObj = this.chartManager.indicatorsConfig?.indicators?.find(
-              (ind) => ind.name === finalNames[0]
-            );
+            const indicatorObj =
+              this.chartManager.indicatorsConfig?.indicators?.find(
+                (ind) => ind.name === finalNames[0],
+              );
             chartType = indicatorObj?.chartType || "line";
-            this.chartCreator.createChart(validData, finalNames, yAxisConfig, undefined, chartType);
+            this.chartCreator.createChart(
+              validData,
+              finalNames,
+              yAxisConfig,
+              undefined,
+              chartType,
+            );
           }
 
           // Update data source

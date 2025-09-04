@@ -37,13 +37,13 @@ Ao explorar a série histórica do PIB Real, você poderá identificar visualmen
 - As crises e "décadas perdidas" que marcaram nossa trajetória.
 - As recessões mais recentes e a velocidade das recuperações.
 
-**Dica de análise:** Que tal cruzar os dados? Compare os anos de baixo crescimento com os períodos de inflação alta (IPCA) ou juros elevados (Selic). Você começará a ver as conexões e entender a complexa dança da economia brasileira em nossa [**página de comparação de indicadores**](insira-o-link-para-a-pagina-de-comparacao-aqui).
+**Dica de análise:** Que tal cruzar os dados? Compare os anos de baixo crescimento com os períodos de inflação alta (IPCA) ou juros elevados (Selic). Você começará a ver as conexões e entender a complexa dança da economia brasileira em nossa [**comparação de indicadores**]({{ site.url }}/?indicators=pib-real-anual,selic-over-acum-12m,ipca-acum-12m).
 
 ---
 
 **Chega de conversa, vamos aos dados!**
 
-[**Acesse o gráfico do PIB Real aqui!**](insira-o-link-para-a-pagina-do-grafico-aqui)
+[**Acesse o gráfico do PIB Real aqui!**]({{ site.url }}/?indicators=pib-real-anual)
 
 O que você percebeu ao analisar a trajetória do Brasil? Qual período mais chamou sua atenção? Deixe sua opinião nos comentários!
 

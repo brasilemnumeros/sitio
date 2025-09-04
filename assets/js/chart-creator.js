@@ -2,6 +2,9 @@
  * Chart Creator - Responsável pela criação e configuração de gráficos
  */
 
+// Registra o plugin DataLabels globalmente, sem alterar o display global
+Chart.register(ChartDataLabels);
+
 class ChartCreator {
   // Método para configurações responsivas de barras
   static getResponsiveBarConfig() {
@@ -183,6 +186,7 @@ class ChartCreator {
     yAxisConfig = null,
     timeRange = null,
     chartType = "line",
+    valuesDisplayConfig = null,
   ) {
     const isMultipleIndicators = Array.isArray(jsonDataArray);
     let dataArray = isMultipleIndicators ? jsonDataArray : [jsonDataArray];
@@ -209,6 +213,7 @@ class ChartCreator {
       namesArray,
       isMultipleIndicators,
       yAxisConfig,
+      valuesDisplayConfig,
     );
     const config = this.createChartConfig(
       datasets,
@@ -219,6 +224,7 @@ class ChartCreator {
       isDark,
       timeRange,
       chartType,
+      valuesDisplayConfig,
     );
 
     return this.renderChart(config);
@@ -240,6 +246,7 @@ class ChartCreator {
     namesArray,
     isMultipleIndicators,
     yAxisConfig = null,
+    valuesDisplayConfig = null,
   ) {
     // Para múltiplos indicadores, verifica se devem ser sincronizados ou não
     if (isMultipleIndicators && dataArray.length > 1) {
@@ -267,6 +274,7 @@ class ChartCreator {
           dataArray,
           namesArray,
           yAxisConfig,
+          valuesDisplayConfig,
         );
       } else if (hasMixedTypes) {
         // Se há tipos mistos (linha + barra), também usa sincronização para melhor interação
@@ -274,6 +282,7 @@ class ChartCreator {
           dataArray,
           namesArray,
           yAxisConfig,
+          valuesDisplayConfig,
         );
       } else if (isMultipleIndicators) {
         // Para múltiplos indicadores, sempre tenta sincronizar para tooltip unificado
@@ -281,6 +290,7 @@ class ChartCreator {
           dataArray,
           namesArray,
           yAxisConfig,
+          valuesDisplayConfig,
         );
       } else {
         // Se frequências diferentes e tipos homogêneos, mantém dados separados
@@ -288,6 +298,7 @@ class ChartCreator {
           dataArray,
           namesArray,
           yAxisConfig,
+          valuesDisplayConfig,
         );
       }
     }
@@ -318,6 +329,10 @@ class ChartCreator {
       const color = window.getIndicatorColor
         ? window.getIndicatorColor(indicatorName, index)
         : ChartCreator.COLOR_PALETTE[index % ChartCreator.COLOR_PALETTE.length];
+
+      // Determina se os valores devem estar sempre visíveis
+      const showValuesAlways =
+        valuesDisplayConfig && valuesDisplayConfig[indicatorName] === "always";
 
       const dataPoints = jsonData.data
         .filter((item) => item.rate !== null)
@@ -354,7 +369,9 @@ class ChartCreator {
         fill: true,
         tension: 0.1,
         borderWidth: ChartCreator.CHART_CONFIG.ANIMATION.BORDER_WIDTH,
-        pointRadius: ChartCreator.CHART_CONFIG.ANIMATION.POINT_RADIUS,
+        pointRadius: showValuesAlways
+          ? 4
+          : ChartCreator.CHART_CONFIG.ANIMATION.POINT_RADIUS,
         pointHoverRadius:
           ChartCreator.CHART_CONFIG.ANIMATION.POINT_HOVER_RADIUS,
         pointBackgroundColor: color,
@@ -363,6 +380,23 @@ class ChartCreator {
           ChartCreator.CHART_CONFIG.ANIMATION.POINT_BORDER_WIDTH,
         yAxisID: "y", // Single indicator always uses left axis
         spanGaps: false,
+        // Plugin de data labels para exibir valores diretamente nos pontos
+        datalabels: showValuesAlways
+          ? {
+              display: true,
+              align: "top",
+              anchor: "end",
+              color: color.replace("0.8)", "1)"),
+              font: {
+                size: 10,
+                weight: "bold",
+              },
+              formatter: (value) => value.y?.toFixed(1) + "%",
+              clip: false,
+            }
+          : {
+              display: false,
+            },
       };
       // Adiciona opções específicas para barras
       if (chartType === "bar") {
@@ -441,7 +475,12 @@ class ChartCreator {
   }
 
   // Cria datasets independentes (sem sincronização) para indicadores de frequências diferentes
-  createIndependentDatasets(dataArray, namesArray, yAxisConfig = null) {
+  createIndependentDatasets(
+    dataArray,
+    namesArray,
+    yAxisConfig = null,
+    valuesDisplayConfig = null,
+  ) {
     console.log("=== createIndependentDatasets called ===");
     return dataArray.map((jsonData, index) => {
       const indicatorName = namesArray[index] || jsonData.indicatorName;
@@ -457,6 +496,10 @@ class ChartCreator {
         yAxisID = yAxisConfig[indicatorName] === "right" ? "y1" : "y";
       }
 
+      // Determina se os valores devem estar sempre visíveis
+      const showValuesAlways =
+        valuesDisplayConfig && valuesDisplayConfig[indicatorName] === "always";
+
       // Busca tipo do indicador
       let chartType = "line";
       if (window.chartManager && window.chartManager.indicatorsConfig) {
@@ -468,6 +511,10 @@ class ChartCreator {
 
       // Verifica se os dados são anuais
       const isAnnual = this.detectFrequency(jsonData) === "annual";
+
+      // Determina se os valores devem estar sempre visíveis
+      const showValuesAlwaysIndependent =
+        valuesDisplayConfig && valuesDisplayConfig[indicatorName] === "always";
 
       // Cria array de dados ajustando as datas para garantir alinhamento correto
       const dataPoints = jsonData.data
@@ -502,7 +549,9 @@ class ChartCreator {
         fill: false,
         tension: 0.1,
         borderWidth: ChartCreator.CHART_CONFIG.ANIMATION.BORDER_WIDTH,
-        pointRadius: ChartCreator.CHART_CONFIG.ANIMATION.POINT_RADIUS,
+        pointRadius: showValuesAlwaysIndependent
+          ? 4
+          : ChartCreator.CHART_CONFIG.ANIMATION.POINT_RADIUS,
         pointHoverRadius:
           ChartCreator.CHART_CONFIG.ANIMATION.POINT_HOVER_RADIUS,
         pointBackgroundColor: color,
@@ -511,6 +560,23 @@ class ChartCreator {
           ChartCreator.CHART_CONFIG.ANIMATION.POINT_BORDER_WIDTH,
         yAxisID: yAxisID,
         spanGaps: false,
+        // Plugin de data labels para exibir valores diretamente nos pontos
+        datalabels: showValuesAlwaysIndependent
+          ? {
+              display: true,
+              align: "top",
+              anchor: "end",
+              color: color.replace("0.8)", "1)"),
+              font: {
+                size: 10,
+                weight: "bold",
+              },
+              formatter: (value) => value.y?.toFixed(1) + "%",
+              clip: false,
+            }
+          : {
+              display: false,
+            },
       };
 
       // Adiciona opções específicas para barras
@@ -525,7 +591,12 @@ class ChartCreator {
   }
 
   // Cria datasets sincronizados para múltiplos indicadores da mesma frequência
-  createSynchronizedDatasets(dataArray, namesArray, yAxisConfig = null) {
+  createSynchronizedDatasets(
+    dataArray,
+    namesArray,
+    yAxisConfig = null,
+    valuesDisplayConfig = null,
+  ) {
     console.log("=== createSynchronizedDatasets called ===");
     // Coleta todas as datas onde qualquer indicador tem dados
     const allDatesSet = new Set();
@@ -591,6 +662,10 @@ class ChartCreator {
       if (yAxisConfig && yAxisConfig[indicatorName]) {
         yAxisID = yAxisConfig[indicatorName] === "right" ? "y1" : "y";
       }
+
+      // Determina se os valores devem estar sempre visíveis
+      const showValuesSynchronized =
+        valuesDisplayConfig && valuesDisplayConfig[indicatorName] === "always";
 
       // Mapa dos dados originais
       const dataMap = new Map();
@@ -659,7 +734,9 @@ class ChartCreator {
         fill: false,
         tension: 0.1,
         borderWidth: ChartCreator.CHART_CONFIG.ANIMATION.BORDER_WIDTH,
-        pointRadius: ChartCreator.CHART_CONFIG.ANIMATION.POINT_RADIUS,
+        pointRadius: showValuesSynchronized
+          ? 4
+          : ChartCreator.CHART_CONFIG.ANIMATION.POINT_RADIUS,
         pointHoverRadius:
           ChartCreator.CHART_CONFIG.ANIMATION.POINT_HOVER_RADIUS,
         pointBackgroundColor: color,
@@ -668,6 +745,24 @@ class ChartCreator {
           ChartCreator.CHART_CONFIG.ANIMATION.POINT_BORDER_WIDTH,
         yAxisID: yAxisID,
         spanGaps: true, // Desenha linha sobre pontos nulos para dados sincronizados
+        // Plugin de data labels para exibir valores diretamente nos pontos
+        datalabels: showValuesSynchronized
+          ? {
+              display: true,
+              align: "top",
+              anchor: "end",
+              color: color.replace("0.8)", "1)"),
+              font: {
+                size: 10,
+                weight: "bold",
+              },
+              formatter: (value) =>
+                value.y !== null ? value.y?.toFixed(1) + "%" : "",
+              clip: false,
+            }
+          : {
+              display: false,
+            },
       };
 
       // Adiciona opções específicas para barras
@@ -691,6 +786,7 @@ class ChartCreator {
     isDark,
     timeRange = null,
     chartType = "line",
+    valuesDisplayConfig = null,
   ) {
     // Detecta se os datasets foram sincronizados (mesma frequência) ou não
     const areSynchronized = this.detectIfSynchronized(datasets, dataArray);
@@ -740,6 +836,9 @@ class ChartCreator {
             themeColors,
           ),
           tooltip: this.createTooltipConfig(areSynchronized),
+          datalabels: {
+            display: false, // Controle individual por dataset
+          },
         },
         scales: this.createScalesConfig(
           isMultipleIndicators,

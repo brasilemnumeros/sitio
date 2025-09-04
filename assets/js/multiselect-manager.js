@@ -85,6 +85,14 @@ class MultiselectManager {
       map[ind.name] = ind.datafile;
       return map;
     }, {});
+
+    // Initialize valuesDisplayConfig if not already present
+    if (
+      !window.multiselectScope.valuesDisplayConfig ||
+      typeof window.multiselectScope.valuesDisplayConfig !== "object"
+    ) {
+      window.multiselectScope.valuesDisplayConfig = {};
+    }
   }
 
   static setupClickOutside() {

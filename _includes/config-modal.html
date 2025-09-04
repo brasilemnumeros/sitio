@@ -1,0 +1,449 @@
+<!-- Configuration Modal -->
+<div
+  v-scope="{ activeFilter: 'Todo o período', selectedIndicators: [], indicatorMap: {}, yAxisConfig: {}, valuesDisplayConfig: {} }"
+  id="config-modal"
+  class="config-modal fixed inset-0 z-50 flex items-center justify-center bg-gray-900/30"
+  @click.self="document.getElementById('config-modal').classList.remove('show');"
+  @vue:mounted="
+    // Escuta evento customizado para sincronizar dados do escopo principal
+    $el.addEventListener('sync-modal-data', (e) => {
+      const d = e.detail;
+      selectedIndicators = d.selectedIndicators || [];
+      indicatorMap = d.indicatorMap || {};
+      yAxisConfig = d.yAxisConfig || {};
+      valuesDisplayConfig = d.valuesDisplayConfig && typeof d.valuesDisplayConfig === 'object' ? d.valuesDisplayConfig : {};
+      activeFilter = d.activeFilter || 'Todo o período';
+    });
+  "
+>
+  <div class="mx-4 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl dark:bg-gray-800">
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
+      <h3 class="text-lg font-semibold text-gray-900 dark:text-white">⚙️ Configurações</h3>
+      <button
+        onclick="              document.getElementById('config-modal').classList.remove('show');"
+        class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+      >
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Modal Content -->
+    <div class="space-y-6 p-4">
+      <!-- Debug Info removido -->
+
+      <!-- Chart Customization -->
+      <div v-if="selectedIndicators && selectedIndicators.length > 0">
+        <h4 class="text-md mb-3 font-medium text-gray-900 dark:text-white">📊 Customização das Linhas</h4>
+
+        <!-- Table-like structure -->
+        <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600">
+          <!-- Table Header -->
+          <div
+            class="grid grid-cols-4 gap-0 bg-gray-100 dark:bg-gray-700"
+            style="grid-template-columns: 2fr 1fr 1.5fr 1.5fr;"
+          >
+            <div class="px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300">Indicador</div>
+            <div class="px-4 py-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300">Cor</div>
+            <div class="px-4 py-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300">Eixo Y</div>
+            <div class="px-4 py-3 text-center text-sm font-medium text-gray-700 dark:text-gray-300">Valores</div>
+          </div>
+
+          <!-- Table Body -->
+          <div class="divide-y divide-gray-200 dark:divide-gray-600">
+            <div
+              v-for="indicator in selectedIndicators"
+              :key="indicator"
+              class="grid grid-cols-4 items-center bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700"
+              style="grid-template-columns: 2fr 1fr 1.5fr 1.5fr;"
+            >
+              <!-- Indicador -->
+              <div class="px-4 py-3">
+                <span class="text-sm text-gray-700 dark:text-gray-300" v-text="indicator"></span>
+              </div>
+              <!-- Cor -->
+              <div class="flex justify-center px-4 py-3">
+                <input
+                  type="color"
+                  :value="window.getIndicatorHexColor ? window.getIndicatorHexColor(indicator, selectedIndicators.indexOf(indicator)) : '#3b82f6'"
+                  @input="window.setIndicatorColor && window.setIndicatorColor(indicator, $event.target.value)"
+                  class="h-8 w-8 cursor-pointer rounded border border-gray-300 dark:border-gray-600"
+                  title="Cor da linha"
+                >
+              </div>
+              <!-- Eixo Y -->
+              <div class="flex justify-center px-4 py-3">
+                <div class="flex rounded border border-gray-300 dark:border-gray-600">
+                  <button
+                    @click="
+                      yAxisConfig[indicator] = 'left';
+                      if (window.multiselectScope) {
+                        window.multiselectScope.yAxisConfig[indicator] = 'left';
+                      }
+                      window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, false, yAxisConfig, valuesDisplayConfig);
+                    "
+                    :class="
+                      {
+                        'bg-blue-500 text-white': (yAxisConfig[indicator] || 'left') === 'left',
+                        'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500': (yAxisConfig[indicator] || 'left') !== 'left'
+                      }
+                    "
+                    class="border-r border-gray-300 px-2 py-1 text-xs font-medium transition-colors dark:border-gray-600"
+                    title="Eixo Y Esquerdo"
+                  >
+                    ⬅️ Esquerdo
+                  </button>
+                  <button
+                    @click="
+                      yAxisConfig[indicator] = 'right';
+                      if (window.multiselectScope) {
+                        window.multiselectScope.yAxisConfig[indicator] = 'right';
+                      }
+                      window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, false, yAxisConfig, valuesDisplayConfig);
+                    "
+                    :class="
+                      {
+                        'bg-blue-500 text-white': (yAxisConfig[indicator] || 'left') === 'right',
+                        'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500': (yAxisConfig[indicator] || 'left') !== 'right'
+                      }
+                    "
+                    class="px-2 py-1 text-xs font-medium transition-colors"
+                    title="Eixo Y Direito"
+                  >
+                    ➡️ Direito
+                  </button>
+                </div>
+              </div>
+              <!-- Valores -->
+              <div class="flex justify-center px-4 py-3">
+                <button
+                  @click="
+                    if ((valuesDisplayConfig[indicator] || 'hover') === 'always') {
+                      valuesDisplayConfig[indicator] = 'hover';
+                      if (window.multiselectScope) {
+                        if (!window.multiselectScope.valuesDisplayConfig || typeof window.multiselectScope.valuesDisplayConfig !== 'object') {
+                          window.multiselectScope.valuesDisplayConfig = {};
+                        }
+                        window.multiselectScope.valuesDisplayConfig[indicator] = 'hover';
+                      }
+                    } else {
+                      valuesDisplayConfig[indicator] = 'always';
+                      if (window.multiselectScope) {
+                        if (!window.multiselectScope.valuesDisplayConfig || typeof window.multiselectScope.valuesDisplayConfig !== 'object') {
+                          window.multiselectScope.valuesDisplayConfig = {};
+                        }
+                        window.multiselectScope.valuesDisplayConfig[indicator] = 'always';
+                      }
+                    }
+                    window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, false, yAxisConfig, valuesDisplayConfig);
+                  "
+                  :class="
+                    {
+                      'bg-blue-500 text-white': (valuesDisplayConfig[indicator] || 'hover') === 'always',
+                      'bg-white text-gray-700 hover:bg-gray-50 dark:bg-gray-600 dark:text-gray-300 dark:hover:bg-gray-500': (valuesDisplayConfig[indicator] || 'hover') !== 'always'
+                    }
+                  "
+                  class="rounded border border-gray-300 px-2 py-1 text-xs font-medium transition-colors dark:border-gray-600"
+                  title="Alterna entre sempre visível e apenas no hover"
+                >
+                  👁️ Sempre visível
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time Filters -->
+      <div>
+        <h4 class="text-md mb-3 font-medium text-gray-900 dark:text-white">📅 Filtros de Tempo</h4>
+
+        <!-- Government Periods -->
+        <div class="mb-4">
+          <h5 class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Períodos de Governo</h5>
+          <div class="grid grid-cols-2 gap-2 lg:grid-cols-3">
+            <button
+              @click="
+                if (activeFilter === 'FHC') {
+                  activeFilter = 'Todo o período';
+                  if (window.resetDateFilter) window.resetDateFilter();
+                } else {
+                  activeFilter = 'FHC';
+                  if (window.applyDateRange) window.applyDateRange('1995-01-01', '2003-01-01');
+                  if (window.chartIntegration) window.chartIntegration.updateTimeRangeURL(null, null, 'FHC');
+                }
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'FHC',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'FHC'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              FHC (1995-2002)
+            </button>
+
+            <button
+              @click="
+                activeFilter = 'Lula I';
+                if (window.applyDateRange) window.applyDateRange('2003-01-01', '2011-01-01');
+                if (window.chartIntegration) window.chartIntegration.updateTimeRangeURL(null, null, 'Lula');
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Lula I',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Lula I'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Lula (2003-2010)
+            </button>
+
+            <button
+              @click="
+                if (activeFilter === 'Dilma') {
+                  activeFilter = 'Todo o período';
+                  if (window.resetDateFilter) window.resetDateFilter();
+                } else {
+                  activeFilter = 'Dilma';
+                  if (window.applyDateRange) window.applyDateRange('2011-01-01', '2016-08-01');
+                  if (window.chartIntegration) window.chartIntegration.updateTimeRangeURL(null, null, 'Dilma');
+                }
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Dilma',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Dilma'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Dilma (2011-2016)
+            </button>
+
+            <button
+              @click="
+                if (activeFilter === 'Temer') {
+                  activeFilter = 'Todo o período';
+                  if (window.resetDateFilter) window.resetDateFilter();
+                } else {
+                  activeFilter = 'Temer';
+                  if (window.applyDateRange) window.applyDateRange('2016-08-01', '2019-01-01');
+                  if (window.chartIntegration) window.chartIntegration.updateTimeRangeURL(null, null, 'Temer');
+                }
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Temer',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Temer'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Temer (2016-2018)
+            </button>
+
+            <button
+              @click="
+                if (activeFilter === 'Bolsonaro') {
+                  activeFilter = 'Todo o período';
+                  if (window.resetDateFilter) window.resetDateFilter();
+                } else {
+                  activeFilter = 'Bolsonaro';
+                  if (window.applyDateRange) window.applyDateRange('2019-01-01', '2023-01-01');
+                  if (window.chartIntegration) window.chartIntegration.updateTimeRangeURL(null, null, 'Bolsonaro');
+                }
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Bolsonaro',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Bolsonaro'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Bolsonaro (2019-2022)
+            </button>
+
+            <button
+              @click="
+                activeFilter = 'Lula II';
+                if (window.applyDateRange) window.applyDateRange('2023-01-01', '2025-12-31');
+                if (window.chartIntegration) window.chartIntegration.updateTimeRangeURL(null, null, 'Lula 3');
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Lula II',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Lula II'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Lula II (2023-atual)
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Filters -->
+        <div class="mb-4">
+          <h5 class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Filtros Rápidos</h5>
+          <div class="grid grid-cols-2 gap-2 lg:grid-cols-3">
+            <button
+              @click="
+                if (activeFilter === 'Último ano') {
+                  activeFilter = 'Todo o período';
+                  if (window.resetDateFilter) window.resetDateFilter();
+                } else {
+                  activeFilter = 'Último ano';
+                  if (window.applyRelativePeriod) window.applyRelativePeriod(1);
+                }
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Último ano',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Último ano'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Último ano
+            </button>
+
+            <button
+              @click="
+                if (activeFilter === 'Últimos 3 anos') {
+                  activeFilter = 'Todo o período';
+                  if (window.resetDateFilter) window.resetDateFilter();
+                } else {
+                  activeFilter = 'Últimos 3 anos';
+                  if (window.applyRelativePeriod) window.applyRelativePeriod(3);
+                }
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Últimos 3 anos',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Últimos 3 anos'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Últimos 3 anos
+            </button>
+
+            <button
+              @click="
+                if (activeFilter === 'Últimos 5 anos') {
+                  activeFilter = 'Todo o período';
+                  if (window.resetDateFilter) window.resetDateFilter();
+                } else {
+                  activeFilter = 'Últimos 5 anos';
+                  if (window.applyRelativePeriod) window.applyRelativePeriod(5);
+                }
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Últimos 5 anos',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Últimos 5 anos'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Últimos 5 anos
+            </button>
+
+            <button
+              @click="
+                if (activeFilter === 'Últimos 10 anos') {
+                  activeFilter = 'Todo o período';
+                  if (window.resetDateFilter) window.resetDateFilter();
+                } else {
+                  activeFilter = 'Últimos 10 anos';
+                  if (window.applyRelativePeriod) window.applyRelativePeriod(10);
+                }
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Últimos 10 anos',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Últimos 10 anos'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Últimos 10 anos
+            </button>
+
+            <button
+              @click="
+                activeFilter = 'Todo o período';
+                if (window.resetDateFilter) window.resetDateFilter();
+              "
+              :class="
+                {
+                  'bg-blue-600 text-white border-blue-600': activeFilter === 'Todo o período',
+                  'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600': activeFilter !== 'Todo o período'
+                }
+              "
+              class="period-btn rounded-md border px-3 py-2 text-xs transition-colors duration-200 hover:border-blue-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Todo o período
+            </button>
+          </div>
+        </div>
+
+        <!-- Custom Period -->
+        <div>
+          <h5 class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">Período Personalizado</h5>
+          <div class="flex flex-wrap items-center gap-2">
+            <div class="flex items-center gap-1">
+              <label class="text-xs text-gray-600 dark:text-gray-400">De:</label>
+              <select
+                id="start-year"
+                class="rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+              >
+                <option value="">Ano</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-1">
+              <label class="text-xs text-gray-600 dark:text-gray-400">Até:</label>
+              <select
+                id="end-year"
+                class="rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+              >
+                <option value="">Ano</option>
+              </select>
+            </div>
+            <button
+              id="apply-custom-range"
+              @click="
+                const fromYear = document.getElementById('start-year').value;
+                const toYear = document.getElementById('end-year').value;
+                if (fromYear && toYear && parseInt(fromYear) <= parseInt(toYear)) {
+                  activeFilter = fromYear + '-' + toYear;
+                  if (window.applyDateRange) window.applyDateRange(fromYear + '-01-01', toYear + '-12-31');
+                  if (window.chartIntegration) window.chartIntegration.updateTimeRangeURL(null, null, fromYear + '-' + toYear);
+                }
+              "
+              class="rounded bg-blue-600 px-3 py-1 text-xs text-white transition-colors hover:bg-blue-700 focus:bg-blue-700 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+            >
+              Aplicar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="flex justify-end border-t border-gray-200 p-4 dark:border-gray-700">
+      <button
+        onclick="              document.getElementById('config-modal').classList.remove('show');"
+        class="rounded-md bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+      >
+        Fechar
+      </button>
+    </div>
+  </div>
+</div>

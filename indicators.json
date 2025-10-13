@@ -8,7 +8,13 @@
       "description": "Taxa básica de juros da economia brasileira definida pelo Banco Central, acumulada nos últimos 12 meses",
       "source": "Banco Central do Brasil",
       "chartType": "line",
-      "group": "monetary"
+      "group": "monetary",
+      "unit": {
+        "type": "percentage",
+        "symbol": "%",
+        "decimals": 2
+      },
+      "yAxisTitle": "Taxa (%)"
     },
     {
       "id": "selic-over-acum-12m",
@@ -18,7 +24,13 @@
       "description": "Taxa de juros efetiva do mercado, acumulada nos últimos 12 meses",
       "source": "Banco Central do Brasil",
       "chartType": "line",
-      "group": "monetary"
+      "group": "monetary",
+      "unit": {
+        "type": "percentage",
+        "symbol": "%",
+        "decimals": 2
+      },
+      "yAxisTitle": "Taxa (%)"
     },
     {
       "id": "ipca-acum-12m",
@@ -28,7 +40,13 @@
       "description": "Variação acumulada do Índice de Preços ao Consumidor Amplo (IPCA) em 12 meses",
       "source": "Banco Central do Brasil",
       "chartType": "line",
-      "group": "inflation"
+      "group": "inflation",
+      "unit": {
+        "type": "percentage",
+        "symbol": "%",
+        "decimals": 2
+      },
+      "yAxisTitle": "Variação (%)"
     },
     {
       "id": "igpm-acum-12m",
@@ -38,7 +56,13 @@
       "description": "Variação acumulada do Índice Geral de Preços do Mercado (IGP-M) em 12 meses",
       "source": "Banco Central do Brasil",
       "chartType": "line",
-      "group": "inflation"
+      "group": "inflation",
+      "unit": {
+        "type": "percentage",
+        "symbol": "%",
+        "decimals": 2
+      },
+      "yAxisTitle": "Variação (%)"
     },
     {
       "id": "pib-real-anual",
@@ -48,7 +72,47 @@
       "description": "Variação do Produto Interno Bruto (PIB) em termos reais, desconsiderando a inflação.",
       "source": "Banco Central do Brasil",
       "chartType": "bar",
-      "group": "growth"
+      "group": "growth",
+      "unit": {
+        "type": "percentage",
+        "symbol": "%",
+        "decimals": 2
+      },
+      "yAxisTitle": "Crescimento (%)"
+    },
+    {
+      "id": "mvgr-nominal",
+      "name": "MVG-R Nominal (R$)",
+      "granularity": "Mensal",
+      "datafile": "https://brasilemnumeros.github.io/dados/mvgr/mvgr-nominal.json",
+      "description": "Mediana dos Valores de Garantia de Imóveis Residenciais Financiados (MVG-R) em Reais (R$)",
+      "source": "Banco Central do Brasil - Desig (Departamento de Monitoramento do Sistema Financeiro)",
+      "chartType": "line",
+      "group": "real-estate",
+      "unit": {
+        "type": "currency",
+        "symbol": "R$",
+        "decimals": 0,
+        "locale": "pt-BR"
+      },
+      "yAxisTitle": "Valor (R$)"
+    },
+    {
+      "id": "mvgr-real",
+      "name": "MVG-R Real (R$)",
+      "granularity": "Mensal",
+      "datafile": "https://brasilemnumeros.github.io/dados/mvgr/mvgr-real.json",
+      "description": "Mediana dos Valores de Garantia de Imóveis Residenciais Financiados (MVG-R) em Reais, descontada a inflação (IPCA)",
+      "source": "Banco Central do Brasil - Desig (Departamento de Monitoramento do Sistema Financeiro)",
+      "chartType": "line",
+      "group": "real-estate",
+      "unit": {
+        "type": "currency",
+        "symbol": "R$",
+        "decimals": 0,
+        "locale": "pt-BR"
+      },
+      "yAxisTitle": "Valor (R$)"
     }
   ],
   "groups": {
@@ -63,6 +127,10 @@
     "growth": {
       "name": "📊 Crescimento Econômico",
       "description": "Indicadores de crescimento e atividade econômica"
+    },
+    "real-estate": {
+      "name": "🏠 Mercado Imobiliário",
+      "description": "Indicadores do mercado imobiliário"
     }
   },
   "defaultIndicator": "selic-meta-acum-12m"

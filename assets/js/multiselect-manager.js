@@ -47,7 +47,7 @@ class MultiselectManager {
       return;
     }
 
-    const { indicators, defaultIndicator } = window.indicatorsData;
+    const { indicators, groups, defaultIndicator } = window.indicatorsData;
 
     // Check for URL parameters first
     const urlParams = new URLSearchParams(window.location.search);
@@ -78,8 +78,30 @@ class MultiselectManager {
       selectedIndicators = defaultInd ? [defaultInd.name] : [];
     }
 
+    // Create grouped indicators structure
+    const groupedIndicators = [];
+    const processedGroups = new Set();
+    
+    indicators.forEach(indicator => {
+      if (!processedGroups.has(indicator.group)) {
+        const groupIndicators = indicators.filter(i => i.group === indicator.group);
+        const groupInfo = groups && groups[indicator.group] ? groups[indicator.group] : { name: indicator.group };
+        
+        groupedIndicators.push({
+          groupKey: indicator.group,
+          groupName: groupInfo.name,
+          groupDescription: groupInfo.description,
+          indicators: groupIndicators
+        });
+        
+        processedGroups.add(indicator.group);
+      }
+    });
+
     // Update the Vue scope
     window.multiselectScope.indicators = indicators;
+    window.multiselectScope.groups = groups || {};
+    window.multiselectScope.groupedIndicators = groupedIndicators;
     window.multiselectScope.selectedIndicators = selectedIndicators;
     window.multiselectScope.indicatorMap = indicators.reduce((map, ind) => {
       map[ind.name] = ind.datafile;

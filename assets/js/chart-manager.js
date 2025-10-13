@@ -20,6 +20,7 @@ class ChartManager {
   constructor() {
     this.chart = null;
     this.indicatorsConfig = null;
+    this.chartCreator = null;
 
     // Store global reference for color manager
     window.chartManager = this;

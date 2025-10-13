@@ -126,6 +126,50 @@ class ChartCreator {
 
   constructor(chartManager) {
     this.chartManager = chartManager;
+    
+    // Store reference to this instance in chart manager for tooltip access
+    if (chartManager) {
+      chartManager.chartCreator = this;
+    }
+  }
+
+  // Obtém configuração de unidade para um indicador
+  getUnitConfig(indicatorName) {
+    if (window.chartManager && window.chartManager.indicatorsConfig) {
+      const indicator = window.chartManager.indicatorsConfig.indicators.find(
+        (ind) => ind.name === indicatorName
+      );
+      return indicator?.unit || { type: "percentage", symbol: "%", decimals: 2 };
+    }
+    return { type: "percentage", symbol: "%", decimals: 2 };
+  }
+
+  // Formata valor baseado na configuração de unidade
+  formatValue(value, unitConfig) {
+    if (value === null || value === undefined) return "";
+    
+    switch (unitConfig.type) {
+      case "currency":
+        return unitConfig.symbol + " " + value.toLocaleString(unitConfig.locale || 'pt-BR', {
+          minimumFractionDigits: unitConfig.decimals || 0,
+          maximumFractionDigits: unitConfig.decimals || 0
+        });
+      case "percentage":
+        return value.toFixed(unitConfig.decimals || 2) + unitConfig.symbol;
+      default:
+        return value.toFixed(unitConfig.decimals || 2) + (unitConfig.symbol || "");
+    }
+  }
+
+  // Obtém título do eixo Y para um indicador
+  getYAxisTitle(indicatorName) {
+    if (window.chartManager && window.chartManager.indicatorsConfig) {
+      const indicator = window.chartManager.indicatorsConfig.indicators.find(
+        (ind) => ind.name === indicatorName
+      );
+      return indicator?.yAxisTitle || "Taxa (%)";
+    }
+    return "Taxa (%)";
   }
 
   // Normaliza a data para garantir interpretação correta pelo Chart.js
@@ -391,7 +435,10 @@ class ChartCreator {
                 size: 10,
                 weight: "bold",
               },
-              formatter: (value) => value.y?.toFixed(1) + "%",
+              formatter: (value) => {
+                const unitConfig = this.getUnitConfig(indicatorName);
+                return this.formatValue(value.y, unitConfig);
+              },
               clip: false,
             }
           : {
@@ -571,7 +618,10 @@ class ChartCreator {
                 size: 10,
                 weight: "bold",
               },
-              formatter: (value) => value.y?.toFixed(1) + "%",
+              formatter: (value) => {
+                const unitConfig = this.getUnitConfig(indicatorName);
+                return this.formatValue(value.y, unitConfig);
+              },
               clip: false,
             }
           : {
@@ -756,8 +806,11 @@ class ChartCreator {
                 size: 10,
                 weight: "bold",
               },
-              formatter: (value) =>
-                value.y !== null ? value.y?.toFixed(1) + "%" : "",
+              formatter: (value) => {
+                if (value.y === null) return "";
+                const unitConfig = this.getUnitConfig(indicatorName);
+                return this.formatValue(value.y, unitConfig);
+              },
               clip: false,
             }
           : {
@@ -1018,7 +1071,13 @@ class ChartCreator {
           // Garante que o valor mostrado seja exatamente o valor do ponto
           const value = context.parsed.y;
           if (value === null || value === undefined) return "";
-          return `${context.dataset.label}: ${value.toFixed(2)}%`;
+          
+          // Obtém configuração de unidade para este indicador
+          const chartCreator = window.chartManager?.chartCreator || new ChartCreator(window.chartManager);
+          const unitConfig = chartCreator.getUnitConfig(context.dataset.label);
+          const formattedValue = chartCreator.formatValue(value, unitConfig);
+          
+          return `${context.dataset.label}: ${formattedValue}`;
         },
       },
       filter: (tooltipItem) => {
@@ -1113,7 +1172,9 @@ class ChartCreator {
     themeColors,
     timeRange = null,
   ) {
-    const yAxisTitle = dataArray[0].yAxisTitle || "Taxa (%)";
+    // Get Y-axis title from indicator configuration
+    const firstIndicatorName = datasets[0]?.label || "Indicador";
+    const yAxisTitle = this.getYAxisTitle(firstIndicatorName);
     const hasBar =
       Array.isArray(datasets) && datasets.some((ds) => ds.type === "bar");
 
@@ -1186,7 +1247,7 @@ class ChartCreator {
         title: {
           display: true,
           text: isMultipleIndicators
-            ? dataArray[0].yAxisTitle || "Taxa (%)"
+            ? yAxisTitle
             : yAxisTitle,
           color: themeColors.axisLabel,
         },
@@ -1254,6 +1315,10 @@ class ChartCreator {
       (dataset) => dataset.yAxisID === "y1",
     );
     if (isMultipleIndicators && hasRightAxisDataset) {
+      // Find the first dataset that uses the right axis to get its title
+      const rightAxisDataset = datasets.find((dataset) => dataset.yAxisID === "y1");
+      const rightAxisTitle = rightAxisDataset ? this.getYAxisTitle(rightAxisDataset.label) : "Taxa (%)";
+      
       scales.y1 = {
         type: "linear",
         display: true,
@@ -1261,7 +1326,7 @@ class ChartCreator {
         beginAtZero: false,
         title: {
           display: true,
-          text: dataArray[1]?.yAxisTitle || "Taxa (%)",
+          text: rightAxisTitle,
           color: themeColors.axisLabel,
         },
         ticks: { color: themeColors.ticks },

@@ -15,7 +15,7 @@
   <div class="flex w-full items-center gap-2">
     <div class="relative min-w-0 flex-grow">
       <div
-        v-scope="{ selectedIndicators: [], isOpen: false, indicators: [], indicatorMap: {}, yAxisConfig: {}, valuesDisplayConfig: {}, showConfig: false, activeFilter: 'Todo o período' }"
+        v-scope="{ selectedIndicators: [], isOpen: false, indicators: [], groups: {}, groupedIndicators: [], indicatorMap: {}, yAxisConfig: {}, valuesDisplayConfig: {}, showConfig: false, activeFilter: 'Todo o período' }"
         id="indicator-multiselect-container"
         class="h-full"
         @vue:mounted="
@@ -89,137 +89,52 @@
             "
           ></div>
 
-          <!-- Grupos de Indicadores organizados por categoria -->
-
-          <!-- Política Monetária -->
-          <div class="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400">
-            🏦 Política Monetária
-          </div>
-          <div
-            v-for="indicator in indicators.filter(i => i.group === 'monetary')"
-            :key="indicator.id"
-            @click="
-              if (selectedIndicators.includes(indicator.name)) {
-                selectedIndicators = selectedIndicators.filter(v => v !== indicator.name);
-                delete yAxisConfig[indicator.name];
-              } else {
-                selectedIndicators = [...selectedIndicators, indicator.name];
-                yAxisConfig[indicator.name] = 'left';
-              }
-              if (typeof gtag !== 'undefined') {
-                gtag('event', 'indicator_selected', {
-                  indicator_name: indicator.name,
-                  indicator_file: indicator.datafile,
-                  selection_type: 'multiselect'
-                });
-              }
-              window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, false, yAxisConfig, valuesDisplayConfig);
-            "
-            class="flex cursor-pointer items-center justify-between px-3 py-2 pl-6 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-          >
-            <div class="flex-grow">
-              <span v-text="indicator.name" class="block"></span>
-              <span
-                v-if="indicator.granularity"
-                v-text="indicator.granularity"
-                class="block text-xs text-gray-500 dark:text-gray-400"
-              ></span>
+          <!-- Grupos de Indicadores organizados por categoria (dinâmico) -->
+          <div v-for="group in groupedIndicators" :key="group.groupKey">
+            <!-- Cabeçalho do grupo -->
+            <div class="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400">
+              <span v-text="group.groupName"></span>
             </div>
-            <div class="flex items-center">
-              {% include tooltip-info.html %}
-              <span
-                :class="{'opacity-0': !selectedIndicators.includes(indicator.name)}"
-                class="w-5 text-center font-bold text-blue-500"
-                >✓</span
-              >
-            </div>
-          </div>
-
-          <!-- Inflação -->
-          <div class="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400">
-            📈 Inflação
-          </div>
-          <div
-            v-for="indicator in indicators.filter(i => i.group === 'inflation')"
-            :key="indicator.id"
-            @click="
-              if (selectedIndicators.includes(indicator.name)) {
-                selectedIndicators = selectedIndicators.filter(v => v !== indicator.name);
-                delete yAxisConfig[indicator.name];
-              } else {
-                selectedIndicators = [...selectedIndicators, indicator.name];
-                yAxisConfig[indicator.name] = 'left';
-              }
-              if (typeof gtag !== 'undefined') {
-                gtag('event', 'indicator_selected', {
-                  indicator_name: indicator.name,
-                  indicator_file: indicator.datafile,
-                  selection_type: 'multiselect'
-                });
-              }
-              window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, false, yAxisConfig, valuesDisplayConfig);
-            "
-            class="flex cursor-pointer items-center justify-between px-3 py-2 pl-6 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-          >
-            <div class="flex-grow">
-              <span v-text="indicator.name" class="block"></span>
-              <span
-                v-if="indicator.granularity"
-                v-text="indicator.granularity"
-                class="block text-xs text-gray-500 dark:text-gray-400"
-              ></span>
-            </div>
-            <div class="flex items-center">
-              {% include tooltip-info.html %}
-              <span
-                :class="{'opacity-0': !selectedIndicators.includes(indicator.name)}"
-                class="w-5 text-center font-bold text-blue-500"
-                >✓</span
-              >
-            </div>
-          </div>
-
-          <!-- Crescimento Econômico -->
-          <div class="border-b border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:border-gray-600 dark:bg-gray-700 dark:text-gray-400">
-            📊 Crescimento Econômico
-          </div>
-          <div
-            v-for="indicator in indicators.filter(i => i.group === 'growth')"
-            :key="indicator.id"
-            @click="
-              if (selectedIndicators.includes(indicator.name)) {
-                selectedIndicators = selectedIndicators.filter(v => v !== indicator.name);
-                delete yAxisConfig[indicator.name];
-              } else {
-                selectedIndicators = [...selectedIndicators, indicator.name];
-                yAxisConfig[indicator.name] = 'left';
-              }
-              if (typeof gtag !== 'undefined') {
-                gtag('event', 'indicator_selected', {
-                  indicator_name: indicator.name,
-                  indicator_file: indicator.datafile,
-                  selection_type: 'multiselect'
-                });
-              }
-              window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, false, yAxisConfig, valuesDisplayConfig);
-            "
-            class="flex cursor-pointer items-center justify-between px-3 py-2 pl-6 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
-          >
-            <div class="flex-grow">
-              <span v-text="indicator.name" class="block"></span>
-              <span
-                v-if="indicator.granularity"
-                v-text="indicator.granularity"
-                class="block text-xs text-gray-500 dark:text-gray-400"
-              ></span>
-            </div>
-            <div class="flex items-center">
-              {% include tooltip-info.html %}
-              <span
-                :class="{'opacity-0': !selectedIndicators.includes(indicator.name)}"
-                class="w-5 text-center font-bold text-blue-500"
-                >✓</span
-              >
+            
+            <!-- Indicadores do grupo -->
+            <div
+              v-for="indicator in group.indicators"
+              :key="indicator.id"
+              @click="
+                if (selectedIndicators.includes(indicator.name)) {
+                  selectedIndicators = selectedIndicators.filter(v => v !== indicator.name);
+                  delete yAxisConfig[indicator.name];
+                } else {
+                  selectedIndicators = [...selectedIndicators, indicator.name];
+                  yAxisConfig[indicator.name] = 'left';
+                }
+                if (typeof gtag !== 'undefined') {
+                  gtag('event', 'indicator_selected', {
+                    indicator_name: indicator.name,
+                    indicator_file: indicator.datafile,
+                    selection_type: 'multiselect'
+                  });
+                }
+                window.updateChartsFromMultiselect && window.updateChartsFromMultiselect(selectedIndicators, indicatorMap, false, yAxisConfig, valuesDisplayConfig);
+              "
+              class="flex cursor-pointer items-center justify-between px-3 py-2 pl-6 hover:bg-gray-100 dark:text-white dark:hover:bg-gray-700"
+            >
+              <div class="flex-grow">
+                <span v-text="indicator.name" class="block"></span>
+                <span
+                  v-if="indicator.granularity"
+                  v-text="indicator.granularity"
+                  class="block text-xs text-gray-500 dark:text-gray-400"
+                ></span>
+              </div>
+              <div class="flex items-center">
+                {% include tooltip-info.html %}
+                <span
+                  :class="{'opacity-0': !selectedIndicators.includes(indicator.name)}"
+                  class="w-5 text-center font-bold text-blue-500"
+                  >✓</span
+                >
+              </div>
             </div>
           </div>
 

@@ -113,6 +113,21 @@
         "locale": "pt-BR"
       },
       "yAxisTitle": "Valor (R$)"
+    },
+    {
+      "id": "caged-total-mensal",
+      "name": "Estoque de Empregos Formais",
+      "granularity": "Mensal",
+      "datafile": "https://brasilemnumeros.github.io/dados/caged/caged-total-mensal.json",
+      "description": "Número total de empregos formais no Brasil, conforme dados do CAGED (Cadastro Geral de Empregados e Desempregados)",
+      "source": "Banco Central do Brasil",
+      "chartType": "line",
+      "group": "labor",
+      "unit": {
+        "type": "number",
+        "symbol": ""
+      },
+      "yAxisTitle": "Número de Empregos"
     }
   ],
   "groups": {
@@ -131,6 +146,10 @@
     "real-estate": {
       "name": "🏠 Mercado Imobiliário",
       "description": "Indicadores do mercado imobiliário"
+    },
+    "labor": {
+      "name": "💼 Mercado de Trabalho",
+      "description": "Indicadores relacionados ao mercado de trabalho e emprego"
     }
   },
   "defaultIndicator": "selic-meta-acum-12m"

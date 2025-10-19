@@ -96,7 +96,7 @@ description: Acompanhe análises, indicadores e novidades do Brasil em Números
                 {{ post.date | date: '%d de %B de %Y' }}
               </time>
 
-              {% if post.categories %}
+              {% if post.categories %} 
                 {% for category in post.categories %}
                   <span class="inline-flex items-center gap-1">
                     {% case category %}

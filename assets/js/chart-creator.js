@@ -147,15 +147,26 @@ class ChartCreator {
   // Formata valor baseado na configuração de unidade
   formatValue(value, unitConfig) {
     if (value === null || value === undefined) return "";
-    
+    unitConfig = unitConfig || {};
+
     switch (unitConfig.type) {
-      case "currency":
+      case "currency": {
+        const currencyDecimals = typeof unitConfig.decimals === 'number' ? unitConfig.decimals : 0;
         return unitConfig.symbol + " " + value.toLocaleString(unitConfig.locale || 'pt-BR', {
-          minimumFractionDigits: unitConfig.decimals || 0,
-          maximumFractionDigits: unitConfig.decimals || 0
+          minimumFractionDigits: currencyDecimals,
+          maximumFractionDigits: currencyDecimals,
         });
+      }
       case "percentage":
         return value.toFixed(unitConfig.decimals || 2) + unitConfig.symbol;
+      case "number": {
+        const numberDecimals = typeof unitConfig.decimals === 'number' ? unitConfig.decimals : 0;
+        const num = value.toLocaleString(unitConfig.locale || 'pt-BR', {
+          minimumFractionDigits: numberDecimals,
+          maximumFractionDigits: numberDecimals,
+        });
+        return (unitConfig.symbol ? unitConfig.symbol + " " : "") + num;
+      }
       default:
         return value.toFixed(unitConfig.decimals || 2) + (unitConfig.symbol || "");
     }

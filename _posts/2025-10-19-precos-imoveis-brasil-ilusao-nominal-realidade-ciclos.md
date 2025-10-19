@@ -7,7 +7,7 @@ tags: [imoveis, mercado imobiliario, mvg-r, inflacao, patrimonio]
 
 ### Por que o valor real dos imóveis, descontado da inflação, conta uma história muito diferente do preço que você vê na vitrine.
 
-Para quem acompanha o mercado imobiliário brasileiro, seja para comprar, vender ou simplesmente entender o valor de seu patrimônio, a percepção é frequentemente de uma alta implacável nos preços. Indicadores como o **MVG-R (Mediana de Valor de Garantia - Residencial)**, calculado pelo Banco Central, parecem confirmar isso. Um olhar rápido no gráfico nominal mostra os valores medianos saltando de aproximadamente R$ 45.000 em 2004 para mais de R$ 250.000 em 2025.
+Para quem acompanha o mercado imobiliário brasileiro, seja para comprar, vender ou simplesmente entender o valor de seu patrimônio, a percepção é frequentemente de uma alta implacável nos preços. Indicadores como o **MVG-R (Mediana de Valor de Garantia - Residencial)**, **que representa o valor médio de imóveis residenciais usados como garantia em financiamentos bancários e é calculado pelo Banco Central**, parecem confirmar isso. Um olhar rápido no gráfico nominal mostra os valores medianos saltando de aproximadamente R$ 45.000 em 2004 para mais de R$ 250.000 em 2025.
 
 Mas será que os imóveis realmente "explodiram" de valor, tornando-se inatingíveis para muitos? Ou estamos sendo vítimas de uma ilusão causada pela inflação, que distorce nossa percepção sobre o preço das coisas?
 

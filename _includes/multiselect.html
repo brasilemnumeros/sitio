@@ -106,7 +106,12 @@
                   delete yAxisConfig[indicator.name];
                 } else {
                   selectedIndicators = [...selectedIndicators, indicator.name];
-                  yAxisConfig[indicator.name] = 'left';
+                  // Se já houver outro indicador selecionado, por padrão coloca este no eixo direito
+                  if (selectedIndicators.length > 1) {
+                    yAxisConfig[indicator.name] = 'right';
+                  } else {
+                    yAxisConfig[indicator.name] = 'left';
+                  }
                 }
                 if (typeof gtag !== 'undefined') {
                   gtag('event', 'indicator_selected', {

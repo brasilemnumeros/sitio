@@ -128,6 +128,37 @@
         "symbol": ""
       },
       "yAxisTitle": "Número de Empregos"
+    },
+    {
+      "id": "populacao-total-anual",
+      "name": "População Total",
+      "granularity": "Anual",
+      "datafile": "http://brasilemnumeros.github.io/dados/populacao/populacao-total-anual.json",
+      "description": "Número total da população brasileira conforme dados do IBGE",
+      "source": "Instituto Brasileiro de Geografia e Estatística (IBGE)",
+      "chartType": "line",
+      "group": "demographics",
+      "unit": {
+        "type": "number",
+        "symbol": ""
+      },
+      "yAxisTitle": "Número de Habitantes"
+    },
+    {
+      "id": "populacao-variacao-anual",
+      "name": "População Variação (%)",
+      "granularity": "Anual",
+      "datafile": "http://brasilemnumeros.github.io/dados/populacao/populacao-variacao-anual.json",
+      "description": "Variação anual da população brasileira conforme dados do IBGE",
+      "source": "Instituto Brasileiro de Geografia e Estatística (IBGE)",
+      "chartType": "bar",
+      "group": "demographics",
+      "unit": {
+        "type": "percentage",
+        "symbol": "%",
+        "decimals": 2
+      },
+      "yAxisTitle": "Variação (%)"
     }
   ],
   "groups": {
@@ -150,6 +181,10 @@
     "labor": {
       "name": "💼 Mercado de Trabalho",
       "description": "Indicadores relacionados ao mercado de trabalho e emprego"
+    },
+    "demographics": {
+      "name": "👥 Demografia",
+      "description": "Indicadores relacionados à população e demografia"
     }
   },
   "defaultIndicator": "selic-meta-acum-12m"

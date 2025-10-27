@@ -63,9 +63,3 @@ Para uma análise ainda mais completa, é fascinante comparar o Estoque de Empre
 ### Conclusão
 
 O **Estoque de Empregos Formais** é mais do que um número: é um indicador da resiliência do trabalhador brasileiro e da dinâmica da nossa economia. Ao acompanhar essa série, podemos entender melhor onde estamos e para onde o mercado de trabalho formal está caminhando.
-
----
-
-**Quer comparar o Estoque de Empregos Formais com o PIB, a Taxa de Desocupação e outros indicadores?** Acesse nossa [**página de comparação de indicadores**](insira-o-link-para-a-pagina-de-comparacao-aqui) e explore as correlações!
-
-**#NovoCaged #EstoqueDeEmpregos #MercadoDeTrabalho #EconomiaBrasileira #CarteiraAssinada #BrasilEmNumeros**

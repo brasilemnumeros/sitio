@@ -189,6 +189,17 @@ class ChartCreator {
     return dateString;
   }
 
+  // Obtém o valor do ponto de dados (suporta "rate" e "value")
+  getDataPointValue(item) {
+    return item.rate !== undefined ? item.rate : item.value;
+  }
+
+  // Verifica se o ponto de dados tem valor válido (suporta "rate" e "value")
+  hasValidValue(item) {
+    const value = this.getDataPointValue(item);
+    return value !== null && value !== undefined;
+  }
+
   // Filtra dados por intervalo de tempo
   filterDataByTimeRange(jsonData, startDate = null, endDate = null) {
     if (!startDate && !endDate) {
@@ -390,7 +401,7 @@ class ChartCreator {
         valuesDisplayConfig && valuesDisplayConfig[indicatorName] === "always";
 
       const dataPoints = jsonData.data
-        .filter((item) => item.rate !== null)
+        .filter((item) => this.hasValidValue(item))
         .map((item) => {
           let xValue = item.date;
 
@@ -406,7 +417,7 @@ class ChartCreator {
 
           return {
             x: xValue,
-            y: item.rate,
+            y: this.getDataPointValue(item),
           };
         });
 
@@ -478,8 +489,7 @@ class ChartCreator {
     jsonData.data.forEach((item) => {
       if (
         item.date &&
-        item.rate !== null &&
-        item.rate !== undefined &&
+        this.hasValidValue(item) &&
         !seenDates.has(item.date)
       ) {
         uniqueData.push(item);
@@ -580,7 +590,7 @@ class ChartCreator {
 
       // Cria array de dados ajustando as datas para garantir alinhamento correto
       const dataPoints = jsonData.data
-        .filter((item) => item.rate !== null && item.rate !== undefined)
+        .filter((item) => this.hasValidValue(item))
         .map((item) => {
           let xValue = item.date;
 
@@ -592,13 +602,13 @@ class ChartCreator {
 
             // Debug: mostra a conversão
             console.log(
-              `Converting annual data (independent): ${item.date} (${item.rate}) -> ${xValue}`,
+              `Converting annual data (independent): ${item.date} (${this.getDataPointValue(item)}) -> ${xValue}`,
             );
           }
 
           return {
             x: xValue,
-            y: item.rate,
+            y: this.getDataPointValue(item),
           };
         });
 
@@ -690,7 +700,7 @@ class ChartCreator {
       );
 
       jsonData.data.forEach((item) => {
-        if (item.rate !== null && item.rate !== undefined) {
+        if (this.hasValidValue(item)) {
           if (isThisDataAnnual) {
             // Para dados anuais, sempre centraliza no meio do ano
             const year = parseInt(item.date.split("-")[0]);
@@ -744,7 +754,7 @@ class ChartCreator {
       );
 
       jsonData.data.forEach((item) => {
-        if (item.rate !== null && item.rate !== undefined) {
+        if (this.hasValidValue(item)) {
           // Busca tipo do indicador para este dataset
           let chartType = "line";
           if (window.chartManager && window.chartManager.indicatorsConfig) {
@@ -758,9 +768,9 @@ class ChartCreator {
             // Para dados anuais, sempre centraliza no meio do ano (julho) para evitar deslocamento
             const year = parseInt(item.date.split("-")[0]);
             const normalizedDate = `${year}-07-01`;
-            dataMap.set(normalizedDate, item.rate);
+            dataMap.set(normalizedDate, this.getDataPointValue(item));
             console.log(
-              `Annual data (synchronized): ${item.date} (${item.rate}) -> ${normalizedDate}`,
+              `Annual data (synchronized): ${item.date} (${this.getDataPointValue(item)}) -> ${normalizedDate}`,
             );
           } else {
             // Para dados mensais, normaliza para primeiro dia do mês
@@ -773,7 +783,7 @@ class ChartCreator {
             const normalizedDateStr = normalizedDate
               .toISOString()
               .split("T")[0];
-            dataMap.set(normalizedDateStr, item.rate);
+            dataMap.set(normalizedDateStr, this.getDataPointValue(item));
           }
         }
       });
@@ -1290,7 +1300,7 @@ class ChartCreator {
         const allDates = [];
         dataArray.forEach((data) => {
           data.data.forEach((item) => {
-            if (item.date && item.rate !== null && item.rate !== undefined) {
+            if (item.date && this.hasValidValue(item)) {
               allDates.push(item.date);
             }
           });

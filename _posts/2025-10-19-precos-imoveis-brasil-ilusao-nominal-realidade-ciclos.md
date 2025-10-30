@@ -21,7 +21,7 @@ Como podemos ver no gráfico abaixo, a trajetória é uma subida quase ininterru
 
 [![GRÁFICO 1: MVG-R NOMINAL (2004-2025)](/assets/img/mvgr-nominal.webp)](/assets/img/mvgr-nominal.webp)
 
-*(Gráfico mostrando a curva ascendente do valor nominal, de aproximadamente R$ 45.000 a R$ 252.000)*
+_(Gráfico mostrando a curva ascendente do valor nominal, de aproximadamente R$ 45.000 a R$ 252.000)_
 
 <p style="text-align: center">
 <a href="{{ site.url }}/?indicators=mvgr-nominal" class="text-blue-600 hover:text-blue-800 underline">Acesse o gráfico do MVG-R Nominal aqui!</a>
@@ -37,7 +37,7 @@ Quando plotamos este gráfico, o cenário muda drasticamente. A linha reta ascen
 
 [![GRÁFICO 2: MVG-R REAL, DESCONTADO DO IPCA (2004-2025)](/assets/img/mvgr-real.webp)](/assets/img/mvgr-real.webp)
 
-*(Gráfico mostrando a curva cíclica do valor real, com picos em 2014 e 2022, e vales em 2006 e 2019, começando em aproximadamente R$ 45.000 e terminando em R$ 77.000)*
+_(Gráfico mostrando a curva cíclica do valor real, com picos em 2014 e 2022, e vales em 2006 e 2019, começando em aproximadamente R$ 45.000 e terminando em R$ 77.000)_
 
 <p style="text-align: center">
 <a href="{{ site.url }}/?indicators=mvgr-real" class="text-blue-600 hover:text-blue-800 underline">Acesse o gráfico do MVG-R Real aqui!</a>
@@ -59,9 +59,9 @@ Este segundo gráfico é a ferramenta correta para qualquer um que deseja compre
 
 A análise comparativa deixa duas lições claras para quem está de olho no mercado imobiliário, seja para comprar, vender ou apenas entender o valor do seu bem:
 
-* **O Preço Nominal é Ruído, o Preço Real é o Sinal:** Para qualquer análise séria sobre a valorização de um imóvel ou sobre a existência de uma "bolha", olhar apenas para o preço nominal é enganoso. O que realmente importa é o valor real, que mostra o poder de compra e o crescimento efetivo do seu patrimônio.
+- **O Preço Nominal é Ruído, o Preço Real é o Sinal:** Para qualquer análise séria sobre a valorização de um imóvel ou sobre a existência de uma "bolha", olhar apenas para o preço nominal é enganoso. O que realmente importa é o valor real, que mostra o poder de compra e o crescimento efetivo do seu patrimônio.
 
-* **O Mercado Não Está no "Pico":** Ao contrário do que o gráfico nominal sugere com sua curva ascendente constante, o mercado imobiliário brasileiro não está em sua máxima histórica em termos de poder de compra. Em termos de valor real, os preços caíram cerca de 15% desde o pico de 2022 e estão em um patamar semelhante ao que víamos em 2013.
+- **O Mercado Não Está no "Pico":** Ao contrário do que o gráfico nominal sugere com sua curva ascendente constante, o mercado imobiliário brasileiro não está em sua máxima histórica em termos de poder de compra. Em termos de valor real, os preços caíram cerca de 15% desde o pico de 2022 e estão em um patamar semelhante ao que víamos em 2013.
 
 Para quem sonha com a casa própria, busca trocar de imóvel ou simplesmente quer entender o valor do seu patrimônio, a mensagem é que o mercado, neste momento, mostra um desaquecimento e uma fase de correção de preços reais. É um convite à análise mais aprofundada antes de tomar grandes decisões.
 

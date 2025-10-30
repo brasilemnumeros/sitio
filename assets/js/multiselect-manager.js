@@ -81,19 +81,24 @@ class MultiselectManager {
     // Create grouped indicators structure
     const groupedIndicators = [];
     const processedGroups = new Set();
-    
-    indicators.forEach(indicator => {
+
+    indicators.forEach((indicator) => {
       if (!processedGroups.has(indicator.group)) {
-        const groupIndicators = indicators.filter(i => i.group === indicator.group);
-        const groupInfo = groups && groups[indicator.group] ? groups[indicator.group] : { name: indicator.group };
-        
+        const groupIndicators = indicators.filter(
+          (i) => i.group === indicator.group,
+        );
+        const groupInfo =
+          groups && groups[indicator.group]
+            ? groups[indicator.group]
+            : { name: indicator.group };
+
         groupedIndicators.push({
           groupKey: indicator.group,
           groupName: groupInfo.name,
           groupDescription: groupInfo.description,
-          indicators: groupIndicators
+          indicators: groupIndicators,
         });
-        
+
         processedGroups.add(indicator.group);
       }
     });

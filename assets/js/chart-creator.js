@@ -126,7 +126,7 @@ class ChartCreator {
 
   constructor(chartManager) {
     this.chartManager = chartManager;
-    
+
     // Store reference to this instance in chart manager for tooltip access
     if (chartManager) {
       chartManager.chartCreator = this;
@@ -137,9 +137,11 @@ class ChartCreator {
   getUnitConfig(indicatorName) {
     if (window.chartManager && window.chartManager.indicatorsConfig) {
       const indicator = window.chartManager.indicatorsConfig.indicators.find(
-        (ind) => ind.name === indicatorName
+        (ind) => ind.name === indicatorName,
       );
-      return indicator?.unit || { type: "percentage", symbol: "%", decimals: 2 };
+      return (
+        indicator?.unit || { type: "percentage", symbol: "%", decimals: 2 }
+      );
     }
     return { type: "percentage", symbol: "%", decimals: 2 };
   }
@@ -151,24 +153,32 @@ class ChartCreator {
 
     switch (unitConfig.type) {
       case "currency": {
-        const currencyDecimals = typeof unitConfig.decimals === 'number' ? unitConfig.decimals : 0;
-        return unitConfig.symbol + " " + value.toLocaleString(unitConfig.locale || 'pt-BR', {
-          minimumFractionDigits: currencyDecimals,
-          maximumFractionDigits: currencyDecimals,
-        });
+        const currencyDecimals =
+          typeof unitConfig.decimals === "number" ? unitConfig.decimals : 0;
+        return (
+          unitConfig.symbol +
+          " " +
+          value.toLocaleString(unitConfig.locale || "pt-BR", {
+            minimumFractionDigits: currencyDecimals,
+            maximumFractionDigits: currencyDecimals,
+          })
+        );
       }
       case "percentage":
         return value.toFixed(unitConfig.decimals || 2) + unitConfig.symbol;
       case "number": {
-        const numberDecimals = typeof unitConfig.decimals === 'number' ? unitConfig.decimals : 0;
-        const num = value.toLocaleString(unitConfig.locale || 'pt-BR', {
+        const numberDecimals =
+          typeof unitConfig.decimals === "number" ? unitConfig.decimals : 0;
+        const num = value.toLocaleString(unitConfig.locale || "pt-BR", {
           minimumFractionDigits: numberDecimals,
           maximumFractionDigits: numberDecimals,
         });
         return (unitConfig.symbol ? unitConfig.symbol + " " : "") + num;
       }
       default:
-        return value.toFixed(unitConfig.decimals || 2) + (unitConfig.symbol || "");
+        return (
+          value.toFixed(unitConfig.decimals || 2) + (unitConfig.symbol || "")
+        );
     }
   }
 
@@ -176,7 +186,7 @@ class ChartCreator {
   getYAxisTitle(indicatorName) {
     if (window.chartManager && window.chartManager.indicatorsConfig) {
       const indicator = window.chartManager.indicatorsConfig.indicators.find(
-        (ind) => ind.name === indicatorName
+        (ind) => ind.name === indicatorName,
       );
       return indicator?.yAxisTitle || "Taxa (%)";
     }
@@ -487,11 +497,7 @@ class ChartCreator {
     const seenDates = new Set();
 
     jsonData.data.forEach((item) => {
-      if (
-        item.date &&
-        this.hasValidValue(item) &&
-        !seenDates.has(item.date)
-      ) {
+      if (item.date && this.hasValidValue(item) && !seenDates.has(item.date)) {
         uniqueData.push(item);
         seenDates.add(item.date);
       }
@@ -563,7 +569,11 @@ class ChartCreator {
       if (yAxisConfig && yAxisConfig[indicatorName]) {
         // Se a configuração explícita existir, respeita-a
         yAxisID = yAxisConfig[indicatorName] === "right" ? "y1" : "y";
-      } else if (Array.isArray(namesArray) && namesArray.length > 1 && index === 1) {
+      } else if (
+        Array.isArray(namesArray) &&
+        namesArray.length > 1 &&
+        index === 1
+      ) {
         // Regra padrão: quando há mais de um indicador, coloca o segundo no eixo direito
         yAxisID = "y1";
       }
@@ -737,7 +747,11 @@ class ChartCreator {
       if (yAxisConfig && yAxisConfig[indicatorName]) {
         // Respeita configuração explícita quando fornecida
         yAxisID = yAxisConfig[indicatorName] === "right" ? "y1" : "y";
-      } else if (Array.isArray(namesArray) && namesArray.length > 1 && index === 1) {
+      } else if (
+        Array.isArray(namesArray) &&
+        namesArray.length > 1 &&
+        index === 1
+      ) {
         // Regra padrão: quando há mais de um indicador, coloca o segundo no eixo direito
         yAxisID = "y1";
       }
@@ -1100,12 +1114,14 @@ class ChartCreator {
           // Garante que o valor mostrado seja exatamente o valor do ponto
           const value = context.parsed.y;
           if (value === null || value === undefined) return "";
-          
+
           // Obtém configuração de unidade para este indicador
-          const chartCreator = window.chartManager?.chartCreator || new ChartCreator(window.chartManager);
+          const chartCreator =
+            window.chartManager?.chartCreator ||
+            new ChartCreator(window.chartManager);
           const unitConfig = chartCreator.getUnitConfig(context.dataset.label);
           const formattedValue = chartCreator.formatValue(value, unitConfig);
-          
+
           return `${context.dataset.label}: ${formattedValue}`;
         },
       },
@@ -1275,9 +1291,7 @@ class ChartCreator {
         beginAtZero: false,
         title: {
           display: true,
-          text: isMultipleIndicators
-            ? yAxisTitle
-            : yAxisTitle,
+          text: isMultipleIndicators ? yAxisTitle : yAxisTitle,
           color: themeColors.axisLabel,
         },
         ticks: { color: themeColors.ticks },
@@ -1345,9 +1359,13 @@ class ChartCreator {
     );
     if (isMultipleIndicators && hasRightAxisDataset) {
       // Find the first dataset that uses the right axis to get its title
-      const rightAxisDataset = datasets.find((dataset) => dataset.yAxisID === "y1");
-      const rightAxisTitle = rightAxisDataset ? this.getYAxisTitle(rightAxisDataset.label) : "Taxa (%)";
-      
+      const rightAxisDataset = datasets.find(
+        (dataset) => dataset.yAxisID === "y1",
+      );
+      const rightAxisTitle = rightAxisDataset
+        ? this.getYAxisTitle(rightAxisDataset.label)
+        : "Taxa (%)";
+
       scales.y1 = {
         type: "linear",
         display: true,

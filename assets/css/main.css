@@ -46,6 +46,14 @@ html:not(.dark) footer {
   }
 }
 
+/* Force linktree buttons to be white in dark mode on small screens.
+   This overrides the typography plugin's `prose a` rule that may apply earlier. */
+@media (max-width: 768px) {
+  html.dark #linktree-container a {
+    color: #ffffff !important;
+  }
+}
+
 /* Correções específicas para componentes */
 .ss-btn {
   font-size: 16px; /* Corrige altura dos botões de compartilhamento social */

@@ -4,9 +4,9 @@
 
 /* Custom styles - apenas o que o Tailwind não consegue lidar */
 
-/* Chart touch handling */
+/* Chart touch handling - let Chart.js handle zoom/pan */
 #chart {
-  touch-action: pan-x pinch-zoom;
+  touch-action: none;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -26,22 +26,13 @@
 .chart-container canvas {
   max-width: 100%;
   height: auto;
-  touch-action: pan-x pinch-zoom;
 }
 
-/* Prevent zooming when interacting with chart on mobile */
+/* Prevent page zoom when touching chart area on mobile */
 @media (max-width: 768px) {
   .chart-container {
     overflow: hidden;
     position: relative;
-  }
-  
-  #chart[data-zoom-active="true"] {
-    touch-action: none;
-  }
-  
-  #chart[data-pan-active="true"] {
-    touch-action: pan-x;
   }
 }
 

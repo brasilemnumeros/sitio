@@ -5,12 +5,19 @@
 // Registra os plugins globalmente
 Chart.register(ChartDataLabels);
 
-// Register zoom plugin when available
-if (typeof zoomPlugin !== 'undefined') {
-  Chart.register(zoomPlugin);
-} else if (window.zoomPlugin) {
-  Chart.register(window.zoomPlugin);
-}
+// Simple zoom plugin registration
+setTimeout(() => {
+  // Register zoom plugin if available from CDN
+  if (window.zoomPlugin) {
+    Chart.register(window.zoomPlugin);
+    console.log('Zoom plugin registered from window.zoomPlugin');
+  } else if (typeof Chart !== 'undefined' && Chart.Zoom) {
+    Chart.register(Chart.Zoom);
+    console.log('Zoom plugin registered from Chart.Zoom');
+  } else {
+    console.warn('Zoom plugin not found - make sure chartjs-plugin-zoom is loaded');
+  }
+}, 100);
 
 class ChartCreator {
   // Método para configurações responsivas de barras
@@ -969,54 +976,35 @@ class ChartCreator {
               },
               pinch: {
                 enabled: true,
-                threshold: 2,
-                mode: 'x'
+                threshold: 2
               },
               mode: "x",
               onZoomStart: (context) => {
-                // Mark that zoom is active to prevent page zoom
-                if (context.chart.canvas) {
-                  context.chart.canvas.dataset.zoomActive = 'true';
-                  context.chart.canvas.style.touchAction = 'none';
-                }
+                console.log('Chart zoom started');
+                return true; // Allow zoom to proceed
               },
               onZoom: (context) => {
-                // Maintain no touch action during zoom
-                if (context.chart.canvas) {
-                  context.chart.canvas.style.touchAction = 'none';
-                }
+                // Chart is zooming, no need to change touch action
+                return true;
               },
               onZoomComplete: (context) => {
-                // Restore touch action after zoom
-                if (context.chart.canvas) {
-                  context.chart.canvas.dataset.zoomActive = 'false';
-                  context.chart.canvas.style.touchAction = 'pan-x pinch-zoom';
-                }
+                console.log('Chart zoom completed');
               }
             },
             pan: {
               enabled: true,
               mode: 'x',
-              threshold: 10,
+              threshold: 5, // Lower threshold for better mobile responsiveness
               onPanStart: (context) => {
-                // Mark that pan is active
-                if (context.chart.canvas) {
-                  context.chart.canvas.dataset.panActive = 'true';
-                  context.chart.canvas.style.touchAction = 'pan-x';
-                }
+                console.log('Chart pan started');
+                return true; // Allow pan to proceed
               },
               onPan: (context) => {
-                // Maintain pan-only touch action during pan
-                if (context.chart.canvas) {
-                  context.chart.canvas.style.touchAction = 'pan-x';
-                }
+                // Chart is panning
+                return true;
               },
               onPanComplete: (context) => {
-                // Restore full touch action after pan
-                if (context.chart.canvas) {
-                  context.chart.canvas.dataset.panActive = 'false';
-                  context.chart.canvas.style.touchAction = 'pan-x pinch-zoom';
-                }
+                console.log('Chart pan completed');
               }
             },
             limits: {

@@ -146,6 +146,25 @@ class ChartCreator {
     return { type: "percentage", symbol: "%", decimals: 2 };
   }
 
+  // Abrevia números grandes (milhares e milhões)
+  abbreviateNumber(value) {
+    if (value === null || value === undefined) return "";
+    
+    const absValue = Math.abs(value);
+    const isNegative = value < 0;
+    const prefix = isNegative ? "-" : "";
+    
+    if (absValue >= 1000000) {
+      const millions = absValue / 1000000;
+      return prefix + millions.toFixed(millions >= 10 ? 0 : 1) + "M";
+    } else if (absValue >= 1000) {
+      const thousands = absValue / 1000;
+      return prefix + thousands.toFixed(thousands >= 10 ? 0 : 1) + "K";
+    }
+    
+    return value.toString();
+  }
+
   // Formata valor baseado na configuração de unidade
   formatValue(value, unitConfig) {
     if (value === null || value === undefined) return "";
@@ -939,11 +958,26 @@ class ChartCreator {
             zoom: {
               wheel: {
                 enabled: true,
+                speed: 0.05,
               },
               pinch: {
-                enabled: true,
+                enabled: true
               },
               mode: "x",
+            },
+            pan: {
+              enabled: true,
+              mode: 'xy',
+            },
+            limits: {
+              x: {
+                min: Date.parse("1995-01-01"),
+                max: Date.parse("2025-01-01"),
+              },
+              y: { 
+                min: 'original', 
+                max: 'original' 
+              },
             },
           },
         },
@@ -1244,6 +1278,13 @@ class ChartCreator {
       dataArray.length > 0 &&
       dataArray.every((data) => this.detectFrequency(data) === "annual");
 
+    // Get unit configuration for the first indicator to check if we need number abbreviation
+    const firstUnitConfig = this.getUnitConfig(firstIndicatorName);
+    const shouldAbbreviateYAxis = firstUnitConfig.type === "number" || firstUnitConfig.type === "currency";
+    
+    // Store reference to this instance for callbacks
+    const chartCreator = this;
+
     const scales = {
       x: {
         type: "time",
@@ -1305,7 +1346,10 @@ class ChartCreator {
           text: isMultipleIndicators ? yAxisTitle : yAxisTitle,
           color: themeColors.axisLabel,
         },
-        ticks: { color: themeColors.ticks },
+        ticks: { 
+          color: themeColors.ticks,
+          callback: shouldAbbreviateYAxis ? (value) => chartCreator.abbreviateNumber(value) : undefined
+        },
         grid: { color: themeColors.grid },
       },
     };
@@ -1377,6 +1421,10 @@ class ChartCreator {
         ? this.getYAxisTitle(rightAxisDataset.label)
         : "Taxa (%)";
 
+      // Get unit configuration for the right axis indicator
+      const rightUnitConfig = this.getUnitConfig(rightAxisDataset.label);
+      const shouldAbbreviateRightAxis = rightUnitConfig.type === "number" || rightUnitConfig.type === "currency";
+
       scales.y1 = {
         type: "linear",
         display: true,
@@ -1387,7 +1435,10 @@ class ChartCreator {
           text: rightAxisTitle,
           color: themeColors.axisLabel,
         },
-        ticks: { color: themeColors.ticks },
+        ticks: { 
+          color: themeColors.ticks,
+          callback: shouldAbbreviateRightAxis ? (value) => chartCreator.abbreviateNumber(value) : undefined
+        },
         grid: { drawOnChartArea: false },
       };
     }

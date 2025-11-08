@@ -94,6 +94,10 @@
       <script defer src="{{ '/assets/js/chart-creator.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
       <script
         defer
+        src="{{ '/assets/js/mobile-chart-handler.js' | relative_url }}?v={{ site.time | date: '%s' }}"
+      ></script>
+      <script
+        defer
         src="{{ '/assets/js/chart-integration.js' | relative_url }}?v={{ site.time | date: '%s' }}"
       ></script>
     {% endif %}

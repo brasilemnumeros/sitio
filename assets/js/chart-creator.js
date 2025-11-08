@@ -935,6 +935,17 @@ class ChartCreator {
           datalabels: {
             display: false, // Controle individual por dataset
           },
+          zoom: {
+            zoom: {
+              wheel: {
+                enabled: true,
+              },
+              pinch: {
+                enabled: true,
+              },
+              mode: "x",
+            },
+          },
         },
         scales: this.createScalesConfig(
           isMultipleIndicators,

@@ -2,8 +2,15 @@
  * Chart Creator - Responsável pela criação e configuração de gráficos
  */
 
-// Registra o plugin DataLabels globalmente, sem alterar o display global
+// Registra os plugins globalmente
 Chart.register(ChartDataLabels);
+
+// Register zoom plugin when available
+if (typeof zoomPlugin !== 'undefined') {
+  Chart.register(zoomPlugin);
+} else if (window.zoomPlugin) {
+  Chart.register(window.zoomPlugin);
+}
 
 class ChartCreator {
   // Método para configurações responsivas de barras
@@ -961,13 +968,56 @@ class ChartCreator {
                 speed: 0.05,
               },
               pinch: {
-                enabled: true
+                enabled: true,
+                threshold: 2,
+                mode: 'x'
               },
               mode: "x",
+              onZoomStart: (context) => {
+                // Mark that zoom is active to prevent page zoom
+                if (context.chart.canvas) {
+                  context.chart.canvas.dataset.zoomActive = 'true';
+                  context.chart.canvas.style.touchAction = 'none';
+                }
+              },
+              onZoom: (context) => {
+                // Maintain no touch action during zoom
+                if (context.chart.canvas) {
+                  context.chart.canvas.style.touchAction = 'none';
+                }
+              },
+              onZoomComplete: (context) => {
+                // Restore touch action after zoom
+                if (context.chart.canvas) {
+                  context.chart.canvas.dataset.zoomActive = 'false';
+                  context.chart.canvas.style.touchAction = 'pan-x pinch-zoom';
+                }
+              }
             },
             pan: {
               enabled: true,
-              mode: 'xy',
+              mode: 'x',
+              threshold: 10,
+              onPanStart: (context) => {
+                // Mark that pan is active
+                if (context.chart.canvas) {
+                  context.chart.canvas.dataset.panActive = 'true';
+                  context.chart.canvas.style.touchAction = 'pan-x';
+                }
+              },
+              onPan: (context) => {
+                // Maintain pan-only touch action during pan
+                if (context.chart.canvas) {
+                  context.chart.canvas.style.touchAction = 'pan-x';
+                }
+              },
+              onPanComplete: (context) => {
+                // Restore full touch action after pan
+                if (context.chart.canvas) {
+                  context.chart.canvas.dataset.panActive = 'false';
+                  context.chart.canvas.style.touchAction = 'pan-x pinch-zoom';
+                }
+              }
             },
             limits: {
               x: {

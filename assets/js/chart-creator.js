@@ -1653,7 +1653,55 @@ class ChartCreator {
       };
     }
 
+    // Apply mobile default zoom if no timeRange is provided and it's a mobile device
+    if (!timeRange && window.innerWidth <= 768) {
+      this.applyMobileZoomToScales(scales, datasets, dataArray);
+    }
+
     return scales;
+  }
+
+  // Apply mobile zoom directly to scales configuration
+  applyMobileZoomToScales(scales, datasets, dataArray) {
+    try {
+      // Extract all dates from datasets
+      const allDates = [];
+      datasets.forEach(dataset => {
+        if (dataset.data) {
+          dataset.data.forEach(point => {
+            if (point && point.x) {
+              allDates.push(new Date(point.x));
+            }
+          });
+        }
+      });
+      
+      if (allDates.length === 0) return;
+      
+      // Sort dates and get range
+      allDates.sort((a, b) => a - b);
+      const firstDate = allDates[0];
+      const lastDate = allDates[allDates.length - 1];
+      
+      // Calculate zoom range (last 15 years or 25% of data, whichever is smaller)
+      const totalRange = lastDate.getTime() - firstDate.getTime();
+      const fifteenYears = 15 * 365 * 24 * 60 * 60 * 1000;
+      const quarterRange = totalRange * 0.25;
+      const zoomRange = Math.min(fifteenYears, quarterRange);
+      
+      // Calculate new bounds (show last portion)
+      const newMaxTime = lastDate.getTime();
+      const newMinTime = Math.max(newMaxTime - zoomRange, firstDate.getTime());
+      
+      // Apply to scales (modify the existing object)
+      scales.x.min = newMinTime;
+      scales.x.max = newMaxTime;
+      
+      console.log("Applied mobile zoom to scales:", new Date(newMinTime), "to", new Date(newMaxTime));
+      
+    } catch (error) {
+      console.warn("Failed to apply mobile zoom to scales:", error);
+    }
   }
 
   // Renderiza o gráfico

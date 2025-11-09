@@ -10,12 +10,14 @@ setTimeout(() => {
   // Register zoom plugin if available from CDN
   if (window.zoomPlugin) {
     Chart.register(window.zoomPlugin);
-    console.log('Zoom plugin registered from window.zoomPlugin');
-  } else if (typeof Chart !== 'undefined' && Chart.Zoom) {
+    console.log("Zoom plugin registered from window.zoomPlugin");
+  } else if (typeof Chart !== "undefined" && Chart.Zoom) {
     Chart.register(Chart.Zoom);
-    console.log('Zoom plugin registered from Chart.Zoom');
+    console.log("Zoom plugin registered from Chart.Zoom");
   } else {
-    console.warn('Zoom plugin not found - make sure chartjs-plugin-zoom is loaded');
+    console.warn(
+      "Zoom plugin not found - make sure chartjs-plugin-zoom is loaded",
+    );
   }
 }, 100);
 
@@ -163,11 +165,11 @@ class ChartCreator {
   // Abrevia números grandes (milhares e milhões)
   abbreviateNumber(value) {
     if (value === null || value === undefined) return "";
-    
+
     const absValue = Math.abs(value);
     const isNegative = value < 0;
     const prefix = isNegative ? "-" : "";
-    
+
     if (absValue >= 1000000) {
       const millions = absValue / 1000000;
       return prefix + millions.toFixed(millions >= 10 ? 0 : 1) + "M";
@@ -175,7 +177,7 @@ class ChartCreator {
       const thousands = absValue / 1000;
       return prefix + thousands.toFixed(thousands >= 10 ? 0 : 1) + "K";
     }
-    
+
     return value.toString();
   }
 
@@ -917,6 +919,9 @@ class ChartCreator {
     chartType = "line",
     valuesDisplayConfig = null,
   ) {
+    // Calculate Y-axis ranges from all data to prevent auto-scaling during pan
+    const yAxisRanges = this.calculateYAxisRanges(datasets, dataArray);
+
     // Detecta se os datasets foram sincronizados (mesma frequência) ou não
     const areSynchronized = this.detectIfSynchronized(datasets, dataArray);
 
@@ -976,45 +981,23 @@ class ChartCreator {
               },
               pinch: {
                 enabled: true,
-                threshold: 2
+                threshold: 2,
               },
-              mode: "x",
-              onZoomStart: (context) => {
-                console.log('Chart zoom started');
-                return true; // Allow zoom to proceed
-              },
-              onZoom: (context) => {
-                // Chart is zooming, no need to change touch action
-                return true;
-              },
-              onZoomComplete: (context) => {
-                console.log('Chart zoom completed');
-              }
+              mode: "x", // Only zoom on X-axis (time) to prevent Y-axis scaling issues
             },
             pan: {
               enabled: true,
-              mode: 'x',
-              threshold: 5, // Lower threshold for better mobile responsiveness
-              onPanStart: (context) => {
-                console.log('Chart pan started');
-                return true; // Allow pan to proceed
-              },
-              onPan: (context) => {
-                // Chart is panning
-                return true;
-              },
-              onPanComplete: (context) => {
-                console.log('Chart pan completed');
-              }
+              mode: "xy", // Allow panning on both axes since Y-axis is now fixed
+              threshold: 5,
             },
             limits: {
               x: {
                 min: Date.parse("1995-01-01"),
                 max: Date.parse("2025-01-01"),
               },
-              y: { 
-                min: 'original', 
-                max: 'original' 
+              y: {
+                min: yAxisRanges.y.min,
+                max: yAxisRanges.y.max,
               },
             },
           },
@@ -1025,6 +1008,7 @@ class ChartCreator {
           dataArray,
           themeColors,
           timeRange,
+          yAxisRanges,
         ),
         maintainAspectRatio: false,
         layout: { padding: ChartCreator.CHART_CONFIG.PADDING },
@@ -1292,6 +1276,143 @@ class ChartCreator {
     });
   }
 
+  // Round numbers to cleaner values for Y-axis display
+  roundToCleanNumber(value, roundDown = false, dataRange = null) {
+    if (value === 0) return 0;
+
+    const abs = Math.abs(value);
+    const sign = value < 0 ? -1 : 1;
+
+    // Special handling for percentage-like data (small ranges, typically 0-100)
+    if (dataRange && dataRange <= 100 && abs <= 100) {
+      // For percentage data, use more appropriate rounding
+      if (abs < 0.1) {
+        // Very small percentages: round to nearest 0.01
+        const rounded = roundDown
+          ? Math.floor(abs * 100) / 100
+          : Math.ceil(abs * 100) / 100;
+        return sign * rounded;
+      } else if (abs < 1) {
+        // Small percentages: round to nearest 0.1
+        const rounded = roundDown
+          ? Math.floor(abs * 10) / 10
+          : Math.ceil(abs * 10) / 10;
+        return sign * rounded;
+      } else if (abs < 10) {
+        // Medium percentages: round to nearest 0.5
+        const rounded = roundDown
+          ? Math.floor(abs * 2) / 2
+          : Math.ceil(abs * 2) / 2;
+        return sign * rounded;
+      } else {
+        // Larger percentages: round to nearest 1
+        const rounded = roundDown ? Math.floor(abs) : Math.ceil(abs);
+        return sign * rounded;
+      }
+    }
+
+    // Original logic for non-percentage data
+    const magnitude = Math.floor(Math.log10(abs));
+    const powerOf10 = Math.pow(10, magnitude);
+
+    // Normalize to 1-10 range
+    const normalized = abs / powerOf10;
+
+    let rounded;
+    if (normalized < 2) {
+      // Round to nearest 0.1 (e.g., 1.2, 1.5, 1.8)
+      rounded = roundDown
+        ? Math.floor(normalized * 10) / 10
+        : Math.ceil(normalized * 10) / 10;
+    } else if (normalized < 5) {
+      // Round to nearest 0.5 (e.g., 2.0, 2.5, 3.0)
+      rounded = roundDown
+        ? Math.floor(normalized * 2) / 2
+        : Math.ceil(normalized * 2) / 2;
+    } else {
+      // Round to nearest 1 (e.g., 5, 6, 7, 8, 9, 10)
+      rounded = roundDown ? Math.floor(normalized) : Math.ceil(normalized);
+    }
+
+    return sign * rounded * powerOf10;
+  }
+
+  // Calculate appropriate step size for Y-axis ticks
+  calculateStepSize(min, max) {
+    if (min === null || max === null || min === max) return undefined;
+
+    const range = Math.abs(max - min);
+    const magnitude = Math.floor(Math.log10(range));
+    const powerOf10 = Math.pow(10, magnitude);
+
+    // Normalize range to 1-10
+    const normalizedRange = range / powerOf10;
+
+    let step;
+    if (normalizedRange <= 1) {
+      step = 0.2 * powerOf10; // 5 steps
+    } else if (normalizedRange <= 2) {
+      step = 0.5 * powerOf10; // 4 steps
+    } else if (normalizedRange <= 5) {
+      step = 1 * powerOf10; // 5 steps
+    } else {
+      step = 2 * powerOf10; // 5 steps
+    }
+
+    return step;
+  }
+
+  // Calculate Y-axis ranges from all data to prevent auto-scaling during pan
+  calculateYAxisRanges(datasets, dataArray) {
+    const ranges = {
+      y: { min: null, max: null },
+      y1: { min: null, max: null },
+    };
+
+    datasets.forEach((dataset, index) => {
+      const yAxisId = dataset.yAxisID || "y";
+      const dataPoints = dataset.data;
+
+      if (!dataPoints || dataPoints.length === 0) return;
+
+      // Extract Y values, handling both object {x, y} and direct values
+      const yValues = dataPoints
+        .map((point) => {
+          if (point && typeof point === "object" && "y" in point) {
+            return point.y;
+          }
+          return point;
+        })
+        .filter((val) => val !== null && val !== undefined && !isNaN(val));
+
+      if (yValues.length === 0) return;
+
+      const min = Math.min(...yValues);
+      const max = Math.max(...yValues);
+      const dataRange = max - min;
+
+      // Add 5% padding to min/max for better visualization
+      const range = max - min;
+      const padding = range * 0.05;
+      let paddedMin = min - padding;
+      let paddedMax = max + padding;
+
+      // Round to cleaner numbers to avoid very long decimals, pass data range for percentage detection
+      paddedMin = this.roundToCleanNumber(paddedMin, true, dataRange); // true = round down
+      paddedMax = this.roundToCleanNumber(paddedMax, false, dataRange); // false = round up
+
+      // Update range for this axis
+      if (ranges[yAxisId].min === null || paddedMin < ranges[yAxisId].min) {
+        ranges[yAxisId].min = paddedMin;
+      }
+      if (ranges[yAxisId].max === null || paddedMax > ranges[yAxisId].max) {
+        ranges[yAxisId].max = paddedMax;
+      }
+    });
+
+    return ranges;
+  }
+
   // Configuração dos eixos
   createScalesConfig(
     isMultipleIndicators,
@@ -1299,7 +1420,12 @@ class ChartCreator {
     dataArray,
     themeColors,
     timeRange = null,
+    yAxisRanges = null,
   ) {
+    // Use provided Y-axis ranges or calculate them if not provided
+    const ranges =
+      yAxisRanges || this.calculateYAxisRanges(datasets, dataArray);
+
     // Get Y-axis title from indicator configuration
     const firstIndicatorName = datasets[0]?.label || "Indicador";
     const yAxisTitle = this.getYAxisTitle(firstIndicatorName);
@@ -1318,8 +1444,9 @@ class ChartCreator {
 
     // Get unit configuration for the first indicator to check if we need number abbreviation
     const firstUnitConfig = this.getUnitConfig(firstIndicatorName);
-    const shouldAbbreviateYAxis = firstUnitConfig.type === "number" || firstUnitConfig.type === "currency";
-    
+    const shouldAbbreviateYAxis =
+      firstUnitConfig.type === "number" || firstUnitConfig.type === "currency";
+
     // Store reference to this instance for callbacks
     const chartCreator = this;
 
@@ -1379,14 +1506,24 @@ class ChartCreator {
         display: true,
         position: "left",
         beginAtZero: false,
+        // Fix Y-axis range to prevent auto-scaling during pan
+        min: ranges.y.min,
+        max: ranges.y.max,
         title: {
           display: true,
           text: isMultipleIndicators ? yAxisTitle : yAxisTitle,
           color: themeColors.axisLabel,
         },
-        ticks: { 
+        ticks: {
           color: themeColors.ticks,
-          callback: shouldAbbreviateYAxis ? (value) => chartCreator.abbreviateNumber(value) : undefined
+          maxTicksLimit: 8, // Limit number of ticks for cleaner appearance
+          stepSize:
+            ranges.y.min !== null && ranges.y.max !== null
+              ? this.calculateStepSize(ranges.y.min, ranges.y.max)
+              : undefined,
+          callback: shouldAbbreviateYAxis
+            ? (value) => chartCreator.abbreviateNumber(value)
+            : undefined,
         },
         grid: { color: themeColors.grid },
       },
@@ -1461,21 +1598,33 @@ class ChartCreator {
 
       // Get unit configuration for the right axis indicator
       const rightUnitConfig = this.getUnitConfig(rightAxisDataset.label);
-      const shouldAbbreviateRightAxis = rightUnitConfig.type === "number" || rightUnitConfig.type === "currency";
+      const shouldAbbreviateRightAxis =
+        rightUnitConfig.type === "number" ||
+        rightUnitConfig.type === "currency";
 
       scales.y1 = {
         type: "linear",
         display: true,
         position: "right",
         beginAtZero: false,
+        // Fix Y1-axis range to prevent auto-scaling during pan
+        min: ranges.y1.min,
+        max: ranges.y1.max,
         title: {
           display: true,
           text: rightAxisTitle,
           color: themeColors.axisLabel,
         },
-        ticks: { 
+        ticks: {
           color: themeColors.ticks,
-          callback: shouldAbbreviateRightAxis ? (value) => chartCreator.abbreviateNumber(value) : undefined
+          maxTicksLimit: 8, // Limit number of ticks for cleaner appearance
+          stepSize:
+            ranges.y1.min !== null && ranges.y1.max !== null
+              ? this.calculateStepSize(ranges.y1.min, ranges.y1.max)
+              : undefined,
+          callback: shouldAbbreviateRightAxis
+            ? (value) => chartCreator.abbreviateNumber(value)
+            : undefined,
         },
         grid: { drawOnChartArea: false },
       };

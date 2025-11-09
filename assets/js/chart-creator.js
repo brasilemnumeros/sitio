@@ -983,7 +983,7 @@ class ChartCreator {
                 enabled: true,
                 threshold: 2,
               },
-              mode: "x", // Only zoom on X-axis (time) to prevent Y-axis scaling issues
+              mode: "xy", // Only zoom on X-axis (time) to prevent Y-axis scaling issues
             },
             pan: {
               enabled: true,
@@ -1362,6 +1362,34 @@ class ChartCreator {
     return step;
   }
 
+  // Format Y-axis tick values to avoid long decimals
+  formatYAxisTick(value, unitConfig = null, shouldAbbreviate = false) {
+    if (value === 0) return "0";
+
+    const abs = Math.abs(value);
+
+    // For very small numbers (likely percentages), use appropriate decimal places
+    if (abs < 0.01) {
+      return value.toFixed(3);
+    } else if (abs < 0.1) {
+      return value.toFixed(2);
+    } else if (abs < 1) {
+      return value.toFixed(1);
+    } else if (abs < 10) {
+      // For numbers 1-10, show 1 decimal if needed
+      return value % 1 === 0 ? value.toString() : value.toFixed(1);
+    } else {
+      // For larger numbers, use abbreviation if requested, otherwise show clean number
+      if (shouldAbbreviate) {
+        return this.abbreviateNumber(value);
+      } else {
+        // Round to avoid long decimals
+        const rounded = Math.round(value * 100) / 100;
+        return rounded % 1 === 0 ? rounded.toString() : rounded.toFixed(2);
+      }
+    }
+  }
+
   // Calculate Y-axis ranges from all data to prevent auto-scaling during pan
   calculateYAxisRanges(datasets, dataArray) {
     const ranges = {
@@ -1521,9 +1549,7 @@ class ChartCreator {
             ranges.y.min !== null && ranges.y.max !== null
               ? this.calculateStepSize(ranges.y.min, ranges.y.max)
               : undefined,
-          callback: shouldAbbreviateYAxis
-            ? (value) => chartCreator.abbreviateNumber(value)
-            : undefined,
+          callback: (value) => chartCreator.formatYAxisTick(value, firstUnitConfig, shouldAbbreviateYAxis),
         },
         grid: { color: themeColors.grid },
       },
@@ -1622,9 +1648,7 @@ class ChartCreator {
             ranges.y1.min !== null && ranges.y1.max !== null
               ? this.calculateStepSize(ranges.y1.min, ranges.y1.max)
               : undefined,
-          callback: shouldAbbreviateRightAxis
-            ? (value) => chartCreator.abbreviateNumber(value)
-            : undefined,
+          callback: (value) => chartCreator.formatYAxisTick(value, rightUnitConfig, shouldAbbreviateRightAxis),
         },
         grid: { drawOnChartArea: false },
       };

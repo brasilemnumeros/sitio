@@ -981,7 +981,6 @@ class ChartCreator {
               },
               pinch: {
                 enabled: true,
-                threshold: 2,
               },
               mode: "xy", // Only zoom on X-axis (time) to prevent Y-axis scaling issues
             },

@@ -33,9 +33,6 @@ class ChartIntegration {
     // Setup reset zoom button
     this.setupResetZoomButton();
 
-    // Setup Y-axis scale toggle button
-    this.setupYScaleToggleButton();
-
     return config;
   }
 
@@ -908,115 +905,6 @@ class ChartIntegration {
         }, 1500);
       }
     });
-  }
-
-  setupYScaleToggleButton() {
-    const toggleBtn = document.getElementById("toggle-y-scale-btn");
-    if (!toggleBtn) return;
-
-    toggleBtn.addEventListener("click", () => {
-      try {
-        const chart =
-          window.chartInstance ||
-          (window.chartManager && window.chartManager.chart);
-        if (!chart) {
-          console.warn("Chart instance not found");
-          return;
-        }
-
-        const currentMode = toggleBtn.dataset.mode;
-        const newMode = currentMode === "fixed" ? "auto" : "fixed";
-
-        if (newMode === "auto") {
-          // Switch to auto-scaling Y-axis
-          if (chart.options.scales.y) {
-            delete chart.options.scales.y.min;
-            delete chart.options.scales.y.max;
-          }
-          if (chart.options.scales.y1) {
-            delete chart.options.scales.y1.min;
-            delete chart.options.scales.y1.max;
-          }
-
-          // Update button appearance
-          toggleBtn.innerHTML = `
-            <svg class="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-            </svg>
-            Escala Y auto
-          `;
-          toggleBtn.dataset.mode = "auto";
-          toggleBtn.title =
-            "Escala Y se ajusta automaticamente ao intervalo visível";
-        } else {
-          // Switch to fixed Y-axis by recreating chart with fixed scales
-          this.recreateChartWithFixedYAxis();
-
-          // Update button appearance
-          toggleBtn.innerHTML = `
-            <svg class="mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12V7.41a1 1 0 011.707-.707l3 3a1 1 0 010 1.414l-3 3A1 1 0 019 12.59V12a4.992 4.992 0 00-4.793-2H4a1 1 0 010-2h.207A4.992 4.992 0 009 12z"/>
-            </svg>
-            Escala Y fixa
-          `;
-          toggleBtn.dataset.mode = "fixed";
-          toggleBtn.title = "Escala Y permanece fixa durante navegação";
-        }
-
-        // Update the chart
-        chart.update("none");
-      } catch (error) {
-        console.error("Erro ao alternar escala Y:", error);
-      }
-    });
-  }
-
-  recreateChartWithFixedYAxis() {
-    // Recreate the current chart with fixed Y-axis
-    const currentIndicators = this.getCurrentIndicators();
-    const config = window.indicatorsConfig;
-    if (!currentIndicators.length || !config) {
-      return;
-    }
-
-    // Get current Y-axis configuration
-    const yAxisConfig = window.multiselectScope?.yAxisConfig || null;
-    // Preserve valuesDisplayConfig
-    const valuesDisplayConfig =
-      window.multiselectScope?.valuesDisplayConfig || {};
-    // Get current time range
-    const timeRange = this.getCurrentTimeRange();
-
-    // Get data files for current indicators
-    const dataFiles = currentIndicators
-      .map((name) => {
-        const indicator = config.indicators.find((ind) => ind.name === name);
-        return indicator ? indicator.datafile : null;
-      })
-      .filter(Boolean);
-
-    if (dataFiles.length === 0) {
-      return;
-    }
-
-    // Recreate chart with time filtering and fixed Y-axis
-    if (dataFiles.length === 1) {
-      this.updateChartWithTimeFilter(
-        dataFiles[0],
-        currentIndicators[0],
-        yAxisConfig,
-        timeRange,
-        valuesDisplayConfig,
-      );
-    } else {
-      this.updateChartWithTimeFilter(
-        dataFiles,
-        currentIndicators,
-        yAxisConfig,
-        timeRange,
-        valuesDisplayConfig,
-      );
-    }
   }
 
   buildShareUrl() {

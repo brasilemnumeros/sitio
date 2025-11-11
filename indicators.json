@@ -191,6 +191,23 @@
         "decimals": 2
       },
       "yAxisTitle": "Homicídios por 100 mil habitantes"
+    },
+    {
+      "id": "proporcao-homicidios-armas-fogo-anual",
+      "name": "Proporção de Homicídios por Armas de Fogo (%)",
+      "granularity": "Anual",
+      "datafile": "https://brasilemnumeros.github.io/dados/homicidios/proporcao-homicidios-armas-fogo-anual.json",
+      "description": "Proporção de homicídios cometidos por armas de fogo em relação ao total de homicídios no Brasil",
+      "source": "IPEA - Instituto de Pesquisa Econômica Aplicada",
+      "chartType": "bar",
+      "group": "public-safety",
+      "unit": {
+        "type": "percentage",
+        "symbol": "%",
+        "decimals": 2
+      },
+      "yAxisTitle": "Proporção (%)",
+      "yAxisMax": 100
     }
   ],
   "groups": {

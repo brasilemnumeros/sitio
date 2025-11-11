@@ -127,7 +127,12 @@ class ChartIntegration {
             randomIndicator.datafile;
         }
 
-        await this.updateChart(randomIndicator.datafile, randomIndicator.name);
+        await this.updateChart(
+          randomIndicator.datafile, 
+          randomIndicator.name,
+          window.multiselectScope?.yAxisConfig || null,
+          window.multiselectScope?.valuesDisplayConfig || null
+        );
       } else {
         // Fallback to hardcoded default if no indicators available
         await this.updateChart("/data/selic-acum-12m.json");
@@ -722,6 +727,54 @@ class ChartIntegration {
     const dataFiles = indicators.map((ind) => ind.datafile);
     const names = indicators.map((ind) => ind.name);
 
+    // Ensure yAxisConfig is properly initialized
+    let yAxisConfig = window.multiselectScope?.yAxisConfig || {};
+    
+    // If yAxisConfig is empty or doesn't have all current indicators, generate it using the same logic
+    const hasAllIndicators = names.every(name => yAxisConfig.hasOwnProperty(name));
+    if (Object.keys(yAxisConfig).length === 0 || !hasAllIndicators) {
+      yAxisConfig = {};
+      // Apply the same logic as decideAxisForNewIndicator for all indicators
+      names.forEach((indicatorName, index) => {
+        if (index === 0) {
+          // First indicator always goes to left
+          yAxisConfig[indicatorName] = 'left';
+        } else {
+          // For subsequent indicators, apply the decision logic
+          const currentSelected = names.slice(0, index);
+          // Check if MultiselectManager is available before using it
+          if (window.MultiselectManager && window.MultiselectManager.decideAxisForNewIndicator) {
+            const decidedAxis = window.MultiselectManager.decideAxisForNewIndicator(
+              currentSelected, 
+              indicatorName, 
+              yAxisConfig
+            );
+            yAxisConfig[indicatorName] = decidedAxis;
+          } else {
+            // Fallback: simple logic for different chart types
+            const indicatorsMeta = config.indicators || [];
+            const newMeta = indicatorsMeta.find(i => i.name === indicatorName);
+            const newType = newMeta && newMeta.chartType ? newMeta.chartType : 'line';
+            
+            const existingTypes = currentSelected.map(name => {
+              const meta = indicatorsMeta.find(i => i.name === name);
+              return meta && meta.chartType ? meta.chartType : 'line';
+            });
+            
+            const existingRight = Object.values(yAxisConfig).includes('right');
+            const isDifferentFromAll = !existingTypes.includes(newType);
+            
+            yAxisConfig[indicatorName] = (!existingRight && isDifferentFromAll) ? 'right' : 'left';
+          }
+        }
+      });
+      
+      // Update multiselect scope with the generated config
+      if (window.multiselectScope) {
+        window.multiselectScope.yAxisConfig = yAxisConfig;
+      }
+    }
+
     // Update multiselect to reflect URL state
     if (window.multiselectScope) {
       window.multiselectScope.selectedIndicators = names;
@@ -729,9 +782,19 @@ class ChartIntegration {
 
     // Load the charts
     if (dataFiles.length === 1) {
-      await this.updateChart(dataFiles[0], names[0]);
+      await this.updateChart(
+        dataFiles[0], 
+        names[0],
+        yAxisConfig,
+        window.multiselectScope?.valuesDisplayConfig || null
+      );
     } else {
-      await this.updateChart(dataFiles, names);
+      await this.updateChart(
+        dataFiles, 
+        names,
+        yAxisConfig,
+        window.multiselectScope?.valuesDisplayConfig || null
+      );
     }
   }
 

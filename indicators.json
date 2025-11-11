@@ -159,6 +159,38 @@
         "decimals": 2
       },
       "yAxisTitle": "Variação (%)"
+    },
+    {
+      "id": "homicidios-anual",
+      "name": "Homicídios",
+      "granularity": "Anual",
+      "datafile": "https://brasilemnumeros.github.io/dados/homicidios/homicidios-anual.json",
+      "description": "Número total de homicídios no Brasil por 100 mil habitantes",
+      "source": "IPEA - Instituto de Pesquisa Econômica Aplicada",
+      "chartType": "line",
+      "group": "public-safety",
+      "unit": {
+        "type": "number",
+        "symbol": "por 100 mil habitantes",
+        "decimals": 2
+      },
+      "yAxisTitle": "Homicídios por 100 mil habitantes"
+    },
+    {
+      "id": "homicidios-armas-fogo-anual",
+      "name": "Homicídios por Armas de Fogo",
+      "granularity": "Anual",
+      "datafile": "https://brasilemnumeros.github.io/dados/homicidios/homicidios-armas-fogo-anual.json",
+      "description": "Número de homicídios por armas de fogo no Brasil por 100 mil habitantes",
+      "source": "IPEA - Instituto de Pesquisa Econômica Aplicada",
+      "chartType": "line",
+      "group": "public-safety",
+      "unit": {
+        "type": "number",
+        "symbol": "por 100 mil habitantes",
+        "decimals": 2
+      },
+      "yAxisTitle": "Homicídios por 100 mil habitantes"
     }
   ],
   "groups": {
@@ -185,7 +217,10 @@
     "demographics": {
       "name": "👥 Demografia",
       "description": "Indicadores relacionados à população e demografia"
+    },
+    "public-safety": {
+      "name": "🚨 Segurança Pública",
+      "description": "Indicadores relacionados à segurança pública e criminalidade"
     }
-  },
-  "defaultIndicator": "selic-meta-acum-12m"
+  }
 }

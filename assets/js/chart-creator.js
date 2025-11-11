@@ -604,13 +604,6 @@ class ChartCreator {
       if (yAxisConfig && yAxisConfig[indicatorName]) {
         // Se a configuração explícita existir, respeita-a
         yAxisID = yAxisConfig[indicatorName] === "right" ? "y1" : "y";
-      } else if (
-        Array.isArray(namesArray) &&
-        namesArray.length > 1 &&
-        index === 1
-      ) {
-        // Regra padrão: quando há mais de um indicador, coloca o segundo no eixo direito
-        yAxisID = "y1";
       }
 
       // Determina se os valores devem estar sempre visíveis
@@ -782,13 +775,6 @@ class ChartCreator {
       if (yAxisConfig && yAxisConfig[indicatorName]) {
         // Respeita configuração explícita quando fornecida
         yAxisID = yAxisConfig[indicatorName] === "right" ? "y1" : "y";
-      } else if (
-        Array.isArray(namesArray) &&
-        namesArray.length > 1 &&
-        index === 1
-      ) {
-        // Regra padrão: quando há mais de um indicador, coloca o segundo no eixo direito
-        yAxisID = "y1";
       }
 
       // Determina se os valores devem estar sempre visíveis

@@ -149,6 +149,14 @@ class ChartCreator {
     }
   }
 
+  // Determina o eixo Y para um dataset baseado no yAxisConfig
+  determineAxisForDataset(indicatorName, index, yAxisConfig) {
+    if (yAxisConfig && yAxisConfig[indicatorName]) {
+      return yAxisConfig[indicatorName] === "right" ? "y1" : "y";
+    }
+    return "y"; // Default to left axis
+  }
+
   // Obtém configuração de unidade para um indicador
   getUnitConfig(indicatorName) {
     if (window.chartManager && window.chartManager.indicatorsConfig) {
@@ -489,7 +497,7 @@ class ChartCreator {
         pointBorderColor: "rgba(255, 255, 255, 0.8)",
         pointBorderWidth:
           ChartCreator.CHART_CONFIG.ANIMATION.POINT_BORDER_WIDTH,
-        yAxisID: "y", // Single indicator always uses left axis
+        yAxisID: this.determineAxisForDataset(indicatorName, index, yAxisConfig), // Respect yAxisConfig even for single indicators
         spanGaps: false,
         // Plugin de data labels para exibir valores diretamente nos pontos
         datalabels: showValuesAlways
@@ -605,7 +613,7 @@ class ChartCreator {
         // Se a configuração explícita existir, respeita-a
         yAxisID = yAxisConfig[indicatorName] === "right" ? "y1" : "y";
       }
-
+      
       // Determina se os valores devem estar sempre visíveis
       const showValuesAlways =
         valuesDisplayConfig && valuesDisplayConfig[indicatorName] === "always";
@@ -776,7 +784,7 @@ class ChartCreator {
         // Respeita configuração explícita quando fornecida
         yAxisID = yAxisConfig[indicatorName] === "right" ? "y1" : "y";
       }
-
+      
       // Determina se os valores devem estar sempre visíveis
       const showValuesSynchronized =
         valuesDisplayConfig && valuesDisplayConfig[indicatorName] === "always";
@@ -1404,15 +1412,33 @@ class ChartCreator {
       const max = Math.max(...yValues);
       const dataRange = max - min;
 
+      // Check if this indicator has a custom yAxisMax configured
+      const indicatorName = dataset.label;
+      let customYAxisMax = null;
+      
+      if (window.chartManager && window.chartManager.indicatorsConfig && indicatorName) {
+        const indicator = window.chartManager.indicatorsConfig.indicators.find(
+          (ind) => ind.name === indicatorName,
+        );
+        customYAxisMax = indicator?.yAxisMax || null;
+      }
+
       // Add 5% padding to min/max for better visualization
       const range = max - min;
       const padding = range * 0.05;
       let paddedMin = min - padding;
       let paddedMax = max + padding;
 
+      // If custom yAxisMax is configured, use it instead of calculated max
+      if (customYAxisMax !== null && customYAxisMax !== undefined) {
+        paddedMax = customYAxisMax;
+      }
+
       // Round to cleaner numbers to avoid very long decimals, pass data range for percentage detection
       paddedMin = this.roundToCleanNumber(paddedMin, true, dataRange); // true = round down
-      paddedMax = this.roundToCleanNumber(paddedMax, false, dataRange); // false = round up
+      if (customYAxisMax === null || customYAxisMax === undefined) {
+        paddedMax = this.roundToCleanNumber(paddedMax, false, dataRange); // false = round up
+      }
 
       // Update range for this axis
       if (ranges[yAxisId].min === null || paddedMin < ranges[yAxisId].min) {

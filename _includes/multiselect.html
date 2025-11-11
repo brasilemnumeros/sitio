@@ -102,12 +102,16 @@
               :key="indicator.id"
               @click="
                 if (selectedIndicators.includes(indicator.name)) {
+                  // Remoção do indicador
                   selectedIndicators = selectedIndicators.filter(v => v !== indicator.name);
                   delete yAxisConfig[indicator.name];
                 } else {
+                  // Decide eixo com função JS centralizada
+                  const axisSide = window.MultiselectManager
+                    ? window.MultiselectManager.decideAxisForNewIndicator(selectedIndicators, indicator.name, yAxisConfig)
+                    : 'left';
+                  yAxisConfig[indicator.name] = axisSide;
                   selectedIndicators = [...selectedIndicators, indicator.name];
-                  // Novo comportamento: nunca auto-atribui eixo direito; tudo começa no esquerdo
-                  yAxisConfig[indicator.name] = 'left';
                 }
                 if (typeof gtag !== 'undefined') {
                   gtag('event', 'indicator_selected', {

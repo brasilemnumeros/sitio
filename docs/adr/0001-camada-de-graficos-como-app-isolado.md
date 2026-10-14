@@ -107,10 +107,10 @@ Registradas aqui apenas para que a ADR não contradiga a spec:
 - **Trilho de mandatos:** seletor desacoplado do eixo do tempo, uma caixa por governo com largura igual — não é régua temporal.
 - **Escalas:** o usuário escolhe o eixo e o app sugere um padrão; séries de magnitude incompatível não entram em silêncio (aviso + escolha entre normalizar e remover).
 - **Modal de busca:** cascata de três colunas (grupo → indicador → ficha), com a busca por digitação disponível nas três. A ficha é onde vivem unidade, granularidade, período, fonte e o aviso de compatibilidade de escala — visível antes da escolha, não depois como erro.
-- **Limite de séries sobrepostas:** 5, por causa da legibilidade da matriz de comparação (5 linhas × 8 mandatos ainda se lê de um relance).
+- **Séries sobrepostas: sem limite** *(revisto em 2026-10-14; a redação original fixava 5)*. O limite protegia a legibilidade da matriz, não o desempenho, e bloquear o usuário por um risco que é dele foi considerado paternalismo. Substituído por duas obrigações de layout: a matriz rola com o cabeçalho dos mandatos fixo e a legenda quebra em linhas. Fica **aberto e não medido** o risco de a paleta derivada do `partido` repetir cores cedo — problema maior sem limite do que com ele.
 - **Arquitetura do app:** cinco camadas com dependência descendente (componentes → stores → domínio → fronteira/dados → estático). Só a camada de fronteira conhece a Lightweight Charts; o domínio é puro e testável. **O gráfico é espelho do store, não dono do estado** — a janela visível volta por callback explícito do adapter.
 - **Governos (D5):** JSON em `dados/governos/` (índice + um arquivo por entidade); `inicio`/`fim` guardam **exercício efetivo**, não mandato formal, e nunca são derivados de regra; reeleição são mandatos separados agrupáveis por `titular`; **cor derivada do partido**, não guardada; municipal suportado pelo modelo mas não populado.
-- **Mandato em curso:** aparece marcado — faixa **hachurada** cortando no último dado disponível, mesma linguagem no trilho, e na matriz a **data de corte dentro de cada célula** (o corte varia por série, então nenhum cabeçalho de coluna pode resumi-lo).
+- **Cobertura parcial da célula** *(generalizada em 2026-10-14)*: qualquer célula cujo Δ **não cobre o mandato inteiro** é marcada — não só o mandato em curso, também a série que começa depois do início do mandato (o MVG-R no "Lula I" só existe a partir de 03/2004, então aquele Δ cobriria 34 dos 48 meses). Faixa **hachurada** no gráfico cortando no último dado disponível, mesma linguagem no trilho, e na matriz o **período real usado** dentro da célula. Consequência: não é preciso mostrar contagem de pontos — o período real é informação de verdade; contagem de pontos, não.
 
 ## Consequências
 
@@ -148,7 +148,7 @@ Registradas aqui apenas para que a ADR não contradiga a spec:
 ## Próximos passos
 
 1. ~~Mockups do layout~~ **feito** (sessão de 2026-10-14: composição da página, conteúdo da matriz de comparação, interação das faixas, trilho de mandatos, escalas).
-2. Desenho da solução em seções, aprovado uma a uma — **em andamento**. Decididas: composição da página, modal de busca, interação das faixas, trilho de mandatos, painel de comparação, escalas, contrato de dados (D7), limite de séries, arquitetura do app e modelo de governos (D5). Falta: forma visual do mandato em curso, carregamento/erro/estado vazio, testes, shell `index.html` e integração com o build do Jekyll, e a modal no celular.
+2. Desenho da solução em seções, aprovado uma a uma — **em andamento**. Decididas: composição da página, modal de busca, interação das faixas, trilho de mandatos, painel de comparação, escalas, contrato de dados (D7), ausência de limite de séries, arquitetura do app, modelo de governos (D5) e a cobertura parcial da célula. Falta: carregamento/erro/estado vazio, testes, shell `index.html` e integração com o build do Jekyll, e a modal no celular.
 3. Spec de design em `sitio/docs/specs/` — **escrita** em `2026-10-14-camada-de-graficos-design.md`; parcial por construção, com a seção 10 listando o que falta desenhar.
 4. Plano de implementação.
 

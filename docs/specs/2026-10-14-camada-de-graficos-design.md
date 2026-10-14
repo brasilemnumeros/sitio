@@ -24,7 +24,14 @@ Decisão de fundo: o painel de comparação fica **abaixo do gráfico, em largur
 
 O painel **não** vem em abas. Ele é sempre visível, mesmo custando página longa.
 
-**Limite de séries sobrepostas: 5.** A razão principal não é o gráfico, é a **matriz do painel de comparação**: 5 linhas × 8 mandatos ainda se lê de um relance; 8 linhas viram parede. O limite também protege a legenda (precisa caber) e a régua do objetivo — sobrepor 8 séries não é comparar, é decorar.
+**Sem limite de séries sobrepostas.** Havia um limite de 5, justificado pela legibilidade da matriz; ele foi **removido em 2026-10-14**. Bloquear o usuário por um risco que é dele é paternalismo — se vai ficar ilegível, é escolha dele. E o limite protegia um *layout*, não o desempenho: o Lightweight Charts aguenta dezenas de séries no volume deste projeto.
+
+O que substitui o limite não é aviso nem gate, são **duas obrigações de layout**:
+
+- **A matriz degrada rolando**, com o cabeçalho dos mandatos **fixo** — sem isso, com 12 séries o usuário perde a referência de qual coluna está lendo.
+- **A legenda quebra em linhas** e continua identificando cada série.
+
+**Risco aberto, ainda não medido:** a cor é derivada do `partido` (seção 7), e ninguém mediu **quantas cores distinguíveis essa derivação produz**. Se a paleta repetir cedo, dois indicadores ficam com a mesma cor e a legenda deixa de identificar qualquer coisa — e isso é um problema **maior** sem limite do que com ele. Fica em aberto até ser medido.
 
 ### 1.1 Modal de busca de indicadores
 
@@ -302,13 +309,19 @@ Campos: `id` estável (`<esfera>-<ano-de-início>-<slug>`), `rotulo` curto para 
 
 **4. A cor sai do dado e passa a ser derivada** (emenda à D5). O dado guarda `partido`; o app deriva a cor por paleta determinística a partir dele, com fallback por titular para quem não tem partido conhecido, e **override opcional** no registro quando a curadoria discordar. Cor à mão não sobrevive a 27 UFs, quanto mais a 5.570 municípios.
 
-**5. Mandato em curso aparece, marcado.** `fim: null` + `emCurso: true`. Tem faixa no gráfico, caixa no trilho e coluna na matriz — mas a célula **não pode mentir**: o Δ dele é **parcial até o último ponto de cada série**, e esse ponto **varia por série** (hoje o IPCA termina em 2025-06, a SELIC em 2025-10). E mandato em curso **não entra em ranking** de "maior variação" sem esse aviso — ele perderia para todos, sempre, só por ser mais curto.
+**5. Cobertura parcial é marcada — e não é só o mandato em curso.** A regra é uma só: **qualquer célula cujo Δ não cobre o mandato inteiro leva marca**, qualquer que seja o motivo (o mandato está em curso, ou a série começa depois do início dele). Célula com Δ parcial que aparece sem aviso é atribuir a um governo uma variação que ele não produziu inteiro.
+
+A medição que motivou a generalização (2026-10-14, sobre os 13 arquivos e 8 mandatos): **15 das 104 células** ficam abaixo do esperado, e o caso que importa não é o mandato em curso — esse já era conhecido. É este: o **MVG-R** só começa em **03/2004**, então no mandato rotulado "Lula I" ele tem **35 dos 48 pontos possíveis**, e o Δ cobriria **34 de 48 meses** enquanto a coluna se chama "Lula I". No "FHC II" ele tem **0 pontos** e nem existe célula.
+
+Por isso a célula não carrega **contagem de pontos** — carrega o **período real usado**. Contagem de pontos é um número que ninguém sabe interpretar (2 pontos numa série anual é normal; 2 numa mensal é defeito); o período real é informação de verdade, e responde a mesma pergunta. *(A contagem de pontos chegou a ser proposta como uma coluna; a medição a tornou desnecessária.)*
 
 Forma visual, decidida:
 
 - **Na faixa do gráfico: hachura diagonal, cortando no último dado disponível** — não na data de hoje. Hachura é convenção estabelecida para "período em aberto" e **não depende de cor**: funciona no tema escuro, no claro, e para quem não distingue cores.
 - **No trilho: a mesma linguagem** (marca hachurada na caixa), para que a faixa e o seletor falem a mesma língua.
-- **Na matriz: a data de corte vive dentro de cada célula**, em corpo menor, com a coluna inteira em fundo levemente marcado. É verboso de propósito — é o único formato em que cada número aparece acompanhado da data que o torna verdadeiro. Nenhum cabeçalho de coluna pode resumir isso, porque o corte é por série.
+- **Na matriz: o período real usado vive dentro de cada célula** (`parcial 03/2004–12/2006` ou `parcial até 10/2025`), em corpo menor. É verboso de propósito — é o único formato em que cada número aparece acompanhado do intervalo que o torna verdadeiro. Nenhum cabeçalho de coluna pode resumir isso, porque a cobertura varia **por série**.
+
+Mandato em curso também **não entra em ranking** de "maior variação" sem esse aviso — ele perderia para todos, sempre, só por ser mais curto.
 
 **Rejeitados:** só o contorno tracejado na faixa (discreto demais — se perde em tela pequena e com muitas faixas, e um mandato inacabado passaria por completo); notação de aproximado (≈) com as datas no tooltip (o ≈ não diz **até quando**, e duas séries com cortes separados por cinco meses pareceriam igualmente parciais); e deixar a coluna da matriz vazia com "—" (o mais conservador contra ranking, mas joga fora a informação que o usuário provavelmente mais quer: o que está acontecendo agora).
 
@@ -395,3 +408,27 @@ Ordem sugerida de ataque:
 Pares mais compatíveis medidos: `igpm` × `selic-meta` (1,056) · `selic-meta` × `selic-over` (1,207) · `pib` × `proporcao-homicidios` (1,208) · `homicidios` × `homicidios-armas-fogo` (1,212).
 
 Pares menos compatíveis medidos: `populacao-total` × `populacao-variacao` (20.921.102) · `caged` × `populacao-variacao` (11.540.627) · `homicidios-armas-fogo` × `populacao-total` (5.880.513).
+
+### Cobertura por mandato (medida em 2026-10-14)
+
+Pontos de cada série dentro de cada mandato federal, conforme o modelo da seção 7 (exercício efetivo). **Δ precisa de 2+ pontos; "—" é ausência de cobertura.**
+
+| série | FHC II | Lula I | Lula II | Dilma I | Dilma II | Temer | Bolsonaro | Lula III |
+|---|---|---|---|---|---|---|---|---|
+| `caged-total-mensal` | 48 | 49 | 48 | 48 | 21 | 31 | 48 | 32 |
+| `homicidios-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | **1** |
+| `homicidios-armas-fogo-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | **—** |
+| `proporcao-homicidios-armas-fogo-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | **—** |
+| `igpm-acum-12m` | 48 | 48 | 48 | 48 | 20 | 32 | 48 | 31 |
+| `ipca-acum-12m` | 48 | 48 | 48 | 48 | 20 | 31 | 48 | 30 |
+| `mvgr-nominal` | **—** | **35** | 48 | 48 | 21 | 31 | 48 | 31 |
+| `mvgr-real` | **—** | **35** | 48 | 48 | 21 | 31 | 48 | 31 |
+| `pib-real-anual` | 4 | 5 | 4 | 4 | 3 | 2 | 4 | 2 |
+| `populacao-total-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | 2 |
+| `populacao-variacao-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | 2 |
+| `selic-meta-acum-12m` | 46 | 48 | 48 | 48 | 20 | 32 | 48 | 34 |
+| `selic-over-acum-12m` | 48 | 48 | 48 | 48 | 20 | 32 | 48 | 34 |
+
+Resumo: **104 células possíveis** (13 × 8) · **99 calculáveis (95%)** · **4 sem cobertura (3%)** — `mvgr-*` no FHC II (a série começa em 2004-03) e os dois `homicidios-*` no Lula III (as séries terminam em 2022) · **1 indefinida** — `homicidios-anual` no Lula III, com 1 ponto só.
+
+**15 células** ficam abaixo do esperado para a própria granularidade da série. A maioria é consequência do mandato em curso (Lula III) ou do início tardio da série. O caso que motivou a regra de cobertura parcial da seção 7.3 é `mvgr-nominal` e `mvgr-real` no **Lula I**: 35 pontos onde caberiam 48, porque as séries começam em **03/2004** — o Δ cobriria 34 dos 48 meses sob um rótulo que diz "Lula I".

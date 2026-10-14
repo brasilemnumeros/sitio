@@ -102,6 +102,8 @@ Registradas aqui apenas para que a ADR não contradiga a spec:
 - **Interação das faixas de governo:** clique **seleciona e destaca**; pan/scroll/duplo-clique dão zoom. Minimapa com o intervalo total. Filtro/isolamento de mandato rejeitado.
 - **Trilho de mandatos:** seletor desacoplado do eixo do tempo, uma caixa por governo com largura igual — não é régua temporal.
 - **Escalas:** o usuário escolhe o eixo e o app sugere um padrão; séries de magnitude incompatível não entram em silêncio (aviso + escolha entre normalizar e remover).
+- **Modal de busca:** cascata de três colunas (grupo → indicador → ficha), com a busca por digitação disponível nas três. A ficha é onde vivem unidade, granularidade, período, fonte e o aviso de compatibilidade de escala — visível antes da escolha, não depois como erro.
+- **Limite de séries sobrepostas:** 5, por causa da legibilidade da matriz de comparação (5 linhas × 8 mandatos ainda se lê de um relance).
 
 ## Consequências
 
@@ -139,7 +141,7 @@ Registradas aqui apenas para que a ADR não contradiga a spec:
 ## Próximos passos
 
 1. ~~Mockups do layout~~ **feito** (sessão de 2026-10-14: composição da página, conteúdo da matriz de comparação, interação das faixas, trilho de mandatos, escalas).
-2. Desenho da solução em seções, aprovado uma a uma — **em andamento**. Decididas: composição da página, interação das faixas, trilho de mandatos, painel de comparação, escalas e contrato de dados (D7). Falta: modal de busca, arquitetura do app Svelte, formato do arquivo de governos (D5), tratamento de erro, testes e integração com o build do Jekyll.
+2. Desenho da solução em seções, aprovado uma a uma — **em andamento**. Decididas: composição da página, modal de busca, interação das faixas, trilho de mandatos, painel de comparação, escalas e contrato de dados (D7). Falta: arquitetura do app Svelte, formato do arquivo de governos (D5), tratamento de erro, testes, integração com o build do Jekyll e a modal no celular.
 3. Spec de design em `sitio/docs/specs/` — **escrita** em `2026-10-14-camada-de-graficos-design.md`; parcial por construção, com a seção 9 listando o que falta desenhar.
 4. Plano de implementação.
 

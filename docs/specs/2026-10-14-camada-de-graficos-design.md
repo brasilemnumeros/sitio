@@ -13,7 +13,7 @@ Esta spec **não repete** as decisões de arquitetura (Svelte, Lightweight Chart
 
 Uma página única, tema escuro, com as peças empilhadas nesta ordem:
 
-1. **Barra de busca** — um campo que abre a modal de busca de indicadores (desenho da modal: pendente, seção 9).
+1. **Barra de busca** — um campo que abre a modal de busca de indicadores (seção 1.1).
 2. **Chips das séries selecionadas** — uma por indicador ativo, com cor, nome e um "×" de remoção.
 3. **Gráfico grande** — série temporal com as faixas de governo pintadas ao fundo.
 4. **Barra de filtros de tempo** — saiu da modal de configuração; é controle do gráfico.
@@ -23,6 +23,27 @@ Uma página única, tema escuro, com as peças empilhadas nesta ordem:
 Decisão de fundo: o painel de comparação fica **abaixo do gráfico, em largura total**, e não numa coluna lateral. Duas razões: o gráfico não perde largura (o *feel* da série temporal é o produto), e a matriz completa de mandatos é o que responde "quem fez o quê" — o objetivo declarado. Uma coluna lateral forçaria escolher entre os dois.
 
 O painel **não** vem em abas. Ele é sempre visível, mesmo custando página longa.
+
+**Limite de séries sobrepostas: 5.** A razão principal não é o gráfico, é a **matriz do painel de comparação**: 5 linhas × 8 mandatos ainda se lê de um relance; 8 linhas viram parede. O limite também protege a legenda (precisa caber) e a régua do objetivo — sobrepor 8 séries não é comparar, é decorar.
+
+### 1.1 Modal de busca de indicadores
+
+**Cascata de três colunas**, no espírito do *symbol search* do TradingView:
+
+| coluna | conteúdo |
+|---|---|
+| 1 | grupos/categorias (os 7 do `indicators.json`: política monetária, inflação, crescimento, imobiliário, trabalho, demografia, segurança pública) |
+| 2 | indicadores do grupo escolhido, com caixa de seleção |
+| 3 | **ficha** do indicador: unidade, granularidade, período coberto, número de pontos, fonte, e o **aviso de compatibilidade de escala** com o que já está no gráfico |
+
+A **busca por digitação está disponível em todas as três** — filtra e colapsa a cascata numa lista. Isso é o que torna os três cliques do pior caso aceitáveis: a cascata é para **navegar** quem não sabe o que quer; a digitação é para **achar** quem já sabe.
+
+Por que a cascata, e não uma lista plana agrupada ou um master-detail de duas colunas:
+
+1. **Escala para a expansão estadual.** Cada nível novo de hierarquia (escopo → família → unidade federativa) vira **uma coluna a mais**, não uma lista mais longa. Com 27 UFs por família, a lista plana vira rolagem de centenas de linhas sem hierarquia para atravessar.
+2. **É o único lugar onde o aviso de compatibilidade de escala cabe.** A seção 5 decidiu que séries incompatíveis não entram em silêncio — mas o chip é pequeno demais e o gráfico já está desenhado quando o problema aparece. A ficha resolve isso **antes** da escolha, transformando um erro futuro em informação presente.
+
+**Pendência conhecida:** a modal é larga e **não cabe no celular**. No mobile ela precisa virar outra coisa — provavelmente lista com a ficha em folha deslizante. Não desenhado.
 
 ---
 
@@ -216,7 +237,7 @@ Elimina as três duplicações atuais: `GOVERNMENT_PERIODS` (`chart-creator.js`)
 
 Ordem sugerida de ataque:
 
-1. **Modal de busca de indicadores** — layout, busca por digitação, agrupamento, seleção por teclado.
+1. **Modal de busca no celular** — a cascata de três colunas não cabe; provavelmente vira lista com a ficha em folha deslizante. E a navegação por teclado da cascata (↑↓ entre itens, ←→ entre colunas, ⏎ adicionar) precisa de regra escrita.
 2. **Máximo de séries sobrepostas** — decisão de produto. Proposta não confirmada: 5.
 3. **Arquitetura do app** — componentes Svelte, estado, fronteira com a biblioteca imperativa, onde vive cada módulo.
 4. **Governos (D5)** — formato do arquivo e onde ele mora.

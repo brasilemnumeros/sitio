@@ -514,6 +514,28 @@ Consequências: (a) `sitio/app/src` **não pode** entrar no `.gitignore`; (b) a 
 
 Sem fase de convivência (seção 6). O `/` vira o shell do app num commit, e os arquivos do legado saem — a **seção 11** lista o que sai. A ordem de deploy entre os dois repos está na seção 6.
 
+### 10.7 Testes
+
+**Ferramenta: Vitest** — do mesmo mundo do Vite (uma configuração, sem segundo bundler), ESM nativo, rápida.
+
+**O alvo prioritário é a camada 3 (`domain/`)**, pelo motivo que a seção 8 registrou: são as contas que **erram calado** — gráfico bonito com número errado não levanta exceção. Sendo puras, testam sem navegador, sem rede e sem *mock*.
+
+| nível | o quê | decidido |
+|---|---|---|
+| unidade, `domain/` | escalas (razão de amplitude, corte 50×, sugestão de eixo), mandatos (Δ, cobertura parcial, ponto único, sem cobertura), formatação, e a matemática de cor (OKLab, simulação de daltonismo, aviso de colisão) | **sim** |
+| unidade, `data/` | validação de `schema` (recusar em voz alta), cache, dado malformado | **sim** |
+| componente Svelte | renderização e interação | **não por ora** — são ligação, não regra; custo por linha alto, retorno baixo |
+| ponta a ponta no navegador | clicar, arrastar, ver a faixa | **não por ora** — o encaixe real é coberto pelo build do CI e pela classe-canário (10.3) |
+
+**Dois testes travam decisões medidas neste documento:**
+
+1. **O envelope da paleta.** Afirma que as 10 cores, sob as quatro visões, mantêm mínima acima do limite (hoje 0,095). Se alguém ajustar a paleta à mão e quebrar a separação no daltonismo, **o teste falha** — em vez de o erro chegar a um usuário. É a medição da seção 1 virando critério de aceite executável.
+2. **A regra de escala e a de cobertura parcial, com os números reais como fixture.** As fixtures são as do anexo — medidas e com data, não inventadas: "`igpm` × `selic-meta` (1,056) convive sem aviso", "`populacao-total` × `selic-meta` (1.192.196) avisa", "o MVG-R no Lula I é marcado como `parcial 03/2004–12/2006`".
+
+**O critério de cobertura não é porcentagem, é regra: toda regra que decide algo tem um teste.** As regras são enumeráveis — o corte de 50×, os quatro estados de célula, o limite de 10, o aviso de colisão de cor. Uma porcentagem premiaria testar *getter*, que é o oposto do que interessa.
+
+**No CI os testes rodam antes do build** (10.2): falhar rápido, em vez de gastar o build inteiro para descobrir um erro de conta.
+
 ---
 
 ## 11. Descartado nesta camada
@@ -530,8 +552,7 @@ Ordem sugerida de ataque:
 2. **Sobreposição dos rótulos na ponta das linhas** — com 10 séries os rótulos podem colidir. Verificar como a Lightweight Charts trata o título de série no eixo de preço com 10 séries simultâneas e decidir o que fazer se colidirem. É o que sustenta o canal redundante de identificação, ou seja, é o item que protege o pior caso da paleta.
 3. **Logos dos partidos** — assets (SVG em `sitio/assets/img/partidos/`), tamanho no trilho e na ficha, e a **questão de uso de marca num repositório público**, que não é decisão técnica e não foi resolvida aqui.
 4. **Duração visível no trilho** — a barrinha proporcional dentro da caixa de largura igual, caso a perda da leitura visual de duração incomode (seção 3).
-5. **Testes** — a camada 3 é pura e é o alvo prioritário; ferramenta e cobertura ainda não escolhidas.
-6. **Leitura por espectro político** — descartada do gráfico em 2026-10-14. Se voltar, será como **modo explícito do usuário**, nunca como padrão, e com a fonte da classificação citada e visível — porque é juízo editorial, não dado.
+5. **Leitura por espectro político** — descartada do gráfico em 2026-10-14. Se voltar, será como **modo explícito do usuário**, nunca como padrão, e com a fonte da classificação citada e visível — porque é juízo editorial, não dado.
 
 ---
 

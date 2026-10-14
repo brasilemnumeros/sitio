@@ -1,7 +1,7 @@
 # Spec de design — Camada de gráficos como app isolado
 
 - **Data:** 2026-10-14
-- **Status:** Em elaboração — seções 1 a 7 decididas; seção 10 lista o que falta desenhar
+- **Status:** Em elaboração — seções 1 a 9 decididas; a seção 10 é o que sai de cena e a 11 lista o que falta desenhar
 - **ADR pai:** `sitio/docs/adr/0001-camada-de-graficos-como-app-isolado.md` (inclui a emenda D7)
 - **Projeto:** Brasil em Números (`www.brasilemnumeros.ong.br`)
 
@@ -99,7 +99,7 @@ Por que não uma régua alinhada ao eixo do tempo: Dilma II durou 1,7 ano contra
 
 Com largura igual, todo mandato é alcançável e legível em qualquer zoom, inclusive no celular.
 
-**Refinamento em aberto (não decidido):** uma barrinha proporcional à duração dentro de cada caixa, caso a perda da leitura visual de duração incomode. Entra na seção 10.
+**Refinamento em aberto (não decidido):** uma barrinha proporcional à duração dentro de cada caixa, caso a perda da leitura visual de duração incomode. Entra na seção 11.
 
 ---
 
@@ -370,20 +370,65 @@ O que isso compra: a tela inteira é reconstruível a partir do estado — link 
 
 ---
 
-## 9. Descartado nesta camada
+## 9. Estados: carregando, erro e vazio
+
+**Regra que governa a seção inteira: nenhum vazio silencioso.** Todo lugar onde falta dado diz *por quê* falta. É a mesma lógica da recusa em voz alta do `schema` (seção 6) e da marca de cobertura parcial (seção 7.3) — um estado sem explicação é lido como defeito, e o usuário não tem como distinguir os dois.
+
+Escala disso: como o caso "sem dado" é raro (4 de 104 células da matriz, medido na seção 7.3), nada aqui merece cerimônia. Merece **correção discreta**.
+
+### 9.1 Estado inicial (nenhum indicador escolhido)
+
+Um campo que abre a busca, mais um **atalho de exemplo** ("Selic × IPCA") para o primeiro uso.
+
+**Rejeitado:** tela de boas-vindas com texto explicativo. Ela reaparece toda vez que o usuário limpa a seleção, e quem já conhece o site paga pedágio em toda visita. O atalho de exemplo resolve o primeiro uso sem obrigar ninguém a lê-lo.
+
+### 9.2 Carregando
+
+**Esqueleto na forma do conteúdo** — a área do gráfico e as linhas da matriz — em vez de spinner central. Assim a página não pula de layout quando o dado chega, e o usuário já sabe onde as coisas vão ficar.
+
+O progresso é **por série**, não um indicador global único: as séries vêm de arquivos diferentes e uma pode demorar mais que as outras.
+
+### 9.3 Erro
+
+**Erro em uma parte é degradação parcial, não tela de erro.** Falhou 1 de 5 séries: o chip daquela série vira erro com as duas ações possíveis (**tentar de novo** / **remover**) e o resto da tela continua usável — gráfico e matriz seguem com as que chegaram. Tela de erro cheia por causa de uma série é desproporcional e faz o usuário perder o trabalho que já fez.
+
+**Erro total** (nada carregou) usa a mesma linguagem, com título, motivo e botão de tentar de novo.
+
+**`schema` desconhecido** cai aqui: o app recusa em voz alta em vez de plotar vazio em silêncio (seção 6), sem a linha de série que não pôde ser interpretada.
+
+### 9.4 Os estados de célula da matriz
+
+Medido na seção 7.3: dos 104 cruzamentos, **4 não têm cobertura** e **1 é indefinido**.
+
+| estado | aparência | exemplo real |
+|---|---|---|
+| **Δ calculável** | o número, na unidade do indicador | a maioria |
+| **cobertura parcial** | o número **com o período real usado** | `mvgr-nominal` no Lula I → `parcial 03/2004–12/2006` |
+| **sem cobertura** | cinza apagado, dizendo **por quê** | `mvgr-nominal` no FHC II → "série começa em 2004-03" |
+| **ponto único** | âmbar, explicitamente sem Δ | `homicidios-anual` no Lula III → 1 dado em 2023 |
+
+"Sem cobertura" e "ponto único" são **estados distintos**, e nenhum deles é `0` nem `—`: com um ponto **existe dado**, então "—" faria o usuário concluir que falta dado que existe; e `0` seria falso nos dois casos.
+
+### 9.5 Sem limite de séries
+
+Não há gate nem aviso (seção 1). A obrigação que sobra é de layout: **a matriz rola com o cabeçalho dos mandatos fixo**, para que o usuário não perca a referência de qual coluna está lendo quando houver 12 séries.
+
+---
+
+## 10. Descartado nesta camada
 
 `chart-creator.js`, `chart-integration.js`, `multiselect-manager.js`, `config-modal.html`, `multiselect.html`, os cinco plugins de Chart.js via CDN e a heurística de eixo automático (`decideAxisForNewIndicator`).
 
 ---
 
-## 10. Ainda não desenhado
+## 11. Ainda não desenhado
 
 Ordem sugerida de ataque:
 
 1. **Modal de busca no celular** — a cascata de três colunas não cabe; provavelmente vira lista com a ficha em folha deslizante. E a navegação por teclado da cascata (↑↓ entre itens, ←→ entre colunas, ⏎ adicionar) precisa de regra escrita.
-2. **Carregamento, erro e estado vazio** — incluindo o comportamento quando um `datafile` falha ou devolve `schema` desconhecido, e o que a tela mostra enquanto as séries chegam.
-3. **Testes** — a camada 3 é pura e é o alvo prioritário; ferramenta e cobertura ainda não escolhidas.
-4. **Build e integração com o Jekyll** — a ferramenta de build do app (Vite ou outra) **não está decidida**; nesta spec o app aparece apenas como `src/`, sem `package.json`. E falta o shell `index.html` e a transição com a página antiga no ar.
+2. **Testes** — a camada 3 é pura e é o alvo prioritário; ferramenta e cobertura ainda não escolhidas.
+3. **Build e integração com o Jekyll** — a ferramenta de build do app (Vite ou outra) **não está decidida**; nesta spec o app aparece apenas como `src/`, sem `package.json`. E falta o shell `index.html` e a transição com a página antiga no ar.
+4. **A paleta de cores derivada do `partido`** — quantas cores distinguíveis ela produz? Não é detalhe estético: sem limite de séries, cor repetida faz a legenda parar de identificar as séries.
 
 ---
 

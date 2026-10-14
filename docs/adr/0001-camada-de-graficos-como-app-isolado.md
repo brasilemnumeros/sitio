@@ -111,6 +111,7 @@ Registradas aqui apenas para que a ADR não contradiga a spec:
 - **Arquitetura do app:** cinco camadas com dependência descendente (componentes → stores → domínio → fronteira/dados → estático). Só a camada de fronteira conhece a Lightweight Charts; o domínio é puro e testável. **O gráfico é espelho do store, não dono do estado** — a janela visível volta por callback explícito do adapter.
 - **Governos (D5):** JSON em `dados/governos/` (índice + um arquivo por entidade); `inicio`/`fim` guardam **exercício efetivo**, não mandato formal, e nunca são derivados de regra; reeleição são mandatos separados agrupáveis por `titular`; **cor derivada do partido**, não guardada; municipal suportado pelo modelo mas não populado.
 - **Cobertura parcial da célula** *(generalizada em 2026-10-14)*: qualquer célula cujo Δ **não cobre o mandato inteiro** é marcada — não só o mandato em curso, também a série que começa depois do início do mandato (o MVG-R no "Lula I" só existe a partir de 03/2004, então aquele Δ cobriria 34 dos 48 meses). Faixa **hachurada** no gráfico cortando no último dado disponível, mesma linguagem no trilho, e na matriz o **período real usado** dentro da célula. Consequência: não é preciso mostrar contagem de pontos — o período real é informação de verdade; contagem de pontos, não.
+- **Estados (carregando, erro, vazio):** regra única — **nenhum vazio silencioso**, todo lugar onde falta dado diz por quê. Carregamento com esqueleto na forma do conteúdo e progresso por série; erro de uma série é degradação parcial (o resto da tela segue usável), não tela de erro; e a matriz tem estados de célula distintos, nunca `0` nem `—`.
 
 ## Consequências
 
@@ -148,8 +149,8 @@ Registradas aqui apenas para que a ADR não contradiga a spec:
 ## Próximos passos
 
 1. ~~Mockups do layout~~ **feito** (sessão de 2026-10-14: composição da página, conteúdo da matriz de comparação, interação das faixas, trilho de mandatos, escalas).
-2. Desenho da solução em seções, aprovado uma a uma — **em andamento**. Decididas: composição da página, modal de busca, interação das faixas, trilho de mandatos, painel de comparação, escalas, contrato de dados (D7), ausência de limite de séries, arquitetura do app, modelo de governos (D5) e a cobertura parcial da célula. Falta: carregamento/erro/estado vazio, testes, shell `index.html` e integração com o build do Jekyll, e a modal no celular.
-3. Spec de design em `sitio/docs/specs/` — **escrita** em `2026-10-14-camada-de-graficos-design.md`; parcial por construção, com a seção 10 listando o que falta desenhar.
+2. Desenho da solução em seções, aprovado uma a uma — **em andamento**. Decididas: composição da página, modal de busca, interação das faixas, trilho de mandatos, painel de comparação, escalas, contrato de dados (D7), ausência de limite de séries, arquitetura do app, modelo de governos (D5), cobertura parcial da célula e estados. Falta: testes, shell `index.html` e integração com o build do Jekyll, a modal no celular e a paleta de cores derivada do partido.
+3. Spec de design em `sitio/docs/specs/` — **escrita** em `2026-10-14-camada-de-graficos-design.md`; parcial por construção, com a seção 11 listando o que falta desenhar.
 4. Plano de implementação.
 
 ## Referências

@@ -308,18 +308,29 @@ git commit -m "feat(domain): simulacao dos quatro tipos de visao"
   - `separacaoMinima(paleta, visao) -> number` — a **mínima** ΔE_ok entre todos os pares
   - `separacaoGlobal(paleta) -> number` — a mínima das quatro visões (o "pior caso")
 
-> **Sobre o número.** A §1 registra a paleta otimizada com mínima **0,095** e a paleta
-> atual com **0,104**, mas **não define em que unidade/normalização** ela mediu. Este
-> projeto mede **ΔE_ok = distância euclidiana em OKLab** (definida na tarefa 1). Portanto:
-> o valor do teste é **o medido aqui**, e o que ele trava é a **não-regressão** — não a
-> igualdade com 0,095. Medir, escrever o número com a data, e só então fixar o limiar.
+> **Sobre o número — já medido.** A §1 registra a paleta otimizada com mínima **0,095**,
+> sem declarar a normalização. Medido nesta sessão com a implementação da tarefa 1
+> (ΔE_ok = **distância euclidiana em OKLab**, com as matrizes de Machado et al. em RGB
+> linear), a §1 se reproduz **exatamente**:
+>
+> | visão | separação mínima medida (2026-10-14) |
+> |---|---|
+> | normal | 0,1112 |
+> | protanopia | 0,0953 |
+> | deuteranopia | **0,0950** ← o pior caso, e o número da §1 |
+> | tritanopia | 0,1061 |
+> | **global (pior caso)** | **0,0950** |
+>
+> Ou seja: **a normalização da §1 é esta**, e a implementação está certa. O par mais
+> apertado em visão normal é `#9d99ed` × `#a5c4ff` (0,1112). O teste trava **não-regressão**
+> com o piso medido — não igualdade com 0,095.
 
 - [ ] **Passo 1: escrever os testes que falham**
 
 Acrescentar a `color.test.js`:
 
 ```js
-import { PALETA_PADRAO, separacaoMinima, separacaoGlobal } from './color.js';
+import { PALETA_PADRAO, separacaoMinima, separacaoGlobal, LIMIAR_ENVELOPE } from './color.js';
 
 describe('PALETA_PADRAO (§1)', () => {
   it('tem exatamente 10 cores e nenhuma repetida', () => {
@@ -349,13 +360,14 @@ describe('separação (§1)', () => {
     expect(separacaoGlobal(PALETA_PADRAO)).toBeGreaterThan(separacaoGlobal(ingenua));
   });
 
-  it('TRAVA o envelope: nenhuma visão cai abaixo do limiar medido', () => {
-    // ⚠️ Substituir pelo número MEDIDO na implementação (rodar uma vez e registrar).
+  it('TRAVA o envelope: nenhuma visão cai abaixo do piso medido', () => {
+    // Medido em 2026-10-14: normal 0,1112 · protanopia 0,0953 · deuteranopia 0,0950 ·
+    // tritanopia 0,1061. O piso fica logo abaixo do pior caso (deuteranopia, 0,0950).
     // É o teste que falha se alguém ajustar a paleta à mão e quebrar o daltonismo (§10.7).
-    const LIMIAR_MEDIDO = 0.02; // ← trocar pelo medido; este é um piso conservador
     for (const visao of ['normal', 'protanopia', 'deuteranopia', 'tritanopia']) {
-      expect(separacaoMinima(PALETA_PADRAO, visao)).toBeGreaterThan(LIMIAR_MEDIDO);
+      expect(separacaoMinima(PALETA_PADRAO, visao)).toBeGreaterThan(LIMIAR_ENVELOPE);
     }
+    expect(separacaoGlobal(PALETA_PADRAO)).toBeCloseTo(0.095, 2);
   });
 });
 
@@ -379,6 +391,10 @@ Run: `cd sitio/app && npm test` → FALHA — `PALETA_PADRAO is not defined`.
 Acrescentar a `color.js`:
 
 ```js
+/** Piso do envelope, medido em 2026-10-14: o pior caso entre as quatro visões é 0,0950
+ * (deuteranopia). O piso fica logo abaixo — é o que o teste de não-regressão trava (§10.7). */
+export const LIMIAR_ENVELOPE = 0.09;
+
 /**
  * A paleta de 10 séries (spec §1) — envelope medido, SEM ciclo, exatamente 10 entradas.
  * O override pessoal (localStorage) mora fora daqui, chaveado pelo id do indicador.
@@ -409,9 +425,10 @@ export function separacaoGlobal(paleta) {
 }
 ```
 
-- [ ] **Passo 4: medir, registrar e fixar o limiar**
+- [ ] **Passo 4: reconferir a medição e o piso**
 
-Rodar uma vez e **anotar os quatro valores**:
+Rodar uma vez e **comparar com os números já medidos** (normal 0,1112 · protanopia 0,0953
+· deuteranopia 0,0950 · tritanopia 0,1061 · global 0,0950):
 
 ```bash
 cd sitio/app && node -e "
@@ -421,9 +438,8 @@ import('./src/domain/color.js').then(({PALETA_PADRAO, separacaoMinima, VISOES}) 
 });"
 ```
 
-Trocar `LIMIAR_MEDIDO` pelo valor medido (com uma margem de segurança de ~20% para baixo)
-e **registrar os números na §1 da spec**, com a data e a unidade (ΔE_ok = euclidiana em
-OKLab).
+**Se divergirem**, ou a paleta foi digitada errada ou a implementação de OKLab/daltonismo
+não é a da §1 — parar e reconciliar antes de seguir. Registrar a data na §1 da spec.
 
 - [ ] **Passo 5: rodar e ver passar; commitar**
 
@@ -444,7 +460,9 @@ git commit -m "feat(domain): paleta de 10 e o teste que trava o envelope no dalt
 **Interfaces:**
 - Consome: tarefas 1–3.
 - Produz:
-  - `LIMIAR_COLISAO = 0.05` (valor a ajustar com o medido da tarefa 3)
+  - `LIMIAR_COLISAO = LIMIAR_ENVELOPE` (0,09) — **a régua do aviso é o próprio envelope da
+    paleta**, não um número solto: o que o app já aceita como separação mínima é o que ele
+    avisa quando o usuário escolhe abaixo.
   - `avisoDeColisao(cor, outrasCores) -> {colide: boolean, distancia: number, contra: number}` —
     `distancia` é a **mínima medida** contra as outras; `contra` é o índice da que mais
     se aproxima (`-1` se não há outras).
@@ -452,17 +470,25 @@ git commit -m "feat(domain): paleta de 10 e o teste que trava o envelope no dalt
 - [ ] **Passo 1: escrever os testes que falham**
 
 ```js
-import { avisoDeColisao } from './color.js';
+import { avisoDeColisao, LIMIAR_COLISAO } from './color.js';
 
 describe('avisoDeColisao (§1)', () => {
-  it('avisa com a distância medida quando a cor escolhida chega perto de outra', () => {
-    const r = avisoDeColisao('#6351ca', ['#9d99ed', '#ffd000']);
-    expect(r.distancia).toBeLessThan(LIMIAR_COLISAO);
+  it('a régua é o envelope da paleta, não um número solto', () => {
+    expect(LIMIAR_COLISAO).toBe(LIMIAR_ENVELOPE);
+  });
+
+  it('avisa com a distância medida quando a cor chega perto de outra', () => {
+    // Medido: dE(#6351ca, #6a58c8) = 0,0213 — bem abaixo do envelope (0,09).
+    const r = avisoDeColisao('#6351ca', ['#6a58c8', '#ffd000']);
+    expect(r.colide).toBe(true);
+    expect(r.distancia).toBeCloseTo(0.0213, 3);
+    expect(r.contra).toBe(0);
   });
 
   it('não avisa quando a cor é bem separada', () => {
-    const r = avisoDeColisao('#00fddc', ['#d25200']);
-    expect(r.distancia).toBeGreaterThan(LIMIAR_COLISAO);
+    // Medido: dE(#00fddc, #d25200) = 0,4275 · dE(#6351ca, #9d99ed) = 0,2081
+    expect(avisoDeColisao('#00fddc', ['#d25200']).colide).toBe(false);
+    expect(avisoDeColisao('#6351ca', ['#9d99ed']).colide).toBe(false);
   });
 
   it('não avisa e não quebra quando não há outras séries', () => {
@@ -471,7 +497,7 @@ describe('avisoDeColisao (§1)', () => {
 });
 ```
 
-*(importar `LIMIAR_COLISAO` junto de `avisoDeColisao` no cabeçalho do teste)*
+*(importar `LIMIAR_ENVELOPE` junto no cabeçalho do teste)*
 
 - [ ] **Passo 2: rodar e ver falhar** → FALHA — `avisoDeColisao is not a function`.
 
@@ -479,8 +505,8 @@ describe('avisoDeColisao (§1)', () => {
 
 ```js
 /** Abaixo disto, duas séries são "a mesma cor" para efeito de aviso (§1).
- * Ajustar com o envelope medido na tarefa 3. */
-export const LIMIAR_COLISAO = 0.05;
+ * É o próprio envelope da paleta — a régua do que o app avisa é o que ele já aceita. */
+export const LIMIAR_COLISAO = LIMIAR_ENVELOPE;
 
 /**
  * Avisa (com a distância medida) quando a cor escolhida pelo usuário colidir com uma
@@ -516,8 +542,9 @@ git commit -m "feat(domain): aviso de colisao de cor, que informa sem bloquear"
 - [ ] `npm test` → verdes, com **4 visões** e a paleta de **exatamente 10** cores.
 - [ ] `rgbParaOKLab`/`oklabParaRGB` fazem **ida e volta** exata nas 10 cores + fundo
       escuro + branco.
-- [ ] O envelope é **medido e registrado na §1 da spec**, com a unidade declarada
-      (ΔE_ok = euclidiana em OKLab) e a data.
+- [ ] O envelope medido bate com a §1: **global 0,0950** (normal 0,1112 · protanopia
+      0,0953 · deuteranopia 0,0950 · tritanopia 0,1061), com ΔE_ok = euclidiana em OKLab.
+      Se divergir, a paleta ou a implementação está errada — não o teste.
 - [ ] O teste de não-regressão **falha** se alguém ajustar uma cor à mão e derrubar a
       separação no daltonismo (§10.7) — conferir trocando uma cor de propósito.
 - [ ] `avisoDeColisao` **informa sem bloquear** (não existe caminho que rejeite a cor).
@@ -530,9 +557,10 @@ git commit -m "feat(domain): aviso de colisao de cor, que informa sem bloquear"
   medido (`separacaoMinima`/`separacaoGlobal`), simulação das quatro visões, e o aviso de
   colisão. O **canal redundante** (rótulo na ponta) não é matemática de cor: é desenho
   (fatia 06). A **persistência em `localStorage`** é store (fatia 05).
-- **Ponto honesto em aberto:** a `§1` não declara a normalização do seu 0,095; por isso o
-  teste trava **não-regressão** com o número medido, não igualdade — e isso está escrito
-  no plano, não escondido.
+- **Ponto resolvido por medição:** a `§1` não declarava a normalização do seu 0,095.
+  Medido nesta sessão, a implementação da tarefa 1 **reproduz o 0,095 exatamente** — a
+  normalização é ΔE_ok = euclidiana em OKLab, e o teste trava não-regressão com o piso
+  0,09. O `LIMIAR_COLISAO` **é** esse piso: a régua do aviso é o envelope do próprio app.
 - **Risco declarado:** as matrizes de daltonismo vêm de uma fonte citada (Machado et al.
   2009) e o teste do colapso as confere; se estiverem erradas, o teste acusa.
 - **Consistência de nomes:** `PALETA_PADRAO`, `VISOES`, `simularDaltonismo`,

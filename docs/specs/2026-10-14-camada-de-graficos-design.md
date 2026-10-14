@@ -1,7 +1,7 @@
 # Spec de design — Camada de gráficos como app isolado
 
 - **Data:** 2026-10-14
-- **Status:** Em elaboração — seções 1 a 10 decididas; a 11 é o que sai de cena e a 12 lista o que falta desenhar
+- **Status:** Desenho **fechado** em 2026-10-14 — seções 1 a 10 decididas (a 11 é o que sai de cena; a 12 lista o que falta, sem item bloqueante). **Aguardando revisão do usuário.** O próximo passo do processo é o **`writing-plans`**: plano fatiado em arquivos por unidade de trabalho, cada um com critérios de aceite explícitos, em **`sitio/docs/plans/`**
 - **ADR pai:** `sitio/docs/adr/0001-camada-de-graficos-como-app-isolado.md` (inclui a emenda D7)
 - **Projeto:** Brasil em Números (`www.brasilemnumeros.ong.br`)
 

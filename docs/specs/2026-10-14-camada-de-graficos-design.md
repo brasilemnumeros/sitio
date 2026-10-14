@@ -213,17 +213,98 @@ A emenda acopla os dois repos: republicar `dados` em formato novo sem coordenar 
 
 ## 7. Modelo de governos (D5)
 
-Períodos de governo viram dado versionado, não constante em código. Campos previstos pela ADR:
+Períodos de governo viram dado versionado, não constante em código. Elimina as três duplicações atuais: `GOVERNMENT_PERIODS` (`chart-creator.js`), os botões de `config-modal.html` e o mapa período→datas de `chart-integration.js` — este último com nomes divergentes ("Lula 3" contra "Lula II").
 
-- `escopo` — `federal` hoje; `estadual` previsto;
-- datas de início e fim;
-- rótulo;
-- cor;
-- indicador de mandato em curso (Lula III).
+### 7.1 Esferas, arquivos e onde mora
 
-Elimina as três duplicações atuais: `GOVERNMENT_PERIODS` (`chart-creator.js`), os botões de `config-modal.html` e o mapa período→datas de `chart-integration.js` — este último com nomes divergentes ("Lula 3" contra "Lula II").
+| esfera | entidade | quantas |
+|---|---|---|
+| federal | Brasil | 1 |
+| estadual | 26 estados + DF | 27 |
+| municipal | municípios (código IBGE de 7 dígitos) | ~5.570 |
 
-**Onde o arquivo mora e o formato exato: pendente** (seção 10). O escopo estadual deve ser possível sem alterar código, mas a fonte dos dados de governos estaduais (candidata: TSE) está fora de escopo.
+Um **índice** e um **arquivo por entidade**:
+
+```
+dados/governos/index.json          → o que existe: esferas, entidades, contagens
+dados/governos/federal.json
+dados/governos/estadual/SP.json
+dados/governos/municipal/SP.json   → por UF; por município só se precisar
+```
+
+Um arquivo único não serve: 5.570 entidades × ~8 mandatos dão dezenas de milhares de registros, e a UI precisa saber **o que existe antes de baixar**.
+
+**Municipal: o modelo suporta, o dado não é populado.** Popular 5.570 entidades é um projeto de dados por si só (fonte candidata: TSE) e fica fora desta rodada — mas o caminho de arquivo e o índice já o comportam, para não haver retrabalho.
+
+**Onde mora: `dados/`** — apesar de hoje ser curadoria à mão e não saída de notebook. É **fato** (quem governou quando), não apresentação, e a divisão de propriedade da seção 6 reserva o `sitio/` para curadoria de apresentação. Além disso, o TSE como fonte futura indica que isso *vira* pipeline: nascendo em `dados/`, ninguém precisa mover depois.
+
+### 7.2 Schema
+
+```json
+{
+  "schema": 1,
+  "esfera": "federal",
+  "entidade": { "codigo": "BR", "nome": "Brasil" },
+  "cargo": "presidente",
+  "mandatos": [
+    {
+      "id": "federal-2019-bolsonaro",
+      "titular": "Jair Messias Bolsonaro",
+      "rotulo": "Bolsonaro",
+      "partido": "PL",
+      "tipo": "eleito",
+      "inicio": "2019-01-01",
+      "fim": "2022-12-31"
+    },
+    {
+      "id": "federal-2015-dilma",
+      "titular": "Dilma Vana Rousseff",
+      "rotulo": "Dilma II",
+      "partido": "PT",
+      "tipo": "eleito",
+      "inicio": "2015-01-01",
+      "fim": "2016-08-31",
+      "mandatoDe": { "inicio": "2015-01-01", "fim": "2018-12-31" }
+    },
+    {
+      "id": "federal-2016-temer",
+      "titular": "Michel Miguel Elias Temer Lulia",
+      "rotulo": "Temer",
+      "partido": "MDB",
+      "tipo": "sucessor",
+      "inicio": "2016-05-12",
+      "fim": "2018-12-31",
+      "mandatoDe": { "inicio": "2015-01-01", "fim": "2018-12-31" }
+    },
+    {
+      "id": "federal-2023-lula",
+      "titular": "Luiz Inácio Lula da Silva",
+      "rotulo": "Lula III",
+      "partido": "PT",
+      "tipo": "eleito",
+      "inicio": "2023-01-01",
+      "fim": null,
+      "emCurso": true
+    }
+  ]
+}
+```
+
+Campos: `id` estável (`<esfera>-<ano-de-início>-<slug>`), `rotulo` curto para faixa e trilho, `titular` completo para matriz e detalhe, `partido`, `tipo` (`eleito` | `sucessor` | `interino`), `inicio`/`fim` de **exercício**, `mandatoDe` opcional, `emCurso`.
+
+### 7.3 Decisões de modelagem
+
+**1. `inicio`/`fim` guardam o exercício efetivo, não o mandato formal.** É o que a faixa deve pintar e o que a matriz deve medir. Temer exercendo a partir de 12/05/2016 é um período real — e foi interino de maio a agosto, o que motiva o campo `tipo`. O mandato formal não se perde: fica em `mandatoDe`.
+
+**2. Datas são explícitas e nunca derivadas de regra.** Tentador assumir "posse em 1º de janeiro, quatro anos" — e é falso na história brasileira: a posse presidencial era **15 de março** até 1994 (Collor 1990-03-15, Itamar 1992-10-02, FHC I só em 1995-01-01). O município começa em 1989. Afastamentos e intervenções existem. Data explícita é o que impede o modelo de carregar direito eleitoral dentro.
+
+**3. Reeleição são dois mandatos agrupáveis, não um período fundido.** Lula I e Lula II ficam separados (preservando a leitura por mandato) e `titular` é a chave para agrupar e responder "como foi o governo Lula". É também o que mata a inconsistência de nomes, separando `rotulo` de `titular`.
+
+**4. A cor sai do dado e passa a ser derivada** (emenda à D5). O dado guarda `partido`; o app deriva a cor por paleta determinística a partir dele, com fallback por titular para quem não tem partido conhecido, e **override opcional** no registro quando a curadoria discordar. Cor à mão não sobrevive a 27 UFs, quanto mais a 5.570 municípios.
+
+**5. Mandato em curso aparece, marcado.** `fim: null` + `emCurso: true`. Tem faixa no gráfico, caixa no trilho e coluna na matriz — mas a célula **não pode mentir**: o Δ dele é **parcial até o último ponto de cada série**, e esse ponto **varia por série** (hoje o IPCA termina em 2025-06, a SELIC em 2025-10). A marcação é **por célula** ("Δ até 2025-06"), não uma nota de rodapé. E mandato em curso **não entra em ranking** de "maior variação" sem esse aviso — ele perderia para todos, sempre, só por ser mais curto.
+
+**6. Ordenação do trilho** é cronológica por `inicio`, com o mandato em curso sempre na ponta direita.
 
 ---
 
@@ -279,7 +360,7 @@ O que isso compra: a tela inteira é reconstruível a partir do estado — link 
 Ordem sugerida de ataque:
 
 1. **Modal de busca no celular** — a cascata de três colunas não cabe; provavelmente vira lista com a ficha em folha deslizante. E a navegação por teclado da cascata (↑↓ entre itens, ←→ entre colunas, ⏎ adicionar) precisa de regra escrita.
-2. **Governos (D5)** — formato do arquivo e onde ele mora.
+2. **Forma visual do mandato em curso** — a seção 7 decidiu *que* ele aparece marcado; falta o *como*: a faixa no gráfico (hachura? borda tracejada? corte no último dado), a caixa no trilho, e a rotulagem da célula parcial na matriz quando as séries terminam em datas diferentes.
 3. **Carregamento, erro e estado vazio** — incluindo o comportamento quando um `datafile` falha ou devolve `schema` desconhecido.
 4. **Testes** — a camada 3 é pura e é o alvo prioritário; ferramenta e cobertura ainda não escolhidas.
 5. **Build e integração com o Jekyll** — a ferramenta de build do app (Vite ou outra) **não está decidida**; nesta spec o app aparece apenas como `src/`, sem `package.json`. E falta o shell `index.html` e a transição com a página antiga no ar.

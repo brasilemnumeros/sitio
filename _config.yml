@@ -35,5 +35,6 @@ exclude:
   - CNAME
   - package.json
   - package-lock.json
+  - docs/
 
 google_analytics: G-N4CFQ7CL1S

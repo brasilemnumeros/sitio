@@ -7,3 +7,7 @@ node_modules
 assets/css/main.dist.css
 data/*
 .github
+
+# Artefato de build do app (fatia 00) — src/ NÃO é ignorado (§10.3)
+assets/js/app/
+app/.vite

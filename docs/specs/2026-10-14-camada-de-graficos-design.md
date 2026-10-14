@@ -24,14 +24,56 @@ Decisão de fundo: o painel de comparação fica **abaixo do gráfico, em largur
 
 O painel **não** vem em abas. Ele é sempre visível, mesmo custando página longa.
 
-**Sem limite de séries sobrepostas.** Havia um limite de 5, justificado pela legibilidade da matriz; ele foi **removido em 2026-10-14**. Bloquear o usuário por um risco que é dele é paternalismo — se vai ficar ilegível, é escolha dele. E o limite protegia um *layout*, não o desempenho: o Lightweight Charts aguenta dezenas de séries no volume deste projeto.
+**Limite de 10 séries sobrepostas.** O limite passou por três estados no mesmo dia — **5 → sem limite → 10** — e o registro fica para não se relitigar a discussão.
 
-O que substitui o limite não é aviso nem gate, são **duas obrigações de layout**:
+O limite de 5 protegia a legibilidade da matriz, o que era paternalismo: se o usuário quer uma tela ilegível, é escolha dele. Mas **sem limite não existe teto de cores**, e a paleta é finita. Com o teto em 10, **o limite deixa de vir do layout e passa a vir da paleta** — o que é uma base bem melhor, porque é medida (abaixo) e não estética.
 
-- **A matriz degrada rolando**, com o cabeçalho dos mandatos **fixo** — sem isso, com 12 séries o usuário perde a referência de qual coluna está lendo.
+**A paleta das séries: gerada, com exatamente 10 entradas fixas, e sem ciclo.** Medido em 2026-10-14:
+
+| leitura | resultado |
+|---|---|
+| paleta atual do site (6 cores, escolhidas à mão, cicladas por `index % 6`) | mínima entre pares **ΔE_ok = 0,104**; o par vermelho/laranja fica **abaixo de 0,12** |
+| consequência do ciclo | a partir do **7º** indicador dois ficam com a mesma cor |
+| contraste contra o fundo escuro (`#0e1117`) | 4,8:1 na atual, **6,0:1** na gerada — a WCAG pede 3:1 para elemento gráfico, então **contraste não é o gargalo** |
+| 10 cores, matizes igualmente espaçados (36° entre si) | ΔE_ok mínimo **0,084** |
+| 10 cores, 2 níveis de luminosidade × 5 matizes | ΔE_ok mínimo **0,099** |
+
+**Por que 10**: três leituras independentes convergem — espaçamento de 36° entre matizes, distância perceptual medida confortável, e o teto histórico de 8–12 de esquemas qualitativos. Não existe corte canônico em OKLab, então isto é convenção declarada, não lei: **10 é defensável e perto do teto; 12 seria forçar.**
+
+**A paleta é gerada, não escolhida à mão** — a paleta manual de 6 do site é pior espaçada (vermelho e laranja quase indistinguíveis) que uma gerada de 10.
+
+**E ela foi medida duas vezes, porque a primeira tentativa não sobreviveu.** Uma paleta de 10 matizes igualmente espaçados parece boa para visão normal (ΔE_ok mínimo 0,084) e **colapsa no daltonismo**:
+
+| visão | 10 matizes igualmente espaçados | paleta do site hoje (6) |
+|---|---|---|
+| normal | 0,0839 | 0,1042 |
+| protanopia | 0,0389 | 0,0542 |
+| **deuteranopia** | **0,0061** | 0,0107 |
+| tritanopia | 0,0203 | 0,0420 |
+
+Sob deuteranopia — a forma mais comum, ~6% dos homens — os pares `#309aff`/`#9581ff` e `#da8000`/`#a59e00` ficam em **0,006**, ou seja, **a mesma cor**. Com 10 séries, **cor sozinha não é canal suficiente de identidade**.
+
+**A regra, então: a paleta é um envelope medido, e o gosto escolhe dentro dele.** Uma busca que otimiza o **pior caso entre as quatro visões** chega a ΔE_ok mínimo de **0,095** (contra 0,006 da versão ingênua), com estes tons:
+
+```
+#6351ca  #00fddc  #d25200  #9d99ed  #ffd000
+#8d5375  #ff8b75  #b47699  #a5c4ff  #cea2ba
+```
+
+Custos assumidos e registrados: o **contraste cai de 6,0:1 para 3,20:1** (passa na WCAG, que pede 3:1, mas raspando) e a paleta otimizada **é feia** — tem marrom e malva, porque o otimizador maximiza distância e não tem gosto. A curadoria ajusta à mão **dentro do envelope** (nenhum par abaixo do limite nas quatro visões), recuperando contraste onde der.
+
+**Canal redundante de identificação: decidido.** O rótulo do indicador vai na **ponta da própria linha** (ou no eixo), de modo que **a cor vire decoração e a identificação venha do texto**. É a mesma regra que já vale para as faixas de governo — sigla no rótulo, não na cor — aparecendo duas vezes, o que é sinal de que é a regra certa. Isso também deixa a margem fina de separação sem consequência grave: quem não distingue os tons lê o rótulo.
+
+**A verificar:** com 10 séries, os rótulos na ponta das linhas podem se sobrepor. A biblioteca mostra o título da série no eixo de preço, mas o comportamento dela com 10 séries simultâneas precisa ser conferido antes de virar decisão.
+
+**Se o app ganhar tema claro, esta medição não vale** — contraste contra fundo claro é outro problema. Hoje o app é tema escuro por decisão (D4).
+
+**Ao atingir o limite**, o botão de adicionar na modal fica **visível e desabilitado, dizendo o motivo**, e **nada é removido automaticamente**: destruir a escolha do usuário para abrir espaço é o pior comportamento possível ali (seção 9.5).
+
+Duas obrigações de layout continuam valendo, e são o que faz 10 caber sem virar parede:
+
+- **A matriz rola com o cabeçalho dos mandatos fixo** — com 10 linhas o usuário não pode perder a referência de qual coluna está lendo.
 - **A legenda quebra em linhas** e continua identificando cada série.
-
-**Risco que mudou de dono.** Este parágrafo apontava a paleta derivada do `partido` como risco aberto. Com a decisão de **não usar cor de partido** (seção 7.3), esse risco desapareceu — não há duas paletas para acomodar. Sobrou o simétrico, e ele continua aberto: **não há limite de séries**, então a **paleta das séries** precisa produzir tantas cores distinguíveis quantas o usuário escolher. Sem limite não existe "número máximo de cores" — a paleta tem de **degradar com elegância** quando os tons separáveis acabarem. Entra na seção 12.
 
 ### 1.1 Modal de busca de indicadores
 
@@ -422,9 +464,11 @@ Medido na seção 7.3: dos 104 cruzamentos, **4 não têm cobertura** e **1 é i
 
 "Sem cobertura" e "ponto único" são **estados distintos**, e nenhum deles é `0` nem `—`: com um ponto **existe dado**, então "—" faria o usuário concluir que falta dado que existe; e `0` seria falso nos dois casos.
 
-### 9.5 Sem limite de séries
+### 9.5 Limite de 10 séries
 
-Não há gate nem aviso (seção 1). A obrigação que sobra é de layout: **a matriz rola com o cabeçalho dos mandatos fixo**, para que o usuário não perca a referência de qual coluna está lendo quando houver 12 séries.
+Ao atingir o teto, o botão de adicionar na modal fica **visível e desabilitado**, dizendo o motivo — e o motivo é a **paleta**, não o layout (seção 1). **Nada é removido automaticamente**: destruir uma escolha do usuário para abrir espaço é o pior comportamento possível ali.
+
+A obrigação de layout que sobra: **a matriz rola com o cabeçalho dos mandatos fixo**, para que o usuário não perca a referência de qual coluna está lendo com 10 linhas.
 
 ---
 
@@ -475,7 +519,7 @@ Sem fase de convivência (seção 6). O `/` vira o shell do app num commit, e os
 Ordem sugerida de ataque:
 
 1. **Modal de busca no celular** — a cascata de três colunas não cabe; provavelmente vira lista com a ficha em folha deslizante. E a navegação por teclado da cascata (↑↓ entre itens, ←→ entre colunas, ⏎ adicionar) precisa de regra escrita.
-2. **Paleta das séries sem limite** — quantas cores distinguíveis ela produz, e o que fazer quando os tons separáveis acabarem: repetir tom com estilo de linha diferente, variar luminosidade, ou outra coisa. Sem limite de séries, cor repetida faz a legenda parar de identificar as séries.
+2. **Paleta sob deficiência de visão de cor** — a paleta de 10 foi medida para **visão normal**. Uma paleta baseada em matizes é justamente o que colapsa no daltonismo, que atinge cerca de 8% dos homens. Precisa ser verificada e, se colapsar, remediada (variação de luminosidade, ou estilo de linha como canal extra). **E remedir se o app ganhar tema claro**, porque o contraste contra fundo claro é outro problema.
 3. **Logos dos partidos** — assets (SVG em `sitio/assets/img/partidos/`), tamanho no trilho e na ficha, e a **questão de uso de marca num repositório público**, que não é decisão técnica e não foi resolvida aqui.
 4. **Duração visível no trilho** — a barrinha proporcional dentro da caixa de largura igual, caso a perda da leitura visual de duração incomode (seção 3).
 5. **Testes** — a camada 3 é pura e é o alvo prioritário; ferramenta e cobertura ainda não escolhidas.

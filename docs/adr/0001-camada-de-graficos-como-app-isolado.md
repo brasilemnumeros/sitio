@@ -94,7 +94,7 @@ Perguntas feitas e respondidas ao longo da sessão (o espaço de busca considera
 
 Duas restrições acompanham a D7:
 
-1. **A página atual não pode quebrar.** Ela lê `rate` e é servida no ar; a migração de formato exige janela de convivência (formato novo publicado em paralelo, ou leitor tolerante no app antigo até a virada).
+1. ~~**A página atual não pode quebrar.**~~ **Substituída em 2026-10-14:** não há legado a preservar. A camada de gráficos atual sai de cena por inteiro — sem fase de convivência entre as duas páginas, sem flag de alternância, sem `index.html` carregando os dois caminhos. O que resta da restrição original é uma questão de **ordem de deploy** entre os dois repos (a página no ar lê `rate` até o app novo entrar), em aberto na spec.
 2. **O detalhamento do schema e do campo de comparabilidade não é decidido nesta ADR** — vai para a spec de design. Esta emenda registra o escopo e a intenção, não a forma.
 
 ### Decisões de design tomadas em 2026-10-14 (rastreabilidade; o detalhe canônico é a spec)
@@ -112,6 +112,8 @@ Registradas aqui apenas para que a ADR não contradiga a spec:
 - **Governos (D5):** JSON em `dados/governos/` (índice + um arquivo por entidade); `inicio`/`fim` guardam **exercício efetivo**, não mandato formal, e nunca são derivados de regra; reeleição são mandatos separados agrupáveis por `titular`; **cor derivada do partido**, não guardada; municipal suportado pelo modelo mas não populado.
 - **Cobertura parcial da célula** *(generalizada em 2026-10-14)*: qualquer célula cujo Δ **não cobre o mandato inteiro** é marcada — não só o mandato em curso, também a série que começa depois do início do mandato (o MVG-R no "Lula I" só existe a partir de 03/2004, então aquele Δ cobriria 34 dos 48 meses). Faixa **hachurada** no gráfico cortando no último dado disponível, mesma linguagem no trilho, e na matriz o **período real usado** dentro da célula. Consequência: não é preciso mostrar contagem de pontos — o período real é informação de verdade; contagem de pontos, não.
 - **Estados (carregando, erro, vazio):** regra única — **nenhum vazio silencioso**, todo lugar onde falta dado diz por quê. Carregamento com esqueleto na forma do conteúdo e progresso por série; erro de uma série é degradação parcial (o resto da tela segue usável), não tela de erro; e a matriz tem estados de célula distintos, nunca `0` nem `—`.
+- **Sem legado.** Nada da camada atual é preservado: sem fase de convivência entre as duas páginas, sem flag de alternância, sem `index.html` carregando dois caminhos. O `/` vira o shell e o legado é apagado. Substitui a restrição nº 1 da D7.
+- **Build e integração:** Vite com fonte em `sitio/app/` e `package.json` próprio; saída em `assets/js/app/` com **nome fixo**, gitignored, construída no CI e cacheada pelo `?v=` do projeto. Tailwind **não precisa de configuração nova** (o v4 varre `.svelte` sozinho) — mas **arquivo no `.gitignore` não é varrido**, e a falha é silenciosa, então o CI ganha uma **checagem de classe-canário** que falha o build. Loop de dev: `vite dev` com fixture. Atribuição do TradingView no **rodapé global** + `NOTICE`.
 
 ## Consequências
 
@@ -129,9 +131,9 @@ Registradas aqui apenas para que a ADR não contradiga a spec:
 - Perde-se o "valores sempre visíveis" nos pontos — o substituto é o readout do crosshair.
 - Lightweight Charts é específica para séries temporais financeiras; gráficos genéricos futuros (pizza etc.) exigiriam outra biblioteca.
 - Atribuição obrigatória do TradingView.
-- Passa a existir um passo de build (npm) no `sitio/`, somando-se ao Ruby do Jekyll. A página atual precisa continuar funcionando durante a transição.
+- Passa a existir um passo de build (npm) no `sitio/`, somando-se ao Ruby do Jekyll. *(Atualizado em 2026-10-14: como não há legado, nada precisa "continuar funcionando durante a transição" — a virada é um commit. O que sobra é a **ordem de deploy** entre os dois repos.)*
 - Os plugins de Chart.js (datalabels, annotation, zoom) e o dropdown/modal atuais saem de cena.
-- **A D7 acopla os dois repos:** republicar dados em formato novo sem coordenar com o `sitio` derruba o gráfico em produção. A janela de convivência deixa de ser opcional.
+- **A D7 acopla os dois repos:** republicar `dados` em formato novo sem coordenar com o `sitio` derruba o gráfico em produção. A mitigação escolhida é a **convivência curta de chaves** (publicar `value` junto de `rate` e retirar `rate` depois) — pela ordem de deploy, não por uma fase de convivência entre páginas, que deixou de existir.
 - **A D7 toca notebooks Colab.** Cada família de indicador precisa ser ajustada e reexecutada; o custo não está no site, está no pipeline — e é lá que mora o risco de regressão silenciosa nos dados.
 
 **Neutras**
@@ -144,13 +146,13 @@ Registradas aqui apenas para que a ADR não contradiga a spec:
 - Migração de stack do site (Astro / Cloudflare Pages).
 - Ferramentas de análise (médias móveis). Séries normalizadas a base 100 ficam disponíveis apenas como opção explícita do usuário, nunca como padrão.
 - **Fonte e população dos dados de governos.** O modelo comporta `federal`, `estadual` e `municipal`, mas nesta rodada só federal e estadual são o alvo: a fonte candidata é o TSE, e municipal (~5.570 entidades) é projeto de dados por si só.
-- Correções dos demais achados da revisão que não pertencem à camada de gráficos (ex.: `jekyll-analytics` ausente do Gemfile, `404.html` com `layout: page` inexistente — **confirmado por build local em 2026-10-14**, o Jekyll emite `Layout 'page' requested in 404.html does not exist` —, `blog_categories` não utilizado por nenhum template).
+- Correções dos demais achados da revisão que não pertencem à camada de gráficos (ex.: `jekyll-analytics` ausente do Gemfile, `404.html` com `layout: page` inexistente — **confirmado por build local em 2026-10-14**, o Jekyll emite `Layout 'page' requested in 404.html does not exist` —, `blog_categories` não utilizado por nenhum template, e `tailwind.config.js`, que ninguém lê desde a v4 — **confirmado com o CLI v4.3.3 em 2026-10-14**: apontando o `content` dele para uma pasta inexistente, as classes continuam sendo geradas).
 
 ## Próximos passos
 
 1. ~~Mockups do layout~~ **feito** (sessão de 2026-10-14: composição da página, conteúdo da matriz de comparação, interação das faixas, trilho de mandatos, escalas).
-2. Desenho da solução em seções, aprovado uma a uma — **em andamento**. Decididas: composição da página, modal de busca, interação das faixas, trilho de mandatos, painel de comparação, escalas, contrato de dados (D7), ausência de limite de séries, arquitetura do app, modelo de governos (D5), cobertura parcial da célula e estados. Falta: testes, shell `index.html` e integração com o build do Jekyll, a modal no celular e a paleta de cores derivada do partido.
-3. Spec de design em `sitio/docs/specs/` — **escrita** em `2026-10-14-camada-de-graficos-design.md`; parcial por construção, com a seção 11 listando o que falta desenhar.
+2. Desenho da solução em seções, aprovado uma a uma — **em andamento**. Decididas: composição da página, modal de busca, interação das faixas, trilho de mandatos, painel de comparação, escalas, contrato de dados (D7), ausência de limite de séries, arquitetura do app, modelo de governos (D5), cobertura parcial da célula, estados e build/integração com o Jekyll. Falta: modal de busca no celular, paleta de cores derivada do partido, duração visível no trilho e testes.
+3. Spec de design em `sitio/docs/specs/` — **escrita** em `2026-10-14-camada-de-graficos-design.md`; seções 1 a 10 decididas e a 12 listando o que falta desenhar.
 4. Plano de implementação.
 
 ## Referências

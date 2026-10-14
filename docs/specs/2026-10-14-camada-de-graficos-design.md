@@ -1,7 +1,7 @@
 # Spec de design — Camada de gráficos como app isolado
 
 - **Data:** 2026-10-14
-- **Status:** Em elaboração — seções 1 a 9 decididas; a seção 10 é o que sai de cena e a 11 lista o que falta desenhar
+- **Status:** Em elaboração — seções 1 a 10 decididas; a 11 é o que sai de cena e a 12 lista o que falta desenhar
 - **ADR pai:** `sitio/docs/adr/0001-camada-de-graficos-como-app-isolado.md` (inclui a emenda D7)
 - **Projeto:** Brasil em Números (`www.brasilemnumeros.ong.br`)
 
@@ -50,7 +50,7 @@ Por que a cascata, e não uma lista plana agrupada ou um master-detail de duas c
 1. **Escala para a expansão estadual.** Cada nível novo de hierarquia (escopo → família → unidade federativa) vira **uma coluna a mais**, não uma lista mais longa. Com 27 UFs por família, a lista plana vira rolagem de centenas de linhas sem hierarquia para atravessar.
 2. **É o único lugar onde o aviso de compatibilidade de escala cabe.** A seção 5 decidiu que séries incompatíveis não entram em silêncio — mas o chip é pequeno demais e o gráfico já está desenhado quando o problema aparece. A ficha resolve isso **antes** da escolha, transformando um erro futuro em informação presente.
 
-**Pendência conhecida:** a modal é larga e **não cabe no celular**. No mobile ela precisa virar outra coisa — provavelmente lista com a ficha em folha deslizante. Não desenhado.
+**Pendência conhecida:** a modal é larga e **não cabe no celular** (seção 12). No mobile ela precisa virar outra coisa — provavelmente lista com a ficha em folha deslizante. Não desenhado.
 
 ---
 
@@ -99,7 +99,7 @@ Por que não uma régua alinhada ao eixo do tempo: Dilma II durou 1,7 ano contra
 
 Com largura igual, todo mandato é alcançável e legível em qualquer zoom, inclusive no celular.
 
-**Refinamento em aberto (não decidido):** uma barrinha proporcional à duração dentro de cada caixa, caso a perda da leitura visual de duração incomode. Entra na seção 11.
+**Refinamento em aberto (não decidido):** uma barrinha proporcional à duração dentro de cada caixa, caso a perda da leitura visual de duração incomode. Entra na seção 12.
 
 ---
 
@@ -202,19 +202,21 @@ O registro do indicador ganha apenas um **escape hatch**, para o dia em que a cu
 
 Zero trabalho editorial hoje; veto disponível quando precisar.
 
-### Transição — a página atual não pode quebrar
+### Transição — não há legado a preservar
 
-A página em produção lê `rate`. Durante a janela de convivência, os notebooks publicam `{"date", "rate", "value"}`:
+Decidido em 2026-10-14: **nada do legado é mantido.** A camada de gráficos atual (Chart.js, as ~2.700 linhas, os cinco plugins de CDN, o `multiselect`, a modal de configuração) sai de cena por inteiro, e a transição **não tem fase de convivência**: não existe período com as duas páginas no ar, nem flag para alternar entre elas, nem `index.html` carregando os dois caminhos de código ao mesmo tempo.
 
-1. `dados/` republica com os dois campos. A página atual continua funcionando sem ser tocada.
-2. O app novo lê `value`.
-3. Publicado o app novo, `rate` é removido de `dados/`.
+Isso **substitui a restrição nº 1 da D7** ("a página atual não pode quebrar"), que pressupunha justamente uma convivência.
 
-A chave redundante é explicitamente temporária. O JSON dobra de tamanho — 13 arquivos de algumas centenas de pontos; irrelevante em banda e em custo (que é zero por invariante).
+O que sobra da restrição original é uma questão de **ordem de deploy** entre os dois repos, porque `dados/` e `sitio/` publicam separadamente: entre a republicação das séries com `value` e o deploy do app existe um intervalo em que a página no ar lê um campo que já não existe.
+
+**Decidido: convivência curta de chaves.** `dados/` publica `{"date","rate","value"}` primeiro; o app entra em seguida; `rate` é retirado num commit posterior. Não é sustentar código antigo — o código antigo estará deletado — é não deixar minutos de gráfico quebrado em produção. O JSON dobra de tamanho nesse intervalo, o que é irrelevante em banda e em custo (que é zero por invariante).
+
+**Rejeitado:** publicação única (`value` só, aceitando o intervalo de quebra). Mais simples, mas exige que os dois pushes aconteçam em sequência imediata e que ninguém abra o site no meio — depende de sorte, não de processo.
 
 ### Risco assumido
 
-A emenda acopla os dois repos: republicar `dados` em formato novo sem coordenar com `sitio` derruba o gráfico em produção. O custo real da D7 não está no site — está nos **notebooks Colab**, um por família, que precisam ser ajustados e reexecutados à mão. É lá que mora o risco de regressão silenciosa nos dados.
+Republicar `dados` em formato novo sem coordenar com o `sitio` derruba o gráfico em produção. O custo real não está no site — está nos **notebooks Colab**, um por família, que precisam ser ajustados e reexecutados à mão. É lá que mora o risco de regressão silenciosa nos dados.
 
 ---
 
@@ -415,20 +417,56 @@ Não há gate nem aviso (seção 1). A obrigação que sobra é de layout: **a m
 
 ---
 
-## 10. Descartado nesta camada
+## 10. Build e integração com o Jekyll
+
+### 10.1 Ferramenta, onde o app mora, e o que sai dele
+
+- **Vite**, com a fonte em **`sitio/app/`** e **`package.json` próprio** — separado do `package.json` do site, que declara só Tailwind e Prettier. O app fica autocontido: pode virar repo próprio depois sem mover arquivo.
+- **Saída com nome fixo**: `sitio/assets/js/app/app.js` e `app.css`, **gitignored** e construídos no CI — como o `main.dist.css` já é. Cache-bust pelo `?v={{ site.time | date: '%s' }}` que o projeto usa em todo script.
+- **Trade-off registrado:** hash de conteúdo é mais eficiente em cache, mas exigiria um manifest para o HTML descobrir o nome gerado. O bundle tem dezenas de KB; trocou-se eficiência de cache por não acoplar HTML a artefato de build.
+
+### 10.2 Ordem do pipeline no CI
+
+`checkout` → setup Node → `npm ci` em `sitio/` → `npm ci && npx vite build` em `sitio/app/` → Tailwind CLI **rodando da raiz de `sitio/`** → **checagem da classe-canário** → `jekyll-build-pages` → upload e deploy.
+
+### 10.3 Dois achados medidos (2026-10-14)
+
+**1. Arquivo no `.gitignore` não é varrido pelo Tailwind.** Medido com o CLI v4.3.3: uma classe dentro de uma pasta ignorada **não** apareceu no CSS gerado, enquanto classes dentro de um `.svelte` em pasta normal apareceram — sem nenhum `@source`, sem nenhum `@config`.
+
+Consequências: (a) `sitio/app/src` **não pode** entrar no `.gitignore`; (b) a falha é **silenciosa** — a UI perde estilo e nada acusa erro. Daí a **checagem da classe-canário** no pipeline: o build falha se uma classe exclusiva do app não estiver no CSS. Mesmo princípio da seção 9 (nenhum vazio silencioso) aplicado ao build em vez da tela.
+
+**2. `tailwind.config.js` é config morta.** Medido: apontando o `content` dele para uma pasta inexistente, as classes continuam sendo geradas. O v4 só lê esse arquivo se for referenciado por `@config`, e o `main.css` não o referencia. Ou seja, o `darkMode: "class"` do arquivo **não faz nada** — o dark mode real vem do `@custom-variant` no `main.css`. Não é escopo desta camada, mas é achado: um arquivo que parece autoritativo e não é.
+
+### 10.4 Loop de desenvolvimento
+
+**Decidido: `vite dev`, com dado de mentira.** O app roda sozinho num endereço local com recarga instantânea, sem o cabeçalho e o rodapé do Jekyll, e com fixture no lugar dos JSONs reais. É rápido e cobre o gráfico, a modal e a matriz — a maior parte do trabalho. O encaixe real (o shell, o dado real, o carregamento sem CDN) é verificado pelo build do CI, que já falha alto no canário.
+
+**Rejeitado, por ora:** `vite build --watch` somado a `jekyll serve`. Testa o encaixe continuamente, mas cada mudança espera dois builds e depende de um Jekyll que **nesta máquina só roda com instalação manual de gems** (o `bundle exec jekyll` do projeto não funciona aqui). Fica como opção caso o loop rápido se mostre insuficiente — "não ficou legal, mudamos depois".
+
+### 10.5 Atribuição do TradingView
+
+**Link no rodapé global** — uma linha, vale para todas as páginas, e não depende de o gráfico continuar na página em que está hoje. A alternativa (link só na página do gráfico) quebraria em silêncio no dia em que a página mudasse. Mais o arquivo **`NOTICE`** no repo, como a D3 exige.
+
+### 10.6 A virada
+
+Sem fase de convivência (seção 6). O `/` vira o shell do app num commit, e os arquivos do legado saem — a **seção 11** lista o que sai. A ordem de deploy entre os dois repos está na seção 6.
+
+---
+
+## 11. Descartado nesta camada
 
 `chart-creator.js`, `chart-integration.js`, `multiselect-manager.js`, `config-modal.html`, `multiselect.html`, os cinco plugins de Chart.js via CDN e a heurística de eixo automático (`decideAxisForNewIndicator`).
 
 ---
 
-## 11. Ainda não desenhado
+## 12. Ainda não desenhado
 
 Ordem sugerida de ataque:
 
 1. **Modal de busca no celular** — a cascata de três colunas não cabe; provavelmente vira lista com a ficha em folha deslizante. E a navegação por teclado da cascata (↑↓ entre itens, ←→ entre colunas, ⏎ adicionar) precisa de regra escrita.
-2. **Testes** — a camada 3 é pura e é o alvo prioritário; ferramenta e cobertura ainda não escolhidas.
-3. **Build e integração com o Jekyll** — a ferramenta de build do app (Vite ou outra) **não está decidida**; nesta spec o app aparece apenas como `src/`, sem `package.json`. E falta o shell `index.html` e a transição com a página antiga no ar.
-4. **A paleta de cores derivada do `partido`** — quantas cores distinguíveis ela produz? Não é detalhe estético: sem limite de séries, cor repetida faz a legenda parar de identificar as séries.
+2. **A paleta de cores derivada do `partido`** — quantas cores distinguíveis ela produz? Não é detalhe estético: sem limite de séries, cor repetida faz a legenda parar de identificar as séries.
+3. **Duração visível no trilho** — a barrinha proporcional dentro da caixa de largura igual, caso a perda da leitura visual de duração incomode (seção 3).
+4. **Testes** — a camada 3 é pura e é o alvo prioritário; ferramenta e cobertura ainda não escolhidas.
 
 ---
 

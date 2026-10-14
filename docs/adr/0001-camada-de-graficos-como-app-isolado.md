@@ -110,6 +110,7 @@ Registradas aqui apenas para que a ADR não contradiga a spec:
 - **Limite de séries sobrepostas:** 5, por causa da legibilidade da matriz de comparação (5 linhas × 8 mandatos ainda se lê de um relance).
 - **Arquitetura do app:** cinco camadas com dependência descendente (componentes → stores → domínio → fronteira/dados → estático). Só a camada de fronteira conhece a Lightweight Charts; o domínio é puro e testável. **O gráfico é espelho do store, não dono do estado** — a janela visível volta por callback explícito do adapter.
 - **Governos (D5):** JSON em `dados/governos/` (índice + um arquivo por entidade); `inicio`/`fim` guardam **exercício efetivo**, não mandato formal, e nunca são derivados de regra; reeleição são mandatos separados agrupáveis por `titular`; **cor derivada do partido**, não guardada; municipal suportado pelo modelo mas não populado.
+- **Mandato em curso:** aparece marcado — faixa **hachurada** cortando no último dado disponível, mesma linguagem no trilho, e na matriz a **data de corte dentro de cada célula** (o corte varia por série, então nenhum cabeçalho de coluna pode resumi-lo).
 
 ## Consequências
 

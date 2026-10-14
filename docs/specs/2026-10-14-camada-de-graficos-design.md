@@ -302,7 +302,15 @@ Campos: `id` estável (`<esfera>-<ano-de-início>-<slug>`), `rotulo` curto para 
 
 **4. A cor sai do dado e passa a ser derivada** (emenda à D5). O dado guarda `partido`; o app deriva a cor por paleta determinística a partir dele, com fallback por titular para quem não tem partido conhecido, e **override opcional** no registro quando a curadoria discordar. Cor à mão não sobrevive a 27 UFs, quanto mais a 5.570 municípios.
 
-**5. Mandato em curso aparece, marcado.** `fim: null` + `emCurso: true`. Tem faixa no gráfico, caixa no trilho e coluna na matriz — mas a célula **não pode mentir**: o Δ dele é **parcial até o último ponto de cada série**, e esse ponto **varia por série** (hoje o IPCA termina em 2025-06, a SELIC em 2025-10). A marcação é **por célula** ("Δ até 2025-06"), não uma nota de rodapé. E mandato em curso **não entra em ranking** de "maior variação" sem esse aviso — ele perderia para todos, sempre, só por ser mais curto.
+**5. Mandato em curso aparece, marcado.** `fim: null` + `emCurso: true`. Tem faixa no gráfico, caixa no trilho e coluna na matriz — mas a célula **não pode mentir**: o Δ dele é **parcial até o último ponto de cada série**, e esse ponto **varia por série** (hoje o IPCA termina em 2025-06, a SELIC em 2025-10). E mandato em curso **não entra em ranking** de "maior variação" sem esse aviso — ele perderia para todos, sempre, só por ser mais curto.
+
+Forma visual, decidida:
+
+- **Na faixa do gráfico: hachura diagonal, cortando no último dado disponível** — não na data de hoje. Hachura é convenção estabelecida para "período em aberto" e **não depende de cor**: funciona no tema escuro, no claro, e para quem não distingue cores.
+- **No trilho: a mesma linguagem** (marca hachurada na caixa), para que a faixa e o seletor falem a mesma língua.
+- **Na matriz: a data de corte vive dentro de cada célula**, em corpo menor, com a coluna inteira em fundo levemente marcado. É verboso de propósito — é o único formato em que cada número aparece acompanhado da data que o torna verdadeiro. Nenhum cabeçalho de coluna pode resumir isso, porque o corte é por série.
+
+**Rejeitados:** só o contorno tracejado na faixa (discreto demais — se perde em tela pequena e com muitas faixas, e um mandato inacabado passaria por completo); notação de aproximado (≈) com as datas no tooltip (o ≈ não diz **até quando**, e duas séries com cortes separados por cinco meses pareceriam igualmente parciais); e deixar a coluna da matriz vazia com "—" (o mais conservador contra ranking, mas joga fora a informação que o usuário provavelmente mais quer: o que está acontecendo agora).
 
 **6. Ordenação do trilho** é cronológica por `inicio`, com o mandato em curso sempre na ponta direita.
 
@@ -360,10 +368,9 @@ O que isso compra: a tela inteira é reconstruível a partir do estado — link 
 Ordem sugerida de ataque:
 
 1. **Modal de busca no celular** — a cascata de três colunas não cabe; provavelmente vira lista com a ficha em folha deslizante. E a navegação por teclado da cascata (↑↓ entre itens, ←→ entre colunas, ⏎ adicionar) precisa de regra escrita.
-2. **Forma visual do mandato em curso** — a seção 7 decidiu *que* ele aparece marcado; falta o *como*: a faixa no gráfico (hachura? borda tracejada? corte no último dado), a caixa no trilho, e a rotulagem da célula parcial na matriz quando as séries terminam em datas diferentes.
-3. **Carregamento, erro e estado vazio** — incluindo o comportamento quando um `datafile` falha ou devolve `schema` desconhecido.
-4. **Testes** — a camada 3 é pura e é o alvo prioritário; ferramenta e cobertura ainda não escolhidas.
-5. **Build e integração com o Jekyll** — a ferramenta de build do app (Vite ou outra) **não está decidida**; nesta spec o app aparece apenas como `src/`, sem `package.json`. E falta o shell `index.html` e a transição com a página antiga no ar.
+2. **Carregamento, erro e estado vazio** — incluindo o comportamento quando um `datafile` falha ou devolve `schema` desconhecido, e o que a tela mostra enquanto as séries chegam.
+3. **Testes** — a camada 3 é pura e é o alvo prioritário; ferramenta e cobertura ainda não escolhidas.
+4. **Build e integração com o Jekyll** — a ferramenta de build do app (Vite ou outra) **não está decidida**; nesta spec o app aparece apenas como `src/`, sem `package.json`. E falta o shell `index.html` e a transição com a página antiga no ar.
 
 ---
 

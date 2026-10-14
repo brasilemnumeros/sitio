@@ -1,7 +1,7 @@
 # Spec de design — Camada de gráficos como app isolado
 
 - **Data:** 2026-10-14
-- **Status:** Em elaboração — seções 1 a 7 decididas; seção 9 lista o que falta desenhar
+- **Status:** Em elaboração — seções 1 a 7 decididas; seção 10 lista o que falta desenhar
 - **ADR pai:** `sitio/docs/adr/0001-camada-de-graficos-como-app-isolado.md` (inclui a emenda D7)
 - **Projeto:** Brasil em Números (`www.brasilemnumeros.ong.br`)
 
@@ -92,7 +92,7 @@ Por que não uma régua alinhada ao eixo do tempo: Dilma II durou 1,7 ano contra
 
 Com largura igual, todo mandato é alcançável e legível em qualquer zoom, inclusive no celular.
 
-**Refinamento em aberto (não decidido):** uma barrinha proporcional à duração dentro de cada caixa, caso a perda da leitura visual de duração incomode. Entra na seção 9.
+**Refinamento em aberto (não decidido):** uma barrinha proporcional à duração dentro de cada caixa, caso a perda da leitura visual de duração incomode. Entra na seção 10.
 
 ---
 
@@ -223,27 +223,66 @@ Períodos de governo viram dado versionado, não constante em código. Campos pr
 
 Elimina as três duplicações atuais: `GOVERNMENT_PERIODS` (`chart-creator.js`), os botões de `config-modal.html` e o mapa período→datas de `chart-integration.js` — este último com nomes divergentes ("Lula 3" contra "Lula II").
 
-**Onde o arquivo mora e o formato exato: pendente** (seção 9). O escopo estadual deve ser possível sem alterar código, mas a fonte dos dados de governos estaduais (candidata: TSE) está fora de escopo.
+**Onde o arquivo mora e o formato exato: pendente** (seção 10). O escopo estadual deve ser possível sem alterar código, mas a fonte dos dados de governos estaduais (candidata: TSE) está fora de escopo.
 
 ---
 
-## 8. Descartado nesta camada
+## 8. Arquitetura do app
+
+Cinco camadas, e a dependência **desce**: nenhum nível conhece o de cima.
+
+| camada | onde | papel | regra |
+|---|---|---|---|
+| 1 · componentes | `src/components/` | UI e reatividade | não conhecem a biblioteca de gráficos |
+| 2 · stores | `src/stores/` | fonte única da verdade | um assunto por store, escrita por ação nomeada |
+| 3 · domínio | `src/domain/` | as contas que decidem algo | **sem Svelte, sem DOM, sem rede** — função pura |
+| 4 · fronteira e dados | `src/chart/`, `src/data/` | falam com o mundo exterior | **únicos** que conhecem a Lightweight Charts e a rede |
+| 5 · estático | `indicators.json`, `dados/`, governos | já publicado | custo zero |
+
+```
+src/
+  components/   App · SearchModal · SeriesChips · Chart · TimeFilters · MandateRail · ComparisonPanel
+  stores/       series · mandate · axes · viewport · catalog
+  domain/       scales · mandates · format
+  chart/        adapter · bands · navigator
+  data/         series · catalog
+```
+
+Regras que a estrutura codifica:
+
+1. **Só `chart/` importa a Lightweight Charts.** Nenhum componente faz `import` da biblioteca. Trocar de biblioteca é mexer numa pasta.
+2. **Só `Chart.svelte` fala com `chart/adapter`.** É o único componente que monta coisa no gráfico.
+3. **`domain/` é puro.** Comparabilidade de escala, Δ por mandato e formatação são funções de entrada e saída. Isso existe por um motivo específico: são as duas contas que **erram calado** — gráfico bonito com número errado não levanta exceção. Sendo puras, viram teste unitário sem navegador, sem rede e sem mock.
+4. **Nada em `window`.** O que hoje é `chartManager`, `chartInstance`, `multiselectScope`, `indicatorsConfig`, `indicatorsData`, `chartIntegration` e `updateChartsFromMultiselect` vira store nomeado.
+5. **`data/` valida o `schema` e falha em voz alta**, consistente com a seção 6.
+
+### 8.1 De quem é o estado da janela visível
+
+**O gráfico é espelho do store, não dono do estado.**
+
+A direção é uma só: store → adapter. Dar zoom é **escrever** no store, e o adapter reage. A única informação que volta é a janela visível, por **callback explícito** do adapter para o store `viewport` — nunca por leitura do gráfico em outro componente.
+
+O que isso compra: a tela inteira é reconstruível a partir do estado — link compartilhável, desfazer e teste deixam de ser problemas separados. O que custa: duas representações da mesma verdade (store e gráfico), que precisam ser mantidas em sincronia pelo adapter.
+
+**Alternativa rejeitada:** deixar a janela visível morar dentro do gráfico e a UI só ler. Tem menos sincronização, porque não há duas cópias — mas o estado real passa a viver dentro de um objeto de terceiros, e reconstruir a tela exige perguntar ao gráfico. É o caminho curto de volta ao problema que motivou a reconstrução: quem desenha mandando no resto.
+
+---
+
+## 9. Descartado nesta camada
 
 `chart-creator.js`, `chart-integration.js`, `multiselect-manager.js`, `config-modal.html`, `multiselect.html`, os cinco plugins de Chart.js via CDN e a heurística de eixo automático (`decideAxisForNewIndicator`).
 
 ---
 
-## 9. Ainda não desenhado
+## 10. Ainda não desenhado
 
 Ordem sugerida de ataque:
 
 1. **Modal de busca no celular** — a cascata de três colunas não cabe; provavelmente vira lista com a ficha em folha deslizante. E a navegação por teclado da cascata (↑↓ entre itens, ←→ entre colunas, ⏎ adicionar) precisa de regra escrita.
-2. **Máximo de séries sobrepostas** — decisão de produto. Proposta não confirmada: 5.
-3. **Arquitetura do app** — componentes Svelte, estado, fronteira com a biblioteca imperativa, onde vive cada módulo.
-4. **Governos (D5)** — formato do arquivo e onde ele mora.
-5. **Carregamento, erro e estado vazio** — incluindo o comportamento quando um `datafile` falha ou devolve `schema` desconhecido.
-6. **Testes** — estratégia para a lógica pura (comparabilidade, Δ por mandato, faixas) separada da renderização.
-7. **Build e integração com o Jekyll** — o passo npm somado ao Ruby, o shell `index.html`, e a transição com a página antiga no ar.
+2. **Governos (D5)** — formato do arquivo e onde ele mora.
+3. **Carregamento, erro e estado vazio** — incluindo o comportamento quando um `datafile` falha ou devolve `schema` desconhecido.
+4. **Testes** — a camada 3 é pura e é o alvo prioritário; ferramenta e cobertura ainda não escolhidas.
+5. **Build e integração com o Jekyll** — a ferramenta de build do app (Vite ou outra) **não está decidida**; nesta spec o app aparece apenas como `src/`, sem `package.json`. E falta o shell `index.html` e a transição com a página antiga no ar.
 
 ---
 

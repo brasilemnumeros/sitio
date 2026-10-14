@@ -183,7 +183,7 @@ export const SCHEMA_VERSION = 1;
 - [ ] **Passo 4: rodar o teste e vê-lo passar**
 
 Run: `cd sitio/app && npm test`
-Esperado: PASS — 1 teste.
+Esperado: PASS — a suíte fica verde.
 
 - [ ] **Passo 5: montar o shell Svelte**
 

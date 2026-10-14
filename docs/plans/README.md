@@ -98,6 +98,33 @@ superfície que os exibe:
 
 ---
 
+## Achados que os planos mediram (não estavam na spec)
+
+Três coisas apareceram ao escrever o plano, todas **medidas**, e ficam registradas aqui
+para não se perderem:
+
+1. **A MVG-R tem meses duplicados.** `mvgr-nominal` e `mvgr-real` têm **259 pontos para
+   257 meses** — **2005-10** e **2015-10** aparecem duas vezes cada. É por isso que o
+   Lula I conta **35** pontos (e não 34). Corrigir muda números que a spec já publicou
+   (35 → 34; a matriz da §7.3 muda em duas células) — a fatia 11 corrige **e** atualiza a
+   spec.
+2. **`sitio/app/` e `sitio/scripts/` precisam entrar no `exclude:` do `_config.yml`.**
+   É o **mesmo trap do `docs/`** já documentado no `AGENTS.md`: o Jekyll copia arquivo sem
+   front matter verbatim, e o fonte do app seria publicado em `/app/...`. A fatia 10
+   trata.
+3. **A medição da §7.3 se reproduz exatamente.** A matriz de cobertura do anexo
+   (13 × 8 = 104 células, 4 sem cobertura, 1 ponto único) foi recomputada sobre os dados
+   reais e bate **célula a célula** — o que permitiu transformá-la em teste de aceite
+   (fatia 03) em vez de prosa.
+
+### Propriedade do metadado — consequência para o `indicators.json`
+
+A §6 atribui **unidade, granularidade e fonte ao `dados/`** e proíbe repetir metadado nos
+dois lados. Consequência que os planos assumem: o `indicators.json` **perde `unit` e
+`source`** (fatia 11) e o app lê ambos da **série carregada** (fatias 05 e 08). A string
+humana de granularidade ("Acumulado 12 meses") **não** é o enum da série (`monthly`) —
+fica, renomeada para `granularityLabel`, porque não é duplicata.
+
 ## Convenções que todos os planos assumem
 
 - **Idioma:** comentários e strings de UI em **português**; nomes de código (funções,

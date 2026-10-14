@@ -190,7 +190,7 @@ A comparabilidade **não é um campo preenchido à mão** — é uma função pu
 O registro do indicador ganha apenas um **escape hatch**, para o dia em que a curadoria discordar do número:
 
 ```json
-"comparabilidade": { "sempre": ["id-a"], "nunca": ["id-b"] }
+{ "comparabilidade": { "sempre": ["id-a"], "nunca": ["id-b"] } }
 ```
 
 Zero trabalho editorial hoje; veto disponível quando precisar.

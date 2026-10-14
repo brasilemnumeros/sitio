@@ -253,7 +253,7 @@ export function validateSeries(raw, { expectedId } = {}) {
 - [ ] **Passo 4: rodar e ver passar**
 
 Run: `cd sitio/app && npm test`
-Esperado: PASS — 10 testes.
+Esperado: PASS — a suíte fica verde.
 
 - [ ] **Passo 5: commitar**
 
@@ -399,7 +399,7 @@ export function clearSeriesCache() {
 - [ ] **Passo 4: rodar e ver passar**
 
 Run: `cd sitio/app && npm test`
-Esperado: PASS — 15 testes no total.
+Esperado: PASS — a suíte fica verde.
 
 - [ ] **Passo 5: commitar**
 
@@ -484,6 +484,12 @@ describe('validateCatalog', () => {
       /\.id ausente/,
     );
   });
+
+  it('aceita indicador SEM unit — o metadado vive no arquivo de série (§6)', () => {
+    const semUnit = { ...catalogoMinimo, indicators: [{ ...catalogoMinimo.indicators[0] }] };
+    delete semUnit.indicators[0].unit;
+    expect(validateCatalog(semUnit).indicators[0].unit).toBeNull();
+  });
 });
 
 describe('loadCatalog', () => {
@@ -562,7 +568,10 @@ export function validateCatalog(raw) {
       group: ind.group,
       datafile: ind.datafile,
       chartType: ind.chartType,
-      unit: validateUnit(ind.unit, `${where}.unit`),
+      // A unidade vive no ARQUIVO DE SÉRIE, não aqui (§6) — repetir metadado nos dois
+      // lados é a duplicação que a ADR condena. Aceito se presente só durante a transição
+      // (a fatia 11 remove); a UI lê a unidade da série carregada.
+      unit: ind.unit ? validateUnit(ind.unit, `${where}.unit`) : null,
       yAxisTitle: typeof ind.yAxisTitle === 'string' ? ind.yAxisTitle : null,
     };
   });
@@ -586,8 +595,7 @@ export async function loadCatalog({ url = '/indicators.json', fetchImpl = fetch 
 - [ ] **Passo 4: rodar e ver passar**
 
 Run: `cd sitio/app && npm test`
-Esperado: PASS — 21 testes no total. O teste do catálogo real confirma 13 indicadores e
-7 grupos.
+Esperado: PASS — a suíte fica verde; o teste do catálogo real confirma 13 indicadores e 7 grupos.
 
 - [ ] **Passo 5: commitar**
 
@@ -601,7 +609,7 @@ git commit -m "feat(app): validacao do catalogo de indicadores contra o arquivo 
 
 ## Critérios de aceite da fatia 01
 
-- [ ] `cd sitio/app && npm test` → **21 testes passam**.
+- [ ] `cd sitio/app && npm test` → a suíte fica verde.
 - [ ] `validateSeries` **recusa** `schema !== 1` com mensagem que cita a versão recebida
       e a esperada (§6).
 - [ ] `validateSeries` **exige** `value` numérico e ignora `rate` (convivência §6).
@@ -610,6 +618,8 @@ git commit -m "feat(app): validacao do catalogo de indicadores contra o arquivo 
       memoriza a falha — a segunda tentativa volta a buscar (§9.3).
 - [ ] `validateCatalog` aceita o **`sitio/indicators.json` real** (13 indicadores, 7
       grupos) — verificado por teste, não por inspeção.
+- [ ] `validateCatalog` **não exige** `unit` no indicador: a unidade vive no arquivo de
+      série (§6) e a UI a lê de lá. Presença só é validada durante a transição.
 - [ ] Nenhuma dependência de navegador: `npm test` roda com `environment: 'node'`.
 - [ ] Nada em `window`; nenhum `console.log` de debug.
 

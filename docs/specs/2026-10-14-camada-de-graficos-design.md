@@ -31,7 +31,7 @@ O que substitui o limite não é aviso nem gate, são **duas obrigações de lay
 - **A matriz degrada rolando**, com o cabeçalho dos mandatos **fixo** — sem isso, com 12 séries o usuário perde a referência de qual coluna está lendo.
 - **A legenda quebra em linhas** e continua identificando cada série.
 
-**Risco aberto, ainda não medido:** a cor é derivada do `partido` (seção 7), e ninguém mediu **quantas cores distinguíveis essa derivação produz**. Se a paleta repetir cedo, dois indicadores ficam com a mesma cor e a legenda deixa de identificar qualquer coisa — e isso é um problema **maior** sem limite do que com ele. Fica em aberto até ser medido.
+**Risco que mudou de dono.** Este parágrafo apontava a paleta derivada do `partido` como risco aberto. Com a decisão de **não usar cor de partido** (seção 7.3), esse risco desapareceu — não há duas paletas para acomodar. Sobrou o simétrico, e ele continua aberto: **não há limite de séries**, então a **paleta das séries** precisa produzir tantas cores distinguíveis quantas o usuário escolher. Sem limite não existe "número máximo de cores" — a paleta tem de **degradar com elegância** quando os tons separáveis acabarem. Entra na seção 12.
 
 ### 1.1 Modal de busca de indicadores
 
@@ -76,16 +76,23 @@ Um **minimapa** com o intervalo temporal completo e todas as faixas, sempre vis�
 
 Renderizadas por um `ISeriesPrimitive` customizado do Lightweight Charts (a lib não tem anotação nativa). Requisitos:
 
-- pintadas ao fundo da área de plotagem, uma por mandato, com o rótulo do governo;
+- pintadas ao fundo da área de plotagem, uma por mandato, **sem cor de partido**: alternância sutil de tom entre mandatos vizinhos, para separá-los sem introduzir significado;
+- o rótulo traz **governo e sigla do partido** — `Lula III · PT`. **Texto, não cor**;
 - clique = seleção (seção acima);
 - **não** recortam nem filtram a série;
-- a faixa já passada (mandato em curso) tem tratamento visual próprio — Lula III é mandato em aberto.
+- o mandato em curso leva hachura e corta no último dado disponível (seção 7.3).
+
+**Por que sem cor de partido** (decidido em 2026-10-14): a cor por partido obrigaria a escolher entre duas coisas ruins. **Cor de marca** colide entre partidos — o vermelho é o mais disputado no Brasil (PT, PCdoB, PSOL, PSTU, PCO) — e não sobrevive ao fundo escuro, porque marca é desenhada para fundo branco. **Cor por espectro político** é juízo editorial sem fonte auditável: faria o site **afirmar uma classificação** no lugar de publicar um dado, num projeto cujo resto tem fonte declarada.
+
+Sem cor, o gráfico fica com **uma paleta só** — as linhas das séries carregam todo o significado e as faixas são contexto puro — e a identificação por partido passa a ser feita por **logo e sigla**, que informam sem classificar.
+
+**O logo não cabe na faixa do gráfico**: Dilma II tem ~27 px de largura num gráfico de 515. Ele vive no trilho e na ficha do mandato (abaixo).
 
 ---
 
 ## 3. Trilho de mandatos
 
-O trilho é um **seletor**, não uma régua temporal. Uma caixa por governo, **largura igual**, desacoplado do eixo do tempo do gráfico.
+O trilho é um **seletor**, não uma régua temporal. Uma caixa por governo, **largura igual**, desacoplado do eixo do tempo do gráfico. Cada caixa carrega: **logo pequeno do partido**, o rótulo do governo e a sigla, **hachura** quando o mandato está em curso e **contorno** quando está selecionado.
 
 Papéis separados por elemento, sem sobreposição:
 
@@ -309,7 +316,11 @@ Campos: `id` estável (`<esfera>-<ano-de-início>-<slug>`), `rotulo` curto para 
 
 **3. Reeleição são dois mandatos agrupáveis, não um período fundido.** Lula I e Lula II ficam separados (preservando a leitura por mandato) e `titular` é a chave para agrupar e responder "como foi o governo Lula". É também o que mata a inconsistência de nomes, separando `rotulo` de `titular`.
 
-**4. A cor sai do dado e passa a ser derivada** (emenda à D5). O dado guarda `partido`; o app deriva a cor por paleta determinística a partir dele, com fallback por titular para quem não tem partido conhecido, e **override opcional** no registro quando a curadoria discordar. Cor à mão não sobrevive a 27 UFs, quanto mais a 5.570 municípios.
+**4. Sem cor de partido: a identificação é logo e sigla** (emenda à D5, em duas etapas). O dado guarda `partido` — a **sigla** — e **não guarda cor**. O gráfico tem uma paleta só, a das séries; as faixas de governo são contexto sem cor, com alternância sutil entre mandatos vizinhos e o rótulo trazendo governo e sigla (`Lula III · PT`). A identificação por partido vive em dois lugares, ambos de texto e imagem, nenhum de cor: **logo pequeno + sigla no trilho**, e **logo com o nome completo do partido na ficha do mandato**.
+
+Por que não cor, em uma frase por caminho: **cor de marca** colide entre partidos (o vermelho é o mais disputado no Brasil — PT, PCdoB, PSOL, PSTU, PCO) e é desenhada para fundo branco, não para o fundo escuro do gráfico; **cor por espectro político** é juízo editorial sem fonte auditável, e faria o site afirmar uma classificação no lugar de publicar um dado com fonte declarada.
+
+**Rejeitados:** cor derivada por hash do nome do partido (dois partidos podem cair no mesmo tom por azar, e não há como garantir separação — foi a primeira proposta, descartada); cor de marca oficial (colide e falha no contraste do tema escuro); cor por espectro político (juízo editorial, e cria a colisão entre a paleta das faixas e a das séries).
 
 **5. Cobertura parcial é marcada — e não é só o mandato em curso.** A regra é uma só: **qualquer célula cujo Δ não cobre o mandato inteiro leva marca**, qualquer que seja o motivo (o mandato está em curso, ou a série começa depois do início dele). Célula com Δ parcial que aparece sem aviso é atribuir a um governo uma variação que ele não produziu inteiro.
 
@@ -464,9 +475,11 @@ Sem fase de convivência (seção 6). O `/` vira o shell do app num commit, e os
 Ordem sugerida de ataque:
 
 1. **Modal de busca no celular** — a cascata de três colunas não cabe; provavelmente vira lista com a ficha em folha deslizante. E a navegação por teclado da cascata (↑↓ entre itens, ←→ entre colunas, ⏎ adicionar) precisa de regra escrita.
-2. **A paleta de cores derivada do `partido`** — quantas cores distinguíveis ela produz? Não é detalhe estético: sem limite de séries, cor repetida faz a legenda parar de identificar as séries.
-3. **Duração visível no trilho** — a barrinha proporcional dentro da caixa de largura igual, caso a perda da leitura visual de duração incomode (seção 3).
-4. **Testes** — a camada 3 é pura e é o alvo prioritário; ferramenta e cobertura ainda não escolhidas.
+2. **Paleta das séries sem limite** — quantas cores distinguíveis ela produz, e o que fazer quando os tons separáveis acabarem: repetir tom com estilo de linha diferente, variar luminosidade, ou outra coisa. Sem limite de séries, cor repetida faz a legenda parar de identificar as séries.
+3. **Logos dos partidos** — assets (SVG em `sitio/assets/img/partidos/`), tamanho no trilho e na ficha, e a **questão de uso de marca num repositório público**, que não é decisão técnica e não foi resolvida aqui.
+4. **Duração visível no trilho** — a barrinha proporcional dentro da caixa de largura igual, caso a perda da leitura visual de duração incomode (seção 3).
+5. **Testes** — a camada 3 é pura e é o alvo prioritário; ferramenta e cobertura ainda não escolhidas.
+6. **Leitura por espectro político** — descartada do gráfico em 2026-10-14. Se voltar, será como **modo explícito do usuário**, nunca como padrão, e com a fonte da classificação citada e visível — porque é juízo editorial, não dado.
 
 ---
 

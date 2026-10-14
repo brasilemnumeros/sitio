@@ -186,6 +186,7 @@ git commit -m "feat(governos): modelo federal versionado, sem cor de partido"
 - Produz:
   - `COBERTURA = { CALCULAVEL:'calculavel', PARCIAL:'parcial', SEM:'sem-cobertura', PONTO_UNICO:'ponto-unico' }`
   - `pontosNoMandato(series, mandato) -> Array<{date, value}>` (ordenados por data)
+  - `pontosEsperados(granularity, mandato) -> number|null` — a régua da cobertura
   - `deltaNoMandato(series, mandato) -> Celula`, onde
     `Celula = { estado, delta: number|null, pontos: number, periodo: {inicio, fim}|null, motivo: string|null }`
   - `formatarPeriodo(periodo) -> string` — `"03/2004–12/2006"`
@@ -197,7 +198,7 @@ git commit -m "feat(governos): modelo federal versionado, sem cor de partido"
 
 ```js
 import { describe, it, expect } from 'vitest';
-import { COBERTURA, deltaNoMandato, formatarPeriodo, ordenarMandatos } from './mandates.js';
+import { COBERTURA, deltaNoMandato, formatarPeriodo, ordenarMandatos, pontosEsperados } from './mandates.js';
 
 const LULA_I = { id: 'federal-2003-lula', rotulo: 'Lula I', inicio: '2003-01-01', fim: '2006-12-31' };
 const LULA_III = { id: 'federal-2023-lula', rotulo: 'Lula III', inicio: '2023-01-01', fim: null, emCurso: true };
@@ -209,7 +210,7 @@ function mensal(de, ate) {
   for (let a = +de.slice(0, 4), m = +de.slice(5, 7); a < +ate.slice(0, 4) || (a === +ate.slice(0, 4) && m <= +ate.slice(5, 7)); m === 12 ? (m = 1, a++) : m++) {
     data.push({ date: `${a}-${String(m).padStart(2, '0')}-28`, value: 42 + m });
   }
-  return { id: 'mvgr-nominal', data };
+  return { id: 'mvgr-nominal', granularity: 'monthly', data };
 }
 
 describe('deltaNoMandato (§4, §7.3.5)', () => {
@@ -230,7 +231,7 @@ describe('deltaNoMandato (§4, §7.3.5)', () => {
   });
 
   it('ponto único é estado distinto, explicitamente sem Δ', () => {
-    const serieAnual = { id: 'homicidios-anual', data: [{ date: '2023-01-01', value: 30.5 }] };
+    const serieAnual = { id: 'homicidios-anual', granularity: 'annual', data: [{ date: '2023-01-01', value: 30.5 }] };
     const c = deltaNoMandato(serieAnual, LULA_III);
     expect(c.estado).toBe(COBERTURA.PONTO_UNICO);
     expect(c.delta).toBeNull();
@@ -253,7 +254,7 @@ describe('deltaNoMandato (§4, §7.3.5)', () => {
   it('nunca devolve 0 para ausência de dado', () => {
     for (const c of [
       deltaNoMandato(mensal('2004-03', '2025-07'), FHC_II),
-      deltaNoMandato({ id: 'x', data: [{ date: '2023-01-01', value: 1 }] }, LULA_III),
+      deltaNoMandato({ id: 'x', granularity: 'annual', data: [{ date: '2023-01-01', value: 1 }] }, LULA_III),
     ]) {
       expect(c.delta).not.toBe(0);
     }
@@ -263,6 +264,22 @@ describe('deltaNoMandato (§4, §7.3.5)', () => {
 describe('formatarPeriodo', () => {
   it('usa MM/AAAA encurtado', () => {
     expect(formatarPeriodo({ inicio: '2004-03-31', fim: '2006-12-31' })).toBe('03/2004–12/2006');
+  });
+});
+
+describe('pontosEsperados — a régua da cobertura (§7.3.5)', () => {
+  it('mensal conta meses inclusive nas duas pontas', () => {
+    expect(pontosEsperados('monthly', LULA_I)).toBe(48);
+    expect(pontosEsperados('monthly', { inicio: '2016-05-12', fim: '2018-12-31' })).toBe(32);
+  });
+
+  it('anual conta anos inclusive', () => {
+    expect(pontosEsperados('annual', { inicio: '2019-01-01', fim: '2022-12-31' })).toBe(4);
+    expect(pontosEsperados('annual', { inicio: '2016-05-12', fim: '2018-12-31' })).toBe(3);
+  });
+
+  it('mandato em curso não tem régua', () => {
+    expect(pontosEsperados('monthly', LULA_III)).toBeNull();
   });
 });
 
@@ -311,9 +328,31 @@ export function pontosNoMandato(series, mandato) {
 }
 
 /**
+ * Quantos pontos a série DEVERIA ter dentro do mandato, na granularidade dela.
+ * É a régua da cobertura (§7.3.5): "abaixo do esperado para a própria granularidade".
+ * `null` para mandato em curso — não há período fechado para comparar.
+ */
+export function pontosEsperados(granularity, mandato) {
+  if (mandato.emCurso || mandato.fim === null) return null;
+  if (granularity === 'annual') {
+    return Number(mandato.fim.slice(0, 4)) - Number(mandato.inicio.slice(0, 4)) + 1;
+  }
+  if (granularity === 'monthly') {
+    const meses = (d) => Number(d.slice(0, 4)) * 12 + Number(d.slice(5, 7));
+    return meses(mandato.fim) - meses(mandato.inicio) + 1;
+  }
+  return null; // 'daily': sem régua declarada nesta camada
+}
+
+/**
  * Δ = último − primeiro valor dentro do mandato (spec §4), com os quatro estados
  * de célula da §9.4. Cobertura parcial é marcada por QUALQUER motivo — não só o
  * mandato em curso (§7.3.5).
+ *
+ * A régua é `pontos < esperados` para a granularidade da série. Medido sobre os
+ * dados reais: são **15 células** nos mandatos fechados — o mesmo número que a §7.3
+ * publica. Comparar datas cruas marcaria 49 (todo ponto mensal cai no dia 1º, e o
+ * mandato começa no meio do mês) — por isso a régua é por contagem, não por data.
  * @returns {{estado:string, delta:number|null, pontos:number,
  *            periodo:{inicio:string,fim:string}|null, motivo:string|null}}
  */
@@ -333,13 +372,10 @@ export function deltaNoMandato(series, mandato) {
   }
   const periodo = { inicio: pontos[0].date, fim: pontos[pontos.length - 1].date };
   const delta = pontos[pontos.length - 1].value - pontos[0].value;
-  const cobreInteiro =
-    !mandato.emCurso &&
-    ymd(periodo.inicio) <= ymd(mandato.inicio) &&
-    mandato.fim !== null &&
-    ymd(periodo.fim) >= ymd(mandato.fim);
+  const esperados = pontosEsperados(series.granularity, mandato);
+  const completa = esperados !== null && pontos.length >= esperados;
   return {
-    estado: cobreInteiro ? COBERTURA.CALCULAVEL : COBERTURA.PARCIAL,
+    estado: completa ? COBERTURA.CALCULAVEL : COBERTURA.PARCIAL,
     delta,
     pontos: pontos.length,
     periodo,
@@ -409,11 +445,27 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { COBERTURA, deltaNoMandato } from './mandates.js';
+import { COBERTURA, deltaNoMandato, pontosEsperados } from './mandates.js';
 
 const raiz = fileURLToPath(new URL('../../../../', import.meta.url)); // = brasilemnumeros/
 const governos = JSON.parse(readFileSync(join(raiz, 'dados/governos/federal.json'), 'utf8'));
 const MANDATOS = governos.mandatos.filter((m) => m.rotulo !== 'FHC I'); // 8 colunas da §7.3
+
+const GRANULARIDADE = {
+  'caged-total-mensal': 'monthly',
+  'homicidios-anual': 'annual',
+  'homicidios-armas-fogo-anual': 'annual',
+  'proporcao-homicidios-armas-fogo-anual': 'annual',
+  'igpm-acum-12m': 'monthly',
+  'ipca-acum-12m': 'monthly',
+  'mvgr-nominal': 'monthly',
+  'mvgr-real': 'monthly',
+  'pib-real-anual': 'annual',
+  'populacao-total-anual': 'annual',
+  'populacao-variacao-anual': 'annual',
+  'selic-meta-acum-12m': 'monthly',
+  'selic-over-acum-12m': 'monthly',
+};
 
 function serieReal(id) {
   for (const fam of readdirSync(join(raiz, 'dados'), { withFileTypes: true })) {
@@ -423,7 +475,11 @@ function serieReal(id) {
       if (f.replace(/\.json$/, '') !== id) continue;
       const bruto = JSON.parse(readFileSync(join(dir, f), 'utf8'));
       // Adaptador temporário: as séries ainda publicam `rate` (migração = fatia 11).
-      return { id, data: bruto.data.map((p) => ({ date: p.date, value: p.value ?? p.rate })) };
+      return {
+        id,
+        granularity: GRANULARIDADE[id],
+        data: bruto.data.map((p) => ({ date: p.date, value: p.value ?? p.rate })),
+      };
     }
   }
   throw new Error(`série ${id} não encontrada em dados/`);
@@ -470,18 +526,21 @@ describe('medição da §7.3 sobre os dados reais', () => {
     expect(estados.filter((e) => e !== COBERTURA.SEM && e !== COBERTURA.PONTO_UNICO)).toHaveLength(99);
   });
 
-  it('só a MVG-R é PARCIAL num mandato FECHADO (o caso que generalizou a regra)', () => {
-    const parciaisFechados = [];
+  it('reproduz as 15 células "abaixo do esperado" da §7.3, com o mandato fechado', () => {
+    // A régua é `pontos < esperados` para a granularidade da série — a mesma que a §7.3
+    // publica. Comparar datas cruas marcaria 49 células (todo ponto mensal cai no dia 1º).
+    const abaixo = [];
     for (const id of Object.keys(ESPERADO)) {
       const s = serieReal(id);
       for (const m of MANDATOS.filter((x) => !x.emCurso)) {
-        if (deltaNoMandato(s, m).estado === COBERTURA.PARCIAL) parciaisFechados.push([id, m.rotulo]);
+        const pontos = deltaNoMandato(s, m).pontos;
+        if (pontos < pontosEsperados(s.granularity, m)) abaixo.push(`${id}|${m.rotulo}`);
       }
     }
-    expect(parciaisFechados).toEqual([
-      ['mvgr-nominal', 'Lula I'],
-      ['mvgr-real', 'Lula I'],
-    ]);
+    expect(abaixo).toHaveLength(15);
+    expect(abaixo.filter((c) => c.endsWith('|Temer'))).toHaveLength(10);
+    expect(abaixo).toContain('mvgr-nominal|Lula I');
+    expect(abaixo).toContain('selic-meta-acum-12m|FHC II');
   });
 
   it('MVG-R no Lula I: o período real usado é 03/2004–12/2006', () => {
@@ -525,7 +584,10 @@ git commit -m "test(domain): trava a medicao de cobertura por mandato da spec"
       que a fatia 10 vai apagar (nenhuma ocorrência nova).
 - [ ] `npm test` → verdes, incluindo a medição real: a matriz de cobertura **reproduz o
       anexo da spec célula a célula** (13 × 8 = 104 células, 4 sem cobertura, 1 ponto
-      único, 99 com Δ), e **só a MVG-R é PARCIAL num mandato fechado**.
+      único, 99 com Δ) e **as 15 células "abaixo do esperado"** da §7.3.
+- [ ] A régua da cobertura é **por contagem de pontos contra o esperado da granularidade**
+      (`pontosEsperados`), **não** por comparação de datas cruas — comparar datas marcaria
+      49 células em vez de 15.
 - [ ] `deltaNoMandato` **nunca** devolve `delta: 0` para ausência de dado (§9.4).
 - [ ] `ordenarMandatos` põe o mandato em curso na ponta direita.
 - [ ] A decisão sobre incluir **FHC I** está tomada e registrada (na §7.3 ou na spec).

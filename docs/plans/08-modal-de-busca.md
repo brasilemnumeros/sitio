@@ -166,7 +166,7 @@ git commit -m "feat(ui): modal de busca em cascata de tres colunas, com digitaca
 - [ ] **Passo 2: verificar o aviso com o par real medido**
 
 Run: com `Selic` já no gráfico, abrir a ficha de **`populacao-total-anual`**.
-**Esperado:** o aviso aparece, citando a razão medida (**≈ 1.192.196×**) e a série culpada
+**Esperado:** o aviso aparece, citando a razão medida (**≈ 1.192.259×**) e a série culpada
 (`selic-meta-acum-12m`); e abrir a ficha de **`igpm-acum-12m`** com Selic no gráfico
 **não** avisa (razão **1,056**). Se o número na tela não bater com a medição da §5, parar.
 
@@ -218,7 +218,7 @@ git commit -m "feat(ui): limite de 10 visivel na modal, com o motivo pela paleta
       grupos**; a 3 mostra unidade, granularidade, período, **número de pontos** e fonte.
 - [ ] A **digitação está disponível em todas as três** e colapsa a cascata numa lista.
 - [ ] O **aviso de escala aparece na ficha, antes da escolha**, com a razão medida — e o
-      par real da §5 (Selic × população, ≈1.192.196×) avisa, enquanto o par compatível
+      par real da §5 (Selic × população, ≈1.192.259×) avisa, enquanto o par compatível
       (Selic × IGP-M, 1,056) **não** avisa.
 - [ ] **Não existe caminho que adicione série incompatível em silêncio** (§5).
 - [ ] Teclado: ↑↓, ←→, ⏎ e ESC funcionam (verificado ao vivo, não por inspeção).

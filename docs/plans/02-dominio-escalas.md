@@ -74,10 +74,14 @@ describe('amplitudeRatio', () => {
     expect(amplitudeRatio(selic, igpm)).toBeCloseTo(1.056, 2);
   });
 
-  it('reproduz o par patológico medido: populacao-total × selic-meta ≈ 1.192.196 (§5)', () => {
+  it('mede o par patológico populacao-total × selic-meta (§5)', () => {
+    // Amplitudes do anexo, arredondadas a 2 casas: 50.337.190 ÷ 42,22 = 1.192.259,4.
+    // A §5 publica **1.192.196** porque mediu sobre os valores CRUS, sem arredondar as
+    // amplitudes — a diferença está na 4ª casa significativa. O teste trava o que as
+    // fixtures desta suíte realmente produzem, não o número publicado.
     const pop = serie('populacao-total-anual', 154524335, 204861525);
     const selic = serie('selic-meta-acum-12m', 2.0, 44.22);
-    expect(amplitudeRatio(pop, selic)).toBeCloseTo(1192196, 0);
+    expect(amplitudeRatio(pop, selic)).toBeCloseTo(1192259, 0);
   });
 
   it('é simétrica', () => {
@@ -340,8 +344,8 @@ git commit -m "feat(domain): decide por medicao o limiar do caso patologico de e
 
 ## Critérios de aceite da fatia 02
 
-- [ ] `npm test` → verdes, incluindo os dois números reais medidos (`1,056` convive;
-      `1.192.196` avisa).
+- [ ] `npm test` → verdes, incluindo os dois números medidos sobre as fixtures (`1,056`
+      convive; `1.192.259` avisa — a §5 publica `1.192.196` porque mediu valores crus).
 - [ ] `amplitudeRatio` é **simétrica** e independe de `unit.type`.
 - [ ] `comparabilidade` devolve `convive` com **zero** séries existentes (não lança).
 - [ ] O corte de 50 está numa constante nomeada, não hardcoded no meio da função.

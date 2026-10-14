@@ -64,6 +64,14 @@ Custos assumidos e registrados: o **contraste cai de 6,0:1 para 3,20:1** (passa 
 
 **Canal redundante de identificação: decidido.** O rótulo do indicador vai na **ponta da própria linha** (ou no eixo), de modo que **a cor vire decoração e a identificação venha do texto**. É a mesma regra que já vale para as faixas de governo — sigla no rótulo, não na cor — aparecendo duas vezes, o que é sinal de que é a regra certa. Isso também deixa a margem fina de separação sem consequência grave: quem não distingue os tons lê o rótulo.
 
+**Cor customizada pelo usuário: mantida, como segunda camada.** O app de hoje permite mudar a cor da linha de cada indicador, e isso fica — porque a paleta medida resolve o caso **comum**, não o **individual**: quem tem deuteranopia pode querer corrigir exatamente a série que lhe confunde, e essa é a única correção individual disponível. Três regras:
+
+1. **O padrão é o envelope medido; a mudança é override pessoal**, chaveado pelo **`id` do indicador** — não por nome como hoje, e não ciclado por índice, que é a mesma fragilidade da paleta de 6.
+2. **O seletor confere e avisa; não bloqueia.** Se a cor escolhida ficar próxima demais de outra série já selecionada, o app diz — **com a distância medida**. Bloquear seria o paternalismo já rejeitado duas vezes hoje (no limite de séries e nas escalas); silenciar seria a falha silenciosa já rejeitada três. *(Consequência útil: a matemática desta seção — OKLab e simulação de daltonismo, umas 40 linhas — vira **função pura em `domain/`**, testável sem navegador. É o primeiro conteúdo real da camada 3.)*
+3. **Persistência local, fora do link.** Vive no `localStorage` do aparelho, com "restaurar padrão" por série. Um link compartilhado reproduz a **visão dos dados**, não as cores de quem o mandou.
+
+**Consequência registrada:** com cores customizadas, a garantia de daltonismo vale **só para o padrão**. O app não pode prometer separação naquilo que não escolheu — só informar. É o canal redundante que impede isso de ser grave: mesmo com cores ruins, a identificação vem do texto.
+
 **A verificar:** com 10 séries, os rótulos na ponta das linhas podem se sobrepor. A biblioteca mostra o título da série no eixo de preço, mas o comportamento dela com 10 séries simultâneas precisa ser conferido antes de virar decisão.
 
 **Se o app ganhar tema claro, esta medição não vale** — contraste contra fundo claro é outro problema. Hoje o app é tema escuro por decisão (D4).
@@ -519,7 +527,7 @@ Sem fase de convivência (seção 6). O `/` vira o shell do app num commit, e os
 Ordem sugerida de ataque:
 
 1. **Modal de busca no celular** — a cascata de três colunas não cabe; provavelmente vira lista com a ficha em folha deslizante. E a navegação por teclado da cascata (↑↓ entre itens, ←→ entre colunas, ⏎ adicionar) precisa de regra escrita.
-2. **Paleta sob deficiência de visão de cor** — a paleta de 10 foi medida para **visão normal**. Uma paleta baseada em matizes é justamente o que colapsa no daltonismo, que atinge cerca de 8% dos homens. Precisa ser verificada e, se colapsar, remediada (variação de luminosidade, ou estilo de linha como canal extra). **E remedir se o app ganhar tema claro**, porque o contraste contra fundo claro é outro problema.
+2. **Sobreposição dos rótulos na ponta das linhas** — com 10 séries os rótulos podem colidir. Verificar como a Lightweight Charts trata o título de série no eixo de preço com 10 séries simultâneas e decidir o que fazer se colidirem. É o que sustenta o canal redundante de identificação, ou seja, é o item que protege o pior caso da paleta.
 3. **Logos dos partidos** — assets (SVG em `sitio/assets/img/partidos/`), tamanho no trilho e na ficha, e a **questão de uso de marca num repositório público**, que não é decisão técnica e não foi resolvida aqui.
 4. **Duração visível no trilho** — a barrinha proporcional dentro da caixa de largura igual, caso a perda da leitura visual de duração incomode (seção 3).
 5. **Testes** — a camada 3 é pura e é o alvo prioritário; ferramenta e cobertura ainda não escolhidas.

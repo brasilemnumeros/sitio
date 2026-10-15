@@ -572,7 +572,57 @@ Sem fase de convivência (seção 6). O `/` vira o shell do app num commit, e os
 
 Ordem sugerida de ataque:
 
-1. **Modal de busca no celular** — a cascata de três colunas não cabe; provavelmente vira lista com a ficha em folha deslizante. E a navegação por teclado da cascata (↑↓ entre itens, ←→ entre colunas, ⏎ adicionar) precisa de regra escrita.
+1. **Modal de busca no celular** — **PROPOSTA escrita em 2026-10-14, aguardando decisão do
+   usuário.** Não é decisão tomada; está aqui para ser aceita, ajustada ou rejeitada.
+
+   **A restrição que manda.** A §1.1 diz que o aviso de escala "transforma um erro futuro em
+   informação presente", **antes** da escolha. Num celular, esconder o aviso atrás de um toque
+   extra trai exatamente esse objetivo. Então o desenho mobile tem de **manter o aviso visível na
+   lista**, não só dentro da ficha.
+
+   **Corte de layout:** `< 768px` (o `md` do Tailwind) usa esta forma; daí para cima vale a §1.1
+   sem mudança.
+
+   | elemento | no celular |
+   |---|---|
+   | **busca** | fixa no topo, com foco automático ao abrir; é o caminho principal |
+   | **grupos** | **fileira de chips** rolável na horizontal (7 + "Todos"), em vez de coluna |
+   | **lista** | uma coluna, com cabeçalho de grupo **grudado** enquanto rola (quando "Todos") |
+   | **linha** | caixa de seleção · nome · **distintivo de escala** · botão "i" |
+   | **ficha** | **folha deslizante** (bottom sheet) ao tocar em "i" ou no nome — unidade, granularidade, período, pontos, fonte, o aviso completo, e o botão Adicionar |
+
+   **Por que chips e não coluna:** 7 grupos numa coluna vertical comem metade da tela e deixam a
+   lista espremida. Numa fileira rolável ocupam 1–2 linhas e liberam a altura para o conteúdo.
+
+   **Por que o distintivo na linha:** é o que preserva a promessa da §1.1. Sem ele, o aviso só
+   apareceria depois de abrir a ficha — um toque tarde demais para quem está varrendo a lista.
+   Com ele, dá para varrer procurando o que **não** colide, sem abrir ficha nenhuma.
+
+   **Por que a ficha é folha deslizante e não um terceiro painel:** no celular não há largura para
+   três painéis, e a ficha é conteúdo de leitura (5–7 linhas + botão). Uma folha é modal,
+   descartável, e não obriga a reflow da lista.
+
+   **Tocar na linha não adiciona.** Adicionar exige abrir a ficha e confirmar — igual ao desktop
+   (grupo → indicador → Adicionar). Tocar na linha = abrir a ficha.
+
+   **Navegação por teclado — uma regra só, e ela vale para os dois layouts.** A cascata é a
+   *forma* da lista; o foco vive num item, nunca numa coluna:
+
+   | tecla | ação |
+   |---|---|
+   | `↑` `↓` | item anterior / seguinte **dentro do grupo atual** |
+   | `←` `→` | grupo anterior / seguinte (no desktop: coluna anterior / seguinte, focando o primeiro item dela) |
+   | `⏎` | abre a ficha do item focado; **com a ficha aberta**, confirma o Adicionar |
+   | `Esc` | com a ficha aberta, fecha a ficha; **sem** ficha aberta, fecha a modal |
+   | digitação | colapsa a cascata numa lista só; `↑↓` percorrem os resultados e `←→` fica inerte |
+
+   **No limite de 10:** o Adicionar fica **visível e desabilitado**, dizendo o motivo — e o motivo
+   é a **paleta** ("a paleta tem 10 cores"), não o layout (§1, §9.5). A linha já-adicionada aparece
+   marcada e inerte. **Nada é removido para abrir espaço.**
+
+   **O que esta proposta NÃO resolve:** o tamanho do distintivo em tela de 320px, e se a fileira
+   de chips deve mostrar a contagem de indicadores por grupo. Ambos são detalhe de implementação —
+   decidir na fatia 08, com a tela na frente.
 2. ~~**Sobreposição dos rótulos na ponta das linhas**~~ — **FECHADO por medição em 2026-10-14.**
    Spike com lightweight-charts 5.2.1, 10 séries, área de plot de 392px. Medição por dois
    caminhos independentes: `series.priceToCoordinate()` para a posição **natural** de cada último

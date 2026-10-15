@@ -44,17 +44,17 @@ function serieReal(id) {
 
 const mandato = (rotulo) => MANDATOS.find((m) => m.rotulo === rotulo);
 
-/** A matriz do anexo da spec, transcrita (medida em 2026-10-14). 0 = sem cobertura. */
+/** A matriz do anexo da spec, transcrita (medida em 2026-10-15, sobre os 13 JSONs já deduplicados). 0 = sem cobertura. */
 const ESPERADO = {
-  'caged-total-mensal': [48, 49, 48, 48, 21, 31, 48, 32],
+  'caged-total-mensal': [48, 48, 48, 48, 20, 31, 48, 32],
   'homicidios-anual': [4, 4, 4, 4, 2, 2, 4, 1],
   'homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 0],
   'proporcao-homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 0],
   'igpm-acum-12m': [48, 48, 48, 48, 20, 32, 48, 31],
   'ipca-acum-12m': [48, 48, 48, 48, 20, 31, 48, 30],
-  'mvgr-nominal': [0, 35, 48, 48, 21, 31, 48, 31],
-  'mvgr-real': [0, 35, 48, 48, 21, 31, 48, 31],
-  'pib-real-anual': [4, 5, 4, 4, 3, 2, 4, 2],
+  'mvgr-nominal': [0, 34, 48, 48, 20, 31, 48, 31],
+  'mvgr-real': [0, 34, 48, 48, 20, 31, 48, 31],
+  'pib-real-anual': [4, 4, 4, 4, 2, 2, 4, 2],
   'populacao-total-anual': [4, 4, 4, 4, 2, 2, 4, 2],
   'populacao-variacao-anual': [4, 4, 4, 4, 2, 2, 4, 2],
   'selic-meta-acum-12m': [46, 48, 48, 48, 20, 32, 48, 34],

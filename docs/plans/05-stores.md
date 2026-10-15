@@ -464,10 +464,15 @@ it('não expõe celulaDe — o Δ é composto pelo componente (R27)', async () =
 import { get } from 'svelte/store';
 import { axesStore, recalcularEixos, moverParaEixo } from './axes.js';
 
-const s = (id, unit) => ({ id, unit, pontos: [{ date: '2020-01-01', value: 1 }] });
-// As amplitudes reais decidem o veredito (fatia 02): 1e11 vs 1 cabe em 'avisa'; 1e11 vs 1e-3 é 'ilegivel'.
-const grande = { id: 'g', unit: { type: 'currency', symbol: 'R$' }, pontos: [{ date: '2020-01-01', value: 1e11 }] };
-const pequeno = { id: 'p', unit: { type: 'currency', symbol: 'R$' }, pontos: [{ date: '2020-01-01', value: 1 }] };
+const serie = (id, valores, unit = { type: 'percentage', symbol: '%', decimals: 2 }) => ({
+  id, unit, granularity: 'monthly', source: 'teste',
+  // `data` é a forma canônica (validate.js), e a amplitude é max−min (scales.js:13) —
+  // com UM ponto a amplitude é 0 e nenhum veredito dispara. Daí dois pontos por série.
+  data: valores.map((v, i) => ({ date: `2020-0${i + 1}-01`, value: v })),
+});
+const s = (id) => serie(id, [0, 1]);                                  // amplitude 1
+const grande = serie('g', [0, 1e11], { type: 'currency', symbol: 'R$' });   // amplitude 1e11
+const pequeno = serie('p', [0, 1], { type: 'currency', symbol: 'R$' });     // amplitude 1
 
 it('com tudo convivendo, tudo fica num eixo só (§5)', () => {
   recalcularEixos([s('a'), s('b')]);

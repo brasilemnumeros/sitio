@@ -23,6 +23,11 @@ export default defineConfig({
   test: {
     // §10.7 — só unidade, sem navegador por ora.
     environment: 'node',
+    // `globals: true` porque os BRIEFS dos planos escrevem `it`/`expect`/`vi` nus, e sem isto
+    // cada transcrição quebra com ReferenceError. Já custou duas rodadas de correção na fatia 05
+    // (o `vi` da tarefa 2, o `it`/`expect` da tarefa 3). Os 10 arquivos antigos importam
+    // explícito e continuam válidos — isto só deixa de punir a forma que o plano já usa.
+    globals: true,
     include: ['src/**/*.test.js'],
   },
 });

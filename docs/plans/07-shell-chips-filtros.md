@@ -29,6 +29,10 @@ biblioteca de gráficos (§8). Consome stores (fatia 05) e, no caso do gráfico,
 - **Estado inicial sem tela de boas-vindas**: um campo que abre a busca + um **atalho de
   exemplo** ("Selic × IPCA") (§9.1).
 - **Nada em `window`** (§8).
+- **A legenda das séries é o canal redundante de identificação — e é obrigatória.** A §12.2
+  (fechada por medição em 2026-10-14) decidiu que a ponta da linha **não** é o canal: com 10
+  séries os rótulos da biblioteca ocupam **80% da altura do gráfico** no pior caso. Então a
+  identificação por texto vive **fora do gráfico**, na legenda. Ela é a **Tarefa 5**.
 
 ---
 
@@ -192,10 +196,119 @@ git commit -m "feat(ui): estados inicial, carregando e erro total, sem vazio sil
 
 ---
 
+---
+
+### Tarefa 5: `components/SeriesLegend.svelte` — o canal redundante (§1, §12.2, §5)
+
+**Arquivos:**
+- Criar: `sitio/app/src/components/SeriesLegend.svelte`
+- Teste: **não por ora** (componente Svelte, §10.7). Verificação é por dev server.
+
+**Interfaces:**
+- Consome: `seriesStore` (fatia 05, dá `cor`, `name`, `unit`), `axesStore` (fatia 05, dá a
+  atribuição de eixo), `definirCor`, `restaurarCor`, `removerSerie`, `moverParaEixo`.
+- Produz: a legenda — e **nada mais**. Não conhece a biblioteca de gráficos (§8).
+
+**Por que esta tarefa existe:** é o que a §1 chama de canal redundante e a §12.2 mediu como
+necessário. Sem ela, a identificação de uma série depende só da cor — que é justamente o canal
+que falha no daltonismo (§1: os pares `#309aff`/`#9581ff` ficam em ΔE 0,006).
+
+- [ ] **Passo 1: escrever o componente**
+
+```svelte
+<script>
+  import { seriesStore, definirCor, restaurarCor, removerSerie } from '../stores/series.js';
+  import { axesStore, moverParaEixo } from '../stores/axes.js';
+  import { avisoDeColisao, LIMIAR_COLISAO } from '../domain/color.js';
+
+  // Svelte 5 com runes (o app é novo; não misturar com `$:` legado). Os stores continuam
+  // funcionando por auto-subscrição.
+  const itens = $derived($seriesStore.itens);
+  // R25: o aviso mede o PIOR CASO entre as quatro visões, não a visão normal.
+  const avisos = $derived(
+    itens.map((i) => avisoDeColisao(i.cor, itens.filter((o) => o.id !== i.id).map((o) => o.cor))),
+  );
+</script>
+
+<!-- A legenda QUEBRA EM LINHAS (§1) — com 10 séries ela não pode virar uma tira horizontal.
+     Estilo por classes Tailwind + `dark:` (convenção do projeto; NÃO existem tokens --cor-*). -->
+<ul class="flex flex-wrap gap-x-4 gap-y-2" data-testid="legenda-series">
+  {#each itens as item, i (item.id)}
+    <li class="flex items-center gap-2 text-sm">
+      <label class="flex cursor-pointer items-center gap-2">
+        <input
+          type="color"
+          value={item.cor}
+          oninput={(e) => definirCor(item.id, e.currentTarget.value)}
+          class="h-3.5 w-3.5 shrink-0 cursor-pointer rounded-full border-0 bg-transparent p-0"
+        />
+        <span class="text-slate-700 dark:text-slate-200">{item.name}</span>
+      </label>
+
+      {#if item.corPessoal}
+        <button
+          type="button"
+          onclick={() => restaurarCor(item.id)}
+          class="text-xs text-slate-500 underline dark:text-slate-400"
+          title="Voltar à cor da paleta">restaurar</button>
+      {/if}
+
+      {#if avisos[i].colide}
+        <!-- Informa, NÃO bloqueia (§1) — a série continua no gráfico. -->
+        <span
+          class="text-xs text-amber-600 dark:text-amber-400"
+          title="Distância {avisos[i].distancia.toFixed(3)} — abaixo do envelope {LIMIAR_COLISAO}"
+        >
+          ⚠ parecida
+        </span>
+      {/if}
+
+      <!-- A atribuição de eixo fica VISÍVEL na legenda e é trocável por clique (§5). -->
+      <button
+        type="button"
+        onclick={() =>
+          moverParaEixo(item.id, $axesStore.atribuicao[item.id] === 'left' ? 'right' : 'left')}
+        class="rounded border border-slate-300 px-1.5 text-xs text-slate-500 dark:border-slate-600 dark:text-slate-400"
+        title="Trocar de eixo"
+      >
+        {$axesStore.atribuicao[item.id] === 'left' ? 'esq.' : 'dir.'}
+      </button>
+
+      <button
+        type="button"
+        onclick={() => removerSerie(item.id)}
+        class="text-xs text-slate-500 dark:text-slate-400"
+        title="Remover do gráfico">✕</button>
+    </li>
+  {/each}
+</ul>
+```
+- [ ] **Passo 2: verificar com 10 séries, ao vivo**
+
+Run: `cd sitio/app && npm run dev`, adicionar **10** séries.
+
+**Esperado:** a legenda quebra em **mais de uma linha** e as 10 continuam identificáveis; trocar
+uma cor mostra o botão "restaurar"; um par abaixo do envelope mostra "⚠ parecida" — e a série
+**continua no gráfico** (informa, não bloqueia).
+
+- [ ] **Passo 3: commitar**
+
+```bash
+cd sitio && git add app/src/components/SeriesLegend.svelte
+git commit -m "feat(shell): legenda das series como canal redundante de identificacao"
+```
+
+---
+
 ## Critérios de aceite da fatia 07
 
 - [ ] A página tem os **seis blocos na ordem da §1**; o painel de comparação está
       **abaixo do gráfico, em largura total e sempre visível** (não é aba).
+- [ ] **A legenda existe e é o canal redundante** (§12.2): uma entrada por série com **cor e
+      nome**, **quebrando em linhas**, com a **atribuição de eixo visível e trocável por
+      clique** (§5), o aviso "⚠ parecida" quando o par cai abaixo do envelope — **sem tirar a
+      série do gráfico** — e "restaurar" quando a cor é pessoal. Verificada **ao vivo com 10
+      séries**, não por inspeção.
 - [ ] `npm run dev` mostra: sem seleção → **EstadoInicial** com o atalho "Selic × IPCA";
       carregando → **Esqueleto na forma do conteúdo**; falha de uma série → **chip em
       erro com tentar de novo/remover e o resto da tela usável**; nada carregou →

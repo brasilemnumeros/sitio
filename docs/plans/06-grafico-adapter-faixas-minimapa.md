@@ -15,14 +15,16 @@ janela visível ao store `viewport` por callback explícito.
 
 **Spec:** `...design.md` §2, §3, §8, §8.1, §7.3.5 · **ADR:** D3
 
-## 🚧 Portão de prontidão — não comece sem isto
+## ✅ Portão de prontidão — RESOLVIDO em 2026-10-14
 
-A §12.2 está **aberta**: *"com 10 séries os rótulos podem colidir. Verificar como a
-Lightweight Charts trata o título de série no eixo de preço com 10 séries simultâneas e
-decidir o que fazer se colidirem."* É o item que **sustenta o canal redundante de
-identificação** — sem ele, a paleta medida perde a rede de segurança dela.
+A **§12.2 foi fechada por medição** (Tarefa 0, abaixo). O resultado muda o desenho: a
+Lightweight Charts até desenha e desconflita os 10 títulos, mas no pior caso a pilha de rótulos
+ocupa **80% da altura da área de plot**, com caixas sobrepostas em 3 de 4 cenários e um rótulo
+que não é desenhado. **Portanto: a ponta da linha vai SEM `title`.** O canal redundante é a
+**legenda fora do gráfico** mais o rótulo sobre o crosshair.
 
-**Tarefa 0 existe para fechar isso antes de qualquer código de produção.** Não pular.
+⚠️ **A legenda é da fatia 07 (o shell), não desta.** A fatia 06 fica responsável por **não**
+passar `title` às séries e por manter `lastValueVisible` — nada além disso.
 
 ## Restrições globais
 
@@ -52,8 +54,10 @@ ocupa **80% da área de plot** (314px de 392), em um cenário um rótulo **some*
 caixas ainda sobrepostas. **Decisão: a ponta da linha NÃO é o canal redundante** — a legenda vai
 **fora do gráfico**, com o rótulo sobre o crosshair como reforço; a ponta fica sem `title`.
 
-**Consequência para a Tarefa 3 (o shell):** precisa de uma **legenda externa** (10 linhas: cor +
-nome). É o que a §1 chama de canal redundante de identificação.
+**Consequência para a FATIA 07 (o shell)** — e não para a Tarefa 3 desta fatia, que é o
+minimapa: ela precisa de uma **legenda externa** (10 linhas: cor + nome, quebrando em linhas).
+É o que a §1 chama de canal redundante de identificação. **Esta fatia não desenha a legenda** —
+só cumpre a parte dela, que é **não** dar `title` às séries e manter `lastValueVisible`.
 
 **Interfaces:**
 - Consome: `PALETA_PADRAO` (fatia 04) e 10 séries sintéticas.
@@ -79,6 +83,21 @@ nome). É o que a §1 chama de canal redundante de identificação.
 
 **Interfaces:**
 - Consome: `lightweight-charts` (único import permitido, §8).
+
+- [ ] **Passo 0: instalar a dependência — ela NÃO existe ainda**
+
+`lightweight-charts` **não está** no `app/package.json` (pré-voo de 2026-10-14). É
+**dependência de runtime**, não `devDependency` — o bundle do site precisa dela:
+
+```bash
+cd sitio/app && NODE_ENV=development npm install lightweight-charts@^5.2.0
+```
+
+⚠️ **`NODE_ENV=development` é obrigatório** nesta máquina (R11): o ambiente tem
+`NODE_ENV=production` + `omit=dev`, e sem a variável o npm não instala nem acha as
+devDependencies. Rodar isso **antes** do passo 1, senão o import não resolve.
+
+A versão **5.2.1** foi a medida no spike da Tarefa 0 — manter o mesmo major.
 - Produz — uma fábrica **sem estado global**:
   - `criarAdapter(container, { aoMudarJanela }) -> Adapter`
   - `Adapter = { definirSeries(itens), definirFaixas(mandatos), destacarMandato(id),
@@ -350,7 +369,7 @@ git commit -m "feat(chart): Chart.svelte liga store e adapter na direcao unica"
 
 - [x] A **§12.2 está fechada** na spec (2026-10-14): a colisão dos rótulos foi **medida com 10 séries**
       (tabela de 4 cenários), e a decisão é legenda externa + rótulo no crosshair, **sem** `title`
-      na ponta. A Tarefa 3 precisa da legenda externa.
+      na ponta. A **fatia 07** precisa da legenda externa.
 - [ ] (critério antigo, manter)
       e a decisão está escrita, com o número.
 - [ ] `grep -rn "lightweight-charts" app/src` → só em `app/src/chart/` (§8, regra 1).

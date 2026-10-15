@@ -58,14 +58,22 @@ export const AMPLITUDE_LIMIT_ILEGIVEL = 1_000_000;
  * @returns {Veredito}
  */
 export function comparabilidade(novaSerie, seriesExistentes) {
-  let pior = { ratio: 1, contra: null };
+  // `contra` é null SÓ quando não há existentes (é o que o typedef promete). Semear com
+  // `ratio: 1` e comparar com `>` deixava `contra` null no caso de razão EXATAMENTE 1
+  // (duas séries de amplitude idêntica) — contrato violado, e a fatia 08 leria isso como
+  // "nada a comparar" num caso em que há. Por isso a primeira existente sempre entra.
+  let piorRatio = 1;
+  let contra = null;
   for (const existente of seriesExistentes) {
     const ratio = amplitudeRatio(novaSerie, existente);
-    if (ratio > pior.ratio) pior = { ratio, contra: existente };
+    if (contra === null || ratio > piorRatio) {
+      piorRatio = ratio;
+      contra = existente;
+    }
   }
   const veredito =
-    pior.ratio > AMPLITUDE_LIMIT_ILEGIVEL ? 'ilegivel'
-    : pior.ratio > AMPLITUDE_LIMIT ? 'avisa'
+    piorRatio > AMPLITUDE_LIMIT_ILEGIVEL ? 'ilegivel'
+    : piorRatio > AMPLITUDE_LIMIT ? 'avisa'
     : 'convive';
-  return { veredito, ratio: pior.ratio, contra: pior.contra };
+  return { veredito, ratio: piorRatio, contra };
 }

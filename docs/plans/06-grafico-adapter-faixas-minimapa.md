@@ -967,13 +967,34 @@ domínio**, e as faixas mais antigas ficavam comprimidas na borda. Uma linha res
 primeiro lote de séries entrar:
 
 ```js
-  // No adapter, ao fim da PRIMEIRA carga de séries: o app abre no todo, não no default da lib.
-  let jaAjustou = false;
+  // O app abre no TODO, não no default da lib (≈ últimos 150 pontos).
+  // 🔴 Duas armadilhas medidas, e a segunda só apareceu na revisão:
+  //
+  //  1. `fitContent()` chamado NA MESMA VOLTA do `setData` é no-op — precisa do frame seguinte.
+  //  2. **No app real as séries entram UMA A UMA** (`adicionarSerie` faz um `store.set` por
+  //     série). Com um flag `jaAjustou`, o fit roda depois da PRIMEIRA e enquadra só o domínio
+  //     dela. O harness da T4 carregava as 10 juntas e escondia isso — "verdadeiro no harness,
+  //     falso no app".
+  //
+  // Por isso: DEBOUNCE (o fit espera a rajada assentar) + o usuário assume no primeiro gesto.
+  let usuarioAssumiu = false;
+  let fitAgendado = null;
+  const assumir = () => { usuarioAssumiu = true; };
+  container.addEventListener('pointerdown', assumir, { once: true });
+  container.addEventListener('wheel', assumir, { once: true, passive: true });
+
   function definirSeries(itens, atribuicao = {}) {
     // … o de sempre …
-    if (!jaAjustou && porId.size > 0) { chart.timeScale().fitContent(); jaAjustou = true; }
+    if (usuarioAssumiu || porId.size === 0) return;
+    clearTimeout(fitAgendado);
+    fitAgendado = setTimeout(() => {
+      requestAnimationFrame(() => chart.timeScale().fitContent());
+    }, 150);   // a rajada de carga assenta; o último enquadra a UNIÃO de todas
   }
 ```
+
+E no `destruir`, limpar o timer e os dois listeners (`pointerdown`/`wheel`) — senão eles sobrevivem
+ao componente.
 
 **(b) Duplo-clique dá zoom.** Medido na T4: **não dava** — só scroll e arraste. A §2 lista os três
 gestos, e "um clique, um efeito" (selecionar) já está resolvido; o duplo-clique é o terceiro.

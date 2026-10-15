@@ -3,7 +3,6 @@
  * janela/tom; a primitiva desenha em canvas e por isso NÃO tem teste de unidade
  * (o `vite.config.js` roda em `node`, sem DOM — §10.7). A verificação é visual (Tarefa 4).
  */
-import { PALETA_PADRAO } from '../domain/color.js';
 
 /** Faixas que TOCAM a janela. `null` em qualquer ponta significa "sem limite" — é o estado
  * inicial (`from`/`to` nulos) e o mandato em curso (`fim` nulo). */
@@ -95,15 +94,24 @@ export function criarPrimitivaDeFaixas(mandatos, { aoClicar, ultimoDadoPorSerie 
     return m ? `${m.rotulo} · ${m.partido}` : '';
   };
 
+  // ⚠ Referência ESTÁVEL, criada uma vez. Os typings avisam (L2145-46): "a lib usa caches
+  // internos baseados em REFERÊNCIA de array — devolva o MESMO array se nada mudou". Devolver
+  // `[view]` novo a cada chamada invalida o cache e força redesenho. Não é incorreção; é custo.
+  const VISOES = [view];
+
   return {
     attached({ chart: c, requestUpdate }) { chart = c; pedirAtualizacao = requestUpdate; recalcular(); },
     detached() { chart = null; pedirAtualizacao = null; faixasPx = []; },
-    paneViews() { return [view]; },
+    paneViews() { return VISOES; },
     updateAllViews() { recalcular(); },
     /** Clique SELECIONA — quem trata o evento decide que não é zoom (§2). */
     hitTest(x) {
       const f = faixasPx.find((f) => x >= f.x1 && x <= (f.x2 ?? Infinity));
-      return f ? { externalId: f.id, cursorStyle: 'pointer', hitTestPriority: 0 } : null;
+      if (!f) return null;
+      // `externalId` E `zOrder` são OBRIGATÓRIOS em PrimitiveHoveredItem (typings L3847/3851) —
+      // não são opcionais. Em JS omitir não quebra, mas é o primeiro suspeito se o cursor/clique
+      // falhar na Tarefa 4.
+      return { externalId: f.id, zOrder: 'bottom', cursorStyle: 'pointer', hitTestPriority: 0 };
     },
     selecionar(id) { selecionado = id; pedirAtualizacao?.(); },
     destruir() { /* nada a liberar: o detached da lib cuida das refs */ },

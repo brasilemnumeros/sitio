@@ -74,6 +74,8 @@ describe('amplitudeRatio', () => {
     expect(amplitudeRatio(selic, igpm)).toBeCloseTo(1.056, 2);
   });
 
+  // ⚠️ Este par mede 1.192.259× — é PATOLÓGICO sob o limiar de 1.000.000 (R19). Serve para
+  // travar a razão, NUNCA para exemplificar `'avisa'`.
   it('mede o par patológico populacao-total × selic-meta (§5)', () => {
     // Amplitudes do anexo, arredondadas a 2 casas: 50.337.190 ÷ 42,22 = 1.192.259,4.
     // A §5 publica **1.192.196** porque mediu sobre os valores CRUS, sem arredondar as
@@ -191,13 +193,17 @@ describe('comparabilidade (§5)', () => {
     expect(v.contra.id).toBe('igpm-acum-12m');
   });
 
-  it('avisa: razão > 50 aponta a série culpada', () => {
-    const pop = serie('populacao-total-anual', 154524335, 204861525);
+  it('avisa: razão entre 50 e 1.000.000 aponta a série culpada', () => {
+    // MVG-R (222.000) × Selic (42,22) = 5.258× — acima do corte de 50 e bem abaixo do
+    // patológico. ⚠️ NÃO use `populacao-total × selic-meta` aqui: medido, aquele par dá
+    // **1.192.259×**, que cai do OUTRO lado do limiar de 1.000.000 e devolveria `'ilegivel'`
+    // (R19). O par patológico tem os seus próprios testes na Tarefa 3.
+    const mvgr = serie('mvgr-nominal', 42000, 264000);
     const selic = serie('selic-meta-acum-12m', 2.0, 44.22);
-    const v = comparabilidade(selic, [pop]);
+    const v = comparabilidade(selic, [mvgr]);
     expect(v.veredito).toBe('avisa');
     expect(v.ratio).toBeGreaterThan(AMPLITUDE_LIMIT);
-    expect(v.contra.id).toBe('populacao-total-anual');
+    expect(v.contra.id).toBe('mvgr-nominal');
   });
 
   it('reporta o PIOR caso entre várias existentes', () => {

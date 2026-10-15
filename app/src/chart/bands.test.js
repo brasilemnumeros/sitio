@@ -29,6 +29,17 @@ describe('faixasVisiveis', () => {
   it('janela que não toca ninguém devolve vazio, não tudo', () => {
     expect(faixasVisiveis(M, { from: '1990-01-01', to: '1991-01-01' })).toEqual([]);
   });
+
+  it('o limite é INCLUSIVO nas DUAS pontas — `>=` não pode virar `>`', () => {
+    // Sem este caso, trocar `>=` por `>` passa despercebido: os fixtures acima têm folga e nunca
+    // tocam o limite exato. Aqui a janela começa EXATAMENTE quando `x` termina.
+    const J = [
+      { id: 'x', inicio: '2000-01-01', fim: '2004-12-31' },
+      { id: 'y', inicio: '2005-01-01', fim: '2009-12-31' },
+    ];
+    expect(faixasVisiveis(J, { from: '2004-12-31', to: '2005-01-01' }).map((m) => m.id))
+      .toEqual(['x', 'y']);
+  });
 });
 
 describe('tomDaFaixa', () => {

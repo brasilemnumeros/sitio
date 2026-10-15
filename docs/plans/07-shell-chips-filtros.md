@@ -284,7 +284,11 @@ git commit -m "feat(ui): estados inicial, carregando e erro total, sem vazio sil
 
 **Interfaces:**
 - Consome: `seriesStore` (fatia 05, dá `cor`, `name`, `unit`), `axesStore` (fatia 05, dá a
-  atribuição de eixo), `definirCor`, `restaurarCor`, `removerSerie`, `moverParaEixo`.
+  atribuição de eixo **E o aviso de escala**), `definirCor`, `restaurarCor`, `removerSerie`,
+  `moverParaEixo`.
+- 🔴 **Produz também o aviso de ESCALA** — o que a §5 promete e que até hoje era **calculado e
+  nunca exibido**. Não confundir com o aviso de colisão de COR (esse é o `avisoDeColisao` da
+  fatia 04): são dois avisos diferentes, e esta tarefa renderiza os dois.
 - Produz: a legenda — e **nada mais**. Não conhece a biblioteca de gráficos (§8).
 
 ⚠️ **Esta tarefa também unifica o aviso de colisão com os chips (T2).** A T2 mediu que um par
@@ -314,6 +318,10 @@ que falha no daltonismo (§1: os pares `#309aff`/`#9581ff` ficam em ΔE 0,006).
   // na T2 (2026-10-15), que tem a mesma forma. Aqui só a série de MAIOR índice fala pelo par,
   // comparando-se apenas com as ANTERIORES. Resultado: uma mensagem por par, como o desenho
   // da §1 pede (o aviso é sobre a combinação, não sobre uma das séries).
+  // O aviso de ESCALA vem do `axesStore` (fatia 05), que já o calcula em `recalcularEixos`.
+  // É uma lista de { veredito, ratio, contra, id } — indexada por ID, não por posição.
+  const avisoEscala = (id) => $axesStore.avisos.find((a) => a.id === id);
+
   const SEM_COLISAO = { colide: false, distancia: Infinity, contra: -1 };
   const avisos = $derived(
     itens.map((item, idx) => {
@@ -353,6 +361,25 @@ que falha no daltonismo (§1: os pares `#309aff`/`#9581ff` ficam em ΔE 0,006).
           title="Distância {avisos[i].distancia.toFixed(3)} — abaixo do envelope {LIMIAR_COLISAO}"
         >
           ⚠ parecida
+        </span>
+      {/if}
+
+      <!-- 🔴 O AVISO DE ESCALA (§5). Vinha calculado no `axesStore` desde a fatia 05 e nunca
+           era exibido — nenhum componente lia `axesStore.avisos`. É o irmão do aviso de colisão
+           de cor, e a §5 o promete em dois graus:
+             'avisa'    -> razão > 50×: a série não é legível na escala atual; a saída é
+                           normalizar ou remover (§5 é explícita: informa, o usuário decide)
+             'ilegivel' -> razão > 1.000.000×: nem dois eixos salvam; o aviso é mais duro
+           `avisos` é uma lista PLANO de { veredito, ratio, contra, id } — um item por série
+           que não convive com as que já estavam à esquerda, então NÃO indexa por `i`. -->
+      {#if avisoEscala(item.id)}
+        <span
+          class="text-xs {avisoEscala(item.id).veredito === 'ilegivel'
+            ? 'font-semibold text-red-600 dark:text-red-400'
+            : 'text-amber-600 dark:text-amber-400'}"
+          title="Razão de amplitude {avisoEscala(item.id).ratio.toFixed(0)}× — {avisoEscala(item.id).veredito === 'ilegivel' ? 'nem dois eixos tornam esta combinação legível' : 'acima do limite de 50×'}"
+        >
+          ⚠ escala {avisoEscala(item.id).ratio.toFixed(0)}×
         </span>
       {/if}
 
@@ -406,6 +433,10 @@ git commit -m "feat(shell): legenda das series como canal redundante de identifi
       clique** (§5), o aviso "⚠ parecida" quando o par cai abaixo do envelope — **sem tirar a
       série do gráfico** — e "restaurar" quando a cor é pessoal. Verificada **ao vivo com 10
       séries**, não por inspeção.
+- [ ] **O aviso de ESCALA aparece (§5)** — o irmão do aviso de cor, que era calculado no
+      `axesStore` e **nunca exibido**. Conferir com um par de razão > 50× (ex.: `populacao-total`
+      × `selic-meta-acum-12m`) que o aviso sai **com a razão medida**, e com um par > 1.000.000×
+      que ele fica mais duro. **Informa, não bloqueia** — a série continua no gráfico.
 - [ ] `npm run dev` mostra: sem seleção → **EstadoInicial** com o atalho "Selic × IPCA";
       carregando → **Esqueleto na forma do conteúdo**; falha de uma série → **chip em
       erro com tentar de novo/remover e o resto da tela usável**; nada carregou →

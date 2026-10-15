@@ -202,6 +202,31 @@ já estão consolidadas nas seções acima — nominalmente, não se repetem aqu
 - **O `source` saiu do `indicators.json`** (13×): a ficha o lê da **série carregada**, e nenhum
   template vivo o usava — só o `chart-manager.js` legado, que a fatia 10 apaga.
 
+### Tema, local e a reabertura do E2E (2026-10-15)
+
+- **O app é escuro, só.** A §1 ("tema escuro") **vence** o `claro + dark:` deste `AGENTS.md`.
+  Decisão do usuário, tomada ao ver o defeito na tela: página clara com canvas escuro. O que
+  resolveu foi **uma linha** — `class="dark"` no `<html>` do `app/index.html` — porque os
+  componentes já tinham as 143 variantes `dark:` escritas e o `dark:` do projeto é por classe
+  (`html.dark`, ver `assets/css/main.css`). **O site Jekyll não é afetado**: o `index.html` do
+  app é entrada própria. Isto encerra a contradição §1 × `AGENTS.md` **na direção da §1**;
+  o `AGENTS.md` é que precisa mudar, e é o único dos dois que ainda diz o contrário.
+- **Local serve dado LOCAL.** O app buscava dois conjuntos de dados de formas diferentes: as
+  séries pelo `datafile` do catálogo, e os **governos por uma URL publicada hardcoded**
+  (`stores/mandate.js`). A segunda funcionava em produção por acidente e **falhava em dev** —
+  o trilho de mandatos aparecia vazio. Agora o dev server serve `/dados/**` do repo irmão
+  (`../../dados/`, **não** `../dados/` — são repos separados) e um `define` do Vite troca
+  `__BASE_DADOS__` por `/dados` em `serve` e pela URL do Pages em `build`. **Conferido: o
+  artefato de produção continua com a URL do Pages.**
+- **🔴 A §10.7 foi reaberta: E2E passa a ser "sim".** A tabela decidia "não por ora", com o
+  argumento de que o build do CI e a classe-canário (§10.3) cobriam o encaixe. **O argumento
+  caiu por medição, três vezes:** a fatia 07 ficou sem Tailwind em silêncio, a 06 ficou sem o
+  eixo duplo, e a 07 de novo com o `setVisibleRange` lançando no gráfico vazio. **Nos três a
+  falha era silenciosa e nos três só uma captura de tela pegou** — a classe-canário cobre um
+  caso (o Tailwind) e é cega para os outros dois. Captura continua necessária (é ela que vê o
+  desenho) mas **exige que alguém olhe**; o E2E é o que faz o CI recusar sozinho.
+
+
 
 
 

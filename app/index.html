@@ -1,8 +1,13 @@
 <!doctype html>
-<html lang="pt-BR">
+<!-- Tema escuro, só. Decisão de 2026-10-15: a §1 da spec ("tema escuro") vence o `dark:` do
+     AGENTS.md — o app é escuro fixo, e a alternância do site Jekyll não o alcança. O `dark`
+     no `<html>` é o que ativa as 143 variantes `dark:` dos componentes e o `html.dark body`
+     do CSS (§1). O canvas do gráfico (`FUNDO = '#0e1117'`) passa a concordar com a página. -->
+<html lang="pt-BR" class="dark">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
     <title>Brasil em Números — app (dev)</title>
     <!-- CSS do site, gerado pelo Tailwind CLI a partir de sitio/ (§10.4):
          npx -y @tailwindcss/cli -i ./assets/css/main.css -o ./assets/css/main.dist.css -->

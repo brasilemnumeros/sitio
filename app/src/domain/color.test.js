@@ -113,7 +113,9 @@ describe('separação (§1)', () => {
   });
 
   it('a paleta otimizada é melhor que a ingênua igualmente espaçada (§1)', () => {
-    // 10 matizes de 36° em HSL — a primeira tentativa, que colapsou no daltonismo.
+    // Uma paleta ingênua de 10 matizes de 36° em HSL. Mede global 0,0216 — NÃO é a
+    // ingênua que a §1 cita (0,0061), que é de outra construção; o teste só compara os
+    // dois globais, então não é contradição.
     const ingenua = Array.from({ length: 10 }, (_, i) => hslParaHex((i * 36) % 360, 70, 55));
     expect(separacaoGlobal(PALETA_PADRAO)).toBeGreaterThan(separacaoGlobal(ingenua));
   });
@@ -129,23 +131,33 @@ describe('separação (§1)', () => {
   });
 });
 
-describe('avisoDeColisao (§1)', () => {
+describe('avisoDeColisao (§1, R25)', () => {
   it('a régua é o envelope da paleta, não um número solto', () => {
     expect(LIMIAR_COLISAO).toBe(LIMIAR_ENVELOPE);
   });
 
-  it('avisa com a distância medida quando a cor chega perto de outra', () => {
-    // Medido: dE(#6351ca, #6a58c8) = 0,0213 — bem abaixo do envelope (0,09).
-    const r = avisoDeColisao('#6351ca', ['#6a58c8', '#ffd000']);
+  it('mede o PIOR CASO entre as quatro visões — e avisa onde a visão normal não avisaria', () => {
+    // O par que a §1 cita como o colapso do daltonismo: dista 0,1114 em visão normal
+    // (ACIMA do limiar) e colapsa para 0,0067 sob deuteranopia. É o teste que impede a
+    // régua de voltar a medir só visão normal.
+    const r = avisoDeColisao('#309aff', ['#9581ff']);
     expect(r.colide).toBe(true);
-    expect(r.distancia).toBeCloseTo(0.0213, 3);
+    expect(r.distancia).toBeCloseTo(0.0067, 3);
     expect(r.contra).toBe(0);
   });
 
-  it('não avisa quando a cor é bem separada', () => {
-    // Medido: dE(#00fddc, #d25200) = 0,4275 · dE(#6351ca, #9d99ed) = 0,2081
+  it('avisa quando a cor chega perto de outra, mesmo em visão normal', () => {
+    // Medido: pior caso de (#6351ca, #6a58c8) = 0,0208
+    const r = avisoDeColisao('#6351ca', ['#6a58c8', '#ffd000']);
+    expect(r.colide).toBe(true);
+    expect(r.distancia).toBeCloseTo(0.0208, 3);
+    expect(r.contra).toBe(0);
+  });
+
+  it('não avisa quando a cor é bem separada em TODAS as visões', () => {
+    // Medido: pior caso de (#00fddc, #d25200) = 0,3041 · de (#9d99ed, #6351ca) = 0,2049
     expect(avisoDeColisao('#00fddc', ['#d25200']).colide).toBe(false);
-    expect(avisoDeColisao('#6351ca', ['#9d99ed']).colide).toBe(false);
+    expect(avisoDeColisao('#9d99ed', ['#6351ca']).colide).toBe(false);
   });
 
   it('não avisa e não quebra quando não há outras séries', () => {

@@ -7,6 +7,7 @@
   import SeriesChips from './components/SeriesChips.svelte';
   import SeriesLegend from './components/SeriesLegend.svelte';
   import TimeFilters from './components/TimeFilters.svelte';
+  import MandateRail from './components/MandateRail.svelte';
   import EstadoInicial from './components/EstadoInicial.svelte';
   import Esqueleto from './components/Esqueleto.svelte';
   import ErroTotal from './components/ErroTotal.svelte';
@@ -90,8 +91,9 @@
   <!-- 4 · filtros de tempo — controle do gráfico, escreve no store `viewport` (§8.1). -->
   <TimeFilters />
 
-  <!-- 5 · trilho — TODO(fatia 09): <MandateRail /> -->
-  <div class="text-sm opacity-50" data-bloco="trilho">[5 · trilho de mandatos]</div>
+  <!-- 5 · trilho de mandatos — seletor de largura igual, desacoplado do eixo do tempo (§3).
+       Fala só com a `mandateStore`, nunca com o gráfico (§8.1). -->
+  <MandateRail />
 
   <!-- 6 · painel de comparação, SEMPRE visível, largura total (§1) — não é aba.
        TODO(fatia 09): <ComparisonPanel /> -->

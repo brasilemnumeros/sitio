@@ -75,8 +75,13 @@ export function criarPrimitivaDeFaixas(mandatos, { aoClicar, ultimoDadoPorSerie 
           }
 
           // O RÓTULO é o canal de identificação — texto, nunca cor (§2, §7.3.4).
+          // ⚠ O `clip` não é decorativo: sem ele, um rótulo longo ("FHC II · PSDB") numa faixa
+          // estreita VAZA para a faixa vizinha, e o limiar de 70px não garante o contrário.
           if (largura > 70 * r) {
             context.save();
+            context.beginPath();
+            context.rect(x1, 0, largura, bitmapSize.height);
+            context.clip();
             context.font = `${11 * r}px -apple-system, system-ui, sans-serif`;
             context.fillStyle = 'rgba(255,255,255,0.62)';
             context.textBaseline = 'top';

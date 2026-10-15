@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "canario": "bash scripts/checar-canario.sh"
+  },
   "dependencies": {
     "@tailwindcss/typography": "^0.5.16",
     "tailwindcss": "^4.1.11"

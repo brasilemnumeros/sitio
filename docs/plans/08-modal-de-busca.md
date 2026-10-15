@@ -215,13 +215,22 @@ git commit -m "feat(ui): limite de 10 visivel na modal, com o motivo pela paleta
 
 ---
 
-### Tarefa 4: 🚧 Mobile — **bloqueada** até a §12.1 ser decidida
+### Tarefa 4: Mobile (`< 768px`) — ✅ desbloqueada em 2026-10-14
 
-- [ ] **Passo 0: decidir o desenho mobile** (lista com a ficha em folha deslizante é a
-      hipótese registrada). Escrever a decisão na §12.1 da spec, **antes** de codar.
-- [ ] **Passos 1+:** só depois. Enquanto isso, a modal pode ficar **não utilizável no
-      celular** sem esconder o problema — mas o `EstadoInicial` e a barra de busca
-      precisam continuar funcionando em tela pequena.
+- [x] **Passo 0: decidir o desenho mobile** — **feito**: §12.1 da spec, a partir de mockup com
+      três posturas comparadas. Escolhida a "lista com contexto".
+- [ ] **Passo 1:** busca fixa no topo com foco automático; **chips** roláveis dos 7 grupos +
+      "Todos" (não coluna).
+- [ ] **Passo 2:** lista de uma coluna com cabeçalho de grupo **grudado**; cada linha com caixa,
+      nome, **distintivo de escala** e botão "i". O distintivo é **obrigatório** — é o que
+      mantém o aviso visível antes da escolha (§12.1).
+- [ ] **Passo 3:** **folha deslizante** com a ficha (unidade, granularidade, período, pontos,
+      fonte, aviso completo, Adicionar). **Tocar na linha não adiciona.**
+- [ ] **Passo 4:** a mesma regra de teclado dos dois layouts (§12.1) — não inventar uma segunda.
+- [ ] **Passo 5:** verificar em **320px** e **375px** que nada estoura; decidir o tamanho do
+      distintivo e se os chips mostram contagem (os dois pontos que a §12.1 deixou em aberto).
+- [ ] Em **todos** os passos: `EstadoInicial` e barra de busca continuam funcionando em tela
+      pequena — a modal não pode esconder o problema do celular por estar "não utilizável".
 
 ---
 
@@ -237,8 +246,11 @@ git commit -m "feat(ui): limite de 10 visivel na modal, com o motivo pela paleta
 - [ ] Teclado: ↑↓, ←→, ⏎ e ESC funcionam (verificado ao vivo, não por inspeção).
 - [ ] No limite, o botão está **visível, desabilitado e diz o motivo (a paleta)**, e
       **nada é removido automaticamente** (§9.5).
-- [ ] A decisão de mobile está **escrita** na §12.1 (ou a tarefa 4 está declaradamente
-      adiada — não pode ficar implícita).
+- [x] A decisão de mobile está **escrita** na §12.1 (2026-10-14) — **feito**. A tarefa 4 está
+      desbloqueada; o portão no topo deste plano traz a lista do que ela implementa.
+- [ ] A modal funciona em **320px e 375px** com o desenho da §12.1: chips roláveis, lista de uma
+      coluna com cabeçalho grudado, **distintivo de escala em cada linha**, ficha em folha
+      deslizante, e a **mesma** regra de teclado dos dois layouts.
 
 ## Auto-revisão
 

@@ -185,8 +185,11 @@ motivoDoLimite()   // -> string com o porquê (§9.5, "nada removido automaticam
       (§9.3), e "tentar de novo" recupera.
 - [ ] **Passo 3: commitar**
 
+⚠️ **Não esquecer:** trocar o marcador `data-bloco="chips"` no `App.svelte` por `<SeriesChips />`
+(R29 — cada tarefa substitui o seu próprio marcador). O commit leva **os dois arquivos**.
+
 ```bash
-cd sitio && git add app/src/components/SeriesChips.svelte
+cd sitio && git add app/src/components/SeriesChips.svelte app/src/App.svelte
 git commit -m "feat(ui): chips com erro por serie, cor com aviso e remocao"
 ```
 
@@ -222,8 +225,10 @@ import { viewportStore, definirJanela, resetarJanela } from '../stores/viewport.
       volta ao intervalo completo.
 - [ ] **Passo 3: commitar**
 
+⚠️ **Não esquecer:** trocar o marcador `data-bloco="filtros"` no `App.svelte` por `<TimeFilters />` (R29).
+
 ```bash
-cd sitio && git add app/src/components/TimeFilters.svelte
+cd sitio && git add app/src/components/TimeFilters.svelte app/src/App.svelte
 git commit -m "feat(ui): barra de filtros de tempo como controle do grafico"
 ```
 
@@ -258,8 +263,12 @@ git commit -m "feat(ui): barra de filtros de tempo como controle do grafico"
 - [ ] **Passo 1–2:** implementar e verificar cada um forçando o estado em dev.
 - [ ] **Passo 3: commitar**
 
+⚠️ **Não esquecer:** trocar os marcadores `data-bloco="inicial"` e `data-bloco="esqueleto"` no
+`App.svelte` pelos componentes reais (R29). O `ErroTotal` é o caso de **todos** os itens em erro —
+ele não tem marcador; entra como um ramo a mais no `{#if}` do bloco 3.
+
 ```bash
-cd sitio && git add app/src/components/EstadoInicial.svelte app/src/components/Esqueleto.svelte app/src/components/ErroTotal.svelte
+cd sitio && git add app/src/components/EstadoInicial.svelte app/src/components/Esqueleto.svelte app/src/components/ErroTotal.svelte app/src/App.svelte
 git commit -m "feat(ui): estados inicial, carregando e erro total, sem vazio silencioso"
 ```
 
@@ -362,8 +371,12 @@ uma cor mostra o botão "restaurar"; um par abaixo do envelope mostra "⚠ parec
 
 - [ ] **Passo 3: commitar**
 
+⚠️ **Não esquecer:** trocar o marcador `data-bloco="legenda"` no `App.svelte` por `<SeriesLegend />`
+(R29). É o último marcador desta fatia — depois dela, os únicos `TODO` que sobram no `App.svelte`
+são os de fatia 08/09.
+
 ```bash
-cd sitio && git add app/src/components/SeriesLegend.svelte
+cd sitio && git add app/src/components/SeriesLegend.svelte app/src/App.svelte
 git commit -m "feat(shell): legenda das series como canal redundante de identificacao"
 ```
 

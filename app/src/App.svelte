@@ -10,6 +10,7 @@
   import EstadoInicial from './components/EstadoInicial.svelte';
   import Esqueleto from './components/Esqueleto.svelte';
   import ErroTotal from './components/ErroTotal.svelte';
+  import SearchModal from './components/SearchModal.svelte';
   // 🔴 Só se importa o que JÁ EXISTE. Um import de arquivo inexistente QUEBRA O BUILD —
   // e é o defeito que o pré-voo desta fatia achou. Os demais componentes entram pelos
   // marcadores de posição abaixo, e cada tarefa troca o seu.
@@ -97,16 +98,8 @@
   <div class="text-sm opacity-50" data-bloco="comparacao">[6 · painel de comparação]</div>
 
   {#if buscaAberta}
-    <!-- TODO(fatia 08): <SearchModal aoFechar={...} /> — e o overlay abaixo vira parte dela.
-         É um <button>, não um <div>: um <div> com onclick dispara dois avisos de
-         acessibilidade do Svelte (sem handler de teclado, sem role) — medido no dev server
-         em 2026-10-15. O overlay É clicável para fechar, então <button> é o elemento certo
-         e resolve os dois de uma vez, ainda ganhando o foco por teclado. -->
-    <button
-      type="button"
-      class="fixed inset-0 cursor-default border-0 bg-black/40 p-0"
-      aria-label="Fechar a busca"
-      onclick={() => (buscaAberta = false)}
-    ></button>
+    <!-- A modal traz o próprio overlay (é um <button>, não um <div> — R31) e fecha por ESC
+         ou clique fora, chamando `aoFechar`. -->
+    <SearchModal aoFechar={() => (buscaAberta = false)} />
   {/if}
 </main>

@@ -37,5 +37,9 @@ exclude:
   - package-lock.json
   - docs/
   - app/
+  # Ferramenta de build, não conteúdo: o Jekyll copia arquivo sem front matter verbatim, então
+  # sem esta linha o `checar-canario.sh` seria publicado em /scripts/checar-canario.sh.
+  # Mesma armadilha do `docs/` — ver AGENTS.md, "Pitfalls".
+  - scripts/
 
 google_analytics: G-N4CFQ7CL1S

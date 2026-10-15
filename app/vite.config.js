@@ -28,8 +28,12 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
  * O Tailwind CLI é rebuildado à parte:
  *   `npx -y @tailwindcss/cli -i ./assets/css/main.css -o ./assets/css/main.dist.css`
  */
-// `dados/` e `sitio/` são repos IRMÃOS: de `sitio/app/` são dois níveis acima.
-const DADOS_LOCAIS = fileURLToPath(new URL('../../dados/', import.meta.url));
+// Onde mora o repo `dados/`. Em dev local são repos IRMÃOS: de `sitio/app/` são dois níveis
+// acima (`../../dados/`). No CI o `actions/checkout` não escreve fora do workspace, então lá o
+// repo vai para `./dados/` — `DADOS_DIR` cobre os dois sem heurística escondida. (Trocar isto
+// por um "tenta um, senão o outro" esconderia justamente o erro que já custou uma rodada: o
+// caminho errado **não falha**, simplesmente nunca casa, e o dev server responde com o HTML.)
+const DADOS_LOCAIS = fileURLToPath(new URL(process.env.DADOS_DIR ?? '../../dados/', import.meta.url));
 const CATALOGO = fileURLToPath(new URL('../indicators.json', import.meta.url));
 const CSS_DO_SITE = fileURLToPath(new URL('../assets/css/main.dist.css', import.meta.url));
 

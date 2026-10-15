@@ -199,6 +199,22 @@ Os indicadores do site cobrem ordens de grandeza que não convivem: `%` (2 a 53)
 
 **O corte é 50**, mas o valor exato não é crítico: qualquer limiar dentro de (21,2 · 125) particiona os dados de hoje de forma idêntica. 50 é o meio da faixa vazia.
 
+**O segundo corte é 1.000.000×** *(decidido por medição em 2026-10-14)*. Os **78 pares** reais foram medidos e distribuídos:
+
+| faixa da razão | pares |
+|---|---|
+| 1,1 – 21,2 | 38 |
+| **21,2 – 125** | **0** ← a faixa vazia |
+| 125 – 1.000 | 4 |
+| 1.000 – 10.000 | 11 |
+| 10.000 – 100.000 | 7 |
+| 100.000 – 1.000.000 | 4 |
+| **≥ 1.000.000** | **14** |
+
+Ao contrário do corte de 50, **este não cai em faixa vazia** — a região 92.267–3.759.751 é densa. Portanto o número é **declarado**, não livre: **seis ordens de grandeza** de diferença de amplitude. Acima disso os 14 pares (18%) são todos amplitude absoluta de ordem de milhão contra um percentual, e a justaposição deixa de comparar coisa alguma.
+
+**Rejeitado:** cortar em **125** (o topo da faixa vazia). Marcaria **40 pares — mais da metade dos pares do site** — como ilegíveis; um aviso duro que dispara em metade dos casos perde força, pelo mesmo motivo que esta seção já rejeita o aviso que pisca no zoom.
+
 **O cálculo é sobre a série inteira, não sobre a janela visível.** Um aviso que se recalcula no zoom pisca na tela enquanto o usuário arrasta, e um aviso que aparece e desaparece ensina o usuário a ignorá-lo.
 
 ### Por que a regra é por magnitude, e não por tipo de unidade

@@ -667,6 +667,37 @@ Ordem sugerida de ataque:
    Consequência para a §1: a garantia de daltonismo da paleta segue **só para o padrão**, mas
    agora o canal redundante é **estrutural** (legenda + crosshair), não depende do layout da
    ponta — então o pior caso da paleta está protegido por construção.
+
+   **⚠️ REABERTA em 2026-10-15 — a decisão do `lastValueVisible` foi tomada sem medir o eixo.**
+
+   A medição acima já registrava o sintoma: *"os rótulos também invadem a coluna dos números do
+   eixo (o texto do último valor corre para dentro dos ticks)"*. A decisão tratou isso como
+   custo aceito — *"`lastValueVisible` continua ligado (o número do último valor é informação)"* —
+   **sem medir o quanto piora**. Medido agora, na captura da Tarefa 5 da fatia 07, com 10 séries
+   e as séries divididas nos dois eixos: no eixo **esquerdo** há **~8 rótulos empilhados e
+   sobrepostos, todos lendo `10.00`**, ocupando uma faixa vertical grande do gráfico; no
+   **direito**, 2 sobrepostos lendo `1000000000.00`.
+
+   Ou seja: **é o mesmo problema que a §12.2 resolveu — a pilha de rótulos — só que no eixo em
+   vez da ponta.** A §12.2 tirou o `title` da ponta e deixou o rótulo de valor no eixo, onde
+   cada série desenha o seu na mesma faixa e a lib não desconflita. A causa é
+   `lastValueVisible: true` em **toda** série (`app/src/chart/adapter.js:100-101`).
+
+   **O que continua decidido:** a ponta da linha não é o canal redundante; o canal é a legenda
+   fora do gráfico (§12.2 acima, inalterada). **O que NÃO está decidido:** se o rótulo de último
+   valor por série sobrevive, e em que condição. As três saídas conhecidas, nenhuma medida:
+
+   1. **`lastValueVisible` só na série sob o crosshair** — a informação continua acessível e a
+      pilha nunca se forma. Custa um handler de crosshair e um re-render por movimento.
+   2. **Desligar acima de N séries** (ex.: 3) — simples, mas o comportamento passa a depender do
+      número de séries, e o número teria de ser medido como o corte de escala da §5 foi.
+   3. **Manter e conviver** — só defensável se a medição mostrar que o pior caso é raro; hoje
+      não mostra, porque o cenário de 10 séries é exatamente o que a §1 declara como teto.
+
+   **O que medir antes de decidir:** com 2, 3, 5 e 10 séries, quantos rótulos a lib desenha por
+   eixo, quantos se sobrepõem, e qual a fração da altura do gráfico a pilha ocupa — o mesmo
+   método e as mesmas quatro posturas (A–D) que fecharam a §12.2. **Não estimar: medir.**
+
 3. **Logos dos partidos** — assets (SVG em `sitio/assets/img/partidos/`), tamanho no trilho e na ficha, e a **questão de uso de marca num repositório público**, que não é decisão técnica e não foi resolvida aqui.
 4. **Duração visível no trilho** — a barrinha proporcional dentro da caixa de largura igual, caso a perda da leitura visual de duração incomode (seção 3).
 5. **Leitura por espectro político** — descartada do gráfico em 2026-10-14. Se voltar, será como **modo explícito do usuário**, nunca como padrão, e com a fonte da classificação citada e visível — porque é juízo editorial, não dado.

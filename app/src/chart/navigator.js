@@ -1,6 +1,6 @@
 import { createChart, LineSeries } from 'lightweight-charts';
 import { criarPrimitivaDeFaixas } from './bands.js';
-import { paraISO } from './points.js';
+import { paraISO, paraPontosDaBiblioteca } from './points.js';
 
 const FUNDO = '#0e1117';
 
@@ -100,8 +100,16 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
 
       // A âncora invisível: só existe para o gráfico ter domínio de tempo (ver acima).
       // Recebe o mesmo dado das séries do gráfico grande — é o intervalo completo que a §2 pede.
+      //
+      // ⚠ A âncora é uma SÉRIE DA LIB: `setData` quer `{time,value}` e REJEITA tempos repetidos
+      //   ou fora de ordem. O dado que chega é o PUBLICADO (`{date,value}`) e vem de VÁRIAS
+      //   séries — logo, é preciso converter e DEDUPLICAR por tempo. Sem isto a lib lança
+      //   ("data must be asc ordered by time") e a exceção sobe pelo subscriber do `Chart.svelte`,
+      //   que morre: o gráfico grande fica preso na primeira série que desenhou.
       if (!ancora) ancora = chart.addSeries(LineSeries, { visible: false });
-      ancora.setData(dadosParaAncora);
+      const porTempo = new Map();
+      for (const p of paraPontosDaBiblioteca(dadosParaAncora)) porTempo.set(p.time, p);
+      ancora.setData([...porTempo.values()].sort((a, b) => a.time - b.time));
       chart.timeScale().fitContent();
 
       // A MESMA primitiva da T2 — sem opção nova.

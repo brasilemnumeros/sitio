@@ -19,6 +19,15 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
   const porId = new Map();          // id -> ISeriesApi
   let primitivaDeFaixas = null;
 
+  // 📌 O clique chega pelo `subscribeClick` da lib: ela consulta o `hitTest` da primitiva
+  //    e devolve o `externalId` (o id da faixa) em `hoveredInfo.objectId`. SEM esta assinatura,
+  //    `aoClicar` nunca dispara e a faixa jamais é selecionada — a primitiva funciona (provado
+  //    chamando `destacarMandato` direto), mas ninguém entregava o clique a ela.
+  chart.subscribeClick((param) => {
+    const id = param.hoveredInfo?.objectId ?? param.hoveredObjectId;
+    if (id != null) destacarMandato(id);
+  });
+
   // A janela visível SÓ sai por aqui, e a direção é store → adapter (§8.1).
   // `subscribeVisibleTIME...`, não `...Logical...`: o range lógico são ÍNDICES de barra, e
   // convertê-los para data exigiria passar pelo array de dados. O de tempo já entrega

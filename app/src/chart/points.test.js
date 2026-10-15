@@ -29,6 +29,28 @@ describe('paraPontosDaBiblioteca', () => {
   it('série vazia devolve lista vazia, não quebra', () => {
     expect(paraPontosDaBiblioteca([])).toEqual([]);
   });
+
+  it('deduplica o mesmo mês — a lib LANÇA em desenvolvimento com tempo repetido', () => {
+    // Medido: o build de DEV tem asserção (`data must be asc ordered by time`) que o de PROD não
+    // tem. E a exceção aborta o laço de quem chama — as séries seguintes nunca desenham.
+    const pontos = paraPontosDaBiblioteca([
+      { date: '2005-01-01', value: 3.2 },
+      { date: '2005-01-01', value: 3.1 }, // repetida
+      { date: '2005-02-01', value: 3.4 },
+    ]);
+    expect(pontos).toHaveLength(2);
+    // Fica a ÚLTIMA leitura do mês: numa república, a posterior é a revisão.
+    expect(pontos[0].value).toBe(3.1);
+  });
+
+  it('duplicata ESPALHADA também cai — não é só a vizinha', () => {
+    const pontos = paraPontosDaBiblioteca([
+      { date: '2005-01-01', value: 1 },
+      { date: '2010-01-01', value: 2 },
+      { date: '2005-01-01', value: 9 }, // repetida, fora de ordem
+    ]);
+    expect(pontos.map((p) => p.value)).toEqual([9, 2]);
+  });
 });
 
 describe('paraISO', () => {

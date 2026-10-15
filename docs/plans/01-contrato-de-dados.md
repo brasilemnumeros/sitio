@@ -420,8 +420,9 @@ git commit -m "feat(app): carga de serie com cache por URL que nao envenena a no
 **Interfaces:**
 - Consome: `SchemaError` de `./validate.js`.
 - Produz:
-  - `validateCatalog(raw) -> { groups, indicators }` — cada indicador normalizado para
-    `{id, name, group, datafile, chartType, yAxisTitle}`. **Não inclui `unit`** (R16).
+  - `validateCatalog(raw) -> { groups, indicators }` — cada indicador com os campos
+    **validados** (`id`, `name`, `group`, `datafile`, `chartType`, `yAxisTitle`) e **o resto
+    preservado** do arquivo (`description`, `yAxisMax`, …). `unit` **não é validado** (R16).
   - `loadCatalog({ url = '/indicators.json', fetchImpl } = {}) -> Promise<{groups, indicators}>`
 
 - [ ] **Passo 1: escrever os testes que falham**
@@ -485,19 +486,27 @@ describe('validateCatalog', () => {
     );
   });
 
-  it('IGNORA unit — não é assunto do catálogo (§6, R16)', () => {
-    // A unidade vive no ARQUIVO DE SÉRIE. O catálogo é curadoria de apresentação, e o
-    // registro real traz unidades de transição malformadas (`{type:'number', symbol:''}`
-    // sem `decimals`) que não são problema dele.
-    const semUnit = { ...catalogoMinimo, indicators: [{ ...catalogoMinimo.indicators[0] }] };
-    delete semUnit.indicators[0].unit;
-    expect(validateCatalog(semUnit).indicators[0]).not.toHaveProperty('unit');
-
+  it('NÃO valida unit — a unidade não é assunto do catálogo (§6, R16)', () => {
+    // O registro real traz unidades de transição malformadas (`{type:'number', symbol:''}`
+    // sem `decimals`) que não podem derrubar a leitura do catálogo.
     const comUnitEstranho = {
       ...catalogoMinimo,
       indicators: [{ ...catalogoMinimo.indicators[0], unit: { type: 'banana', symbol: 42 } }],
     };
-    expect(validateCatalog(comUnitEstranho).indicators[0]).not.toHaveProperty('unit');
+    expect(() => validateCatalog(comUnitEstranho)).not.toThrow();
+  });
+
+  it('PRESERVA os campos de apresentação — nada é descartado em silêncio (§6)', () => {
+    // `yAxisMax` existe de verdade: `proporcao-homicidios-armas-fogo-anual` traz 100.
+    const comApresentacao = {
+      ...catalogoMinimo,
+      indicators: [
+        { ...catalogoMinimo.indicators[0], description: 'texto editorial', yAxisMax: 100 },
+      ],
+    };
+    const [ind] = validateCatalog(comApresentacao).indicators;
+    expect(ind.description).toBe('texto editorial');
+    expect(ind.yAxisMax).toBe(100);
   });
 });
 
@@ -570,14 +579,19 @@ export function validateCatalog(raw) {
     if (!CHART_TYPES.has(ind.chartType)) {
       throw new SchemaError(`${where}.chartType deve ser "line" ou "bar", veio ${JSON.stringify(ind.chartType)}`);
     }
+    // PRESERVA o resto do registro (R16 emendado): `description`, `yAxisMax` e afins são
+    // curadoria de APRESENTAÇÃO e pertencem ao catálogo (§6) — descartá-los em silêncio
+    // seria perda invisível de dado, e o revisor pegou exatamente isso (`yAxisMax: 100` em
+    // `proporcao-homicidios-armas-fogo-anual`).
+    // `unit` vem junto se estiver no arquivo, mas o app NÃO o lê daqui: a unidade vem da
+    // SÉRIE carregada (fatias 05 e 08), e o campo sai do registro na fatia 11.
     return {
+      ...ind,
       id: ind.id,
       name: ind.name,
       group: ind.group,
       datafile: ind.datafile,
       chartType: ind.chartType,
-      // `unit` NÃO entra (R16): pertence ao arquivo de série (§6). O catálogo não valida
-      // nem carrega esse campo — a UI lê a unidade da série carregada (fatias 05 e 08).
       yAxisTitle: typeof ind.yAxisTitle === 'string' ? ind.yAxisTitle : null,
     };
   });
@@ -624,9 +638,10 @@ git commit -m "feat(app): validacao do catalogo de indicadores contra o arquivo 
       memoriza a falha — a segunda tentativa volta a buscar (§9.3).
 - [ ] `validateCatalog` aceita o **`sitio/indicators.json` real** (13 indicadores, 7
       grupos) — verificado por teste, não por inspeção.
-- [ ] `validateCatalog` **não toca em `unit`** — nem exige, nem valida, nem devolve. A
-      unidade vive no arquivo de série (§6) e a UI a lê de lá. Um `unit` malformado no
-      registro não faz o catálogo falhar (R16).
+- [ ] `validateCatalog` **não valida `unit`** — um `unit` malformado no registro não faz o
+      catálogo falhar (R16). A unidade é lida da **série carregada**, não do registro.
+- [ ] `validateCatalog` **preserva os campos de apresentação** — `description` e `yAxisMax`
+      sobrevivem à validação; nada é descartado em silêncio (§6, achado do revisor).
 - [ ] Nenhuma dependência de navegador: `npm test` roda com `environment: 'node'`.
 - [ ] Nada em `window`; nenhum `console.log` de debug.
 

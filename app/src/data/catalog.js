@@ -1,4 +1,4 @@
-import { SchemaError, validateUnit } from './validate.js';
+import { SchemaError } from './validate.js';
 
 const CHART_TYPES = new Set(['line', 'bar']);
 
@@ -9,7 +9,6 @@ const CHART_TYPES = new Set(['line', 'bar']);
  * @property {string} group
  * @property {string} datafile
  * @property {'line'|'bar'} chartType
- * @property {import('./validate.js').Unit} unit
  * @property {string|null} yAxisTitle
  */
 
@@ -40,16 +39,19 @@ export function validateCatalog(raw) {
     if (!CHART_TYPES.has(ind.chartType)) {
       throw new SchemaError(`${where}.chartType deve ser "line" ou "bar", veio ${JSON.stringify(ind.chartType)}`);
     }
+    // PRESERVA o resto do registro (R16 emendado): `description`, `yAxisMax` e afins são
+    // curadoria de APRESENTAÇÃO e pertencem ao catálogo (§6) — descartá-los em silêncio
+    // seria perda invisível de dado, e o revisor pegou exatamente isso (`yAxisMax: 100` em
+    // `proporcao-homicidios-armas-fogo-anual`).
+    // `unit` vem junto se estiver no arquivo, mas o app NÃO o lê daqui: a unidade vem da
+    // SÉRIE carregada (fatias 05 e 08), e o campo sai do registro na fatia 11.
     return {
+      ...ind,
       id: ind.id,
       name: ind.name,
       group: ind.group,
       datafile: ind.datafile,
       chartType: ind.chartType,
-      // A unidade vive no ARQUIVO DE SÉRIE, não aqui (§6) — repetir metadado nos dois
-      // lados é a duplicação que a ADR condena. Aceito se presente só durante a transição
-      // (a fatia 11 remove); a UI lê a unidade da série carregada.
-      unit: ind.unit ? validateUnit(ind.unit, `${where}.unit`) : null,
       yAxisTitle: typeof ind.yAxisTitle === 'string' ? ind.yAxisTitle : null,
     };
   });

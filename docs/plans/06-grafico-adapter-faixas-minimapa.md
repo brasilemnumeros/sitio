@@ -75,50 +75,47 @@ só cumpre a parte dela, que é **não** dar `title` às séries e manter `lastV
 
 ---
 
-### Tarefa 1: O adapter (`chart/adapter.js`)
+### Tarefa 1: A conversão pura (`chart/points.js`) — e a dependência
 
 **Arquivos:**
-- Criar: `sitio/app/src/chart/adapter.js`
-- Teste: `sitio/app/src/chart/adapter.test.js`
+- Criar: `sitio/app/src/chart/points.js`
+- Teste: `sitio/app/src/chart/points.test.js`
 
 **Interfaces:**
-- Consome: `lightweight-charts` (único import permitido, §8).
+- Consome: nada (pura).
+- Produz:
+  - `paraPontosDaBiblioteca(data) -> {time, value}[]` — de `{date, value}` (a forma canônica,
+    `validate.js`) para o tempo da lib, em **segundos UNIX UTC**, **ordenado por tempo**.
+  - `paraISO(segundos) -> 'YYYY-MM-DD'` — o caminho de volta, para o callback da janela.
 
-- [ ] **Passo 0: instalar a dependência — ela NÃO existe ainda**
+> 🔴 **Por que esta tarefa existe separada (correção de pré-voo, 2026-10-14).** A versão anterior
+> deste plano punha a conversão **dentro** do `adapter.js` e o teste importava de lá. Só que o
+> adapter importa `lightweight-charts` **e** `./bands.js` — e o `bands.js` só nasce na Tarefa 2.
+> Resultado: a Tarefa 1 **não passaria no próprio teste** (módulo inexistente). Além disso, a
+> conversão é a **única parte do gráfico testável sem DOM** (§10.7) — ela merece viver sozinha,
+> sem arrastar a biblioteca para o teste.
 
-`lightweight-charts` **não está** no `app/package.json` (pré-voo de 2026-10-14). É
-**dependência de runtime**, não `devDependency` — o bundle do site precisa dela:
+- [ ] **Passo 0: a dependência**
+
+`lightweight-charts` **não estava** no `app/package.json` (ela só é necessária de verdade a
+partir da Tarefa 3, mas instalar aqui evita surpresa). É dependência de **runtime**:
 
 ```bash
 cd sitio/app && NODE_ENV=development npm install lightweight-charts@^5.2.0
 ```
 
-⚠️ **`NODE_ENV=development` é obrigatório** nesta máquina (R11): o ambiente tem
-`NODE_ENV=production` + `omit=dev`, e sem a variável o npm não instala nem acha as
-devDependencies. Rodar isso **antes** do passo 1, senão o import não resolve.
+⚠️ **`NODE_ENV=development` é obrigatório** nesta máquina (R11). Conferido no pré-voo: resolve
+para **5.2.1**, e `createChart`/`LineSeries`/`LineStyle`/`ISeriesPrimitive` existem nessa versão.
 
-A versão **5.2.1** foi a medida no spike da Tarefa 0 — manter o mesmo major.
-- Produz — uma fábrica **sem estado global**:
-  - `criarAdapter(container, { aoMudarJanela }) -> Adapter`
-  - `Adapter = { definirSeries(itens), definirFaixas(mandatos), destacarMandato(id),
-    definirJanela({from,to}), resetarJanela(), destruir() }`
-  - `aoMudarJanela({from, to})` — **callback explícito** para o store `viewport` (§8.1).
+- [ ] **Passo 1: escrever os testes que falham**
 
-**Teste em `node` sem DOM:** o adapter não é testável sem navegador; a fatia 06 **não**
-tem teste de unidade (coerente com §10.7 — "componente Svelte: não por ora"). O que se
-testa aqui é a **única parte pura**: a conversão de `Series` para o formato de dados da
-lib.
-
-- [ ] **Passo 1: escrever o teste da parte pura que falha**
-
-`sitio/app/src/chart/adapter.test.js`:
+`sitio/app/src/chart/points.test.js`:
 
 ```js
-import { describe, it, expect } from 'vitest';
-import { paraPontosDaBiblioteca } from './adapter.js';
+import { paraPontosDaBiblioteca, paraISO } from './points.js';
 
 describe('paraPontosDaBiblioteca', () => {
-  it('converte {date, value} para o tempo da lib (segundos UNIX)', () => {
+  it('converte {date, value} para o tempo da lib (segundos UNIX UTC)', () => {
     const pontos = paraPontosDaBiblioteca([
       { date: '2004-03-01', value: 42 },
       { date: '2004-04-01', value: 43 },
@@ -136,74 +133,57 @@ describe('paraPontosDaBiblioteca', () => {
     ]);
     expect(pontos.map((p) => p.value)).toEqual([42, 43]);
   });
+
+  it('corta a data em 10 caracteres — o dado é diário, não horário', () => {
+    // O caminho publicado já teve data com hora; sem o corte, o fuso desloca o ponto de dia.
+    const [p] = paraPontosDaBiblioteca([{ date: '2004-03-01T23:00:00-03:00', value: 1 }]);
+    expect(p.time).toBe(1078099200);
+  });
+
+  it('série vazia devolve lista vazia, não quebra', () => {
+    expect(paraPontosDaBiblioteca([])).toEqual([]);
+  });
+});
+
+describe('paraISO', () => {
+  it('volta de segundos UNIX para YYYY-MM-DD', () => {
+    expect(paraISO(1078099200)).toBe('2004-03-01');
+  });
 });
 ```
 
-> **Confirmar os timestamps.** Os segundos acima são o resultado esperado de
-> `Date.parse('2004-03-01T00:00:00Z')/1000`. **Rodar e conferir** — se divergirem, o
-> esperado é o que a implementação produzir em UTC, e o teste fixa isso.
+- [ ] **Passo 2: rodar e ver falhar** → FALHA (`Cannot find module './points.js'`).
 
-- [ ] **Passo 2: rodar e ver falhar** → FALHA.
+- [ ] **Passo 3: implementar**
 
-- [ ] **Passo 3: implementar o adapter**
-
-`sitio/app/src/chart/adapter.js` — estrutura:
+`sitio/app/src/chart/points.js`:
 
 ```js
-import { createChart, LineSeries, LineStyle } from 'lightweight-charts';
-import { criarPrimitivaDeFaixas } from './bands.js';
-
-/** Pura: {date,value} -> {time,value} no formato da lib, ordenado por tempo. */
+/** Pura: {date,value} -> {time,value} no formato da lib, ordenado por tempo.
+ * O tempo da lib é em SEGUNDOS UNIX UTC. O corte em 10 caracteres não é cosmético: o dado
+ * já veio com hora em algum arquivo, e sem ele o fuso desloca o ponto de dia. */
 export function paraPontosDaBiblioteca(data) {
   return data
-    .map(({ date, value }) => ({ time: Math.floor(Date.parse(`${date.slice(0, 10)}T00:00:00Z`) / 1000), value }))
+    .map(({ date, value }) => ({
+      time: Math.floor(Date.parse(`${date.slice(0, 10)}T00:00:00Z`) / 1000),
+      value,
+    }))
     .sort((a, b) => a.time - b.time);
 }
 
-/**
- * Monta o gráfico numa função — nunca em singleton de módulo (§8, nada em window).
- * @param {HTMLElement} container
- * @param {{aoMudarJanela: (w:{from:string|null,to:string|null}) => void}} opcoes
- */
-export function criarAdapter(container, { aoMudarJanela }) {
-  const chart = createChart(container, {
-    layout: { background: { color: '#0e1117' }, textColor: '#c9d1d9' },
-    // tema escuro por decisão (D4); a medição de paleta vale para este fundo (§1)
-  });
-  const porId = new Map();
-
-  // A janela visível SÓ sai por aqui, e a direção é store -> adapter (§8.1).
-  chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
-    if (!range) return aoMudarJanela({ from: null, to: null });
-    aoMudarJanela({ from: paraISO(range.from), to: paraISO(range.to) });
-  });
-
-  return {
-    definirSeries(itens) { /* cria/atualiza/reusa uma LineSeries por id, com a cor do item */ },
-    definirFaixas(mandatos) { /* anexa criarPrimitivaDeFaixas(...) na série de referência */ },
-    destacarMandato(id) { /* repinta a faixa clicada e esmaece as outras (§2) */ },
-    definirJanela({ from, to }) { /* chart.timeScale().setVisibleRange(...) */ },
-    resetarJanela() { chart.timeScale().fitContent(); },
-    destruir() { chart.remove(); porId.clear(); },
-  };
+/** O caminho de volta, para o callback da janela visível (§8.1). */
+export function paraISO(segundos) {
+  return new Date(segundos * 1000).toISOString().slice(0, 10);
 }
-
-const paraISO = (t) => new Date(t * 1000).toISOString().slice(0, 10);
 ```
 
-> **Verificar a API contra a versão instalada.** `createChart`/`addSeries`/`subscribe…`
-> mudaram entre a v4 e a v5; conferir em
-> `node_modules/lightweight-charts/dist/typings.d.ts` **antes** de codar. O plano descreve
-> a forma, não substitui a leitura dos tipos.
-
-- [ ] **Passo 4: rodar e ver passar** → o teste puro passa; o adapter é verificado na
-      fatia 07 (montagem real).
+- [ ] **Passo 4: rodar e ver passar.**
 
 - [ ] **Passo 5: commitar**
 
 ```bash
-cd sitio && git add app/src/chart/adapter.js app/src/chart/adapter.test.js
-git commit -m "feat(chart): adapter da lib, com a janela visivel saindo por callback"
+cd sitio && git add app/src/chart/points.js app/src/chart/points.test.js app/package.json app/package-lock.json
+git commit -m "feat(chart): conversao pura para o formato da lib, testada sem DOM"
 ```
 
 ---
@@ -286,21 +266,74 @@ git commit -m "feat(chart): faixas de governo como ISeriesPrimitive, sem cor de 
 
 ---
 
-### Tarefa 3: O minimapa (`chart/navigator.js`)
+### Tarefa 3: O adapter (`chart/adapter.js`) e o minimapa (`chart/navigator.js`)
 
 **Arquivos:**
-- Criar: `sitio/app/src/chart/navigator.js`
-- Teste: `sitio/app/src/chart/navigator.test.js`
+- Criar: `sitio/app/src/chart/adapter.js`, `sitio/app/src/chart/navigator.js`
+- Teste: **não por ora** — nenhum dos dois é testável sem DOM (§10.7). A verificação é a
+  montagem real, na Tarefa 4 e na fatia 07.
+
+**Por que os dois juntos:** o adapter é a única camada que conhece a lib (§8, regra 1) e o
+minimapa é uma segunda instância dela. Separá-los em duas tarefas só criaria uma dependência
+de import entre tarefas — o defeito que o pré-voo acabou de corrigir na Tarefa 1.
 
 **Interfaces:**
-- Consome: o adapter (tarefa 1).
-- Produz: `criarNavigator(container, { intervalo, faixas, aoMudarJanela }) -> { atualizar(janela), destruir() }`
+- Consome: `lightweight-charts`, `./points.js` (Tarefa 1), `./bands.js` (Tarefa 2).
+- Produz:
+  - `criarAdapter(container, { aoMudarJanela }) -> Adapter`, com
+    `Adapter = { definirSeries(itens), definirFaixas(mandatos), destacarMandato(id),
+    definirJanela({from,to}), resetarJanela(), destruir() }`.
+  - `criarNavigator(container, { intervalo, faixas, aoMudarJanela }) -> { atualizar(janela), destruir() }`
+
+```js
+import { createChart, LineSeries } from 'lightweight-charts';
+import { paraPontosDaBiblioteca, paraISO } from './points.js';
+import { criarPrimitivaDeFaixas } from './bands.js';
+
+export function criarAdapter(container, { aoMudarJanela }) {
+  const chart = createChart(container, {
+    layout: { background: { color: '#0e1117' }, textColor: '#c9d1d9' },
+    // tema escuro por decisão (D4); a medição da paleta vale para este fundo (§1)
+  });
+  const porId = new Map();
+
+  // A janela visível SÓ sai por aqui, e a direção é store -> adapter (§8.1).
+  chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
+    if (!range) return aoMudarJanela({ from: null, to: null });
+    aoMudarJanela({ from: paraISO(range.from), to: paraISO(range.to) });
+  });
+
+  return {
+    definirSeries(itens) {
+      // cria/atualiza/reusa UMA LineSeries por id, com a cor do item.
+      // ⚠ NÃO passar `title` — a decisão da §12.2 é que a ponta vai sem rótulo
+      //   (`lastValueVisible` fica ligado: o número do último valor é informação).
+    },
+    definirFaixas(mandatos) { /* anexa criarPrimitivaDeFaixas(...) na série de referência */ },
+    destacarMandato(id) { /* repinta a faixa clicada e esmaece as outras (§2) */ },
+    definirJanela({ from, to }) { /* chart.timeScale().setVisibleRange(...) */ },
+    resetarJanela() { chart.timeScale().fitContent(); },
+    destruir() { chart.remove(); porId.clear(); },
+  };
+}
+```
+
+> **A API confere com a 5.2.1 instalada** (conferido no pré-voo, não é suposição):
+> `createChart` e `LineStyle` são funções/enums exportados; `LineSeries` é um **objeto
+> `SeriesDefinition`** (`{ type: 'Line', isBuiltIn: true, defaultOptions }`) usado em
+> `chart.addSeries(LineSeries, options)` — **não** existe mais `chart.addLineSeries(...)`.
+> `ISeriesPrimitive` existe e é o parâmetro de `ISeriesApi.attachPrimitive`.
 
 O minimapa mostra o **intervalo temporal completo e todas as faixas** e é o que torna o
 clique-destaca seguro: sem ele, ao dar zoom o usuário perde a referência do todo (§2).
 
-- [ ] **Passo 1–4:** implementar com o mesmo padrão da tarefa 1 (parte pura testada +
-      montagem verificada na fatia 07).
+- [ ] **Passo 1:** implementar `adapter.js` (acima) e `navigator.js`.
+- [ ] **Passo 2:** conferir contra os typings instalados **antes** de codar —
+      `node_modules/lightweight-charts/dist/typings.d.ts`. O plano dá a forma, não substitui a
+      leitura dos tipos: o gráfico é a única camada que depende de uma biblioteca de terceiro, e
+      é onde o teste de unidade **não** alcança.
+- [ ] **Passo 3:** a montagem real é verificada na **Tarefa 4** (e na fatia 07). Não inventar
+      teste de DOM — o `vite.config.js` roda em `node` (§10.7).
 
 ```bash
 cd sitio && git add app/src/chart/navigator.js app/src/chart/navigator.test.js
@@ -370,8 +403,10 @@ git commit -m "feat(chart): Chart.svelte liga store e adapter na direcao unica"
 - [x] A **§12.2 está fechada** na spec (2026-10-14): a colisão dos rótulos foi **medida com 10 séries**
       (tabela de 4 cenários), e a decisão é legenda externa + rótulo no crosshair, **sem** `title`
       na ponta. A **fatia 07** precisa da legenda externa.
-- [ ] (critério antigo, manter)
-      e a decisão está escrita, com o número.
+- [ ] **A conversão pura está testada sem DOM** (`points.test.js`): segundos UNIX UTC, ordem
+      por tempo, corte da data em 10 caracteres, e série vazia devolvendo lista vazia.
+- [ ] **Nenhuma série recebe `title`** (§12.2) e `lastValueVisible` segue ligado — conferido no
+      código do adapter, não por impressão.
 - [ ] `grep -rn "lightweight-charts" app/src` → só em `app/src/chart/` (§8, regra 1).
 - [ ] `grep -rn "chart/adapter" app/src/components` → só `Chart.svelte` (§8, regra 2).
 - [ ] **Clique na faixa não move o viewport** — conferido ao vivo, não por inspeção.
@@ -379,8 +414,8 @@ git commit -m "feat(chart): Chart.svelte liga store e adapter na direcao unica"
 - [ ] Hachura no mandato em curso, **cortando no último dado** e não na data de hoje.
 - [ ] Arrastar/scroll/duplo-clique dão zoom; o minimapa mantém a referência do todo.
 - [ ] `grep -rn "window\." app/src/chart app/src/components/Chart.svelte` → sem resultado.
-- [ ] Testes puros (`paraPontosDaBiblioteca`, `faixasVisiveis`, `tomDaFaixa`) passam em
-      node, sem DOM.
+- [ ] Testes puros (`paraPontosDaBiblioteca`, `paraISO`, `faixasVisiveis`, `tomDaFaixa`) passam
+      em node, sem DOM.
 
 ## Auto-revisão
 

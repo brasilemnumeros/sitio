@@ -166,9 +166,9 @@ git commit -m "feat(domain): amplitude e razao de amplitude por magnitude"
 - Produz:
   - `AMPLITUDE_LIMIT = 50`
   - `comparabilidade(novaSerie, seriesExistentes) -> Veredito`, onde
-    `Veredito = { veredito: 'convive'|'avisa', ratio: number, contra: Series|null }` —
-    `ratio` é o **pior caso** contra as existentes; `contra` é a série que o produziu
-    (`null` quando não há existentes).
+    `Veredito = { veredito: 'convive'|'avisa'|'ilegivel', ratio: number, contra: Series|null }`
+    — `ratio` é o **pior caso** contra as existentes; `contra` é a série que o produziu
+    (`null` quando não há existentes). `'ilegivel'` entra na tarefa 3.
 
 - [ ] **Passo 1: escrever os testes que falham**
 
@@ -278,67 +278,104 @@ git commit -m "feat(domain): veredito de comparabilidade com corte de 50x"
 
 ---
 
-### Tarefa 3 (decisão pendente): o grau de aviso para o caso patológico
+### Tarefa 3: O grau de aviso para o caso patológico — **decidido por medição**
 
-**Contexto honesto.** A §5 fixa **um** corte (50×, `avisa`) e descreve um segundo grau —
-*"nem dois eixos salvam; a combinação não é legível, ponto"* — usando o par
-`populacao-total × populacao-variacao` (**20.921.102×**) como exemplo. **O limiar desse
-segundo grau não está decidido em lugar nenhum**, e ao contrário do corte de 50 ele
-**não é livre**: a faixa medida 125–20.921.102 contém **40 pares**, então qualquer
-escolha fora da faixa vazia (21,2–125) particiona esses 40 de um jeito diferente.
+**Contexto.** A §5 fixa **um** corte (50×, `avisa`) e descreve um segundo grau — *"nem dois
+eixos salvam; a combinação não é legível, ponto"* — sem fixar o limiar. O controlador
+mediu os **78 pares** reais (2026-10-14) para decidir:
 
-Esta tarefa existe para **fechar a decisão com medição**, conforme a convenção do
-projeto (*número medido, não estimado*), não para chutar um número no código.
+| faixa da razão | pares |
+|---|---|
+| 1,1 – 21,2 | 38 |
+| **21,2 – 125** | **0** ← a faixa vazia que justifica o corte de 50 |
+| 125 – 1.000 | 4 |
+| 1.000 – 10.000 | 11 |
+| 10.000 – 100.000 | 7 |
+| 100.000 – 1.000.000 | 4 |
+| **≥ 1.000.000** | **14** |
+
+**Ao contrário do que eu supus ao escrever este plano, NÃO existe faixa vazia acima de
+125** — a região 92.267–3.759.751 é densa. Logo o corte de 1.000.000 **não é livre**: ele
+particiona os dados, e a escolha é declarada, não medida.
+
+**Decisão: `AMPLITUDE_LIMIT_ILEGIVEL = 1_000_000`.** Critério: **seis ordens de grandeza**
+de diferença de amplitude. Acima disso, os 14 pares (18% do total) são todos *amplitude
+absoluta de ordem de milhão ou mais* contra um percentual — e a justaposição deixa de
+comparar qualquer coisa. Abaixo disso, entre 125× e 1.000.000×, o app **avisa** e oferece
+**normalizar ou remover**, que é remédio real.
+
+**Rejeitado:** o corte em **125** (o topo da faixa vazia). Marcaria **40 pares — mais da
+metade dos pares do site** — como ilegíveis, e um aviso duro que dispara em metade dos
+casos perde força, exatamente como a §5 argumenta contra aviso que aparece e desaparece.
+
+**Custo se errado:** entre 125× e 1.000.000× o app oferece normalizar/remover em vez de
+recusar. Reversível com uma constante.
 
 **Arquivos:**
-- Modificar: `sitio/app/src/domain/scales.js` (acrescentar `AMPLITUDE_LIMIT_ILEGIVEL`)
+- Modificar: `sitio/app/src/domain/scales.js`
 - Teste: `sitio/app/src/domain/scales.test.js`
-- Documentar: a decisão vai para `sitio/docs/specs/2026-10-14-camada-de-graficos-design.md` §5
+- Documentar: `sitio/docs/specs/2026-10-14-camada-de-graficos-design.md` §5
 
-- [ ] **Passo 1: medir os 78 pares reais**
+- [ ] **Passo 1: escrever o teste que falha**
 
-Escrever um script temporário (não commitado) que lê os 13 JSONs reais de `dados/`,
-calcula a razão de amplitude de todos os 78 pares e imprime a distribuição ordenada.
-Registrar a medição com a data no corpo da decisão.
+Acrescentar a `scales.test.js` (importando `AMPLITUDE_LIMIT_ILEGIVEL` junto):
 
-Run: `cd sitio/app && node ../../scratch/medir-pares.mjs` (script descartável)
-Esperado: a lista ordenada das razões, confirmando o vazio em (21,2 · 125) e a
-distribuição acima de 125.
+```js
+describe('o caso patológico (§5, decidido por medição em 2026-10-14)', () => {
+  it('o limiar é seis ordens de grandeza', () => {
+    expect(AMPLITUDE_LIMIT_ILEGIVEL).toBe(1_000_000);
+  });
 
-- [ ] **Passo 2: decidir o limiar e registrar**
+  it('populacao-total × populacao-variacao (20.921.102×) é ILEGÍVEL', () => {
+    const pop = serie('populacao-total-anual', 154524335, 204861525);      // 50.337.190
+    const var_ = serie('populacao-variacao-anual', -0.35, 2.06);           // 2,41
+    expect(comparabilidade(pop, [var_]).veredito).toBe('ilegivel');
+  });
 
-Com a distribuição em mão, escolher o limiar do segundo grau e **escrever o porquê em
-uma frase** na §5 da spec, junto com o número medido e a data. Critério: o limiar deve
-cair num ponto onde a separação faça sentido para o produto (a série menor já não é
-legível), e o motivo deve ser auditável.
+  it('caged × selic-meta (≈657.647×) ainda AVISA — não é patológico', () => {
+    const caged = serie('caged-total-mensal', 20937049, 48704360);          // 27.767.311
+    const selic = serie('selic-meta-acum-12m', 2.0, 44.22);                 // 42,22
+    expect(comparabilidade(caged, [selic]).veredito).toBe('avisa');
+  });
+});
+```
 
-- [ ] **Passo 3: implementar com o número decidido**
+- [ ] **Passo 2: rodar e ver falhar** → FALHA — `AMPLITUDE_LIMIT_ILEGIVEL is not defined`.
 
-Acrescentar a `scales.js` — substituindo `<LIMIAR>` pelo número medido no Passo 2:
+- [ ] **Passo 3: implementar**
+
+Acrescentar a `scales.js`:
 
 ```js
 /** Acima daqui nem dois eixos salvam — a série menor vira reta colada no zero (§5).
- * Medido sobre os 78 pares reais em <data> — registro na §5 da spec. */
-export const AMPLITUDE_LIMIT_ILEGIVEL = 1000;
+ * Seis ordens de grandeza. Decidido por medição dos 78 pares reais em 2026-10-14: 14 pares
+ * (18%) caem aqui, todos amplitude de ordem de milhão contra um percentual. NÃO é faixa
+ * vazia como o corte de 50 — a região 92.267–3.759.751 é densa, então o número é declarado,
+ * não livre. Ver a §5 da spec. */
+export const AMPLITUDE_LIMIT_ILEGIVEL = 1_000_000;
 ```
 
-*(`1000` acima é ilustrativo — trocar pelo número do Passo 2, medido, não copiado.)*
+E estender o veredito em `comparabilidade`, **checando o caso patológico primeiro**:
 
-E estender `Veredito.veredito` para `'convive'|'avisa'|'ilegivel'`, com o teste do par
-`populacao-total × populacao-variacao` (20.921.102) exigindo `'ilegivel'`.
+```js
+  const veredito =
+    pior.ratio > AMPLITUDE_LIMIT_ILEGIVEL ? 'ilegivel'
+    : pior.ratio > AMPLITUDE_LIMIT ? 'avisa'
+    : 'convive';
+  return { veredito, ratio: pior.ratio, contra: pior.contra };
+```
 
-- [ ] **Passo 4: rodar e ver passar; commitar**
+Atualizar o typedef de `Veredito` para `'convive'|'avisa'|'ilegivel'`.
+
+- [ ] **Passo 4: rodar e ver passar**
+
+- [ ] **Passo 5: registrar a decisão na §5 da spec e commitar**
 
 ```bash
 cd sitio && npm --prefix app test
 git add app/src/domain/scales.js app/src/domain/scales.test.js docs/specs/
-git commit -m "feat(domain): decide por medicao o limiar do caso patologico de escala"
+git commit -m "feat(domain): limiar do caso patologico de escala, decidido por medicao"
 ```
-
-> **Bloqueio declarado:** este passo **não é opcional e não pode ser chutado**. Se o
-> limiar não for medido e registrado, o veredito `ilegivel` fica de fora e a §5 fica
-> meio-implementada. Alternativa legítima: adiar `ilegivel` para uma iteração futura e
-> registrar isso na spec — mas a decisão precisa estar escrita.
 
 ---
 
@@ -349,8 +386,9 @@ git commit -m "feat(domain): decide por medicao o limiar do caso patologico de e
 - [ ] `amplitudeRatio` é **simétrica** e independe de `unit.type`.
 - [ ] `comparabilidade` devolve `convive` com **zero** séries existentes (não lança).
 - [ ] O corte de 50 está numa constante nomeada, não hardcoded no meio da função.
-- [ ] O limiar do caso patológico está **medido e registrado** na §5 da spec (ou a spec
-      diz explicitamente que `ilegivel` fica para depois).
+- [ ] O limiar do caso patológico é **1.000.000** (seis ordens de grandeza), com a medição
+      dos 78 pares registrada na §5 da spec — e com a ressalva explícita de que, ao contrário
+      do corte de 50, **ele não cai em faixa vazia**, logo é número declarado.
 - [ ] `grep -r "svelte\|fetch\|window" app/src/domain/scales.js` → sem resultado.
 
 ## Auto-revisão

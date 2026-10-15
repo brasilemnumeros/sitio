@@ -20,6 +20,16 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
     timeScale: { borderColor: 'rgba(255,255,255,0.10)' },
   });
   const porId = new Map();          // id -> ISeriesApi
+
+  // 🔴 `setVisibleRange` e `fitContent` LANÇAM num gráfico sem NENHUMA barra. Medido em
+  // 2026-07-15 (sonda no navegador, os dois builds): `setData([])` e depois `setVisibleRange`
+  // dá `Value is null`; com UMA barra já não lança. **Não é o range que importa** — com dado
+  // na tela, um range degenerado `{X,X}` é aceito e vira no-op. É a AUSÊNCIA de dado.
+  //
+  // Alcançável em produção: remover a última série enquanto um preset de janela está ativo
+  // (a barra de filtros escreve `from`, o adapter reage, o gráfico está vazio, lança). Achado
+  // pela T3 da fatia 07, fora do escopo dela — o defeito é daqui.
+  let temDado = false;
   let primitivaDeFaixas = null;
 
   // 🔴 O app abre no TODO, não no default da lib (≈ últimos 150 pontos).
@@ -100,6 +110,8 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
       }
       serie.setData(paraPontosDaBiblioteca(item.series?.data ?? []));
     }
+    // "Há alguma barra na tela?" — é o que decide se a lib aceita mexer na janela.
+    temDado = itens.some((i) => (i.series?.data?.length ?? 0) > 0);
     // O fit enquadra a UNIÃO de todas as séries: espera a rajada de carga assentar (debounce) e
     // re-agenda a cada chamada, de modo que só o ÚLTIMO `definirSeries` da rajada dispara o fit —
     // com todas as séries já no gráfico. Uma vez que o usuário interaja (`pointerdown`/`wheel`),
@@ -148,6 +160,7 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
     destacarMandato,
     /** Direção store → adapter: o adapter NÃO devolve nada por aqui (§8.1). */
     definirJanela({ from, to } = {}) {
+      if (!temDado) return;                  // sem barra na tela, a lib lança — ver `temDado`
       const t = janelaEmTempo(from, to);
       if (t.from == null && t.to == null) return chart.timeScale().fitContent();
       // ⚠ Com só UMA ponta, a outra tem de vir do que está na tela — NÃO de 0.
@@ -158,7 +171,7 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
         to: t.to ?? atual?.to ?? t.from,
       });
     },
-    resetarJanela() { chart.timeScale().fitContent(); },
+    resetarJanela() { if (temDado) chart.timeScale().fitContent(); },
     serieVisivel: () => porId.size,
     destruir() {
       // ⚠ Limpa o timer E os dois listeners do container: com `{ once: true }` eles só se

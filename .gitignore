@@ -11,3 +11,9 @@ data/*
 # Artefato de build do app (fatia 00) — src/ NÃO é ignorado (§10.3)
 assets/js/app/
 app/.vite
+
+# Artefatos do Playwright (E2E): relatórios e traços são saída, não fonte.
+app/test-results/
+app/playwright-report/
+app/blob-report/
+app/.playwright/

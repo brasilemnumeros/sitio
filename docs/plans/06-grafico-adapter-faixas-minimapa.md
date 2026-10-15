@@ -970,8 +970,6 @@ git commit -m "feat(chart): o adapter honra a atribuicao de eixo do store (§5)"
 
 ## Critérios de aceite da fatia 06
 
-## Critérios de aceite da fatia 06
-
 - [x] A **§12.2 está fechada** na spec (2026-10-14): a colisão dos rótulos foi **medida com 10 séries**
       (tabela de 4 cenários), e a decisão é legenda externa + rótulo no crosshair, **sem** `title`
       na ponta. A **fatia 07** precisa da legenda externa.

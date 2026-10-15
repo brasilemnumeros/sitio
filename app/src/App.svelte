@@ -1,18 +1,54 @@
 <script>
   import { onMount } from 'svelte';
   import { catalogStore, carregarCatalogo } from './stores/catalog.js';
-  import { seriesStore } from './stores/series.js';
+  import { seriesStore, adicionarSerie, tentarNovamente } from './stores/series.js';
   import { carregarMandatos } from './stores/mandate.js';
   import Chart from './components/Chart.svelte';
   import SeriesChips from './components/SeriesChips.svelte';
   import TimeFilters from './components/TimeFilters.svelte';
+  import EstadoInicial from './components/EstadoInicial.svelte';
+  import Esqueleto from './components/Esqueleto.svelte';
+  import ErroTotal from './components/ErroTotal.svelte';
   // 🔴 Só se importa o que JÁ EXISTE. Um import de arquivo inexistente QUEBRA O BUILD —
   // e é o defeito que o pré-voo desta fatia achou. Os demais componentes entram pelos
   // marcadores de posição abaixo, e cada tarefa troca o seu.
 
   let buscaAberta = $state(false);
-  let { status } = $derived($catalogStore);
   let itens = $derived($seriesStore.itens);
+
+  // §9.3 — erro TOTAL é quando NADA carregou; com uma série de pé, é degradação PARCIAL e o
+  // chip de erro cuida dela. Estes dois ramos leem só o `status` dos itens (§8).
+  let todosEmErro = $derived(itens.length > 0 && itens.every((i) => i.status === 'erro'));
+  let todosCarregando = $derived(
+    itens.length > 0 && itens.every((i) => i.status === 'carregando'),
+  );
+
+  // O motivo vem das PRÓPRIAS séries: a mensagem do validador já diz o que houve — um `schema`
+  // não suportado, por exemplo, chega com a palavra "schema" (§6). NUNCA "erro desconhecido":
+  // o vazio sempre diz por quê (§9). Várias séries → um motivo por linha.
+  let motivoErro = $derived.by(() => {
+    const falhas = itens.filter((i) => i.status === 'erro' && i.error);
+    if (falhas.length === 0) return null;
+    if (falhas.length === 1) return falhas[0].error;
+    return falhas.map((i) => `${i.name}: ${i.error}`).join('\n');
+  });
+
+  // §9.1 — o atalho de primeiro uso. Os IDs vivem no `indicators.json`; o par "Selic × IPCA" é
+  // RESOLVIDO no catálogo carregado NA HORA DE ADICIONAR — nada de hardcodar nome nem URL aqui.
+  const EXEMPLO_IDS = ['selic-meta-acum-12m', 'ipca-acum-12m'];
+
+  function pedirExemplo() {
+    const { indicators } = $catalogStore;
+    for (const id of EXEMPLO_IDS) {
+      const entry = indicators.find((i) => i.id === id);
+      if (entry) adicionarSerie(entry);
+    }
+  }
+
+  /** O "tentar de novo" do erro total: refaz o fetch de CADA série (uma a uma, como no add). */
+  function tentarTodas() {
+    for (const item of itens) tentarNovamente(item.id);
+  }
 
   onMount(() => {
     carregarCatalogo();
@@ -34,11 +70,16 @@
        de identificação (§12.2) e fica FORA do gráfico de propósito: com 10 séries os
        rótulos da lib ocupam 80% da altura da área de plot. -->
   {#if itens.length === 0}
-    <!-- TODO(T4): <EstadoInicial aoPedirExemplo={...} /> -->
-    <div class="text-sm opacity-50" data-bloco="inicial">[3 · estado inicial]</div>
-  {:else if itens.every((i) => i.status === 'carregando')}
-    <!-- TODO(T4): <Esqueleto /> -->
-    <div class="text-sm opacity-50" data-bloco="esqueleto">[3 · carregando]</div>
+    <EstadoInicial aoAbrirBusca={() => (buscaAberta = true)} aoPedirExemplo={pedirExemplo} />
+  {:else if todosEmErro}
+    <!-- §9.3 — erro TOTAL: nada carregou. Sem marcador próprio (R29) — é um ramo a mais. -->
+    <ErroTotal
+      titulo="Não foi possível carregar os dados"
+      motivo={motivoErro}
+      aoTentarNovamente={tentarTodas}
+    />
+  {:else if todosCarregando}
+    <Esqueleto />
   {:else}
     <Chart />
     <!-- TODO(T5): <SeriesLegend /> -->

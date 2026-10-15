@@ -14,16 +14,29 @@ e `seriesStore` (fatia 05) e `comparabilidade` (fatia 02, via store `axes`).
 
 **Spec:** `...design.md` §1.1 (completa), §5 (o aviso), §9.5 (o limite)
 
-## 🚧 Portão de prontidão — não comece a tarefa 4 sem isto
+## ✅ Portão de prontidão — RESOLVIDO em 2026-10-14
 
-A **§12.1** está aberta: *"a modal é larga e não cabe no celular. No mobile ela precisa
-virar outra coisa — provavelmente lista com a ficha em folha deslizante. Não desenhado."*
-E: *"a navegação por teclado da cascata (↑↓ entre itens, ←→ entre colunas, ⏎ adicionar)
-precisa de regra escrita."*
+A **§12.1** está **fechada**. O desenho mobile foi decidido a partir de mockup com três posturas
+comparadas (ver §12.1 para as três e o motivo da rejeição de duas). **A tarefa 4 pode começar.**
 
-**Tarefas 1–3 (desktop) podem andar.** A **tarefa 4 (mobile) não começa** sem a decisão de
-desenho escrita — em uma folha, no chat, ou na §12.1 da spec. Não improvisar layout mobile
-dentro do código.
+**O que a tarefa 4 precisa implementar (fonte: §12.1):**
+
+- Corte em `< 768px` (o `md` do Tailwind). Daí para cima, a §1.1 sem mudança.
+- **Busca** fixa no topo, com foco automático ao abrir.
+- **Grupos** em **fileira de chips rolável na horizontal** (7 + "Todos") — **não** coluna.
+- **Lista** de uma coluna, com **cabeçalho de grupo grudado** enquanto rola (quando "Todos").
+- **Linha**: caixa de seleção · nome · **distintivo de escala** · botão "i". O **distintivo é
+  obrigatório** — é ele que mantém o aviso visível antes da escolha, que é o critério que decidiu
+  o desenho. Sem ele a implementação não atende à §12.1.
+- **Ficha em folha deslizante** (bottom sheet) ao tocar na linha — unidade, granularidade,
+  período, pontos, fonte, aviso completo e Adicionar. **Tocar na linha não adiciona.**
+- **Teclado** (regra única, vale para os dois layouts): `↑↓` item dentro do grupo · `←→` grupo
+  (no desktop, coluna) · `⏎` abre a ficha / confirma o Adicionar · `Esc` fecha a ficha e depois a
+  modal · digitação colapsa a cascata e `←→` fica inerte.
+- **No limite de 10**: Adicionar visível e desabilitado, com o motivo sendo a **paleta**.
+
+**Aberto, para decidir na implementação com a tela na frente** (não bloqueia): o tamanho do
+distintivo em 320px, e se os chips mostram a contagem de indicadores por grupo.
 
 ## Restrições globais
 

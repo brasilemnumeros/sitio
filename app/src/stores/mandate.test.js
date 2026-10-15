@@ -37,8 +37,12 @@ it('seleciona e limpa', async () => {
   expect(mandatoSelecionado()).toBeNull();
 });
 
-it('não expõe celulaDe — o Δ é composto pelo componente (R27)', async () => {
-  const m = await import('./mandate.js');
-  expect(m.celulaDe).toBeUndefined();
-  expect(Object.keys(m)).not.toContain('seriesStore');
+it('R27 — não importa series.js, verificado NO FONTE e não por proxy', async () => {
+  // O teste anterior conferia que `celulaDe` não existe e que `seriesStore` não é exportado —
+  // mas um módulo poderia importar series.js SEM exportar nada disso e ainda assim passar.
+  // O R27 proíbe o IMPORT, então é o import que tem de ser travado.
+  const { readFileSync } = await import('node:fs');
+  const fonte = readFileSync(new URL('./mandate.js', import.meta.url), 'utf8');
+  expect(fonte).not.toMatch(/from\s+['"][^'"]*stores\//);   // nenhum store
+  expect(fonte).not.toMatch(/\bseries\.js\b/);              // nem por caminho direto
 });

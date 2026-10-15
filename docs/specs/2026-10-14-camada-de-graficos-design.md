@@ -72,7 +72,13 @@ Custos assumidos e registrados: o **contraste cai de 6,0:1 para 3,20:1** (passa 
 
 **Consequência registrada:** com cores customizadas, a garantia de daltonismo vale **só para o padrão**. O app não pode prometer separação naquilo que não escolheu — só informar. É o canal redundante que impede isso de ser grave: mesmo com cores ruins, a identificação vem do texto.
 
-**A verificar:** com 10 séries, os rótulos na ponta das linhas podem se sobrepor. A biblioteca mostra o título da série no eixo de preço, mas o comportamento dela com 10 séries simultâneas precisa ser conferido antes de virar decisão.
+**Medido (2026-10-14, lightweight-charts 5.2.1, spike — ver §12.2):** a biblioteca **desenha o
+título das 10 séries** no eixo de preço e **desconflita** empurrando-os para um passo uniforme de
+~15,5px. Mas a desconflição é **imperfeita e cara**: em 3 dos 4 cenários medidos ainda há caixas
+sobrepostas, em um deles um rótulo **desaparece**, e no pior caso realista a pilha de rótulos
+ocupa **80% da altura da área de plot**, cobrindo o dado. **Decisão: a ponta da linha não é o
+canal redundante.** O canal redundante é a **legenda fora do gráfico**, com o rótulo da série
+sobre o crosshair como reforço — e a ponta fica sem rótulo.
 
 **Se o app ganhar tema claro, esta medição não vale** — contraste contra fundo claro é outro problema. Hoje o app é tema escuro por decisão (D4).
 
@@ -567,7 +573,37 @@ Sem fase de convivência (seção 6). O `/` vira o shell do app num commit, e os
 Ordem sugerida de ataque:
 
 1. **Modal de busca no celular** — a cascata de três colunas não cabe; provavelmente vira lista com a ficha em folha deslizante. E a navegação por teclado da cascata (↑↓ entre itens, ←→ entre colunas, ⏎ adicionar) precisa de regra escrita.
-2. **Sobreposição dos rótulos na ponta das linhas** — com 10 séries os rótulos podem colidir. Verificar como a Lightweight Charts trata o título de série no eixo de preço com 10 séries simultâneas e decidir o que fazer se colidirem. É o que sustenta o canal redundante de identificação, ou seja, é o item que protege o pior caso da paleta.
+2. ~~**Sobreposição dos rótulos na ponta das linhas**~~ — **FECHADO por medição em 2026-10-14.**
+   Spike com lightweight-charts 5.2.1, 10 séries, área de plot de 392px. Medição por dois
+   caminhos independentes: `series.priceToCoordinate()` para a posição **natural** de cada último
+   valor, e **análise de pixel** do canvas para a posição **renderizada**.
+
+   | cenário | pares naturais colidindo | rótulos desenhados | caixas sobrepostas | altura da pilha | % do plot |
+   |---|---|---|---|---|---|
+   | A · escalas misturadas | 28/45 | **9** (um some) | 2 | 314px | **80%** |
+   | B · só % (convivem) | 11/45 | 10 | 0 | 314px | **80%** |
+   | C · pior caso realista | 24/45 | 10 | 1 | 196px | 50% |
+   | D · todas no mesmo valor | 45/45 | 10 | 1 | 156px | 40% |
+
+   **O que a biblioteca faz:** desenha o `title` de **todas** as séries (não só o último — a
+   hipótese de que `priceScale.title` seria único era sobre outra opção), e **desconflita**
+   empurrando os rótulos para um passo uniforme de ~15,5px. No cenário D as 10 posições naturais
+   são o **mesmo pixel** (`y=138`) e ainda assim os 10 saem legíveis, empilhados.
+
+   **O que isso custa:** a desconflição é imperfeita e cara. Em A e B a pilha ocupa **314px de
+   392px — 80% da altura do gráfico**, cobrindo as linhas. Em A um rótulo **não é desenhado** e 2
+   pares de caixas ainda se sobrepõem; em C e D, 1 par. Os rótulos também invadem a coluna dos
+   números do eixo (o texto do último valor corre para dentro dos ticks).
+
+   **Decisão:** a **ponta da linha não é o canal redundante**. O canal redundante é a **legenda
+   fora do gráfico**, sempre visível, com o rótulo da série sobre o crosshair como reforço. A
+   ponta fica sem rótulo — `lastValueVisible` continua ligado (o número do último valor é
+   informação), mas **sem `title`**. Custo: a legenda precisa caber 10 linhas; ganho: o gráfico
+   não perde 80% da altura no pior caso, e a identificação não depende de a lib desconflitar bem.
+
+   Consequência para a §1: a garantia de daltonismo da paleta segue **só para o padrão**, mas
+   agora o canal redundante é **estrutural** (legenda + crosshair), não depende do layout da
+   ponta — então o pior caso da paleta está protegido por construção.
 3. **Logos dos partidos** — assets (SVG em `sitio/assets/img/partidos/`), tamanho no trilho e na ficha, e a **questão de uso de marca num repositório público**, que não é decisão técnica e não foi resolvida aqui.
 4. **Duração visível no trilho** — a barrinha proporcional dentro da caixa de largura igual, caso a perda da leitura visual de duração incomode (seção 3).
 5. **Leitura por espectro político** — descartada do gráfico em 2026-10-14. Se voltar, será como **modo explícito do usuário**, nunca como padrão, e com a fonte da classificação citada e visível — porque é juízo editorial, não dado.

@@ -38,6 +38,10 @@ biblioteca de gráficos (§8). Consome stores (fatia 05) e, no caso do gráfico,
 
 ### Tarefa 1: `components/App.svelte` — a ordem da §1
 
+> ⚠️ **Ordem de execução desta fatia: T2 → T3 → T4 → T5 → T1.** A casca monta componentes
+> que as outras quatro produzem, então ela é a **última**. Executá-la primeiro só é possível
+> com stubs, que seriam trabalho descartado — melhor compor depois.
+
 **Arquivos:**
 - Modificar: `sitio/app/src/App.svelte` (o shell da fatia 00)
 - Teste: `sitio/app/src/components/App.test.js` ✓ **não** — componente não é testado por
@@ -58,12 +62,13 @@ biblioteca de gráficos (§8). Consome stores (fatia 05) e, no caso do gráfico,
   import { carregarMandatos } from './stores/mandate.js';
   import Chart from './components/Chart.svelte';
   import SeriesChips from './components/SeriesChips.svelte';
+  import SeriesLegend from './components/SeriesLegend.svelte';
   import TimeFilters from './components/TimeFilters.svelte';
-  import SearchModal from './components/SearchModal.svelte';
-  import MandateRail from './components/MandateRail.svelte';
-  import ComparisonPanel from './components/ComparisonPanel.svelte';
   import EstadoInicial from './components/EstadoInicial.svelte';
   import Esqueleto from './components/Esqueleto.svelte';
+  // 🔴 NÃO importar `SearchModal` (fatia 08), `MandateRail` nem `ComparisonPanel`
+  // (fatia 09): os arquivos não existem ainda, e um import morto QUEBRA O BUILD.
+  // Os três entram por comentário `TODO(fatia NN)` no lugar da ordem da §1.
 
   let buscaAberta = $state(false);
   let { status } = $derived($catalogStore);
@@ -84,32 +89,37 @@ biblioteca de gráficos (§8). Consome stores (fatia 05) e, no caso do gráfico,
   <!-- 2 · chips -->
   <SeriesChips />
 
-  <!-- 3 · gráfico (ou o estado que o substitui) -->
+  <!-- 3 · gráfico (ou o estado que o substitui) — e a LEGENDA, que é o canal
+       redundante de identificação (§12.2): ela fica FORA do gráfico de propósito,
+       porque com 10 séries os rótulos da lib ocupam 80% da altura da área de plot. -->
   {#if itens.length === 0}
     <EstadoInicial aoPedirExemplo={() => { /* adiciona "Selic × IPCA" (§9.1) */ }} />
   {:else if itens.every((i) => i.status === 'carregando')}
     <Esqueleto />
   {:else}
     <Chart />
+    <SeriesLegend />
   {/if}
 
   <!-- 4 · filtros de tempo -->
   <TimeFilters />
 
-  <!-- 5 · trilho (fatia 09) -->
-  <MandateRail />
+  <!-- 5 · trilho -->
+  <!-- TODO(fatia 09): <MandateRail /> — a ordem da §1 fica visível no comentário
+       e o build segue verde até a fatia existir. -->
 
-  <!-- 6 · painel de comparação, SEMPRE visível, largura total (§1) -->
-  <ComparisonPanel />
+  <!-- 6 · painel de comparação, SEMPRE visível, largura total (§1) — não é aba -->
+  <!-- TODO(fatia 09): <ComparisonPanel /> -->
 
   {#if buscaAberta}
-    <SearchModal aoFechar={() => (buscaAberta = false)} />
+    <!-- TODO(fatia 08): <SearchModal aoFechar={() => (buscaAberta = false)} /> -->
   {/if}
 </main>
 ```
 
-> Svelte 5: `$state`/`$derived` só funcionam em `.svelte`/`.svelte.js`. Confirmar a versão
-> instalada na fatia 00 — se for Svelte 4, usar `let` + `$store` normalmente.
+> **Svelte 5.57.2, medido** (`node_modules/svelte/package.json`) — as runes valem, e a
+> auto-subscrição de store (`$seriesStore`) segue funcionando junto com elas. Não há cenário
+> de Svelte 4 a considerar; a fatia 00 já fixou a versão.
 
 - [ ] **Passo 2: verificar na tela** — `npm run dev`; a ordem dos seis blocos confere.
 - [ ] **Passo 3: commitar**
@@ -158,8 +168,13 @@ git commit -m "feat(ui): chips com erro por serie, cor com aviso e remocao"
 - Produz: presets de janela (**1a · 5a · 10a · 30a · Tudo**) que escrevem no store
   `viewport` — e **não** no gráfico (§8.1). "Tudo" = `resetarJanela()`.
 
-- [ ] **Passo 1: implementar** com os cinco presets, calculando `from` a partir da data
-      máxima da série mais longa e chamando `definirJanela`.
+- [ ] **Passo 1: implementar** com os cinco presets.
+
+      ⚠️ **De onde vem a data máxima:** de `$seriesStore.itens`, que é estado de store — a
+      última data de `item.series.data`, entre as séries com `status === 'ok'`. **Nunca**
+      perguntar ao gráfico (§8.1: o gráfico é espelho, não dono). Sem série `ok`, os presets
+      ficam **desabilitados** com o motivo visível (§9: nada vazio em silêncio).
+      O `from` é `dataMaxima − N anos`, e o preset escreve via `definirJanela({ from })`.
 - [ ] **Passo 2: verificar** — clicar em "5a" move o gráfico; o minimapa acompanha; "Tudo"
       volta ao intervalo completo.
 - [ ] **Passo 3: commitar**

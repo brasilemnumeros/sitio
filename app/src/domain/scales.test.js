@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { seriesSpan, amplitudeRatio } from './scales.js';
-import { comparabilidade, AMPLITUDE_LIMIT } from './scales.js';
+import { comparabilidade, AMPLITUDE_LIMIT, AMPLITUDE_LIMIT_ILEGIVEL } from './scales.js';
 
 /** Série de fixture: só as amplitudes importam (spec §5, anexo). */
 function serie(id, min, max) {
@@ -60,13 +60,17 @@ describe('comparabilidade (§5)', () => {
     expect(v.contra.id).toBe('igpm-acum-12m');
   });
 
-  it('avisa: razão > 50 aponta a série culpada', () => {
-    const pop = serie('populacao-total-anual', 154524335, 204861525);
+  it('avisa: razão entre 50 e 1.000.000 aponta a série culpada', () => {
+    // MVG-R (222.000) × Selic (42,22) = 5.258× — acima do corte de 50 e bem abaixo do
+    // patológico. ⚠️ NÃO use `populacao-total × selic-meta` aqui: medido, aquele par dá
+    // **1.192.259×**, que cai do OUTRO lado do limiar de 1.000.000 e devolveria `'ilegivel'`
+    // (R19). O par patológico tem os seus próprios testes na Tarefa 3.
+    const mvgr = serie('mvgr-nominal', 42000, 264000);
     const selic = serie('selic-meta-acum-12m', 2.0, 44.22);
-    const v = comparabilidade(selic, [pop]);
+    const v = comparabilidade(selic, [mvgr]);
     expect(v.veredito).toBe('avisa');
     expect(v.ratio).toBeGreaterThan(AMPLITUDE_LIMIT);
-    expect(v.contra.id).toBe('populacao-total-anual');
+    expect(v.contra.id).toBe('mvgr-nominal');
   });
 
   it('reporta o PIOR caso entre várias existentes', () => {
@@ -87,5 +91,23 @@ describe('comparabilidade (§5)', () => {
     const hom = serie('homicidios-anual', 21.22, 31.59);       // 10,37
     const pib = serie('pib-real-anual', -3.55, 7.53);          // 11,08
     expect(comparabilidade(hom, [pib]).veredito).toBe('convive');
+  });
+});
+
+describe('o caso patológico (§5, decidido por medição em 2026-10-14)', () => {
+  it('o limiar é seis ordens de grandeza', () => {
+    expect(AMPLITUDE_LIMIT_ILEGIVEL).toBe(1_000_000);
+  });
+
+  it('populacao-total × populacao-variacao (20.921.102×) é ILEGÍVEL', () => {
+    const pop = serie('populacao-total-anual', 154524335, 204861525);      // 50.337.190
+    const var_ = serie('populacao-variacao-anual', -0.35, 2.06);           // 2,41
+    expect(comparabilidade(pop, [var_]).veredito).toBe('ilegivel');
+  });
+
+  it('caged × selic-meta (≈657.647×) ainda AVISA — não é patológico', () => {
+    const caged = serie('caged-total-mensal', 20937049, 48704360);          // 27.767.311
+    const selic = serie('selic-meta-acum-12m', 2.0, 44.22);                 // 42,22
+    expect(comparabilidade(caged, [selic]).veredito).toBe('avisa');
   });
 });

@@ -149,6 +149,37 @@ já estão consolidadas nas seções acima — nominalmente, não se repetem aqu
 > para cá. As que descrevem o **ambiente** desta máquina vivem no `AGENTS.md`, onde quem executa
 > olha primeiro.
 
+### Decisões e reaberturas da fatia 07 (2026-10-15)
+
+- **🔴 A §12.2 foi REABERTA — a decisão do `lastValueVisible` foi tomada sem medir o eixo.** A
+  §12.2 tinha notado o sintoma (*"os rótulos invadem a coluna dos números do eixo"*) e o aceitou
+  como custo, sem medir o quanto piora. Medido agora, com 10 séries divididas nos dois eixos:
+  ~8 rótulos empilhados lendo `10.00` no eixo esquerdo. **É o mesmo problema da §12.2 — a pilha
+  de rótulos — só que no eixo em vez da ponta.** O que **continua** decidido: a ponta não é o
+  canal redundante; o canal é a legenda. O que **não está** decidido: se o rótulo de valor por
+  série sobrevive. Três saídas registradas na spec, nenhuma medida. O conserto é da camada de
+  gráfico e exige o mesmo método que fechou a §12.2 — **medir, não estimar.**
+- **🔴 Contradição aberta entre a §1 e o `AGENTS.md` sobre tema.** A §1 diz *"uma página única,
+  **tema escuro**"*; o `AGENTS.md` diz que dark mode é class-based e que se deve sempre parear
+  com variantes `dark:`. Os componentes seguiram o `AGENTS.md` (claros por padrão) e o canvas do
+  gráfico segue a §1 (escuro fixo, `FUNDO = '#0e1117'`) — resultado: página clara com canvas
+  escuro. **Não é inconsistência de código: são dois documentos que se contradizem, e nada os
+  obrigava a se encontrar.** Decisão pendente: qual dos dois é a fonte, e o outro se alinha.
+- **A casca monta marcadores de posição e cada tarefa troca o seu** — a única ordem que funciona:
+  T2–T5 precisam de página montada para se verificar, e import de arquivo inexistente quebra o
+  build. O `data-bloco` sobrevive ao componente real, então a ordem da §1 fica conferível por DOM
+  depois de tudo montado.
+- **O aviso de escala — calculado desde a fatia 05 e nunca exibido — passou a ser renderizado**
+  (a legenda), nos dois graus da §5: `avisa` acima de 50×, `ilegivel` acima de 1.000.000×. O item
+  já estava anotado no `AGENTS.md` como pendência sem dono; a fatia 07 era a dona e **o plano não
+  o carregava**. Fica o registro: uma pendência escrita com dono não é suficiente se o plano
+  seguinte não a lê.
+- **A janela do gráfico não age num gráfico sem barra nenhuma** (`setVisibleRange`/`fitContent`
+  lançam `Value is null` com zero barras). Defeito da fatia 06, achado pela 07. A guarda está no
+  adapter; **a alcançabilidade no app foi medida por terceiro, não pelo controlador** — registrado
+  como tal, não como provada.
+
+
 
 ## Consequências
 

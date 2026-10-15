@@ -192,7 +192,13 @@ git commit -m "feat(ui): ficha com unidade, fonte e o aviso de escala antes da e
 
 ---
 
-### Tarefa 3: O limite de 10 dentro da modal (§9.5)
+### Tarefa 3: O limite de 10 dentro da modal (§9.5) — ✅ **ENTREGUE PELA T2**
+
+> **Fechada sem dispatch.** A T2 implementou o `disabled` + o motivo, e a captura
+> `task-2-ficha-limite.png` já mostra os dois: botão visível e desabilitado no teto, com o
+> motivo **verbatim da paleta** ("Limite de 10 séries atingido — a paleta tem 10 cores sem
+> repetição"), e nada removido. Os quatro critérios abaixo estão satisfeitos; o dispatch
+> seria repetição. Mantido aqui como registro do que foi verificado e onde.
 
 **Arquivos:**
 - Modificar: `sitio/app/src/components/Ficha.svelte`, `SearchModal.svelte`

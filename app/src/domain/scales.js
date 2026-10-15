@@ -31,3 +31,34 @@ export function amplitudeRatio(a, b) {
   if (menor === 0) return maior === 0 ? 1 : Infinity;
   return maior / menor;
 }
+
+/** O corte de comparabilidade (§5). O valor exato não é crítico: qualquer limiar em
+ * (21,2 · 125) particiona os dados de hoje de forma idêntica — 50 é o meio da faixa. */
+export const AMPLITUDE_LIMIT = 50;
+
+/**
+ * @typedef {Object} Veredito
+ * @property {'convive'|'avisa'} veredito
+ * @property {number} ratio   pior razão contra as séries já presentes
+ * @property {Series|null} contra  a série que produziu a pior razão
+ */
+
+/**
+ * Decide se uma série pode entrar num eixo com as que já estão lá.
+ * Não encaixa em silêncio: devolve o veredito para a ficha da modal exibir (§1.1, §5).
+ * @param {Series} novaSerie
+ * @param {Series[]} seriesExistentes
+ * @returns {Veredito}
+ */
+export function comparabilidade(novaSerie, seriesExistentes) {
+  let pior = { ratio: 1, contra: null };
+  for (const existente of seriesExistentes) {
+    const ratio = amplitudeRatio(novaSerie, existente);
+    if (ratio > pior.ratio) pior = { ratio, contra: existente };
+  }
+  return {
+    veredito: pior.ratio > AMPLITUDE_LIMIT ? 'avisa' : 'convive',
+    ratio: pior.ratio,
+    contra: pior.contra,
+  };
+}

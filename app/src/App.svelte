@@ -54,7 +54,16 @@
   <div class="text-sm opacity-50" data-bloco="comparacao">[6 · painel de comparação]</div>
 
   {#if buscaAberta}
-    <!-- TODO(fatia 08): <SearchModal aoFechar={...} /> -->
-    <div class="fixed inset-0 bg-black/40" onclick={() => (buscaAberta = false)}></div>
+    <!-- TODO(fatia 08): <SearchModal aoFechar={...} /> — e o overlay abaixo vira parte dela.
+         É um <button>, não um <div>: um <div> com onclick dispara dois avisos de
+         acessibilidade do Svelte (sem handler de teclado, sem role) — medido no dev server
+         em 2026-10-15. O overlay É clicável para fechar, então <button> é o elemento certo
+         e resolve os dois de uma vez, ainda ganhando o foco por teclado. -->
+    <button
+      type="button"
+      class="fixed inset-0 cursor-default border-0 bg-black/40 p-0"
+      aria-label="Fechar a busca"
+      onclick={() => (buscaAberta = false)}
+    ></button>
   {/if}
 </main>

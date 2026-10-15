@@ -124,11 +124,12 @@ O detalhe canônico continua sendo a spec; isto é o registro do que foi decidid
 execução** e que ainda não estava em nenhum documento durável. As demais decisões de execução
 já estão consolidadas nas seções acima — nominalmente, não se repetem aqui.
 
-- **Os números de razão publicados na §5 são sobre as fixtures arredondadas** — e é por isso que
-  divergem do medido. `50.337.190 ÷ 42,22 = 1.192.259`, não `1.192.196`: a tabela da §5 é sobre
-  valores com 2 casas, enquanto o corte de escala é calculado sobre os valores crus. Os testes
-  travam o que **as fixtures produzem**, com o plano dizendo por que diverge do publicado.
-  *Custo se errado:* nenhum no código — mas o número da §5 precisa ser lido como arredondado.
+- **Os números de razão publicados na §5 são sobre valores crus — as fixtures dos testes é que
+  não são.** As fixtures do anexo têm amplitudes arredondadas a 2 casas, então
+  `50.337.190 ÷ 42,22 = 1.192.259,4`, e não o `1.192.196` que a §5 publica. Os testes travam o
+  que **as fixtures produzem**, e o plano diz por que diverge do publicado. *Custo se errado:*
+  nenhum no código — o teste continua pegando regressão; o que se perde é a leitura direta do
+  número da §5 como se fosse o que a suíte mede.
 - **O catálogo não valida `unit`.** `sitio/indicators.json` é curadoria de apresentação (a tabela
   da §6 já diz isso), então a unidade **não** é assunto dele: quem valida é o `validateSeries`, no
   caminho canônico, e o `validateUnit` fica **estrito** (um `percentage` sem `symbol` é recusado).

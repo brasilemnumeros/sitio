@@ -257,12 +257,13 @@ git commit -m "feat(ui): limite de 10 visivel na modal, com o motivo pela paleta
 - **Cobertura da spec:** §1.1 inteira (três colunas, busca nas três, a ficha como lugar do
   aviso) → tarefas 1–2; §5 (o aviso com as ações normalizar/remover, e o caso patológico)
   → tarefa 2; §9.5 (limite visível com o motivo) → tarefa 3; §12.1 (teclado e mobile) →
-  tarefa 1 (teclado) e tarefa 4 (mobile, bloqueada).
+  tarefa 1 (teclado) e tarefa 4 (mobile — **decidida em 2026-10-14**, desbloqueada).
 - **Por que a cascata e não lista plana** (§1.1) fica preservada na arquitetura: cada nível
   de hierarquia é **uma coluna**, o que é o que permite a expansão estadual sem virar
   rolagem — não trocar por lista plana "porque é mais simples".
-- **Ponto honesto:** a tarefa 4 é **bloqueada por decisão de desenho**, não por
-  dependência técnica — declarada no portão, não escondida no código.
+- **Ponto honesto:** a tarefa 4 ficou **bloqueada por decisão de desenho**, não por
+  dependência técnica — declarada no portão, não escondida no código. Resolvida em
+  2026-10-14 com a §12.1 escrita a partir de mockup comparado.
 - **Consistência de nomes:** `SearchModal`, `Ficha`, `indicadoresDoGrupo`,
   `buscarIndicadores`, `atingiuLimite`, `motivoDoLimite`, `comparabilidade` — todos vêm das
   fatias 02 e 05 como estão.

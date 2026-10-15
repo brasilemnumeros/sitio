@@ -6,7 +6,6 @@
       "granularity": "Acumulado 12 meses",
       "datafile": "https://brasilemnumeros.github.io/dados/selic/selic-meta-acum-12m.json",
       "description": "Taxa básica de juros da economia brasileira definida pelo Banco Central, acumulada nos últimos 12 meses",
-      "source": "Banco Central do Brasil",
       "chartType": "line",
       "group": "monetary",
       "unit": {
@@ -22,7 +21,6 @@
       "granularity": "Acumulado 12 meses",
       "datafile": "https://brasilemnumeros.github.io/dados/selic/selic-over-acum-12m.json",
       "description": "Taxa de juros efetiva do mercado, acumulada nos últimos 12 meses",
-      "source": "Banco Central do Brasil",
       "chartType": "line",
       "group": "monetary",
       "unit": {
@@ -38,7 +36,6 @@
       "granularity": "Acumulado 12 meses",
       "datafile": "https://brasilemnumeros.github.io/dados/ipca/ipca-acum-12m.json",
       "description": "Variação acumulada do Índice de Preços ao Consumidor Amplo (IPCA) em 12 meses",
-      "source": "Banco Central do Brasil",
       "chartType": "line",
       "group": "inflation",
       "unit": {
@@ -54,7 +51,6 @@
       "granularity": "Acumulado 12 meses",
       "datafile": "https://brasilemnumeros.github.io/dados/igp-m/igpm-acum-12m.json",
       "description": "Variação acumulada do Índice Geral de Preços do Mercado (IGP-M) em 12 meses",
-      "source": "Banco Central do Brasil",
       "chartType": "line",
       "group": "inflation",
       "unit": {
@@ -70,7 +66,6 @@
       "granularity": "Anual",
       "datafile": "https://brasilemnumeros.github.io/dados/pib/pib-real-anual.json",
       "description": "Variação do Produto Interno Bruto (PIB) em termos reais, desconsiderando a inflação.",
-      "source": "Banco Central do Brasil",
       "chartType": "bar",
       "group": "growth",
       "unit": {
@@ -86,7 +81,6 @@
       "granularity": "Mensal",
       "datafile": "https://brasilemnumeros.github.io/dados/mvgr/mvgr-nominal.json",
       "description": "Mediana dos Valores de Garantia de Imóveis Residenciais Financiados (MVG-R) em Reais (R$)",
-      "source": "Banco Central do Brasil - Desig (Departamento de Monitoramento do Sistema Financeiro)",
       "chartType": "line",
       "group": "real-estate",
       "unit": {
@@ -103,7 +97,6 @@
       "granularity": "Mensal",
       "datafile": "https://brasilemnumeros.github.io/dados/mvgr/mvgr-real.json",
       "description": "Mediana dos Valores de Garantia de Imóveis Residenciais Financiados (MVG-R) em Reais, descontada a inflação (IPCA)",
-      "source": "Banco Central do Brasil - Desig (Departamento de Monitoramento do Sistema Financeiro)",
       "chartType": "line",
       "group": "real-estate",
       "unit": {
@@ -120,7 +113,6 @@
       "granularity": "Mensal",
       "datafile": "https://brasilemnumeros.github.io/dados/caged/caged-total-mensal.json",
       "description": "Número total de empregos formais no Brasil, conforme dados do CAGED (Cadastro Geral de Empregados e Desempregados)",
-      "source": "Banco Central do Brasil",
       "chartType": "line",
       "group": "labor",
       "unit": {
@@ -135,7 +127,6 @@
       "granularity": "Anual",
       "datafile": "https://brasilemnumeros.github.io/dados/populacao/populacao-total-anual.json",
       "description": "Número total da população brasileira conforme dados do IBGE",
-      "source": "Instituto Brasileiro de Geografia e Estatística (IBGE)",
       "chartType": "line",
       "group": "demographics",
       "unit": {
@@ -150,7 +141,6 @@
       "granularity": "Anual",
       "datafile": "https://brasilemnumeros.github.io/dados/populacao/populacao-variacao-anual.json",
       "description": "Variação anual da população brasileira conforme dados do IBGE",
-      "source": "Instituto Brasileiro de Geografia e Estatística (IBGE)",
       "chartType": "bar",
       "group": "demographics",
       "unit": {
@@ -166,7 +156,6 @@
       "granularity": "Anual",
       "datafile": "https://brasilemnumeros.github.io/dados/homicidios/homicidios-anual.json",
       "description": "Número total de homicídios no Brasil por 100 mil habitantes",
-      "source": "IPEA - Instituto de Pesquisa Econômica Aplicada",
       "chartType": "line",
       "group": "public-safety",
       "unit": {
@@ -182,7 +171,6 @@
       "granularity": "Anual",
       "datafile": "https://brasilemnumeros.github.io/dados/homicidios/homicidios-armas-fogo-anual.json",
       "description": "Número de homicídios por armas de fogo no Brasil por 100 mil habitantes",
-      "source": "IPEA - Instituto de Pesquisa Econômica Aplicada",
       "chartType": "line",
       "group": "public-safety",
       "unit": {
@@ -198,7 +186,6 @@
       "granularity": "Anual",
       "datafile": "https://brasilemnumeros.github.io/dados/homicidios/proporcao-homicidios-armas-fogo-anual.json",
       "description": "Proporção de homicídios cometidos por armas de fogo em relação ao total de homicídios no Brasil",
-      "source": "IPEA - Instituto de Pesquisa Econômica Aplicada",
       "chartType": "bar",
       "group": "public-safety",
       "unit": {

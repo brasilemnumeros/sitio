@@ -4,6 +4,7 @@
   import { criarAdapter } from '../chart/adapter.js';
   import { criarNavigator } from '../chart/navigator.js';
   import { seriesStore } from '../stores/series.js';
+  import { axesStore, recalcularEixos } from '../stores/axes.js';
   import { mandateStore, carregarMandatos } from '../stores/mandate.js';
   import { viewportStore, definirJanela } from '../stores/viewport.js';
 
@@ -18,6 +19,10 @@
       aoMudarJanela: (j) => definirJanela(j),
     });
 
+    // As séries `ok` na forma que o `axesStore` entende (`{id, unit, data}`), como na fatia 05.
+    const seriesOk = () => get(seriesStore).itens.filter((i) => i.status === 'ok');
+    const paraEixo = (i) => ({ id: i.id, unit: i.series?.unit, data: i.series?.data ?? [] });
+
     // O minimapa desenha faixas E séries: as duas fontes podem chegar em qualquer ordem.
     // Por isso ele é atualizado tanto pela mudança das SÉRIES quanto pela dos MANDATOS —
     // sem isto, os mandatos que chegam depois da última série nunca viram faixa no minimapa.
@@ -26,10 +31,18 @@
       navigator.definirFaixas(get(mandateStore).mandatos, ok.flatMap((i) => i.series?.data ?? []));
     };
 
-    // store → adapter: a direção que faltava. O adapter é espelho, não dono.
-    const pararSeries = seriesStore.subscribe(({ itens }) => {
-      adapter.definirSeries(itens.filter((i) => i.status === 'ok'));
+    // ⚠ A ORDEM IMPORTA (§5): o eixo é DERIVADO das séries, então `recalcularEixos` roda
+    //   aqui — depois de as séries ficarem `ok` e ANTES de o adapter desenhar. O desenho em si
+    //   não é feito neste subscriber: ele é feito no de `axesStore`, logo abaixo. Assim o
+    //   adapter nunca recebe uma atribuição um passo atrás do que está na tela.
+    const pararSeries = seriesStore.subscribe(() => {
+      recalcularEixos(seriesOk().map(paraEixo));
       atualizarMinimapa();
+    });
+    // store → adapter: a terceira assinatura. Aqui o adapter recebe a atribuição de eixo JUNTO
+    // com as séries — as duas coisas saem juntas, então não há como ficarem dessincronizadas.
+    const pararEixos = axesStore.subscribe(({ atribuicao }) => {
+      adapter.definirSeries(seriesOk(), atribuicao);
     });
     const pararMandatos = mandateStore.subscribe(({ mandatos }) => {
       adapter.definirFaixas(mandatos);
@@ -46,7 +59,7 @@
     carregarMandatos();
 
     return () => {
-      pararSeries(); pararMandatos(); pararJanela();
+      pararSeries(); pararEixos(); pararMandatos(); pararJanela();
       navigator.destruir();
       adapter.destruir();
     };

@@ -44,9 +44,19 @@
     const pararEixos = axesStore.subscribe(({ atribuicao }) => {
       adapter.definirSeries(seriesOk(), atribuicao);
     });
-    const pararMandatos = mandateStore.subscribe(({ mandatos }) => {
-      adapter.definirFaixas(mandatos);
-      atualizarMinimapa();
+    // As faixas são REANEXADAS só quando a LISTA de mandatos muda: um clique de seleção não
+    // deve recriar a primitiva (nem apagar, por um instante, o realce que ela acabou de pintar).
+    let mandatosAnteriores;
+    const pararMandatos = mandateStore.subscribe(({ mandatos, selecionado }) => {
+      if (mandatos !== mandatosAnteriores) {
+        mandatosAnteriores = mandatos;
+        adapter.definirFaixas(mandatos);
+        atualizarMinimapa();
+      }
+      // §8.1 — store → adapter: aqui a SELEÇÃO é ESPELHADA, nunca decidida. O trilho escreve
+      // no `mandateStore` (`selecionarMandato`/`limparSelecao`); este é o outro lado que
+      // faltava ligar (T3 da fatia 09). `null` apaga o realce — clicar de novo limpa.
+      adapter.destacarMandato(selecionado);
     });
     // A janela volta para o gráfico quando a store muda — inclusive quando quem mudou foi o
     // minimapa. E a MESMA janela vai para o minimapa: é ele que desenha a cortina (§2).

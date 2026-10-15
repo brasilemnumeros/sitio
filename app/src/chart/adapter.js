@@ -3,7 +3,6 @@ import { paraPontosDaBiblioteca, paraISO } from './points.js';
 import { criarPrimitivaDeFaixas } from './bands.js';
 
 const FUNDO = '#0e1117';
-const SEM_DADOS = 'rgba(255,255,255,0.05)';
 
 /**
  * Monta o gráfico numa FUNÇÃO — nunca em singleton de módulo (§8, nada em `window`).
@@ -19,7 +18,6 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
   });
   const porId = new Map();          // id -> ISeriesApi
   let primitivaDeFaixas = null;
-  let ultimoDestacado = null;
 
   // A janela visível SÓ sai por aqui, e a direção é store → adapter (§8.1).
   // `subscribeVisibleTIME...`, não `...Logical...`: o range lógico são ÍNDICES de barra, e
@@ -79,7 +77,6 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
 
   /** Repinta a faixa clicada e esmaece as outras (§2). Não mexe no viewport — clique ≠ zoom. */
   function destacarMandato(id) {
-    ultimoDestacado = id;
     primitivaDeFaixas?.selecionar?.(id);
   }
 
@@ -96,7 +93,13 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
     definirJanela({ from, to } = {}) {
       const t = janelaEmTempo(from, to);
       if (t.from == null && t.to == null) return chart.timeScale().fitContent();
-      chart.timeScale().setVisibleRange({ from: t.from ?? 0, to: t.to ?? 1 });
+      // ⚠ Com só UMA ponta, a outra tem de vir do que está na tela — NÃO de 0.
+      // `{from: 0, to: 1}` é 1970: a janela saltaria para o início dos tempos, em silêncio.
+      const atual = chart.timeScale().getVisibleRange();
+      chart.timeScale().setVisibleRange({
+        from: t.from ?? atual?.from ?? t.to,
+        to: t.to ?? atual?.to ?? t.from,
+      });
     },
     resetarJanela() { chart.timeScale().fitContent(); },
     serieVisivel: () => porId.size,

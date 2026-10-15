@@ -1,4 +1,4 @@
-import { createChart } from 'lightweight-charts';
+import { createChart, LineSeries } from 'lightweight-charts';
 import { criarPrimitivaDeFaixas } from './bands.js';
 import { paraISO } from './points.js';
 
@@ -21,8 +21,17 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
     crosshair: { horzLine: { visible: false }, vertLine: { visible: false } },
   });
 
+  // 🔴 MEDIDO (2026-10-14, sonda no navegador): **um gráfico SEM série não tem domínio de tempo.**
+  // `timeToCoordinate()` e `getVisibleRange()` devolvem `null`, e a primitiva das faixas — que
+  // depende de `timeToCoordinate` — não desenharia NADA (todas as faixas cairiam no filtro de
+  // `x1 !== null`). A saída é uma série **invisível**: ela dá o domínio sem desenhar nada.
+  // A decisão de produto continua a mesma (§2: faixas + janela, sem as séries na tela) — só
+  // descobrimos que ela precisa de uma âncora invisível para funcionar.
+  let ancora = null;
+
   let janela = { from: null, to: null, de: null, ate: null };
   let primitiva = null;
+  let cortinaAnexada = false;
   let arrastando = null;
   let pedirRedesenho = null;   // vem do `attached` da cortina — a lib redesenha por aqui
 
@@ -85,15 +94,22 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
 
   return {
     /** As faixas do navegador são as MESMAS do gráfico grande — um só dado, dois desenhos. */
-    definirFaixas(mandatos) {
+    definirFaixas(mandatos, dadosParaAncora = []) {
       const pane = chart.panes()[0];
       if (primitiva) pane.detachPrimitive(primitiva);
-      // A MESMA primitiva da T2 — sem opção nova. O rótulo dela já se auto-limita por
-      // `largura > 70 * r`, então em 48px de altura ele simplesmente não aparece nas faixas
-      // estreitas. Se atrapalhar na tela, aí sim vale uma opção — e ela nasce medida, na T4.
+
+      // A âncora invisível: só existe para o gráfico ter domínio de tempo (ver acima).
+      // Recebe o mesmo dado das séries do gráfico grande — é o intervalo completo que a §2 pede.
+      if (!ancora) ancora = chart.addSeries(LineSeries, { visible: false });
+      ancora.setData(dadosParaAncora);
+      chart.timeScale().fitContent();
+
+      // A MESMA primitiva da T2 — sem opção nova.
       primitiva = criarPrimitivaDeFaixas(mandatos, {});
       pane.attachPrimitive(primitiva);
-      pane.attachPrimitive(cortina);
+      // ⚠ Só UMA vez: sem a guarda, chamar `definirFaixas` duas vezes anexaria a cortina
+      // duas vezes, e a lib desenharia a sobreposição em dobro.
+      if (!cortinaAnexada) { pane.attachPrimitive(cortina); cortinaAnexada = true; }
     },
     /** Onde o gráfico grande está, em ISO — vem do callback DELE; a direção é sempre essa (§8.1).
      *  Guarda as duas formas de propósito: `from`/`to` em PIXEL (para desenhar a cortina) e
@@ -101,10 +117,12 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
      *  escrever o bug do `LogicalRange` — os nomes agora dizem a unidade. */
     mostrarJanela({ from, to } = {}) {
       const ts = chart.timeScale();
+      // ⚠ `timeToCoordinate` quer SEGUNDOS UNIX, não a string ISO que o store guarda.
+      const seg = (iso) => (iso ? Math.floor(Date.parse(`${iso}T00:00:00Z`) / 1000) : null);
       janela = {
         de: from, ate: to,
-        from: from ? ts.timeToCoordinate(from) : null,
-        to: to ? ts.timeToCoordinate(to) : null,
+        from: seg(from) == null ? null : ts.timeToCoordinate(seg(from)),
+        to: seg(to) == null ? null : ts.timeToCoordinate(seg(to)),
       };
       pedirRedesenho?.();
     },

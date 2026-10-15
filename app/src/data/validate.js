@@ -30,10 +30,13 @@ export const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
  */
 
 /**
- * Normaliza e valida uma unidade. `symbol` pode ser vazio — é o valor natural de uma
- * unidade `number` (contagem: população, empregos) — e `decimals` ausente assume 0.
- * Sem isso, o `indicators.json` real (transição) não validaria: `caged-total-mensal` e
- * `populacao-total-anual` trazem `{type:'number', symbol:''}` sem `decimals`.
+ * Normaliza e valida uma unidade. Estrito de propósito: `symbol` não-vazio e `decimals`
+ * inteiro ≥ 0 são obrigatórios. Este é o caminho CANÔNICO (`validateSeries`), onde um
+ * `percentage` sem símbolo ou sem casas declaradas é defeito de verdade; relaxá-lo para
+ * acomodar dado de transição enfraqueceria o contrato que fica.
+ * @param {unknown} unit
+ * @param {string} [where]
+ * @returns {Unit}
  */
 export function validateUnit(unit, where = 'unit') {
   if (unit === null || typeof unit !== 'object' || Array.isArray(unit)) {
@@ -42,14 +45,13 @@ export function validateUnit(unit, where = 'unit') {
   if (!UNIT_TYPES.has(unit.type)) {
     throw new SchemaError(`${where}.type "${unit.type}" desconhecido`);
   }
-  if (typeof unit.symbol !== 'string') {
-    throw new SchemaError(`${where}.symbol deve ser texto`);
+  if (typeof unit.symbol !== 'string' || unit.symbol === '') {
+    throw new SchemaError(`${where}.symbol ausente ou vazio`);
   }
-  const decimals = unit.decimals === undefined ? 0 : unit.decimals;
-  if (!Number.isInteger(decimals) || decimals < 0) {
+  if (!Number.isInteger(unit.decimals) || unit.decimals < 0) {
     throw new SchemaError(`${where}.decimals deve ser inteiro ≥ 0`);
   }
-  return { type: unit.type, symbol: unit.symbol, decimals };
+  return { type: unit.type, symbol: unit.symbol, decimals: unit.decimals };
 }
 
 /**

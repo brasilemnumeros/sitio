@@ -54,10 +54,27 @@ describe('validateCatalog', () => {
     );
   });
 
-  it('aceita indicador SEM unit — o metadado vive no arquivo de série (§6)', () => {
-    const semUnit = { ...catalogoMinimo, indicators: [{ ...catalogoMinimo.indicators[0] }] };
-    delete semUnit.indicators[0].unit;
-    expect(validateCatalog(semUnit).indicators[0].unit).toBeNull();
+  it('NÃO valida unit — a unidade não é assunto do catálogo (§6, R16)', () => {
+    // O registro real traz unidades de transição malformadas (`{type:'number', symbol:''}`
+    // sem `decimals`) que não podem derrubar a leitura do catálogo.
+    const comUnitEstranho = {
+      ...catalogoMinimo,
+      indicators: [{ ...catalogoMinimo.indicators[0], unit: { type: 'banana', symbol: 42 } }],
+    };
+    expect(() => validateCatalog(comUnitEstranho)).not.toThrow();
+  });
+
+  it('PRESERVA os campos de apresentação — nada é descartado em silêncio (§6)', () => {
+    // `yAxisMax` existe de verdade: `proporcao-homicidios-armas-fogo-anual` traz 100.
+    const comApresentacao = {
+      ...catalogoMinimo,
+      indicators: [
+        { ...catalogoMinimo.indicators[0], description: 'texto editorial', yAxisMax: 100 },
+      ],
+    };
+    const [ind] = validateCatalog(comApresentacao).indicators;
+    expect(ind.description).toBe('texto editorial');
+    expect(ind.yAxisMax).toBe(100);
   });
 });
 

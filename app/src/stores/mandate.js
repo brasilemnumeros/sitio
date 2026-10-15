@@ -1,7 +1,10 @@
 import { writable, get } from 'svelte/store';
 import { ordenarMandatos } from '../domain/mandates.js';
 
-const URL_GOVERNOS = 'https://brasilemnumeros.github.io/dados/governos/federal.json';
+// `__BASE_DADOS__` é trocado em tempo de build pelo `vite.config.js`: em dev aponta para o
+// repo `dados/` local (servido pelo middleware), em produção para o Pages. Antes isto era uma
+// URL publicada **fixa** — o que fazia o trilho de mandatos buscar da rede mesmo em dev.
+const URL_GOVERNOS = `${__BASE_DADOS__}/governos/federal.json`;
 const inicial = { mandatos: [], selecionado: null };
 
 const store = writable(inicial);

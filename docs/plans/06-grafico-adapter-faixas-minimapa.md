@@ -374,8 +374,13 @@ export function criarPrimitivaDeFaixas(mandatos, { aoClicar, ultimoDadoPorSerie 
           }
 
           // O RÓTULO é o canal de identificação — texto, nunca cor (§2, §7.3.4).
+          // ⚠ O `clip` não é decorativo: sem ele, um rótulo longo ("FHC II · PSDB") numa faixa
+          // estreita VAZA para a faixa vizinha, e o limiar de 70px não garante o contrário.
           if (largura > 70 * r) {
             context.save();
+            context.beginPath();
+            context.rect(x1, 0, largura, bitmapSize.height);
+            context.clip();
             context.font = `${11 * r}px -apple-system, system-ui, sans-serif`;
             context.fillStyle = 'rgba(255,255,255,0.62)';
             context.textBaseline = 'top';
@@ -428,6 +433,21 @@ git commit -m "feat(chart): faixas de governo como primitiva de pane, sem cor de
 > **A verificação de verdade desta tarefa é visual, na Tarefa 4** — e é a única parte do projeto
 > onde o teste de unidade não alcança. Ao revisar, conferir contra os typings instalados, não
 > contra esta descrição.
+
+> ✅ **Medido em 2026-10-14 — o espaço de coordenadas do `hitTest`, que era a única suposição em
+> aberto.** Os typings só dizem *"Coordinate of mouse event"*, e se fosse **bitmap** o clique
+> erraria por um fator de `devicePixelRatio`. Sonda no navegador
+> (`~/.hermes/cache/scratch/probe-datas/hittest.html`) com cliques reais em posições conhecidas:
+>
+> | offset dentro do gráfico | `hitTest` recebeu — DPR=1 | `hitTest` recebeu — DPR=2 |
+> |---|---|---|
+> | 100 px | `x=99` | `x=99` |
+> | 300 px | `x=299` | `x=299` |
+> | 500 px | `x=499` | `x=499` |
+>
+> **É mídia** (CSS px relativos ao gráfico), **independente do DPR** — o mesmo espaço que
+> `timeToCoordinate()` devolve, que é o que `faixasPx` guarda. `x0 >= f.x1 && x <= f.x2` está no
+> espaço certo.
 
 ---
 

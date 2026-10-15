@@ -32,8 +32,116 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
   let janela = { from: null, to: null, de: null, ate: null };
   let primitiva = null;
   let cortinaAnexada = false;
-  let arrastando = null;
+  let gesto = null;            // { modo: 'mover'|'redimensionar', lado?, agarrePx }
   let pedirRedesenho = null;   // vem do `attached` da cortina — a lib redesenha por aqui
+
+  /**
+   * Os dois gestos da §2, com nome: **mover** a janela inteira e **redimensionar** uma ponta.
+   *
+   * 🔴 MEDIDO (2026-10-15): o gesto era ABSOLUTO — cada `pointermove` re-centrava a janela no
+   * cursor (`from = centro - meia`). Efeito: agarrar a janela e mover o mouse **10px** saltava
+   * ~5 anos (janela de 30 anos, minimapa de 1120px), e como o fim bate no limite do dado, a
+   * janela colapsava na borda — o "zoom numa fatia minúscula" que o usuário relatou. E como
+   * `meia` era constante, as PONTAS não tinham alça nenhuma: não havia como redimensionar.
+   *
+   * Agora o gesto é RELATIVO: guarda-se ONDE o ponteiro agarrou e aplica-se a DIFERENÇA.
+   */
+  const PEGA = 6; // px de tolerância em cada borda, para pegar a ponta
+
+  /**
+   * 🔴 O espaço do PONTEIRO (o container) não é o espaço do GRÁFICO. A lib reserva faixas para
+   * as escalas de preço, então o *pane* é mais estreito que o container — no minimapa, 1010px
+   * contra 1120px. Comparar a borda da janela (espaço do gráfico) com `ev.clientX - r.left`
+   * (espaço do container) erra por esse tanto: 54px, muito além dos 6px de tolerância, e
+   * `ladoPegavel` NUNCA casava — o redimensionar simplesmente não existia.
+   * Medido no DOM a cada gesto (o layout muda): procura-se o canvas cuja largura é a do pane.
+   */
+  function deslocamentoDoPane() {
+    try {
+      const r = container.getBoundingClientRect();
+      const larguraPane = Math.round(chart.panes()[0]?.getWidth?.() ?? r.width);
+      const alvo = [...container.querySelectorAll('canvas')]
+        .find((c) => Math.round(c.getBoundingClientRect().width) === larguraPane);
+      return alvo ? alvo.getBoundingClientRect().left - r.left : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  /** Converte duas bordas em PIXEL (no espaço do minimapa) numa janela ISO, presa ao alcance. */
+  function paraJanela(x1, x2) {
+    const ts = chart.timeScale();
+    const largura = container.clientWidth || 1;
+    // ⚠ O CLAMP é em PIXEL, não em tempo. Comparar `coordinateToTime()` (segundos, ~1,7e9) com
+    //   uma coordenada (pixel, ~800) satura tudo no mesmo valor e devolve `null` sempre — foi o
+    //   que fiz na primeira versão desta função. Segunda vez neste arquivo que unidades
+    //   diferentes se disfarçam; por isso os nomes aqui dizem a unidade.
+    const a = Math.max(0, Math.min(largura, x1));
+    const b = Math.max(0, Math.min(largura, x2));
+    const t1 = ts.coordinateToTime(a);
+    const t2 = ts.coordinateToTime(b);
+    if (t1 == null || t2 == null || t2 <= t1) return null;
+    return { from: paraISO(t1), to: paraISO(t2) };
+  }
+
+  /** Espera `x` no espaço do GRÁFICO (o do pane), não no do container — ver `deslocamentoDoPane`. */
+  function ladoPegavel(x) {
+    const { from, to } = janela;
+    if (from == null || to == null) return null;
+    if (Math.abs(x - from) <= PEGA) return 'esquerda';
+    if (Math.abs(x - to) <= PEGA) return 'direita';
+    return null;
+  }
+
+  /** Recalcula os PIXELS da janela a partir do ISO guardado. É isto que mantém a cortina e o
+   *  arrasto coerentes quando a escala do minimapa muda (`fitContent` no `definirFaixas`). */
+  function ressincronizarPixels() {
+    const ts = chart.timeScale();
+    // ⚠ `timeToCoordinate` quer SEGUNDOS UNIX, não a string ISO que o store guarda.
+    const seg = (iso) => (iso ? Math.floor(Date.parse(`${iso}T00:00:00Z`) / 1000) : null);
+    janela = {
+      ...janela,
+      from: seg(janela.de) == null ? null : ts.timeToCoordinate(seg(janela.de)),
+      to: seg(janela.ate) == null ? null : ts.timeToCoordinate(seg(janela.ate)),
+    };
+    pedirRedesenho?.();
+  }
+
+  function aoPressionar(ev) {
+    const r = container.getBoundingClientRect();
+    // Tudo daqui para baixo é ESPAÇO DO GRÁFICO — a conversão acontece uma vez, aqui.
+    const x = ev.clientX - r.left - deslocamentoDoPane();
+    const lado = ladoPegavel(x);
+    if (lado) {
+      gesto = { modo: 'redimensionar', lado };
+    } else if (x >= (janela.from ?? 0) && x <= (janela.to ?? Infinity)) {
+      // Agarra a janela ONDE ELA ESTÁ. Este número é o que torna o gesto relativo.
+      gesto = { modo: 'mover', agarrePx: x - (janela.from ?? 0) };
+    } else {
+      // Fora da janela: aqui o salto é o esperado — centra no ponto clicado.
+      gesto = { modo: 'mover', agarrePx: ((janela.to ?? 0) - (janela.from ?? 0)) / 2 };
+    }
+    container.setPointerCapture?.(ev.pointerId);
+  }
+
+  function aoMover(ev) {
+    if (!gesto) return;
+    const r = container.getBoundingClientRect();
+    const x = ev.clientX - r.left - deslocamentoDoPane();
+
+    if (gesto.modo === 'redimensionar') {
+      const nova = gesto.lado === 'esquerda'
+        ? paraJanela(x, janela.to)
+        : paraJanela(janela.from, x);
+      if (nova) aoMudarJanela?.(nova);
+      return;
+    }
+    // Mover: desloca a janela pela DIFERENÇA, mantendo a largura.
+    const largura = (janela.to ?? 0) - (janela.from ?? 0);
+    const deslocada = paraJanela(x - gesto.agarrePx, x - gesto.agarrePx + largura);
+    if (deslocada) aoMudarJanela?.(deslocada);
+  }
+  function aoSoltar() { gesto = null; }
 
   // A cortina é uma primitiva de pane, como as faixas — mesmo mecanismo, sem inventar outro.
   const cortina = {
@@ -58,34 +166,14 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
     updateAllViews() {},
     attached({ requestUpdate }) { pedirRedesenho = requestUpdate; },
     detached() { pedirRedesenho = null; },
-    /** Arrastar dentro da janela move; clicar fora centraliza. */
+    /** O cursor diz o que o gesto vai fazer — alça nas pontas, mão no meio (§2). */
     hitTest(x) {
-      return { externalId: x >= (janela.from ?? 0) && x <= (janela.to ?? Infinity) ? 'dentro' : 'fora',
-               zOrder: 'top', cursorStyle: 'grab', hitTestPriority: 0 };
+      const lado = ladoPegavel(x);
+      if (lado) return { externalId: `alca-${lado}`, zOrder: 'top', cursorStyle: 'ew-resize', hitTestPriority: 0 };
+      const dentro = x >= (janela.from ?? 0) && x <= (janela.to ?? Infinity);
+      return { externalId: dentro ? 'dentro' : 'fora', zOrder: 'top', cursorStyle: dentro ? 'grab' : 'pointer', hitTestPriority: 0 };
     },
   };
-
-  function aoPressionar(ev) {
-    const r = container.getBoundingClientRect();
-    const x = ev.clientX - r.left;
-    arrastando = x;
-    container.setPointerCapture?.(ev.pointerId);
-  }
-  function aoMover(ev) {
-    if (arrastando == null) return;
-    const r = container.getBoundingClientRect();
-    const x = ev.clientX - r.left;
-    const ts = chart.timeScale();
-    // A largura da janela, em SEGUNDOS — as duas pontas são tempo, então a subtração é válida.
-    const de = ts.coordinateToTime(janela.from ?? 0);
-    const ate = ts.coordinateToTime(janela.to ?? 0);
-    if (de == null || ate == null) return;
-    const meia = (ate - de) / 2;
-    const centro = ts.coordinateToTime(x);
-    if (centro == null) return;
-    aoMudarJanela?.({ from: paraISO(centro - meia), to: paraISO(centro + meia) });
-  }
-  function aoSoltar() { arrastando = null; }
 
   container.addEventListener('pointerdown', aoPressionar);
   container.addEventListener('pointermove', aoMover);
@@ -111,6 +199,9 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
       for (const p of paraPontosDaBiblioteca(dadosParaAncora)) porTempo.set(p.time, p);
       ancora.setData([...porTempo.values()].sort((a, b) => a.time - b.time));
       chart.timeScale().fitContent();
+      // `fitContent` MUDA A ESCALA — e os pixels da janela guardados antes apontariam para o
+      // lugar errado (a cortina desenharia deslocada e o arrasto partiria de um valor falso).
+      if (janela.de != null) ressincronizarPixels();
 
       // A MESMA primitiva da T2 — sem opção nova.
       primitiva = criarPrimitivaDeFaixas(mandatos, {});
@@ -124,15 +215,11 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
      *  `de`/`ate` em ISO (para o arrasto). Misturar as duas em um nome só foi o que me fez
      *  escrever o bug do `LogicalRange` — os nomes agora dizem a unidade. */
     mostrarJanela({ from, to } = {}) {
-      const ts = chart.timeScale();
-      // ⚠ `timeToCoordinate` quer SEGUNDOS UNIX, não a string ISO que o store guarda.
-      const seg = (iso) => (iso ? Math.floor(Date.parse(`${iso}T00:00:00Z`) / 1000) : null);
-      janela = {
-        de: from, ate: to,
-        from: seg(from) == null ? null : ts.timeToCoordinate(seg(from)),
-        to: seg(to) == null ? null : ts.timeToCoordinate(seg(to)),
-      };
-      pedirRedesenho?.();
+      // Guarda as duas formas de propósito: `from`/`to` em PIXEL (para desenhar a cortina e para
+      // agarrar) e `de`/`ate` em ISO (para o arrasto). Misturar as duas em um nome só foi o que
+      // me fez escrever o bug do `LogicalRange` — os nomes agora dizem a unidade.
+      janela = { ...janela, de: from, ate: to };
+      ressincronizarPixels();
     },
     destruir() {
       container.removeEventListener('pointerdown', aoPressionar);

@@ -88,8 +88,10 @@
   });
 </script>
 
-<!-- O `data-bloco="ficha"` sobrevive à troca (R29) — é o que torna a ordem da §1 conferível por DOM. -->
-<div data-bloco="ficha" class="min-h-0 w-72 shrink-0 overflow-y-auto p-4">
+<!-- O `data-bloco="ficha"` sobrevive à troca (R29) — é o que torna a ordem da §1 conferível por DOM.
+     A largura não é fixa aqui: no desktop é a 3ª coluna (`md:w-72` no invólucro) e no celular é a
+     folha deslizante de largura total; por isso `w-full flex-1` — quem manda é o invólucro (§12.1). -->
+<div data-bloco="ficha" class="min-h-0 w-full flex-1 overflow-y-auto p-4">
   {#if !indicador}
     <p class="text-sm text-slate-500 dark:text-slate-400">
       Escolha um indicador para ver a ficha.

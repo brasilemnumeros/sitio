@@ -8,6 +8,7 @@
   import SeriesLegend from './components/SeriesLegend.svelte';
   import TimeFilters from './components/TimeFilters.svelte';
   import MandateRail from './components/MandateRail.svelte';
+  import ComparisonPanel from './components/ComparisonPanel.svelte';
   import EstadoInicial from './components/EstadoInicial.svelte';
   import Esqueleto from './components/Esqueleto.svelte';
   import ErroTotal from './components/ErroTotal.svelte';
@@ -95,9 +96,8 @@
        Fala só com a `mandateStore`, nunca com o gráfico (§8.1). -->
   <MandateRail />
 
-  <!-- 6 · painel de comparação, SEMPRE visível, largura total (§1) — não é aba.
-       TODO(fatia 09): <ComparisonPanel /> -->
-  <div class="text-sm opacity-50" data-bloco="comparacao">[6 · painel de comparação]</div>
+  <!-- 6 · painel de comparação, SEMPRE visível, largura total (§1) — não é aba. -->
+  <ComparisonPanel />
 
   {#if buscaAberta}
     <!-- A modal traz o próprio overlay (é um <button>, não um <div> — R31) e fecha por ESC

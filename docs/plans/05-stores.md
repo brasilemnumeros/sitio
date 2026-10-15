@@ -452,10 +452,14 @@ it('seleciona e limpa', async () => {
   expect(mandatoSelecionado()).toBeNull();
 });
 
-it('não expõe celulaDe — o Δ é composto pelo componente (R27)', async () => {
-  const m = await import('./mandate.js');
-  expect(m.celulaDe).toBeUndefined();
-  expect(Object.keys(m)).not.toContain('seriesStore');
+it('R27 — não importa series.js, verificado NO FONTE e não por proxy', async () => {
+  // O teste anterior conferia que `celulaDe` não existe e que `seriesStore` não é exportado —
+  // mas um módulo poderia importar series.js SEM exportar nada disso e ainda assim passar.
+  // O R27 proíbe o IMPORT, então é o import que tem de ser travado.
+  const { readFileSync } = await import('node:fs');
+  const fonte = readFileSync(new URL('./mandate.js', import.meta.url), 'utf8');
+  expect(fonte).not.toMatch(/from\s+['"][^'"]*stores\//);   // nenhum store
+  expect(fonte).not.toMatch(/\bseries\.js\b/);              // nem por caminho direto
 });
 ```
 
@@ -569,7 +573,7 @@ export function mandatoSelecionado() {
 #### Passo 3: `stores/axes.js`
 
 ```js
-import { writable, get } from 'svelte/store';
+import { writable } from 'svelte/store';
 import { comparabilidade } from '../domain/scales.js';
 
 const inicial = { atribuicao: {}, avisos: [] };
@@ -619,8 +623,9 @@ const inicial = { from: null, to: null };
 const store = writable(inicial);
 export const viewportStore = { subscribe: store.subscribe };
 
-/** A ÚNICA escrita deste store, e é o adapter (comando) que a chama (§8.1) — nenhum
- * componente lê a janela de volta do gráfico para escrevê-la aqui. */
+/** A única escrita que o ADAPTER chama (§8.1) — nenhum componente lê a janela de volta do
+ * gráfico para escrevê-la aqui. (`resetarJanela` é a outra escrita: as duas são ações nomeadas,
+ * nenhuma é alcançável de fora de `stores/`.) */
 export function definirJanela({ from = null, to = null } = {}) {
   store.set({ from, to });
 }

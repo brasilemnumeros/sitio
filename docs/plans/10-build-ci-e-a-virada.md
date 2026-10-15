@@ -184,7 +184,8 @@ layout: default
 title: Início
 ---
 <div id="app"></div>
-<link rel="stylesheet" href="{{ '/assets/js/app/app.css' | relative_url }}?v={{ site.time | date: '%s' }}">
+<!-- Sem <link> de CSS do app: o main.dist.css (Tailwind sobre o site inteiro, que já
+     varre app/src) é carregado pelo _layouts/default.html — ver R13. -->
 <script type="module" src="{{ '/assets/js/app/app.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
 ```
 
@@ -314,7 +315,8 @@ git commit -m "docs: atribuicao do TradingView Lightweight Charts no rodape e no
 - [ ] O CI roda **testes antes do build** e o pipeline é exatamente o da §10.2.
 - [ ] `_site/` **não contém** `app/` nem `scripts/` — verificado por build local.
 - [ ] `_site/index.html` tem o `<div id="app">` e o bundle; **nenhum CDN de Chart.js**
-      sobrou em `default.html`.
+      sobrou em `default.html`; e **nenhuma referência a `app.css`** (R13).
+- [ ] `_site/` **não contém** `assets/js/app/index.html` (R13: a entrada de build é o JS).
 - [ ] `grep -rn "chart-creator\|multiselect\|decideAxisForNewIndicator" sitio --exclude-dir=node_modules --exclude-dir=_site` → **sem resultado**.
 - [ ] O rodapé traz o link do TradingView e o `NOTICE` existe.
 - [ ] A ordem de deploy foi seguida: `dados` publicou `value` **antes** do push do `sitio`.

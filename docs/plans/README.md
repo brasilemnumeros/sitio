@@ -125,6 +125,23 @@ dois lados. Consequência que os planos assumem: o `indicators.json` **perde `un
 humana de granularidade ("Acumulado 12 meses") **não** é o enum da série (`monthly`) —
 fica, renomeada para `granularityLabel`, porque não é duplicata.
 
+3. **O app não emite CSS próprio.** O `app.css` que a §10.1 menciona é o `main.dist.css`
+   do site re-empacotado pelo Vite ao seguir o `<link>` do `index.html` de dev — não um CSS
+   do app. Com a entrada de build no JS, o build emite **só `app.js`**. Quem estiliza o app
+   é o `main.dist.css` (Tailwind sobre o site inteiro, que já varre `app/src` — é
+   exatamente por isso que a §10.3 exige que `app/src` não seja ignorado, e por isso existe
+   a classe-canário). O `_layouts/default.html` já o carrega. **Registrado como desvio da
+   §10.1**, que lista `app.css` como saída — ver o adendo abaixo.
+
+## Desvios da spec registrados por medição
+
+- **§10.1 (saída do build).** A §10.1 diz "saída com nome fixo: `app.js` e `app.css`". Medido:
+  o app **não tem CSS próprio** — o `app.css` era o Vite empacotando o `<link>` do
+  `index.html` de dev, que aponta para o `main.dist.css` do site. Manter os dois significaria
+  carregar o mesmo CSS duas vezes. **Decisão: o build emite só `app.js`,** e o estilo vem do
+  `main.dist.css` já carregado pelo `_layouts/default.html`. A `§10.1` precisa ser corrigida
+  na spec.
+
 ## Convenções que todos os planos assumem
 
 - **Idioma:** comentários e strings de UI em **português**; nomes de código (funções,

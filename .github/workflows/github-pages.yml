@@ -29,19 +29,39 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # NODE_ENV=development em todo passo npm: garante que as devDependencies
+    # (vitest, vite) sejam instaladas — com NODE_ENV=production o npm as omite.
+    env:
+      NODE_ENV: development
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Checkout
-        uses: actions/checkout@v4
-      - run: npm install
-      - run: npx -y @tailwindcss/cli -i ./assets/css/main.css -o ./assets/css/main.dist.css
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            app/package-lock.json
+
+      # Falhar rápido: as contas que erram calado são testadas antes de gastar o build (§10.7)
+      - name: Testes do app
+        run: npm ci --prefix app && npm test --prefix app
+
+      - name: Build do app (Vite, saída de nome fixo)
+        run: npm ci --prefix app && npm run build --prefix app
+
+      - name: CSS do site (Tailwind CLI, da raiz de sitio/)
+        run: npm ci && npx -y @tailwindcss/cli -i ./assets/css/main.css -o ./assets/css/main.dist.css
+
+      - name: Canário do Tailwind (§10.3)
+        run: bash scripts/checar-canario.sh
+
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
-      - name: Build
+      - name: Build (Jekyll)
         uses: actions/jekyll-build-pages@v1
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

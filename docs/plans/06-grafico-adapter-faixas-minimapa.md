@@ -880,6 +880,96 @@ git commit -m "feat(chart): Chart.svelte liga store e adapter nas duas direcoes,
 
 ---
 
+### Tarefa 5: O eixo duplo (`adapter.js`) — o buraco entre duas fatias
+
+**Arquivos:**
+- Modificar: `sitio/app/src/chart/adapter.js` e `sitio/app/src/components/Chart.svelte`
+
+> 🔴 **Achado da prova visual da T4 (2026-10-14), e é o mais grave da fatia.** Com 10 séries nas
+> escalas reais, **9 ficam esmagadas num amontoado ilegível no fundo** e os rótulos de valor
+> colidem na borda — a captura `01-montado.png` mostra isso sem ambiguidade. Motivo: **o eixo
+> duplo nunca foi implementado por ninguém.**
+>
+> - A **fatia 05** calcula *onde* cada série deve ficar (`axesStore.atribuicao`, com a régua de
+>   amplitude da §5) — e ninguém lê o resultado.
+> - A **fatia 06** desenha tudo com `priceScaleId` padrão (um eixo só).
+> - O **critério de aceite** desta fatia não cobrava o eixo. O plano mencionava "eixo da direita"
+>   de passagem, num comentário do harness, e nunca virou passo.
+>
+> É o mesmo padrão do "a legenda não era de ninguém" (pré-voo da T1): uma promessa da §5 que cai
+> **entre** duas fatias. A diferença é que a legenda eu peguei lendo; esta só apareceu **na tela**.
+
+- [ ] **Passo 1: o adapter passa a honrar a atribuição de eixo**
+
+`adapter.js` — em `definirSeries`, aceitar a atribuição e aplicá-la:
+
+```js
+  /** `atribuicao` vem do `axesStore` (fatia 05) — o ADAPTER não decide eixo, só obedece (§8.1). */
+  function definirSeries(itens, atribuicao = {}) {
+    // … o de sempre …
+      const eixo = atribuicao[item.id] === 'left' ? 'left' : 'right';
+      if (!serie) {
+        serie = chart.addSeries(LineSeries, {
+          color: item.cor,
+          priceScaleId: eixo,        // ← o que faltava
+          title: '', lastValueVisible: true, priceLineVisible: false, lineWidth: 2,
+        });
+        porId.set(item.id, serie);
+      } else {
+        serie.applyOptions({ color: item.cor, priceScaleId: eixo });
+      }
+    // …
+  }
+```
+
+E o gráfico precisa saber que existem **dois** eixos visíveis:
+
+```js
+  const chart = createChart(container, {
+    // …
+    leftPriceScale: { visible: true, borderColor: 'rgba(255,255,255,0.10)' },
+    rightPriceScale: { visible: true, borderColor: 'rgba(255,255,255,0.10)' },
+  });
+```
+
+- [ ] **Passo 2: o componente liga o `axesStore`**
+
+`Chart.svelte` — a terceira assinatura (a atribuição **também** é store → adapter):
+
+```js
+  import { axesStore, recalcularEixos } from '../stores/axes.js';
+  // …
+  const pararEixos = axesStore.subscribe(({ atribuicao }) => {
+    adapter.definirSeries(seriesStoreItens(), atribuicao);   // reaproveita o caminho de séries
+  });
+```
+
+> ⚠️ **A ordem importa:** o eixo é derivado das séries, então `recalcularEixos(seriesOk)` roda
+> **depois** de as séries ficarem `ok`, e antes de o adapter desenhar. Se você virar isso, o
+> eixo fica um passo atrás. **Se a mecânica do store não permitir essa ordem, PARE e me diga** —
+> a saída pode ser o componente compor os dois, e isso é decisão de arquitetura, não de código.
+
+- [ ] **Passo 3: provar na tela (a mesma prova da T4)**
+
+Refazer o harness com 10 séries nas escalas reais e conferir, **na captura**:
+1. As séries de % ficam **legíveis** num eixo, e as de R$/milhões no outro?
+2. Os **dois eixos** aparecem, um de cada lado?
+3. O **aviso de escala** da §5 aparece quando o par é incompatível — e a série **continua** no
+   gráfico (informa, não bloqueia)?
+4. Trocar o eixo pela **legenda** (fatia 07) muda o desenho? *(Se a legenda ainda não existe,
+   registrar como pendência — não inventar.)*
+
+- [ ] **Passo 4: commitar**
+
+```bash
+cd sitio && git add app/src/chart/adapter.js app/src/components/Chart.svelte
+git commit -m "feat(chart): o adapter honra a atribuicao de eixo do store (§5)"
+```
+
+---
+
+## Critérios de aceite da fatia 06
+
 ## Critérios de aceite da fatia 06
 
 - [x] A **§12.2 está fechada** na spec (2026-10-14): a colisão dos rótulos foi **medida com 10 séries**
@@ -898,7 +988,13 @@ git commit -m "feat(chart): Chart.svelte liga store e adapter nas duas direcoes,
 - [ ] **Clique na faixa não move o viewport** — conferido ao vivo, não por inspeção.
 - [ ] Faixas **sem nenhuma cor de partido**; rótulo com `governo · SIGLA` (§2).
 - [ ] Hachura no mandato em curso, **cortando no último dado** e não na data de hoje.
-- [ ] Arrastar/scroll/duplo-clique dão zoom; o minimapa mantém a referência do todo.
+- [ ] Arrastar/scroll dão zoom; **duplo-clique também** (a T4 mediu que não dava); o minimapa
+      mantém a referência do todo.
+- [ ] **O eixo duplo funciona** (§5, Tarefa 5): as séries vão para o lado que o `axesStore`
+      mandou, **os dois eixos aparecem**, e as séries de % ficam **legíveis** na captura — não
+      esmagadas no fundo. Medido: sem isto, 9 de 10 séries ficam ilegíveis.
+- [ ] **A janela inicial é o intervalo COMPLETO**, não o padrão da lib (a T4 mediu que vinha
+      2007–2024). As faixas e o eixo têm de concordar sobre o domínio.
 - [ ] `grep -rn "window\." app/src/chart app/src/components/Chart.svelte` → sem resultado.
 - [ ] Testes puros (`paraPontosDaBiblioteca`, `paraISO`, `faixasVisiveis`, `tomDaFaixa`) passam
       em node, sem DOM.

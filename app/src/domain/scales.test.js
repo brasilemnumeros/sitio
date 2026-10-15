@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { seriesSpan, amplitudeRatio } from './scales.js';
+import { comparabilidade, AMPLITUDE_LIMIT } from './scales.js';
 
 /** Série de fixture: só as amplitudes importam (spec §5, anexo). */
 function serie(id, min, max) {
@@ -42,5 +43,49 @@ describe('amplitudeRatio', () => {
 
   it('duas séries constantes convivem (razão 1)', () => {
     expect(amplitudeRatio({ id: 'a', data: [] }, { id: 'b', data: [] })).toBe(1);
+  });
+});
+
+describe('comparabilidade (§5)', () => {
+  it('o corte é 50', () => {
+    expect(AMPLITUDE_LIMIT).toBe(50);
+  });
+
+  it('convive: razão ≤ 50 não gera aviso', () => {
+    const igpm = serie('igpm-acum-12m', -7.97, 32.0);          // amplitude 39,97
+    const selic = serie('selic-meta-acum-12m', 2.0, 44.22);    // amplitude 42,22
+    const v = comparabilidade(selic, [igpm]);
+    expect(v.veredito).toBe('convive');
+    expect(v.ratio).toBeCloseTo(1.056, 2);
+    expect(v.contra.id).toBe('igpm-acum-12m');
+  });
+
+  it('avisa: razão > 50 aponta a série culpada', () => {
+    const pop = serie('populacao-total-anual', 154524335, 204861525);
+    const selic = serie('selic-meta-acum-12m', 2.0, 44.22);
+    const v = comparabilidade(selic, [pop]);
+    expect(v.veredito).toBe('avisa');
+    expect(v.ratio).toBeGreaterThan(AMPLITUDE_LIMIT);
+    expect(v.contra.id).toBe('populacao-total-anual');
+  });
+
+  it('reporta o PIOR caso entre várias existentes', () => {
+    const igpm = serie('igpm-acum-12m', -7.97, 32.0);          // 39,97
+    const pop = serie('populacao-total-anual', 154524335, 204861525);
+    const v = comparabilidade(serie('selic-meta-acum-12m', 2.0, 44.22), [igpm, pop]);
+    expect(v.contra.id).toBe('populacao-total-anual'); // 1.192.196 > 1,056
+  });
+
+  it('sem existentes, não há com o que comparar', () => {
+    const v = comparabilidade(serie('x', 0, 10), []);
+    expect(v.veredito).toBe('convive');
+    expect(v.contra).toBeNull();
+  });
+
+  it('o insumo é a MAGNITUDE, não unit.type (§5)', () => {
+    // homicidios (number) × pib (percentage) → 1,068 → convive apesar de tipos diferentes
+    const hom = serie('homicidios-anual', 21.22, 31.59);       // 10,37
+    const pib = serie('pib-real-anual', -3.55, 7.53);          // 11,08
+    expect(comparabilidade(hom, [pib]).veredito).toBe('convive');
   });
 });

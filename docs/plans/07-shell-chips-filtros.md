@@ -287,6 +287,11 @@ git commit -m "feat(ui): estados inicial, carregando e erro total, sem vazio sil
   atribuição de eixo), `definirCor`, `restaurarCor`, `removerSerie`, `moverParaEixo`.
 - Produz: a legenda — e **nada mais**. Não conhece a biblioteca de gráficos (§8).
 
+⚠️ **Esta tarefa também unifica o aviso de colisão com os chips (T2).** A T2 mediu que um par
+em colisão emite **duas** mensagens (uma por série, simétricas). Aqui a regra passa a ser **uma
+por par** — e os chips devem consumir a mesma derivação, para as duas superfícies não divergirem.
+Se preferir, extraia a derivação para um helper puro em `domain/color.js` e use nos dois.
+
 **Por que esta tarefa existe:** é o que a §1 chama de canal redundante e a §12.2 mediu como
 necessário. Sem ela, a identificação de uma série depende só da cor — que é justamente o canal
 que falha no daltonismo (§1: os pares `#309aff`/`#9581ff` ficam em ΔE 0,006).
@@ -303,8 +308,18 @@ que falha no daltonismo (§1: os pares `#309aff`/`#9581ff` ficam em ΔE 0,006).
   // funcionando por auto-subscrição.
   const itens = $derived($seriesStore.itens);
   // R25: o aviso mede o PIOR CASO entre as quatro visões, não a visão normal.
+  //
+  // 🔴 UMA linha por PAR, não por série. `avisoDeColisao` é SIMÉTRICO: se cada série avisar
+  // sobre todas as outras, um par em colisão gera DUAS mensagens idênticas trocadas — medido
+  // na T2 (2026-10-15), que tem a mesma forma. Aqui só a série de MAIOR índice fala pelo par,
+  // comparando-se apenas com as ANTERIORES. Resultado: uma mensagem por par, como o desenho
+  // da §1 pede (o aviso é sobre a combinação, não sobre uma das séries).
+  const SEM_COLISAO = { colide: false, distancia: Infinity, contra: -1 };
   const avisos = $derived(
-    itens.map((i) => avisoDeColisao(i.cor, itens.filter((o) => o.id !== i.id).map((o) => o.cor))),
+    itens.map((item, idx) => {
+      const anteriores = itens.slice(0, idx).map((o) => o.cor);
+      return anteriores.length ? avisoDeColisao(item.cor, anteriores) : SEM_COLISAO;
+    }),
   );
 </script>
 

@@ -42,6 +42,11 @@ export function rgbParaOKLab({ r, g, b }) {
   };
 }
 
+/**
+ * OKLab → sRGB. Devolve valores **possivelmente fora de [0,255]** para entradas fora de
+ * gamut (não faz *clamp*: preserva a informação para quem chama). O *clamp* acontece em
+ * `rgbParaHex`, que é o ponto de conversão para texto.
+ */
 export function oklabParaRGB({ L, a, b }) {
   const l = Math.pow(L + 0.3963377774 * a + 0.2158037573 * b, 3);
   const m = Math.pow(L - 0.1055613458 * a - 0.0638541728 * b, 3);
@@ -138,13 +143,21 @@ export const LIMIAR_COLISAO = LIMIAR_ENVELOPE;
 /**
  * Avisa (com a distância medida) quando a cor escolhida pelo usuário colidir com uma
  * série já selecionada — mas NÃO bloqueia (§1).
+ *
+ * **R25 — a distância é o PIOR CASO entre as quatro visões, não a distância em visão
+ * normal.** O limiar é o envelope da paleta, que é um pior-caso; comparar uma distância
+ * de visão normal contra ele é comparar duas medidas diferentes. Medido (2026-10-14):
+ * o par que a §1 cita como o colapso do daltonismo (`#309aff` × `#9581ff`) dista
+ * **0,1114** em visão normal — acima do limiar, então a régua antiga **não avisava** —
+ * e **0,0067** sob deuteranopia. O aviso ficava cego exatamente no risco que o envelope
+ * existe para pegar.
  */
 export function avisoDeColisao(cor, outrasCores) {
   if (outrasCores.length === 0) return { colide: false, distancia: Infinity, contra: -1 };
   let distancia = Infinity;
   let contra = -1;
   outrasCores.forEach((outra, i) => {
-    const d = deltaEOK(hexParaRgb(cor), hexParaRgb(outra));
+    const d = separacaoGlobal([cor, outra]);   // pior caso entre as quatro visões
     if (d < distancia) {
       distancia = d;
       contra = i;

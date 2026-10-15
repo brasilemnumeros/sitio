@@ -550,8 +550,23 @@ Sem fase de convivência (seção 6). O `/` vira o shell do app num commit, e os
 |---|---|---|
 | unidade, `domain/` | escalas (razão de amplitude, corte 50×, sugestão de eixo), mandatos (Δ, cobertura parcial, ponto único, sem cobertura), formatação, e a matemática de cor (OKLab, simulação de daltonismo, aviso de colisão) | **sim** |
 | unidade, `data/` | validação de `schema` (recusar em voz alta), cache, dado malformado | **sim** |
+| integração, `dados/` reais | os 13 arquivos publicados contra o contrato, mais a ausência de mês repetido | **sim** — fatia 11 |
 | componente Svelte | renderização e interação | **não por ora** — são ligação, não regra; custo por linha alto, retorno baixo |
-| ponta a ponta no navegador | clicar, arrastar, ver a faixa | **não por ora** — o encaixe real é coberto pelo build do CI e pela classe-canário (10.3) |
+| ponta a ponta no navegador | clicar, arrastar, ver a faixa | **sim** — reaberta em 2026-10-15 |
+
+**Emenda de 2026-10-15 — a linha E2E foi reaberta.** Esta tabela decidia "não por ora", com o
+argumento de que o encaixe real era coberto pelo build do CI e pela classe-canário (§10.3). O
+argumento estava **errado por medição**: a fatia 07 ficou com a página sem Tailwind, **em
+silêncio**, e nenhum dos dois pegou — só uma captura de tela. O mesmo valeu para o gráfico com
+o eixo duplo ausente (fatia 06) e para o `setVisibleRange` que lançava com o gráfico vazio
+(fatia 07). **Três defeitos de ligação, três vezes nenhum teste acusou**, e em todos os três a
+falha era *silenciosa*: um teste que afirmasse "isto está montado e responde" teria falhado nos
+três. A classe-canário cobre **um** caso (o Tailwind); os outros dois eram invisíveis para ela.
+
+A verificação por captura de tela **continua necessária** — é ela que pega o desenho —, mas
+**não é suficiente**: ela exige que alguém olhe, e nada obriga que alguém olhe. O E2E é o que
+transforma "alguém precisa olhar" em "o CI recusa".
+
 
 **Dois testes travam decisões medidas neste documento:**
 

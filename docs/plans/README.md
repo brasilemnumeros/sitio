@@ -144,8 +144,13 @@ fica, renomeada para `granularityLabel`, porque não é duplicata.
 
 ## Convenções que todos os planos assumem
 
-- **Idioma:** comentários e strings de UI em **português**; nomes de código (funções,
-  tipos, variáveis) em inglês, como o resto do projeto.
+- **Idioma:** comentários e strings de UI em **português**. Nos identificadores: **infra e
+  utilidade em inglês** (`seriesSpan`, `amplitudeRatio`, `loadSeries`, `validateCatalog`) e
+  **vocabulário de domínio em português** (`comparabilidade`, `deltaNoMandato`,
+  `pontosEsperados`, `faixasVisiveis`). Ruling **R24**: a redação anterior — "nomes de código
+  em inglês" — era larga demais para um produto cujo domínio é político-econômico brasileiro;
+  `mandato`, `titular` e `cobertura` não têm equivalente inglês que não seja pior. O revisor da
+  fatia 03 flagrou a divergência, corretamente, e é isto que resolve.
 - **Camadas (§8):** a dependência desce. `components/` → `stores/` → `domain/` →
   `chart/` + `data/` → estático. **Só `chart/` importa a Lightweight Charts.** Só
   `Chart.svelte` fala com `chart/adapter`. `domain/` é puro (sem Svelte, sem DOM, sem

@@ -114,8 +114,17 @@ biblioteca de gráficos (§8). Consome stores (fatia 05) e, no caso do gráfico,
   <div class="text-sm opacity-50" data-bloco="comparacao">[6 · painel de comparação]</div>
 
   {#if buscaAberta}
-    <!-- TODO(fatia 08): <SearchModal aoFechar={...} /> -->
-    <div class="fixed inset-0 bg-black/40" onclick={() => (buscaAberta = false)}></div>
+    <!-- TODO(fatia 08): <SearchModal aoFechar={...} /> — e o overlay abaixo vira parte dela.
+         É um <button>, não um <div>: um <div> com onclick dispara dois avisos de
+         acessibilidade do Svelte (sem handler de teclado, sem role) — medido no dev server
+         em 2026-10-15. O overlay É clicável para fechar, então <button> é o elemento certo
+         e resolve os dois de uma vez, ainda ganhando o foco por teclado. -->
+    <button
+      type="button"
+      class="fixed inset-0 cursor-default border-0 bg-black/40 p-0"
+      aria-label="Fechar a busca"
+      onclick={() => (buscaAberta = false)}
+    ></button>
   {/if}
 </main>
 ```
@@ -378,6 +387,13 @@ git commit -m "feat(shell): legenda das series como canal redundante de identifi
 - [ ] `definirJanela` é a única rota de mudança de janela; nenhum componente toca no
       adapter do gráfico (§8.1).
 - [ ] `grep -rn "window\.\|console\.log" app/src/components` → sem resultado.
+- [ ] **A captura de tela mostra o CSS aplicado** — não basta a ordem do DOM estar certa.
+      O dev server precisa servir `main.dist.css` (sem o middleware em `vite.config.js` o
+      Vite devolve o `index.html` no lugar do CSS e a página fica sem estilo **em silêncio**;
+      medido em 2026-10-15). Conferir na captura: fonte, espaçamento e a barra de busca com
+      borda — não Times New Roman cru.
+- [ ] **Sem aviso de acessibilidade do Svelte** no console do dev server. O overlay da busca
+      é `<button>`, não `<div onclick>`.
 
 ## Auto-revisão
 

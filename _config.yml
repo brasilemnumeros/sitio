@@ -36,5 +36,6 @@ exclude:
   - package.json
   - package-lock.json
   - docs/
+  - app/
 
 google_analytics: G-N4CFQ7CL1S

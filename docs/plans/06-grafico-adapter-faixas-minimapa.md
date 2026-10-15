@@ -653,11 +653,6 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
     },
   };
 
-  function medirJanela() {
-    const ts = chart.timeScale();
-    return { x1: ts.timeToCoordinate(janela.de_iso) ?? null, x2: ts.timeToCoordinate(janela.ate_iso) ?? null };
-  }
-
   function aoPressionar(ev) {
     const r = container.getBoundingClientRect();
     const x = ev.clientX - r.left;

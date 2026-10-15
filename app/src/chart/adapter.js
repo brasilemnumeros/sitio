@@ -22,7 +22,7 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
   const porId = new Map();          // id -> ISeriesApi
 
   // 🔴 `setVisibleRange` e `fitContent` LANÇAM num gráfico sem NENHUMA barra. Medido em
-  // 2026-07-15 (sonda no navegador, os dois builds): `setData([])` e depois `setVisibleRange`
+  // 2026-10-15 (sonda no navegador, os dois builds): `setData([])` e depois `setVisibleRange`
   // dá `Value is null`; com UMA barra já não lança. **Não é o range que importa** — com dado
   // na tela, um range degenerado `{X,X}` é aceito e vira no-op. É a AUSÊNCIA de dado.
   //

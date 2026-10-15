@@ -118,6 +118,37 @@ Registradas aqui apenas para que a ADR não contradiga a spec:
 - **Sem legado.** Nada da camada atual é preservado: sem fase de convivência entre as duas páginas, sem flag de alternância, sem `index.html` carregando dois caminhos. O `/` vira o shell e o legado é apagado. Substitui a restrição nº 1 da D7.
 - **Build e integração:** Vite com fonte em `sitio/app/` e `package.json` próprio; saída em `assets/js/app/` com **nome fixo**, gitignored, construída no CI e cacheada pelo `?v=` do projeto. Tailwind **não precisa de configuração nova** (o v4 varre `.svelte` sozinho) — mas **arquivo no `.gitignore` não é varrido**, e a falha é silenciosa, então o CI ganha uma **checagem de classe-canário** que falha o build. Loop de dev: `vite dev` com fixture. Atribuição do TradingView no **rodapé global** + `NOTICE`.
 
+### Decisões tomadas na execução das fatias 00–06 (2026-10-14/15)
+
+O detalhe canônico continua sendo a spec; isto é o registro do que foi decidido **durante a
+execução** e que ainda não estava em nenhum documento durável. As demais decisões de execução
+já estão consolidadas nas seções acima — nominalmente, não se repetem aqui.
+
+- **Os números de razão publicados na §5 são sobre as fixtures arredondadas** — e é por isso que
+  divergem do medido. `50.337.190 ÷ 42,22 = 1.192.259`, não `1.192.196`: a tabela da §5 é sobre
+  valores com 2 casas, enquanto o corte de escala é calculado sobre os valores crus. Os testes
+  travam o que **as fixtures produzem**, com o plano dizendo por que diverge do publicado.
+  *Custo se errado:* nenhum no código — mas o número da §5 precisa ser lido como arredondado.
+- **O catálogo não valida `unit`.** `sitio/indicators.json` é curadoria de apresentação (a tabela
+  da §6 já diz isso), então a unidade **não** é assunto dele: quem valida é o `validateSeries`, no
+  caminho canônico, e o `validateUnit` fica **estrito** (um `percentage` sem `symbol` é recusado).
+  Uma tentativa de relaxá-lo para acomodar o catálogo foi revertida. *Custo se errado:* duas
+  fontes de verdade para a mesma unidade, que é exatamente o que a §6 proíbe.
+- **O store do mandato não lê o store das séries.** O Δ é `deltaNoMandato(series, mandato)` — uma
+  função pura — e quem compõe os dois é o consumidor (a matriz, na fatia 09). O `mandate.js` não
+  importa `series.js`; a proibição é do **import**, não de um comportamento observável, então o
+  teste a verifica lendo o fonte. *Custo se errado:* a camada de mandato passa a depender de estado
+  de UI, e o Δ deixa de ser reconstruível a partir de dois argumentos.
+- **A unidade vem da SÉRIE, nos dois caminhos de carga.** `adicionarSerie` e `tentarNovamente`
+  gravam `unit: series.unit` — não do registro do catálogo. *Custo se errado:* a **mesma** série
+  aparece com unidades diferentes conforme tenha carregado de primeira ou por retentativa.
+
+> **Nota de rastreabilidade:** as decisões de execução que **não** são de produto — batching de
+> dispatch, escolha de modelo, `NODE_ENV`, `task-brief` e o idioma dos identificadores — não sobem
+> para cá. As que descrevem o **ambiente** desta máquina vivem no `AGENTS.md`, onde quem executa
+> olha primeiro.
+
+
 ## Consequências
 
 **Positivas**

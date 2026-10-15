@@ -4,43 +4,50 @@ import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 
 /**
- * Dev: serve o CSS do site, que mora FORA da raiz do Vite.
+ * Dev: serve os arquivos do SITE que moram fora da raiz do Vite.
  *
- * O `index.html` aponta para `../assets/css/main.dist.css` (o CSS gerado pelo Tailwind CLI
- * a partir de `sitio/`, §10.4). Como esse caminho está fora da raiz do dev server, o Vite
- * **não o serve** — cai no fallback do SPA e devolve o `index.html` com
- * `Content-Type: text/html`. O browser descarta, e a página fica **sem estilo, em silêncio**.
+ * O app roda em `sitio/app/`, mas consome dois arquivos que vivem um nível acima, na raiz
+ * Jekyll: `/assets/css/main.dist.css` (o CSS gerado pelo Tailwind CLI, §10.4) e
+ * `/indicators.json` (o catálogo, `data/catalog.js`). Como esses caminhos estão fora da raiz
+ * do dev server, o Vite **não os serve** — cai no fallback do SPA e devolve o `index.html`
+ * com `Content-Type: text/html`. O browser descarta e a falha é **silenciosa**: a página
+ * fica sem estilo, e o catálogo dá `SchemaError` em vez de 404.
  *
- * Medido em 2026-10-15 durante a fatia 07: a captura de tela da Tarefa 1 saiu com Times New
- * Roman cru. Nenhum teste pega isso (§10.7 — o desenho não tem teste), e o build do CI não
- * pega também, porque lá o CSS é publicado junto. Só a tela pega.
+ * Medido em 2026-10-15 (fatias 07 e 08). Nenhum teste pega (§10.7 — o desenho não tem teste)
+ * e o build do CI também não, porque lá os dois arquivos são publicados no lugar certo.
+ * Só a tela pega.
  *
- * Rebuild do arquivo: `npx -y @tailwindcss/cli -i ./assets/css/main.css -o ./assets/css/main.dist.css`
+ * O Tailwind CLI é rebuildado à parte:
+ *   `npx -y @tailwindcss/cli -i ./assets/css/main.css -o ./assets/css/main.dist.css`
  */
-const cssDoSite = fileURLToPath(new URL('../assets/css/main.dist.css', import.meta.url));
+const ARQUIVOS_DO_SITE = [
+  { rota: '/assets/css/main.dist.css', de: '../assets/css/main.dist.css', tipo: 'text/css; charset=utf-8' },
+  { rota: '/indicators.json',          de: '../indicators.json',          tipo: 'application/json; charset=utf-8' },
+];
 
-function servirCssDoSite() {
+function servirArquivosDoSite() {
   return {
-    name: 'servir-css-do-site',
+    name: 'servir-arquivos-do-site',
     configureServer(server) {
-      server.middlewares.use('/assets/css/main.dist.css', (_req, res) => {
-        if (!existsSync(cssDoSite)) {
-          // Falha em voz alta: sem isto a página aparece sem estilo e ninguém sabe por quê.
-          res.statusCode = 404;
-          res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-          return res.end(
-            'main.dist.css nao existe. Rode o Tailwind CLI — ver AGENTS.md, secao "Dev environment".\n',
-          );
-        }
-        res.setHeader('Content-Type', 'text/css; charset=utf-8');
-        createReadStream(cssDoSite).pipe(res);
-      });
+      for (const { rota, de, tipo } of ARQUIVOS_DO_SITE) {
+        const caminho = fileURLToPath(new URL(de, import.meta.url));
+        server.middlewares.use(rota, (_req, res) => {
+          if (!existsSync(caminho)) {
+            // Falha em voz alta: sem isto a página aparece quebrada e ninguém sabe por quê.
+            res.statusCode = 404;
+            res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+            return res.end(`${de} nao existe. Ver AGENTS.md, secao "Dev environment".\n`);
+          }
+          res.setHeader('Content-Type', tipo);
+          createReadStream(caminho).pipe(res);
+        });
+      }
     },
   };
 }
 
 export default defineConfig({
-  plugins: [servirCssDoSite(), svelte()],
+  plugins: [servirArquivosDoSite(), svelte()],
   build: {
     // Artefato publicado em sitio/assets/js/app/ (gitignored) — §10.1
     outDir: '../assets/js/app',

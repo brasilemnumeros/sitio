@@ -211,6 +211,27 @@ describe('seriesStore', () => {
     expect(get(seriesStore).itens[0].status).toBe('ok');
   });
 
+  it('a retentativa também pega a unidade da SÉRIE, não a do catálogo (§6, R28)', async () => {
+    // O catálogo carrega uma unidade TRANSITÓRIA; quem manda é a série (§6).
+    // As duas unidades são de propósito DIFERENTES — com `entrada()`/`okSerie()` iguais o
+    // teste passaria sem provar nada.
+    const doCatalogo = { type: 'number', symbol: '', decimals: 0 };
+    const daSerie = { type: 'percentage', symbol: '%', decimals: 2 };
+    await adicionarSerie({ ...entrada('b'), unit: doCatalogo }, { fetchImpl: async () => ({ ok: false, status: 500, json: async () => ({}) }) });
+    expect(get(seriesStore).itens[0].unit).toEqual(doCatalogo);   // ainda a do catálogo
+
+    await tentarNovamente('b', { fetchImpl: okSerie('b') });
+    expect(get(seriesStore).itens[0].unit).toEqual(daSerie);      // agora a da SÉRIE
+  });
+
+  it('o override de cor sobrevive à remoção de outra série — a chave é o id (§1)', async () => {
+    await adicionarSerie(entrada('a'), { fetchImpl: okSerie('a') });
+    await adicionarSerie(entrada('b'), { fetchImpl: okSerie('b') });
+    definirCor('b', '#123456');
+    removerSerie('a');                       // 'b' muda de posição (1 → 0)
+    expect(corDe('b')).toBe('#123456');      // sobreviveu: a cor NÃO é por posição
+  });
+
   it('o limite é 10 e o motivo é a PALETA, não o layout (§1, §9.5)', async () => {
     expect(LIMITE_SERIES).toBe(10);
     for (let i = 0; i < 10; i++) await adicionarSerie(entrada(`s${i}`), { fetchImpl: okSerie(`s${i}`) });
@@ -306,7 +327,9 @@ export async function tentarNovamente(id, { fetchImpl } = {}) {
     // inclui a família (`dados/selic/selic-meta-acum-12m.json`), e uma URL adivinhada daria
     // 404 — numa ação cujo propósito é justamente RECUPERAR de uma falha.
     const series = await loadSeries(item.url, { expectedId: id, fetchImpl });
-    escrever((itens) => itens.map((i) => (i.id === id ? { ...i, status: 'ok', series, error: null } : i)));
+    // R28 — a unidade vem da SÉRIE, como no caminho de adicionar (§6). Sem isto, a MESMA série
+    // chegaria com unidade diferente conforme tivesse vindo pelo add ou pela retentativa.
+    escrever((itens) => itens.map((i) => (i.id === id ? { ...i, status: 'ok', series, unit: series.unit, error: null } : i)));
   } catch (error) {
     escrever((itens) => itens.map((i) => (i.id === id ? { ...i, status: 'erro', error: error.message } : i)));
   }
@@ -344,6 +367,12 @@ cd sitio && git add app/src/stores/series.js app/src/stores/series.test.js
 git commit -m "feat(stores): selecao de series, carga por serie e o limite de 10 pela paleta"
 ```
 
+> **R28 — a unidade vem da série, nos dois caminhos.** A versão anterior deste plano fazia
+> `tentarNovamente` gravar só `status`/`series`/`error`, sem `unit` — enquanto `adicionarSerie`
+> grava `unit: series.unit`. Efeito: a **mesma** série ficava com unidade diferente conforme
+> tivesse chegado pelo add ou por uma retentativa, contra o §6. Achado do revisor; a classe do
+> defeito é "dois caminhos para o mesmo estado, e só um faz a coisa toda".
+>
 > **R26 — a URL é guardada, não adivinhada.** A versão anterior deste plano fazia
 > `tentarNovamente` reconstruir a URL a partir do id. Medido: o caminho publicado inclui a
 > **família** (`dados/selic/selic-meta-acum-12m.json`), então a URL adivinhada daria 404 —
@@ -612,6 +641,9 @@ git commit -m "feat(stores): mandato, eixos e janela visivel"
 - [ ] **Limite de 10**: `atingiuLimite()` vira `true` na 10ª, `motivoDoLimite()` cita a
       **paleta**, e a 11ª tentativa **não** remove nem adiciona nada (§9.5).
 - [ ] **Erro por série**: uma série com erro não derruba as outras nem o store (§9.3).
+- [ ] **A unidade da série vence a do catálogo nos DOIS caminhos** — no `adicionarSerie` e na
+      `tentarNovamente` (§6, R28). O teste usa unidades **diferentes** de propósito: com
+      `entrada()` e `okSerie()` idênticos, ele passaria sem provar nada.
 - [ ] **Cor**: padrão vem da paleta por posição, **sem ciclo**; override chaveado pelo
       **id**; `restaurarCor` volta ao padrão (§1).
 - [ ] **`viewport`** só é escrito pela ação que o adapter chama — nenhum componente

@@ -418,10 +418,10 @@ git commit -m "feat(app): carga de serie com cache por URL que nao envenena a no
 - Teste: `sitio/app/src/data/catalog.test.js`
 
 **Interfaces:**
-- Consome: `SchemaError`, `validateUnit` de `./validate.js`.
+- Consome: `SchemaError` de `./validate.js`.
 - Produz:
   - `validateCatalog(raw) -> { groups, indicators }` — cada indicador normalizado para
-    `{id, name, group, datafile, chartType, unit, yAxisTitle}`.
+    `{id, name, group, datafile, chartType, yAxisTitle}`. **Não inclui `unit`** (R16).
   - `loadCatalog({ url = '/indicators.json', fetchImpl } = {}) -> Promise<{groups, indicators}>`
 
 - [ ] **Passo 1: escrever os testes que falham**
@@ -485,10 +485,19 @@ describe('validateCatalog', () => {
     );
   });
 
-  it('aceita indicador SEM unit — o metadado vive no arquivo de série (§6)', () => {
+  it('IGNORA unit — não é assunto do catálogo (§6, R16)', () => {
+    // A unidade vive no ARQUIVO DE SÉRIE. O catálogo é curadoria de apresentação, e o
+    // registro real traz unidades de transição malformadas (`{type:'number', symbol:''}`
+    // sem `decimals`) que não são problema dele.
     const semUnit = { ...catalogoMinimo, indicators: [{ ...catalogoMinimo.indicators[0] }] };
     delete semUnit.indicators[0].unit;
-    expect(validateCatalog(semUnit).indicators[0].unit).toBeNull();
+    expect(validateCatalog(semUnit).indicators[0]).not.toHaveProperty('unit');
+
+    const comUnitEstranho = {
+      ...catalogoMinimo,
+      indicators: [{ ...catalogoMinimo.indicators[0], unit: { type: 'banana', symbol: 42 } }],
+    };
+    expect(validateCatalog(comUnitEstranho).indicators[0]).not.toHaveProperty('unit');
   });
 });
 
@@ -520,7 +529,7 @@ Esperado: FALHA — `Failed to resolve import "./catalog.js"`.
 `sitio/app/src/data/catalog.js`:
 
 ```js
-import { SchemaError, validateUnit } from './validate.js';
+import { SchemaError } from './validate.js';
 
 const CHART_TYPES = new Set(['line', 'bar']);
 
@@ -531,7 +540,6 @@ const CHART_TYPES = new Set(['line', 'bar']);
  * @property {string} group
  * @property {string} datafile
  * @property {'line'|'bar'} chartType
- * @property {import('./validate.js').Unit} unit
  * @property {string|null} yAxisTitle
  */
 
@@ -568,10 +576,8 @@ export function validateCatalog(raw) {
       group: ind.group,
       datafile: ind.datafile,
       chartType: ind.chartType,
-      // A unidade vive no ARQUIVO DE SÉRIE, não aqui (§6) — repetir metadado nos dois
-      // lados é a duplicação que a ADR condena. Aceito se presente só durante a transição
-      // (a fatia 11 remove); a UI lê a unidade da série carregada.
-      unit: ind.unit ? validateUnit(ind.unit, `${where}.unit`) : null,
+      // `unit` NÃO entra (R16): pertence ao arquivo de série (§6). O catálogo não valida
+      // nem carrega esse campo — a UI lê a unidade da série carregada (fatias 05 e 08).
       yAxisTitle: typeof ind.yAxisTitle === 'string' ? ind.yAxisTitle : null,
     };
   });
@@ -618,8 +624,9 @@ git commit -m "feat(app): validacao do catalogo de indicadores contra o arquivo 
       memoriza a falha — a segunda tentativa volta a buscar (§9.3).
 - [ ] `validateCatalog` aceita o **`sitio/indicators.json` real** (13 indicadores, 7
       grupos) — verificado por teste, não por inspeção.
-- [ ] `validateCatalog` **não exige** `unit` no indicador: a unidade vive no arquivo de
-      série (§6) e a UI a lê de lá. Presença só é validada durante a transição.
+- [ ] `validateCatalog` **não toca em `unit`** — nem exige, nem valida, nem devolve. A
+      unidade vive no arquivo de série (§6) e a UI a lê de lá. Um `unit` malformado no
+      registro não faz o catálogo falhar (R16).
 - [ ] Nenhuma dependência de navegador: `npm test` roda com `environment: 'node'`.
 - [ ] Nada em `window`; nenhum `console.log` de debug.
 

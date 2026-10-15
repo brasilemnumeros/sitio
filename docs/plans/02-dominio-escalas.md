@@ -210,13 +210,24 @@ describe('comparabilidade (§5)', () => {
     const igpm = serie('igpm-acum-12m', -7.97, 32.0);          // 39,97
     const pop = serie('populacao-total-anual', 154524335, 204861525);
     const v = comparabilidade(serie('selic-meta-acum-12m', 2.0, 44.22), [igpm, pop]);
-    expect(v.contra.id).toBe('populacao-total-anual'); // 1.192.196 > 1,056
+    expect(v.contra.id).toBe('populacao-total-anual'); // 1.192.259 > 1,056
   });
 
   it('sem existentes, não há com o que comparar', () => {
     const v = comparabilidade(serie('x', 0, 10), []);
     expect(v.veredito).toBe('convive');
     expect(v.contra).toBeNull();
+  });
+
+  it('razão EXATAMENTE 1 ainda aponta a série comparada — `contra` só é null sem existentes', () => {
+    // Duas séries de amplitude idêntica: 10×10. O contrato do typedef diz que `contra` é a
+    // série que produziu a pior razão — não "null quando a razão é 1".
+    const dez = serie('dez', 0, 10);
+    const outraDez = serie('outra-dez', 5, 15);
+    const v = comparabilidade(dez, [outraDez]);
+    expect(v.ratio).toBeCloseTo(1, 9);
+    expect(v.contra).not.toBeNull();
+    expect(v.contra.id).toBe('outra-dez');
   });
 
   it('o insumo é a MAGNITUDE, não unit.type (§5)', () => {
@@ -257,16 +268,24 @@ export const AMPLITUDE_LIMIT = 50;
  * @returns {Veredito}
  */
 export function comparabilidade(novaSerie, seriesExistentes) {
-  let pior = { ratio: 1, contra: null };
+  // `contra` é null SÓ quando não há existentes (é o que o typedef promete). Semear com
+  // `ratio: 1` e comparar com `>` deixava `contra` null no caso de razão EXATAMENTE 1
+  // (duas séries de amplitude idêntica) — contrato violado, e a fatia 08 leria isso como
+  // "nada a comparar" num caso em que há. Por isso a primeira existente sempre entra.
+  let piorRatio = 1;
+  let contra = null;
   for (const existente of seriesExistentes) {
     const ratio = amplitudeRatio(novaSerie, existente);
-    if (ratio > pior.ratio) pior = { ratio, contra: existente };
+    if (contra === null || ratio > piorRatio) {
+      piorRatio = ratio;
+      contra = existente;
+    }
   }
-  return {
-    veredito: pior.ratio > AMPLITUDE_LIMIT ? 'avisa' : 'convive',
-    ratio: pior.ratio,
-    contra: pior.contra,
-  };
+  const veredito =
+    piorRatio > AMPLITUDE_LIMIT_ILEGIVEL ? 'ilegivel'
+    : piorRatio > AMPLITUDE_LIMIT ? 'avisa'
+    : 'convive';
+  return { veredito, ratio: piorRatio, contra };
 }
 ```
 
@@ -332,13 +351,28 @@ describe('o caso patológico (§5, decidido por medição em 2026-10-14)', () =>
     expect(AMPLITUDE_LIMIT_ILEGIVEL).toBe(1_000_000);
   });
 
-  it('populacao-total × populacao-variacao (20.921.102×) é ILEGÍVEL', () => {
+  it('nas FRONTEIRAS vale o `>` estrito: 50 convive, 1.000.000 avisa', () => {
+    const um = serie('um', 0, 1);
+    expect(comparabilidade(serie('cinquenta', 0, 50), [um]).veredito).toBe('convive');
+    expect(comparabilidade(serie('um-milhao', 0, 1_000_000), [um]).veredito).toBe('avisa');
+  });
+
+  it('série de amplitude ZERO é ilegível contra uma série real — a razão é indefinida', () => {
+    // Uma série constante (ou de um ponto só) tem span 0. Contra uma série real a razão é
+    // `Infinity`, e a comparação não significa nada — é o veredito mais forte.
+    const plana = serie('plana', 5, 5);
+    expect(comparabilidade(plana, [serie('real', 0, 10)]).veredito).toBe('ilegivel');
+    // Duas planas convivem: as duas são retas na mesma escala.
+    expect(comparabilidade(plana, [serie('plana2', 7, 7)]).veredito).toBe('convive');
+  });
+
+  it('populacao-total × populacao-variacao (20.886.801×) é ILEGÍVEL', () => {
     const pop = serie('populacao-total-anual', 154524335, 204861525);      // 50.337.190
     const var_ = serie('populacao-variacao-anual', -0.35, 2.06);           // 2,41
     expect(comparabilidade(pop, [var_]).veredito).toBe('ilegivel');
   });
 
-  it('caged × selic-meta (≈657.647×) ainda AVISA — não é patológico', () => {
+  it('caged × selic-meta (657.681×) ainda AVISA — não é patológico', () => {
     const caged = serie('caged-total-mensal', 20937049, 48704360);          // 27.767.311
     const selic = serie('selic-meta-acum-12m', 2.0, 44.22);                 // 42,22
     expect(comparabilidade(caged, [selic]).veredito).toBe('avisa');
@@ -387,8 +421,14 @@ git commit -m "feat(domain): limiar do caso patologico de escala, decidido por m
 
 ## Critérios de aceite da fatia 02
 
-- [ ] `npm test` → verdes, incluindo os dois números medidos sobre as fixtures (`1,056`
-      convive; `1.192.259` avisa — a §5 publica `1.192.196` porque mediu valores crus).
+- [ ] `npm test` → verdes, incluindo os números medidos sobre as fixtures: `1,056` convive ·
+      `5.258` avisa · **`1.192.259` é `ilegivel`** (cai acima do limiar de 1.000.000) ·
+      `20.886.801` é `ilegivel`. A §5 publica `1.192.196` e `20.921.102` porque mediu os
+      valores **crus**; as fixtures do teste usam amplitudes arredondadas.
+- [ ] **`contra` nunca é `null` havendo séries existentes** — inclusive com razão exatamente 1.
+- [ ] As **fronteiras** valem o `>` estrito: 50× convive, 1.000.000× avisa.
+- [ ] Série de **amplitude zero** contra série real é `ilegivel` (razão indefinida), e duas
+      de amplitude zero convivem.
 - [ ] `amplitudeRatio` é **simétrica** e independe de `unit.type`.
 - [ ] `comparabilidade` devolve `convive` com **zero** séries existentes (não lança).
 - [ ] O corte de 50 está numa constante nomeada, não hardcoded no meio da função.

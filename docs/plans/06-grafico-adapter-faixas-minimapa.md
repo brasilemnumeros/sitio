@@ -959,11 +959,58 @@ Refazer o harness com 10 séries nas escalas reais e conferir, **na captura**:
 4. Trocar o eixo pela **legenda** (fatia 07) muda o desenho? *(Se a legenda ainda não existe,
    registrar como pendência — não inventar.)*
 
-- [ ] **Passo 4: commitar**
+- [ ] **Passo 3.5: os dois achados da T4 que caem aqui (mesmos arquivos)**
+
+**(a) A janela inicial é o intervalo COMPLETO, não o padrão da lib.** Medido na T4: o gráfico
+abria em 2007–2024 enquanto as faixas cobrem 1995–2025 — as faixas e o eixo **discordavam sobre o
+domínio**, e as faixas mais antigas ficavam comprimidas na borda. Uma linha resolve, **depois** do
+primeiro lote de séries entrar:
+
+```js
+  // No adapter, ao fim da PRIMEIRA carga de séries: o app abre no todo, não no default da lib.
+  let jaAjustou = false;
+  function definirSeries(itens, atribuicao = {}) {
+    // … o de sempre …
+    if (!jaAjustou && porId.size > 0) { chart.timeScale().fitContent(); jaAjustou = true; }
+  }
+```
+
+**(b) Duplo-clique dá zoom.** Medido na T4: **não dava** — só scroll e arraste. A §2 lista os três
+gestos, e "um clique, um efeito" (selecionar) já está resolvido; o duplo-clique é o terceiro.
+A lib expõe `subscribeDblClick`:
+
+```js
+  // §2: zoom é gesto separado e explícito — arrastar, scroll E duplo-clique.
+  chart.subscribeDblClick(({ point }) => {
+    if (!point) return;
+    const ts = chart.timeScale();
+    const r = ts.getVisibleRange();
+    if (!r) return;
+    const t0 = ts.coordinateToTime(point.x);
+    if (t0 == null) return;
+    // Aproxima para metade da janela, centrado onde o usuário clicou.
+    const meia = (r.to - r.from) / 4;
+    ts.setVisibleRange({ from: t0 - meia, to: t0 + meia });
+  });
+```
+
+> ⚠️ Conferir `subscribeDblClick` nos typings antes de escrever — e o formato do `param`
+> (`{point: {x, y}, time}`). Se a assinatura não for essa, **PARE e me diga**.
+
+- [ ] **Passo 4: provar na tela, como na T4**
+
+Refazer o harness (ele foi apagado — *mockup não é documentação*) e conferir **na captura**:
+1. **O eixo duplo:** as séries de % legíveis num lado, as de R$/milhões no outro — **não** o
+   amontoado de antes. Esta é a captura que importa.
+2. A janela inicial é o **intervalo completo**, e as faixas concordam com o eixo.
+3. **Duplo-clique dá zoom**; clicar na faixa **seleciona sem mexer no zoom**.
+4. Nada em `window`.
+
+- [ ] **Passo 5: commitar**
 
 ```bash
 cd sitio && git add app/src/chart/adapter.js app/src/components/Chart.svelte
-git commit -m "feat(chart): o adapter honra a atribuicao de eixo do store (§5)"
+git commit -m "feat(chart): o adapter honra a atribuicao de eixo (§5), abre no todo e o duplo-clique da zoom"
 ```
 
 ---

@@ -216,13 +216,35 @@ exclude:
   - scripts/        # ← novo: o canário não é publicado
 ```
 
-- [ ] **Passo 4: verificar com um build local**
+- [ ] **Passo 4: verificar a exclusão — sem depender do render do Jekyll**
 
-Run: `cd sitio && npx -y @tailwindcss/cli -i ./assets/css/main.css -o ./assets/css/main.dist.css && bundle exec jekyll build`
+⚠️ **Medido na execução da fatia 00: o `bundle exec jekyll build` NÃO renderiza nesta
+máquina.** Duas causas pré-existentes e alheias ao projeto: `Could not find 'bundler'
+(2.7.1)` (o Ruby 2.6 do sistema não o tem) e, pelo jekyll instalado em `~/.gem`,
+`Could not find 'em-websocket' (~> 0.5)`. **Não gaste tempo tentando fazer o render
+terminar** — foi o que queimou 15 minutos de um subagente.
 
-**Esperado:** `_site/` **sem** `_site/app/` e **sem** `_site/scripts/`; `_site/index.html`
-com o `<div id="app">` e o `<script type="module">`. Se `_site/app/` existir, o exclude
-não pegou — corrigir antes de seguir.
+A prova que **funciona e é honesta** é carregar o **`Jekyll::EntryFilter` real** (a classe
+que aplica o `exclude:`) com um stub de logger e conferir caminho a caminho:
+
+```bash
+ruby -e '
+require "jekyll"
+config = Jekyll.configuration({"source" => ".", "destination" => "_site", "quiet" => true})
+filter = Jekyll::EntryFilter.new(config)
+%w[app/index.html app/package.json app/vite.config.js app/src/main.js scripts/checar-canario.sh
+   assets/js/app/app.js index.html _layouts/default.html indicators.json].each do |p|
+  puts format("%-45s excluded=%s", p, filter.excluded?(p))
+end'
+```
+
+**Esperado:** tudo sob `app/` e `scripts/` → `excluded=true`; `assets/js/app/app.js`,
+`index.html`, `_layouts/default.html` e `indicators.json` → `excluded=false`. **Se
+`assets/js/app/app.js` aparecer excluído, o padrão está largo demais** — o app não seria
+publicado.
+
+*(Se, por acaso, o render completo rodar na sua máquina, rode-o e confirme `_site/app/`
+ausente — mas ele não é o critério.)*
 
 - [ ] **Passo 5: commitar**
 

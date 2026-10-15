@@ -44,7 +44,10 @@ export async function tentarNovamente(id, { fetchImpl } = {}) {
     // inclui a família (`dados/selic/selic-meta-acum-12m.json`), e uma URL adivinhada daria
     // 404 — numa ação cujo propósito é justamente RECUPERAR de uma falha.
     const series = await loadSeries(item.url, { expectedId: id, fetchImpl });
-    escrever((itens) => itens.map((i) => (i.id === id ? { ...i, status: 'ok', series, error: null } : i)));
+    // A unidade vem da SÉRIE, não do catálogo (§6) — igual ao caminho de `adicionarSerie`.
+    // Sem isto, a MESMA série ficaria com unidade diferente conforme tivesse vindo pelo
+    // add ou pela retentativa (R28).
+    escrever((itens) => itens.map((i) => (i.id === id ? { ...i, status: 'ok', series, unit: series.unit, error: null } : i)));
   } catch (error) {
     escrever((itens) => itens.map((i) => (i.id === id ? { ...i, status: 'erro', error: error.message } : i)));
   }

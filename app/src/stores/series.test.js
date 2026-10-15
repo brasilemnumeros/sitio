@@ -4,6 +4,7 @@ import {
   LIMITE_SERIES, seriesStore, adicionarSerie, removerSerie, tentarNovamente,
   atingiuLimite, motivoDoLimite, corDe, definirCor, restaurarCor, limparSeries,
 } from './series.js';
+import { clearSeriesCache } from '../data/series.js';
 import { PALETA_PADRAO } from '../domain/color.js';
 
 const entrada = (id) => ({ id, name: `Indicador ${id}`, datafile: `https://x/${id}.json`, unit: { type: 'percentage', symbol: '%', decimals: 2 } });
@@ -12,7 +13,9 @@ const okSerie = (id) => async () => ({
   json: async () => ({ schema: 1, id, unit: { type: 'percentage', symbol: '%', decimals: 2 }, granularity: 'monthly', source: 'fonte', data: [{ date: '2020-01-01', value: 1 }] }),
 });
 
-beforeEach(() => limparSeries());
+// O cache de `loadSeries` é por URL e vive no módulo — sem zerá-lo, um sucesso de um teste
+// vaza para o próximo (o R28 usa a MESMA url do R26) e o teste deixa de provar o que diz.
+beforeEach(() => { limparSeries(); clearSeriesCache(); });
 
 describe('seriesStore', () => {
   it('adiciona e carrega, com status por série (§9.2)', async () => {
@@ -39,6 +42,27 @@ describe('seriesStore', () => {
     await tentarNovamente('b', { fetchImpl: espiao });
     expect(espiao).toHaveBeenCalledWith('https://x/b.json');
     expect(get(seriesStore).itens[0].status).toBe('ok');
+  });
+
+  it('a retentativa também pega a unidade da SÉRIE, não a do catálogo (§6, R28)', async () => {
+    // O catálogo carrega uma unidade TRANSITÓRIA; quem manda é a série (§6).
+    // As duas unidades são de propósito DIFERENTES — com `entrada()`/`okSerie()` iguais o
+    // teste passaria sem provar nada.
+    const doCatalogo = { type: 'number', symbol: '', decimals: 0 };
+    const daSerie = { type: 'percentage', symbol: '%', decimals: 2 };
+    await adicionarSerie({ ...entrada('b'), unit: doCatalogo }, { fetchImpl: async () => ({ ok: false, status: 500, json: async () => ({}) }) });
+    expect(get(seriesStore).itens[0].unit).toEqual(doCatalogo);   // ainda a do catálogo
+
+    await tentarNovamente('b', { fetchImpl: okSerie('b') });
+    expect(get(seriesStore).itens[0].unit).toEqual(daSerie);      // agora a da SÉRIE
+  });
+
+  it('o override de cor sobrevive à remoção de outra série — a chave é o id (§1)', async () => {
+    await adicionarSerie(entrada('a'), { fetchImpl: okSerie('a') });
+    await adicionarSerie(entrada('b'), { fetchImpl: okSerie('b') });
+    definirCor('b', '#123456');
+    removerSerie('a');                       // 'b' muda de posição (1 → 0)
+    expect(corDe('b')).toBe('#123456');      // sobreviveu: a cor NÃO é por posição
   });
 
   it('o limite é 10 e o motivo é a PALETA, não o layout (§1, §9.5)', async () => {

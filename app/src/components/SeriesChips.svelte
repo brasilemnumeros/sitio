@@ -14,7 +14,7 @@
     restaurarCor,
     motivoDoLimite,
   } from '../stores/series.js';
-  import { avisoDeColisao } from '../domain/color.js';
+  import { avisosDeColisao } from '../domain/color.js';
 
   let itens = $derived($seriesStore.itens);
 
@@ -24,18 +24,13 @@
     $seriesStore.itens.length >= LIMITE_SERIES ? motivoDoLimite() : null,
   );
 
-  // O aviso de colisão é DERIVADO das cores atuais (§1): confere e avisa, com a
-  // distância medida, mas NUNCA bloqueia — a série continua no gráfico.
+  // O aviso de colisão é DERIVADO das cores atuais (§1) e usa a MESMA derivação da legenda
+  // (`avisosDeColisao`, §12.2), para as duas superfícies não divergirem. O helper atribui o
+  // aviso à série de MAIOR índice e compara só com as anteriores — UMA mensagem por PAR (T2),
+  // não duas simétricas. Aqui só se resolve o índice `contra` de volta para a série.
   let avisos = $derived(
-    itens
-      .map((item) => {
-        const outras = itens.filter((i) => i.id !== item.id);
-        const aviso = avisoDeColisao(
-          item.cor,
-          outras.map((i) => i.cor),
-        );
-        return { item, aviso, contra: outras[aviso.contra] ?? null };
-      })
+    avisosDeColisao(itens)
+      .map((aviso, i) => ({ item: itens[i], aviso, contra: itens[aviso.contra] ?? null }))
       .filter((a) => a.aviso.colide),
   );
 

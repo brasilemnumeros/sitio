@@ -5,6 +5,7 @@
   import { carregarMandatos } from './stores/mandate.js';
   import Chart from './components/Chart.svelte';
   import SeriesChips from './components/SeriesChips.svelte';
+  import SeriesLegend from './components/SeriesLegend.svelte';
   import TimeFilters from './components/TimeFilters.svelte';
   import EstadoInicial from './components/EstadoInicial.svelte';
   import Esqueleto from './components/Esqueleto.svelte';
@@ -82,8 +83,7 @@
     <Esqueleto />
   {:else}
     <Chart />
-    <!-- TODO(T5): <SeriesLegend /> -->
-    <div class="text-sm opacity-50" data-bloco="legenda">[3 · legenda das séries]</div>
+    <SeriesLegend />
   {/if}
 
   <!-- 4 · filtros de tempo — controle do gráfico, escreve no store `viewport` (§8.1). -->

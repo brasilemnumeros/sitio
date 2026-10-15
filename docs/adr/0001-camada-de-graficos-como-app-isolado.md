@@ -226,6 +226,34 @@ já estão consolidadas nas seções acima — nominalmente, não se repetem aqu
   caso (o Tailwind) e é cega para os outros dois. Captura continua necessária (é ela que vê o
   desenho) mas **exige que alguém olhe**; o E2E é o que faz o CI recusar sozinho.
 
+### O gesto do minimapa (2026-10-15)
+
+- **O arrasto era ABSOLUTO, e as pontas não tinham alça.** Cada `pointermove` re-centrava a
+  janela no cursor (`from = centro - meia`), então **10px de mouse saltavam ~5 anos** — e com a
+  ponta batendo no limite do dado a janela colapsava na borda: o "zoom numa fatia mínima"
+  relatado pelo usuário. E como `meia` era constante, **redimensionar não existia**. Corrigido
+  em `chart/navigator.js`: o gesto passou a ser **relativo** (guarda onde o ponteiro agarrou e
+  aplica a diferença) e as pontas ganharam alça com 6px de tolerância e cursor `ew-resize`.
+  Medido depois: mover 120px desloca ~2,9 anos **mantendo a largura**; agarrar a borda esquerda
+  move **só** `from` com `to` parado.
+- **Dois erros meus no caminho, os dois de UNIDADE** — e é a segunda vez que este arquivo cobra
+  isso (o comentário do `mostrarJanela` já avisava). Primeiro comparei **segundos com pixels** no
+  clamp (`coordinateToTime` devolve ~1,7e9; a coordenada é ~800) e a função passou a devolver
+  `null` **sempre**. Depois confundi o **espaço do container com o do gráfico**: a lib reserva
+  faixa para as escalas de preço, então o pane tem 1010px onde o container tem 1120 — **54px de
+  erro** contra 6px de tolerância, e a alça nunca era encontrada. A conversão agora acontece
+  **uma vez**, na entrada do gesto, e os nomes dizem a unidade.
+- **🔴 O gesto do minimapa NÃO tem teste, e isto está registrado no arquivo.** Três testes E2E
+  foram escritos e ficaram `fixme` (`app/e2e/minimapa.spec.js`): rodando só aquela spec, em três
+  execuções seguidas falharam **3/3, 1/3 e 2/3**, e as falhas migram entre os testes — logo não é
+  o gesto. Cinco abordagens foram tentadas e descartadas (esperar por estado, assentamento,
+  achar a alça pelo cursor — esta ficou —, `scrollIntoView`, repetir o gesto 4×). **Hipótese
+  aberta e não confirmada:** `adapter.js:79` — `setVisibleRange` dispara o mesmo callback que
+  escreve na store, então a escrita programática **volta** com o valor que o gráfico aplicou. Uma
+  guarda de eco foi tentada e **piorou** (5 falhas em vez de 2); revertida. Enquanto isto não
+  fechar, a verificação do minimapa é captura de tela — o que é precisamente o que a §10.7
+  reabriu para não depender.
+
 
 
 

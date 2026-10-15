@@ -200,9 +200,14 @@ describe('seriesStore', () => {
     expect(itens[1].error).toMatch(/HTTP 500/);
   });
 
-  it('tentar de novo recupera a série que falhou', async () => {
+  it('tentar de novo recupera a série que falhou — NA URL ORIGINAL (R26)', async () => {
     await adicionarSerie(entrada('b'), { fetchImpl: async () => ({ ok: false, status: 500, json: async () => ({}) }) });
-    await tentarNovamente('b', { fetchImpl: okSerie('b') });
+    expect(get(seriesStore).itens[0].url).toBe('https://x/b.json'); // a url fica guardada
+
+    // O fetch espia o argumento: a retentativa NÃO pode adivinhar o caminho a partir do id.
+    const espiao = vi.fn(okSerie('b'));
+    await tentarNovamente('b', { fetchImpl: espiao });
+    expect(espiao).toHaveBeenCalledWith('https://x/b.json');
     expect(get(seriesStore).itens[0].status).toBe('ok');
   });
 
@@ -278,7 +283,7 @@ function reindexarCores(itens) {
 export async function adicionarSerie(entry, { fetchImpl } = {}) {
   if (get(seriesStore).itens.some((i) => i.id === entry.id)) return;
   if (atingiuLimite()) return; // visível e desabilitado na UI; nada é removido (§9.5)
-  escrever((itens) => reindexarCores([...itens, { id: entry.id, name: entry.name, unit: entry.unit ?? null, cor: null, corPessoal: false, status: 'carregando', series: null, error: null }]));
+  escrever((itens) => reindexarCores([...itens, { id: entry.id, name: entry.name, url: entry.datafile, unit: entry.unit ?? null, cor: null, corPessoal: false, status: 'carregando', series: null, error: null }]));
   try {
     const series = await loadSeries(entry.datafile, { expectedId: entry.id, fetchImpl });
     // A unidade vem da SÉRIE, não do catálogo (§6) — o catálogo só a tem durante a transição.
@@ -297,8 +302,10 @@ export async function tentarNovamente(id, { fetchImpl } = {}) {
   if (!item) return;
   escrever((itens) => itens.map((i) => (i.id === id ? { ...i, status: 'carregando', error: null } : i)));
   try {
-    const url = item.url ?? `https://brasilemnumeros.github.io/dados/${item.id}.json`;
-    const series = await loadSeries(url, { expectedId: id, fetchImpl });
+    // A URL REAL, guardada ao adicionar. NÃO reconstruir a partir do id: o caminho publicado
+    // inclui a família (`dados/selic/selic-meta-acum-12m.json`), e uma URL adivinhada daria
+    // 404 — numa ação cujo propósito é justamente RECUPERAR de uma falha.
+    const series = await loadSeries(item.url, { expectedId: id, fetchImpl });
     escrever((itens) => itens.map((i) => (i.id === id ? { ...i, status: 'ok', series, error: null } : i)));
   } catch (error) {
     escrever((itens) => itens.map((i) => (i.id === id ? { ...i, status: 'erro', error: error.message } : i)));
@@ -337,9 +344,12 @@ cd sitio && git add app/src/stores/series.js app/src/stores/series.test.js
 git commit -m "feat(stores): selecao de series, carga por serie e o limite de 10 pela paleta"
 ```
 
-> **Nota de dívida assumida:** `tentarNovamente` reconstrói a URL a partir do id quando
-> não a guardou. Guardar `url` no item ao adicionar é o certo — fazer isso antes de
-> fechar a fatia (o teste não cobre, é revisão).
+> **R26 — a URL é guardada, não adivinhada.** A versão anterior deste plano fazia
+> `tentarNovamente` reconstruir a URL a partir do id. Medido: o caminho publicado inclui a
+> **família** (`dados/selic/selic-meta-acum-12m.json`), então a URL adivinhada daria 404 —
+> numa ação cujo propósito é **recuperar de uma falha**. O item passa a guardar
+> `url: entry.datafile`, e o teste abaixo **espia a URL que o `fetchImpl` recebeu** (o teste
+> antigo não pegava isso: o falso `fetchImpl` ignorava o argumento).
 
 ---
 
@@ -351,47 +361,248 @@ git commit -m "feat(stores): selecao de series, carga por serie e o limite de 10
 - Teste: `sitio/app/src/stores/mandate.test.js`, `sitio/app/src/stores/axes.test.js`,
   `sitio/app/src/stores/viewport.test.js`
 
-**Interfaces:**
-- Consome: `comparabilidade` (fatia 02), `deltaNoMandato`/`ordenarMandatos` (fatia 03).
+**Interfaces (conferidas contra o código das fatias 02 e 03 — não são suposição):**
+- Consome: `comparabilidade(novaSerie, seriesExistentes) -> {veredito: 'convive'|'avisa'|'ilegivel', ratio, contra}`
+  (fatia 02, `scales.js:60`) · `ordenarMandatos(mandatos)` (fatia 03, `mandates.js:101` —
+  ordena por `inicio` crescente, com `emCurso` **por último**) · `deltaNoMandato(series, mandato)`
+  (fatia 03, `mandates.js:56`) — **não** é reexportado por store nenhum.
 - Produz:
   - `mandateStore` — `{mandatos: Mandato[], selecionado: string|null}`;
-    `carregarMandatos({fetchImpl})`, `selecionarMandato(id)`, `limparSelecao()`,
-    `mandatoSelecionado()`, `celulaDe(seriesId)` → o Δ da série selecionada no mandato
-    selecionado.
-  - `axesStore` — `{atribuicao: Record<string,'left'|'right'>, avisos: Veredito[]}`;
+    `carregarMandatos({url, fetchImpl})`, `selecionarMandato(id)`, `limparSelecao()`,
+    `mandatoSelecionado()`.
+  - `axesStore` — `{atribuicao: Record<string,'left'|'right'>, avisos: Array}`;
     `recalcularEixos(seriesList)`, `moverParaEixo(id, 'left'|'right')`.
   - `viewportStore` — `{from: string|null, to: string|null}`; `definirJanela({from,to})`,
     `resetarJanela()`. **Este é o callback do adapter** (§8.1).
 
-- [ ] **Passo 1: testes (resumo do essencial)**
+> **R27 — o store do mandato não lê o store das séries.** A versão anterior deste plano expunha
+> `celulaDe(seriesId)`, que obrigaria `mandate.js` a importar `series.js` para achar a série —
+> dois stores acoplados, e a mesma pergunta ("qual o Δ desta série neste mandato?" ) respondida em
+> dois lugares. **O Δ é `deltaNoMandato(series, mandato)` composto pelo componente**, que já lê os
+> dois stores. Um store, um assunto.
+
+#### Passo 1: os testes
 
 ```js
-// mandate.test.js — o essencial
-it('seleciona, agrega por titular e limpa', ...);
-it('celulaDe devolve o Δ da série no mandato selecionado', ...);
+// Crie: sitio/app/src/stores/mandate.test.js
+import { get } from 'svelte/store';
+import {
+  mandateStore, carregarMandatos, selecionarMandato, limparSelecao, mandatoSelecionado,
+} from './mandate.js';
 
-// axes.test.js — o essencial
-it('sugere um eixo só quando tudo convive (§5)', ...);
-it('gera aviso para a série incompatível, apontando a culpada', ...);
-it('moverParaEixo move uma série para a direita', ...);
-it('mais de dois eixos não existe — só left/right', ...);
+const GOVERNOS = {
+  schema: 1,
+  mandatos: [
+    { id: 'lula-3', titular: 'Lula', inicio: '2023-01-01', fim: null, emCurso: true },
+    { id: 'bolsonaro', titular: 'Bolsonaro', inicio: '2019-01-01', fim: '2022-12-31', emCurso: false },
+    { id: 'lula-1', titular: 'Lula', inicio: '2003-01-01', fim: '2005-12-31', emCurso: false },
+  ],
+};
+const okGovernos = async () => ({ ok: true, status: 200, json: async () => GOVERNOS });
 
-// viewport.test.js — o essencial
-it('definirJanela é a única escrita e vem do adapter (§8.1)', ...);
-it('resetarJanela volta ao intervalo completo', ...);
+it('carrega ordenado (em curso por último) e começa SEM seleção', async () => {
+  await carregarMandatos({ fetchImpl: okGovernos });
+  const { mandatos, selecionado } = get(mandateStore);
+  expect(mandatos.map((m) => m.id)).toEqual(['lula-1', 'bolsonaro', 'lula-3']);
+  expect(selecionado).toBeNull();
+});
+
+it('governos fora do ar NÃO derrubam o app — o store só fica vazio', async () => {
+  // O mandato é CONTEXTO: o eixo do tempo não depende dele (§9.3, espírito).
+  await carregarMandatos({ fetchImpl: async () => { throw new Error('rede'); } });
+  expect(get(mandateStore)).toEqual({ mandatos: [], selecionado: null });
+  await carregarMandatos({ fetchImpl: async () => ({ ok: false, status: 500, json: async () => ({}) }) });
+  expect(get(mandateStore)).toEqual({ mandatos: [], selecionado: null });
+});
+
+it('seleciona e limpa', async () => {
+  await carregarMandatos({ fetchImpl: okGovernos });
+  selecionarMandato('bolsonaro');
+  expect(mandatoSelecionado().id).toBe('bolsonaro');
+  limparSelecao();
+  expect(mandatoSelecionado()).toBeNull();
+});
+
+it('não expõe celulaDe — o Δ é composto pelo componente (R27)', async () => {
+  const m = await import('./mandate.js');
+  expect(m.celulaDe).toBeUndefined();
+  expect(Object.keys(m)).not.toContain('seriesStore');
+});
 ```
 
-- [ ] **Passo 2–4:** implementar cada store no padrão da tarefa 2 (writable + ações
-      nomeadas), com o teste correspondente passando.
+```js
+// Crie: sitio/app/src/stores/axes.test.js
+import { get } from 'svelte/store';
+import { axesStore, recalcularEixos, moverParaEixo } from './axes.js';
 
-- [ ] **Passo 5: commitar**
+const s = (id, unit) => ({ id, unit, pontos: [{ date: '2020-01-01', value: 1 }] });
+// As amplitudes reais decidem o veredito (fatia 02): 1e11 vs 1 cabe em 'avisa'; 1e11 vs 1e-3 é 'ilegivel'.
+const grande = { id: 'g', unit: { type: 'currency', symbol: 'R$' }, pontos: [{ date: '2020-01-01', value: 1e11 }] };
+const pequeno = { id: 'p', unit: { type: 'currency', symbol: 'R$' }, pontos: [{ date: '2020-01-01', value: 1 }] };
+
+it('com tudo convivendo, tudo fica num eixo só (§5)', () => {
+  recalcularEixos([s('a'), s('b')]);
+  const { atribuicao, avisos } = get(axesStore);
+  expect(atribuicao).toEqual({ a: 'left', b: 'left' });
+  expect(avisos).toEqual([]);
+});
+
+it('a série incompatível vai para a direita, e o aviso aponta a CULPADA', () => {
+  recalcularEixos([grande, pequeno]);
+  const { atribuicao, avisos } = get(axesStore);
+  expect(atribuicao.left ?? atribuicao.g).toBe('left');
+  expect(atribuicao.p).toBe('right');
+  expect(avisos).toHaveLength(1);
+  expect(avisos[0].id).toBe('p');
+  expect(avisos[0].contra).toBe(grande);          // a culpada, não um booleano
+  expect(['avisa', 'ilegivel']).toContain(avisos[0].veredito);
+});
+
+it('moverParaEixo move uma série para a direita', () => {
+  recalcularEixos([s('a'), s('b')]);
+  moverParaEixo('a', 'right');
+  expect(get(axesStore).atribuicao.a).toBe('right');
+});
+
+it('só existem dois eixos — um terceiro valor é ignorado (§9.5)', () => {
+  recalcularEixos([s('a')]);
+  moverParaEixo('a', 'meio');
+  expect(get(axesStore).atribuicao.a).toBe('left'); // inalterado
+});
+```
+
+```js
+// Crie: sitio/app/src/stores/viewport.test.js
+import { get } from 'svelte/store';
+import { viewportStore, definirJanela, resetarJanela } from './viewport.js';
+
+it('definirJanela é a única escrita, e vem do adapter (§8.1)', () => {
+  definirJanela({ from: '2020-01-01', to: '2021-01-01' });
+  expect(get(viewportStore)).toEqual({ from: '2020-01-01', to: '2021-01-01' });
+});
+
+it('campos ausentes viram null, não undefined', () => {
+  definirJanela({ from: '2020-01-01' });
+  expect(get(viewportStore)).toEqual({ from: '2020-01-01', to: null });
+});
+
+it('resetarJanela volta ao intervalo completo', () => {
+  definirJanela({ from: '2020-01-01', to: '2021-01-01' });
+  resetarJanela();
+  expect(get(viewportStore)).toEqual({ from: null, to: null });
+});
+```
+
+#### Passo 2: `stores/mandate.js`
+
+```js
+import { writable, get } from 'svelte/store';
+import { ordenarMandatos } from '../domain/mandates.js';
+
+const URL_GOVERNOS = 'https://brasilemnumeros.github.io/dados/governos/federal.json';
+const inicial = { mandatos: [], selecionado: null };
+
+const store = writable(inicial);
+export const mandateStore = { subscribe: store.subscribe };
+
+/** O mandato é CONTEXTO, não dado do gráfico: se os governos não vierem, o app ainda mostra
+ * as séries — por isso a falha é engolida e o store fica vazio em vez de propagar (§9.3). */
+export async function carregarMandatos({ url = URL_GOVERNOS, fetchImpl = fetch } = {}) {
+  try {
+    const r = await fetchImpl(url);
+    if (!r.ok) throw new Error(`HTTP ${r.status} ao buscar governos`);
+    const dados = await r.json();
+    store.set({ mandatos: ordenarMandatos(dados.mandatos ?? []), selecionado: null });
+  } catch {
+    store.set({ ...inicial });
+  }
+}
+
+export function selecionarMandato(id) {
+  store.update((s) => (s.mandatos.some((m) => m.id === id) ? { ...s, selecionado: id } : s));
+}
+
+export function limparSelecao() {
+  store.update((s) => ({ ...s, selecionado: null }));
+}
+
+export function mandatoSelecionado() {
+  const { mandatos, selecionado } = get(store);
+  return mandatos.find((m) => m.id === selecionado) ?? null;
+}
+```
+
+#### Passo 3: `stores/axes.js`
+
+```js
+import { writable, get } from 'svelte/store';
+import { comparabilidade } from '../domain/scales.js';
+
+const inicial = { atribuicao: {}, avisos: [] };
+const store = writable(inicial);
+export const axesStore = { subscribe: store.subscribe };
+
+const EIXOS = ['left', 'right'];
+
+/** Sugere eixo para cada série, na ordem dada: a primeira vai para a esquerda, e cada
+ * seguinte fica à esquerda SE conviver com as que já estão lá — senão vai para a direita
+ * com um aviso apontando a culpada (§5). Só existem dois eixos (§9.5): não há terceiro. */
+export function recalcularEixos(seriesList) {
+  const atribuicao = {};
+  const avisos = [];
+  const esquerda = [];
+  for (const s of seriesList) {
+    if (esquerda.length === 0) {
+      atribuicao[s.id] = 'left';
+      esquerda.push(s);
+      continue;
+    }
+    const v = comparabilidade(s, esquerda);
+    if (v.veredito === 'convive') {
+      atribuicao[s.id] = 'left';
+      esquerda.push(s);
+    } else {
+      atribuicao[s.id] = 'right';
+      avisos.push({ ...v, id: s.id });
+    }
+  }
+  store.set({ atribuicao, avisos });
+}
+
+/** Só `left` e `right`. Um terceiro valor é ignorado em silêncio — o app não inventa eixo. */
+export function moverParaEixo(id, eixo) {
+  if (!EIXOS.includes(eixo)) return;
+  store.update((s) => ({ ...s, atribuicao: { ...s.atribuicao, [id]: eixo } }));
+}
+```
+
+#### Passo 4: `stores/viewport.js`
+
+```js
+import { writable } from 'svelte/store';
+
+const inicial = { from: null, to: null };
+const store = writable(inicial);
+export const viewportStore = { subscribe: store.subscribe };
+
+/** A ÚNICA escrita deste store, e é o adapter (comando) que a chama (§8.1) — nenhum
+ * componente lê a janela de volta do gráfico para escrevê-la aqui. */
+export function definirJanela({ from = null, to = null } = {}) {
+  store.set({ from, to });
+}
+
+export function resetarJanela() {
+  store.set({ ...inicial });
+}
+```
+
+#### Passo 5: rodar e commitar
 
 ```bash
-cd sitio && git add app/src/stores/
+cd sitio/app && NODE_ENV=development npm test    # 8 arquivos verdes viram 11
+cd .. && git add app/src/stores/
 git commit -m "feat(stores): mandato, eixos e janela visivel"
 ```
-
----
 
 ## Critérios de aceite da fatia 05
 
@@ -405,6 +616,11 @@ git commit -m "feat(stores): mandato, eixos e janela visivel"
       **id**; `restaurarCor` volta ao padrão (§1).
 - [ ] **`viewport`** só é escrito pela ação que o adapter chama — nenhum componente
       escreve nele lendo do gráfico (§8.1).
+- [ ] **`mandate.js` não importa `series.js`** (R27): o Δ é `deltaNoMandato(series, mandato)`
+      composto pelo componente; o store do mandato não conhece séries.
+- [ ] **A `url` da série é guardada no item ao adicionar** e é ela que a retentativa usa — o
+      teste espia o argumento do `fetchImpl` (R26). Reconstruir a URL a partir do id daria
+      404, porque o caminho publicado inclui a família.
 - [ ] Nenhum store importa `lightweight-charts`.
 
 ## Auto-revisão

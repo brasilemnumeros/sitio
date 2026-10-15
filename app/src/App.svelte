@@ -61,7 +61,14 @@
 </script>
 
 <!-- A ORDEM DESTES SEIS BLOCOS É A DA §1, LITERAL. Não reordenar. -->
-<main class="mx-auto flex max-w-6xl flex-col gap-4 p-4">
+<!-- O `bg` arbitrário no <main> é a CLASSE-CANÁRIO (§10.3): o fundo do app, com a mesma
+     cor (#0e1117) do adapter/navigator. ATENÇÃO: escrever a classe aqui, num comentário,
+     NÃO é permitido — o Tailwind também varre comentário e criaria um SEGUNDO produtor,
+     o que cegaria o canário. A classe aparece UMA vez só, no <main> abaixo. Se o Tailwind
+     parar de varrer `app/src`, ela some do `main.dist.css` e `scripts/checar-canario.sh`
+     falha o build. O sufixo de opacidade cheia existe para não colidir com a forma nua
+     que também aparece em `docs/plans/`, que o Tailwind varre — ela daria falso OK. -->
+<main class="mx-auto flex max-w-6xl flex-col gap-4 bg-[#0e1117]/100 p-4">
   <!-- 1 · busca -->
   <button class="rounded border px-3 py-2 text-left" onclick={() => (buscaAberta = true)}>
     Buscar indicador…

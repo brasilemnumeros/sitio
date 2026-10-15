@@ -4,6 +4,7 @@
   import { seriesStore } from './stores/series.js';
   import { carregarMandatos } from './stores/mandate.js';
   import Chart from './components/Chart.svelte';
+  import SeriesChips from './components/SeriesChips.svelte';
   // 🔴 Só se importa o que JÁ EXISTE. Um import de arquivo inexistente QUEBRA O BUILD —
   // e é o defeito que o pré-voo desta fatia achou. Os demais componentes entram pelos
   // marcadores de posição abaixo, e cada tarefa troca o seu.
@@ -25,8 +26,8 @@
     Buscar indicador…
   </button>
 
-  <!-- 2 · chips — TODO(T2): trocar por <SeriesChips /> -->
-  <div class="text-sm opacity-50" data-bloco="chips">[2 · chips das séries]</div>
+  <!-- 2 · chips -->
+  <SeriesChips />
 
   <!-- 3 · gráfico (ou o estado que o substitui) + a LEGENDA, que é o canal redundante
        de identificação (§12.2) e fica FORA do gráfico de propósito: com 10 séries os

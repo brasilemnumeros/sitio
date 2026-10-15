@@ -38,9 +38,12 @@ biblioteca de gráficos (§8). Consome stores (fatia 05) e, no caso do gráfico,
 
 ### Tarefa 1: `components/App.svelte` — a ordem da §1
 
-> ⚠️ **Ordem de execução desta fatia: T2 → T3 → T4 → T5 → T1.** A casca monta componentes
-> que as outras quatro produzem, então ela é a **última**. Executá-la primeiro só é possível
-> com stubs, que seriam trabalho descartado — melhor compor depois.
+> ⚠️ **Ordem de execução: T1 primeiro, e depois T2 → T3 → T4 → T5.** A casca precisa vir
+> antes porque **T2–T5 só conseguem se verificar na tela se houver uma página montada**. Para
+> isso, a T1 renderiza **marcadores de posição** no lugar dos componentes que ainda não
+> existem, e **cada tarefa seguinte troca o seu próprio marcador pelo componente real** —
+> uma linha cada, no mesmo arquivo. Assim o build fica verde desde a T1 e a ordem da §1 é
+> verificável desde o começo.
 
 **Arquivos:**
 - Modificar: `sitio/app/src/App.svelte` (o shell da fatia 00)
@@ -61,14 +64,9 @@ biblioteca de gráficos (§8). Consome stores (fatia 05) e, no caso do gráfico,
   import { seriesStore } from './stores/series.js';
   import { carregarMandatos } from './stores/mandate.js';
   import Chart from './components/Chart.svelte';
-  import SeriesChips from './components/SeriesChips.svelte';
-  import SeriesLegend from './components/SeriesLegend.svelte';
-  import TimeFilters from './components/TimeFilters.svelte';
-  import EstadoInicial from './components/EstadoInicial.svelte';
-  import Esqueleto from './components/Esqueleto.svelte';
-  // 🔴 NÃO importar `SearchModal` (fatia 08), `MandateRail` nem `ComparisonPanel`
-  // (fatia 09): os arquivos não existem ainda, e um import morto QUEBRA O BUILD.
-  // Os três entram por comentário `TODO(fatia NN)` no lugar da ordem da §1.
+  // 🔴 Só se importa o que JÁ EXISTE. Um import de arquivo inexistente QUEBRA O BUILD —
+  // e é o defeito que o pré-voo desta fatia achou. Os demais componentes entram pelos
+  // marcadores de posição abaixo, e cada tarefa troca o seu.
 
   let buscaAberta = $state(false);
   let { status } = $derived($catalogStore);
@@ -80,39 +78,44 @@ biblioteca de gráficos (§8). Consome stores (fatia 05) e, no caso do gráfico,
   });
 </script>
 
+<!-- A ORDEM DESTES SEIS BLOCOS É A DA §1, LITERAL. Não reordenar. -->
 <main class="mx-auto flex max-w-6xl flex-col gap-4 p-4">
   <!-- 1 · busca -->
   <button class="rounded border px-3 py-2 text-left" onclick={() => (buscaAberta = true)}>
     Buscar indicador…
   </button>
 
-  <!-- 2 · chips -->
-  <SeriesChips />
+  <!-- 2 · chips — TODO(T2): trocar por <SeriesChips /> -->
+  <div class="text-sm opacity-50" data-bloco="chips">[2 · chips das séries]</div>
 
-  <!-- 3 · gráfico (ou o estado que o substitui) — e a LEGENDA, que é o canal
-       redundante de identificação (§12.2): ela fica FORA do gráfico de propósito,
-       porque com 10 séries os rótulos da lib ocupam 80% da altura da área de plot. -->
+  <!-- 3 · gráfico (ou o estado que o substitui) + a LEGENDA, que é o canal redundante
+       de identificação (§12.2) e fica FORA do gráfico de propósito: com 10 séries os
+       rótulos da lib ocupam 80% da altura da área de plot. -->
   {#if itens.length === 0}
-    <EstadoInicial aoPedirExemplo={() => { /* adiciona "Selic × IPCA" (§9.1) */ }} />
+    <!-- TODO(T4): <EstadoInicial aoPedirExemplo={...} /> -->
+    <div class="text-sm opacity-50" data-bloco="inicial">[3 · estado inicial]</div>
   {:else if itens.every((i) => i.status === 'carregando')}
-    <Esqueleto />
+    <!-- TODO(T4): <Esqueleto /> -->
+    <div class="text-sm opacity-50" data-bloco="esqueleto">[3 · carregando]</div>
   {:else}
     <Chart />
-    <SeriesLegend />
+    <!-- TODO(T5): <SeriesLegend /> -->
+    <div class="text-sm opacity-50" data-bloco="legenda">[3 · legenda das séries]</div>
   {/if}
 
-  <!-- 4 · filtros de tempo -->
-  <TimeFilters />
+  <!-- 4 · filtros de tempo — TODO(T3): trocar por <TimeFilters /> -->
+  <div class="text-sm opacity-50" data-bloco="filtros">[4 · filtros de tempo]</div>
 
-  <!-- 5 · trilho -->
-  <!-- TODO(fatia 09): <MandateRail /> — a ordem da §1 fica visível no comentário
-       e o build segue verde até a fatia existir. -->
+  <!-- 5 · trilho — TODO(fatia 09): <MandateRail /> -->
+  <div class="text-sm opacity-50" data-bloco="trilho">[5 · trilho de mandatos]</div>
 
-  <!-- 6 · painel de comparação, SEMPRE visível, largura total (§1) — não é aba -->
-  <!-- TODO(fatia 09): <ComparisonPanel /> -->
+  <!-- 6 · painel de comparação, SEMPRE visível, largura total (§1) — não é aba.
+       TODO(fatia 09): <ComparisonPanel /> -->
+  <div class="text-sm opacity-50" data-bloco="comparacao">[6 · painel de comparação]</div>
 
   {#if buscaAberta}
-    <!-- TODO(fatia 08): <SearchModal aoFechar={() => (buscaAberta = false)} /> -->
+    <!-- TODO(fatia 08): <SearchModal aoFechar={...} /> -->
+    <div class="fixed inset-0 bg-black/40" onclick={() => (buscaAberta = false)}></div>
   {/if}
 </main>
 ```
@@ -121,7 +124,10 @@ biblioteca de gráficos (§8). Consome stores (fatia 05) e, no caso do gráfico,
 > auto-subscrição de store (`$seriesStore`) segue funcionando junto com elas. Não há cenário
 > de Svelte 4 a considerar; a fatia 00 já fixou a versão.
 
-- [ ] **Passo 2: verificar na tela** — `npm run dev`; a ordem dos seis blocos confere.
+- [ ] **Passo 2: verificar na tela** — `npm run dev`; os **seis marcadores** aparecem na ordem
+      da §1 (busca, chips, gráfico, filtros, trilho, comparação), e o `data-bloco` de cada um
+      torna a ordem conferível por inspeção. Os três `TODO` de fatia 08/09 ficam visíveis como
+      marcadores até essas fatias existirem — **não** removê-los antes.
 - [ ] **Passo 3: commitar**
 
 ```bash
@@ -145,7 +151,26 @@ git commit -m "feat(ui): casca da pagina na ordem da secao 1"
   - Clicar na cor abre o seletor; escolher uma cor colidindo **avisa com a distância
     medida** e **não bloqueia** (§1); "restaurar padrão" por série.
 
-- [ ] **Passo 1: implementar** (padrão da §1/§9.3 acima)
+**Formas de dado — verificadas em `stores/series.js` e `domain/color.js` (2026-10-15):**
+
+```js
+// item de seriesStore.itens:
+// { id, name, unit, cor, corPessoal, status:'carregando'|'ok'|'erro',
+//   series:object|null, error:string|null }
+
+// funções que o chip usa:
+import { seriesStore, LIMITE_SERIES, atingiuLimite, removerSerie,
+         tentarNovamente, definirCor, restaurarCor } from '../stores/series.js';
+import { avisoDeColisao } from '../domain/color.js';
+//   avisoDeColisao(cor, outrasCores)  ->  { colide:boolean, distancia:number, contra:number }
+
+// O texto do limite já existe pronto — NÃO reescrever a frase na UI:
+motivoDoLimite()   // -> string com o porquê (§9.5, "nada removido automaticamente")
+```
+
+- [ ] **Passo 1: implementar** (padrão da §1/§9.3 acima) — seguir a **T5 como referência de
+      estilo**: classes Tailwind com `dark:`, `<script>` com runes do Svelte 5, `$derived`
+      para o que vem do store. **Não** existe token `--cor-*` no projeto.
 - [ ] **Passo 2: verificar** — com 3 séries, derrubar uma (apontar `datafile` para uma URL
       inexistente em dev) e conferir: o chip vira erro, o gráfico **segue com as outras**
       (§9.3), e "tentar de novo" recupera.
@@ -167,6 +192,15 @@ git commit -m "feat(ui): chips com erro por serie, cor com aviso e remocao"
 - Consome: `viewportStore`, `definirJanela`, `resetarJanela`.
 - Produz: presets de janela (**1a · 5a · 10a · 30a · Tudo**) que escrevem no store
   `viewport` — e **não** no gráfico (§8.1). "Tudo" = `resetarJanela()`.
+
+**Formas de dado — verificadas em `stores/viewport.js` (2026-10-15):**
+
+```js
+import { viewportStore, definirJanela, resetarJanela } from '../stores/viewport.js';
+//   definirJanela({ from = null, to = null })   // data em ISO 'AAAA-MM-DD'
+//   resetarJanela()                             // o preset "Tudo"
+// O store guarda { from, to } — o adapter é quem reage (§8.1).
+```
 
 - [ ] **Passo 1: implementar** com os cinco presets.
 
@@ -200,6 +234,17 @@ git commit -m "feat(ui): barra de filtros de tempo como controle do grafico"
   página não pular de layout quando o dado chega (§9.2).
 - `ErroTotal` — mesma linguagem da degradação parcial, com **título, motivo e botão de
   tentar de novo** (§9.3). `schema` desconhecido cai aqui (§6, §9.3).
+
+**Formas de dado — o que cada estado lê:**
+
+```js
+// EstadoInicial: não lê store. Recebe `aoPedirExemplo` e pede o par "Selic × IPCA" (§9.1).
+//   O par existe em indicators.json — resolver por id na hora de adicionar, não hardcodar
+//   nome nem URL.
+// Esqueleto: não lê store. É forma, não dado.
+// ErroTotal: recebe { titulo, motivo, aoTentarNovamente }. O `motivo` é texto que o
+//   chamador monta — nunca "erro desconhecido" (§9: o vazio sempre diz por quê).
+```
 
 - [ ] **Passo 1–2:** implementar e verificar cada um forçando o estado em dev.
 - [ ] **Passo 3: commitar**

@@ -335,7 +335,9 @@ git commit -m "docs: atribuicao do TradingView Lightweight Charts no rodape e no
 - [ ] O **canário falha** quando `app/src` está no `.gitignore` e **passa** quando não está
       — provado nos dois sentidos (tarefa 1, passo 3).
 - [ ] O CI roda **testes antes do build** e o pipeline é exatamente o da §10.2.
-- [ ] `_site/` **não contém** `app/` nem `scripts/` — verificado por build local.
+- [ ] A exclusão está provada pelo **`Jekyll::EntryFilter` real**: `app/*` e `scripts/*`
+      excluídos, e `assets/js/app/app.js` **não** — o render completo do Jekyll não roda
+      nesta máquina (causas pré-existentes, alheias ao projeto).
 - [ ] `_site/index.html` tem o `<div id="app">` e o bundle; **nenhum CDN de Chart.js**
       sobrou em `default.html`; e **nenhuma referência a `app.css`** (R13).
 - [ ] `_site/` **não contém** `assets/js/app/index.html` (R13: a entrada de build é o JS).

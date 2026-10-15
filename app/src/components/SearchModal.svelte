@@ -14,6 +14,7 @@
     motivoDoLimite,
     LIMITE_SERIES,
   } from '../stores/series.js';
+  import Ficha from './Ficha.svelte';
 
   /** Prop única: chamada ao fechar por ESC ou clique fora (§1.1). */
   let { aoFechar } = $props();
@@ -42,6 +43,11 @@
   // só se decide QUANDO mostrá-la. `$seriesStore` é lido para a derivação reagir à seleção.
   let itens = $derived($seriesStore.itens);
   let noLimite = $derived(itens.length >= LIMITE_SERIES);
+
+  // §9.5 — a frase do motivo vem PRONTA de `motivoDoLimite()`, que lê a store por `get()` e por
+  // isso NÃO registra dependência em runes. Derivá-la de `noLimite` (que É reativo) evita a frase
+  // ficar presa no `null` da primeira renderização — sem isto, o botão desabilita mudo.
+  let motivoLimite = $derived(noLimite ? motivoDoLimite() : null);
 
   const jaNoGrafico = (id) => itens.some((i) => i.id === id);
 
@@ -246,40 +252,15 @@
         </ul>
       {/if}
 
-      <!-- coluna 3 · a ficha.
-           TODO(T2): trocar este bloco por <Ficha indicador={indicadorAberto} {noLimite}
-           motivo={motivoDoLimite()} aoAdicionar={(ind) => adicionarSerie(ind)} /> — a ficha
-           traz unidade, granularidade, período, nº de pontos, fonte e o AVISO DE ESCALA (§1.1,
-           §5). O `data-bloco="ficha"` sobrevive à troca (R29). -->
-      <div
-        data-bloco="ficha"
-        class="min-h-0 w-72 shrink-0 overflow-y-auto p-4"
-      >
-        {#if indicadorAberto}
-          <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">
-            {indicadorAberto.name}
-          </h3>
-
-          {#if noLimite}
-            <!-- §9.5 — visível, desabilitado e DIZENDO o motivo (a paleta). -->
-            <p class="mt-2 text-xs text-amber-700 dark:text-amber-400">{motivoDoLimite()}</p>
-          {/if}
-
-          <button
-            type="button"
-            onclick={() => adicionarSerie(indicadorAberto)}
-            onkeydown={aoTeclado}
-            disabled={noLimite || jaNoGrafico(indicadorAberto.id)}
-            class="mt-3 rounded border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
-          >
-            {jaNoGrafico(indicadorAberto.id) ? 'Já está no gráfico' : 'Adicionar'}
-          </button>
-        {:else}
-          <p class="text-sm text-slate-500 dark:text-slate-400">
-            Escolha um indicador para ver a ficha.
-          </p>
-        {/if}
-      </div>
+      <!-- coluna 3 · a ficha (§1.1). Traz unidade, granularidade, período, nº de pontos, fonte e
+           o AVISO DE ESCALA antes da escolha (§5). O `data-bloco="ficha"` sobrevive à troca (R29). -->
+      <Ficha
+        indicador={indicadorAberto}
+        {noLimite}
+        motivo={motivoLimite}
+        aoAdicionar={(ind) => adicionarSerie(ind)}
+        {aoTeclado}
+      />
     </div>
   </div>
 </div>

@@ -17,3 +17,6 @@ app/test-results/
 app/playwright-report/
 app/blob-report/
 app/.playwright/
+# Saida de cada execucao do E2E (capturas e contextos de falha). Regenerada a cada run:
+# versionar isto e churn, nao evidencia.
+app/e2e/.artefatos/

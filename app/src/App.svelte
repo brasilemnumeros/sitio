@@ -5,6 +5,7 @@
   import { carregarMandatos } from './stores/mandate.js';
   import Chart from './components/Chart.svelte';
   import SeriesChips from './components/SeriesChips.svelte';
+  import TimeFilters from './components/TimeFilters.svelte';
   // 🔴 Só se importa o que JÁ EXISTE. Um import de arquivo inexistente QUEBRA O BUILD —
   // e é o defeito que o pré-voo desta fatia achou. Os demais componentes entram pelos
   // marcadores de posição abaixo, e cada tarefa troca o seu.
@@ -44,8 +45,8 @@
     <div class="text-sm opacity-50" data-bloco="legenda">[3 · legenda das séries]</div>
   {/if}
 
-  <!-- 4 · filtros de tempo — TODO(T3): trocar por <TimeFilters /> -->
-  <div class="text-sm opacity-50" data-bloco="filtros">[4 · filtros de tempo]</div>
+  <!-- 4 · filtros de tempo — controle do gráfico, escreve no store `viewport` (§8.1). -->
+  <TimeFilters />
 
   <!-- 5 · trilho — TODO(fatia 09): <MandateRail /> -->
   <div class="text-sm opacity-50" data-bloco="trilho">[5 · trilho de mandatos]</div>

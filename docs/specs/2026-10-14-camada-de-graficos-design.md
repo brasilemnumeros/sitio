@@ -618,4 +618,6 @@ Pontos de cada série dentro de cada mandato federal, conforme o modelo da seç�
 
 Resumo: **104 células possíveis** (13 × 8) · **99 calculáveis (95%)** · **4 sem cobertura (3%)** — `mvgr-*` no FHC II (a série começa em 2004-03) e os dois `homicidios-*` no Lula III (as séries terminam em 2022) · **1 indefinida** — `homicidios-anual` no Lula III, com 1 ponto só.
 
+> **Nota (2026-10-14, decisão R22):** esta tabela mede **8 colunas** porque foi assim que a medição foi feita — não porque FHC I não exista. O arquivo `dados/governos/federal.json` **inclui FHC I (1995-01-01 – 1998-12-31)**, e com ele a matriz passa a **117 células** (13 × 9). A medição acima continua válida como medição; o que muda é o total. O teste que a trava filtra FHC I explicitamente, para continuar afirmando exatamente os números publicados aqui.
+
 **15 células** ficam abaixo do esperado para a própria granularidade da série. A maioria é consequência do mandato em curso (Lula III) ou do início tardio da série. O caso que motivou a regra de cobertura parcial da seção 7.3 é `mvgr-nominal` e `mvgr-real` no **Lula I**: 35 pontos onde caberiam 48, porque as séries começam em **03/2004** — o Δ cobriria 34 dos 48 meses sob um rótulo que diz "Lula I".

@@ -199,7 +199,8 @@ git commit -m "feat(chart): conversao pura para o formato da lib, testada sem DO
 - Teste: `sitio/app/src/chart/bands.test.js` (só a parte **pura**)
 
 **Interfaces:**
-- Consome: `COBERTURA` (fatia 03) para saber onde a hachura corta.
+- Consome: **nada de store nem de `domain/`** — a primitiva recebe o que precisa por parâmetro
+  (o último dado vem do callback `ultimoDadoPorSerie`, não de importar `mandates.js`).
 - Produz:
   - `faixasVisiveis(mandatos, {from, to}) -> Mandato[]` — **pura**
   - `tomDaFaixa(indice) -> string` — **pura**, alternância sutil entre vizinhos (§2)
@@ -266,6 +267,17 @@ describe('faixasVisiveis', () => {
   it('janela que não toca ninguém devolve vazio, não tudo', () => {
     expect(faixasVisiveis(M, { from: '1990-01-01', to: '1991-01-01' })).toEqual([]);
   });
+
+  it('o limite é INCLUSIVO nas DUAS pontas — `>=` não pode virar `>`', () => {
+    // Sem este caso, trocar `>=` por `>` passa despercebido: os fixtures acima têm folga e nunca
+    // tocam o limite exato. Aqui a janela começa EXATAMENTE quando `x` termina.
+    const J = [
+      { id: 'x', inicio: '2000-01-01', fim: '2004-12-31' },
+      { id: 'y', inicio: '2005-01-01', fim: '2009-12-31' },
+    ];
+    expect(faixasVisiveis(J, { from: '2004-12-31', to: '2005-01-01' }).map((m) => m.id))
+      .toEqual(['x', 'y']);
+  });
 });
 
 describe('tomDaFaixa', () => {
@@ -287,8 +299,6 @@ describe('tomDaFaixa', () => {
 - [ ] **Passo 3: implementar a parte pura**
 
 ```js
-import { PALETA_PADRAO } from '../domain/color.js';
-
 /** Faixas que TOCAM a janela. `null` em qualquer ponta significa "sem limite" — é o estado
  * inicial (`from`/`to` nulos) e o mandato em curso (`fim` nulo). */
 export function faixasVisiveis(mandatos, { from, to }) {
@@ -383,15 +393,24 @@ export function criarPrimitivaDeFaixas(mandatos, { aoClicar, ultimoDadoPorSerie 
     return m ? `${m.rotulo} · ${m.partido}` : '';
   };
 
+  // ⚠ Referência ESTÁVEL, criada uma vez. Os typings avisam (L2145-46): "a lib usa caches
+  // internos baseados em REFERÊNCIA de array — devolva o MESMO array se nada mudou". Devolver
+  // `[view]` novo a cada chamada invalida o cache e força redesenho. Não é incorreção; é custo.
+  const VISOES = [view];
+
   return {
     attached({ chart: c, requestUpdate }) { chart = c; pedirAtualizacao = requestUpdate; recalcular(); },
     detached() { chart = null; pedirAtualizacao = null; faixasPx = []; },
-    paneViews() { return [view]; },
+    paneViews() { return VISOES; },
     updateAllViews() { recalcular(); },
     /** Clique SELECIONA — quem trata o evento decide que não é zoom (§2). */
     hitTest(x) {
       const f = faixasPx.find((f) => x >= f.x1 && x <= (f.x2 ?? Infinity));
-      return f ? { externalId: f.id, cursorStyle: 'pointer', hitTestPriority: 0 } : null;
+      if (!f) return null;
+      // `externalId` E `zOrder` são OBRIGATÓRIOS em PrimitiveHoveredItem (typings L3847/3851) —
+      // não são opcionais. Em JS omitir não quebra, mas é o primeiro suspeito se o cursor/clique
+      // falhar na Tarefa 4.
+      return { externalId: f.id, zOrder: 'bottom', cursorStyle: 'pointer', hitTestPriority: 0 };
     },
     selecionar(id) { selecionado = id; pedirAtualizacao?.(); },
     destruir() { /* nada a liberar: o detached da lib cuida das refs */ },

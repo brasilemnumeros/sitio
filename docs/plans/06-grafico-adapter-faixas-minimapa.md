@@ -40,39 +40,34 @@ identificação** — sem ele, a paleta medida perde a rede de segurança dela.
 
 ---
 
-### Tarefa 0: A medição dos rótulos na ponta das linhas (fecha a §12.2)
+### Tarefa 0: A medição dos rótulos na ponta das linhas (fecha a §12.2) — ✅ FEITA 2026-10-14
 
-**Arquivos:**
-- Criar (descartável): `sitio/app/spikes/rotulos-lwc.html` — **não** versionar
-- Documentar: §12.2 da spec
+**Feita fora do repo:** o spike foi montado em `~/.hermes/cache/scratch/spike06/` (servido por
+`python3 -m http.server`), **não** em `sitio/app/spikes/` — assim não há risco de entrar num
+`git add`. Nada a apagar no repo. O que sobrevive é o texto da §12.2.
+
+**Resultado (medido, lightweight-charts 5.2.1, plot de 392px):** a lib desenha o título de
+**todas** as 10 séries e **desconflita** num passo de ~15,5px — mas no pior caso realista a pilha
+ocupa **80% da área de plot** (314px de 392), em um cenário um rótulo **some** e em 3 de 4 há
+caixas ainda sobrepostas. **Decisão: a ponta da linha NÃO é o canal redundante** — a legenda vai
+**fora do gráfico**, com o rótulo sobre o crosshair como reforço; a ponta fica sem `title`.
+
+**Consequência para a Tarefa 3 (o shell):** precisa de uma **legenda externa** (10 linhas: cor +
+nome). É o que a §1 chama de canal redundante de identificação.
 
 **Interfaces:**
 - Consome: `PALETA_PADRAO` (fatia 04) e 10 séries sintéticas.
 - Produz: uma decisão escrita sobre o que fazer quando os rótulos colidem.
 
-- [ ] **Passo 1: montar a página de medição**
-
-Criar uma página HTML avulsa que instancia um gráfico com **10 séries simultâneas**, cada
-uma com um título, e verifica na prática:
-
-1. A lib aceita 10 títulos no eixo de preço ou só mostra o último (`priceScale.title` é
-   único — provavelmente **sim**, então o título de série precisa ser desenhado de outra
-   forma).
-2. Se for por `createSeriesMarkers`/primitive na ponta: os 10 rótulos se sobrepõem?
-
-Rodar com `npx vite` na pasta `spikes/` e **capturar tela com 10 séries**.
-
-- [ ] **Passo 2: medir e decidir**
-
-Registrar na §12.2 da spec: o que a lib faz, quantos rótulos colidem, e a decisão entre
-as opções — (a) rótulo só na série sob o crosshair, (b) rótulo na ponta com
-anti-colisão (empurrar para cima/baixo), (c) legenda externa como único canal. Decisão
-com o **número medido** (quantos de 10 colidem), não por impressão.
-
-- [ ] **Passo 3: apagar o spike**
-
-`rm -rf sitio/app/spikes` — *mockup não é documentação* (convenção do projeto). O que
-sobrevive é o texto da §12.2.
+- [x] **Passo 1: montar a página de medição** — 4 cenários (A escalas misturadas, B só %,
+      C pior caso realista, D todas no mesmo valor). Medição por dois caminhos independentes:
+      `series.priceToCoordinate()` para a posição natural, e **análise de pixel** do canvas
+      (`PIL`) para a posição renderizada.
+- [x] **Passo 2: medir e decidir** — registrado na §12.2 com a tabela medida. A opção escolhida
+      não é (a) nem (b) nem (c) isoladas: é **(c) legenda externa como canal principal + (a)
+      rótulo no crosshair como reforço**. A (b) — anti-colisão na ponta — é justamente o que a
+      lib já faz de fábrica, e a medição mostra que ela custa 80% da altura no pior caso.
+- [x] **Passo 3: apagar o spike** — não foi criado no repo (ver acima); nada a apagar.
 
 ---
 
@@ -353,7 +348,10 @@ git commit -m "feat(chart): Chart.svelte liga store e adapter na direcao unica"
 
 ## Critérios de aceite da fatia 06
 
-- [ ] A **§12.2 está fechada** na spec: a colisão dos rótulos foi **medida com 10 séries**
+- [x] A **§12.2 está fechada** na spec (2026-10-14): a colisão dos rótulos foi **medida com 10 séries**
+      (tabela de 4 cenários), e a decisão é legenda externa + rótulo no crosshair, **sem** `title`
+      na ponta. A Tarefa 3 precisa da legenda externa.
+- [ ] (critério antigo, manter)
       e a decisão está escrita, com o número.
 - [ ] `grep -rn "lightweight-charts" app/src` → só em `app/src/chart/` (§8, regra 1).
 - [ ] `grep -rn "chart/adapter" app/src/components` → só `Chart.svelte` (§8, regra 2).

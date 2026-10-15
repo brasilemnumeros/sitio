@@ -80,6 +80,15 @@ comporta, o dado não é populado. Não preencher com palpite.
   "cargo": "presidente",
   "mandatos": [
     {
+      "id": "federal-1995-fhc",
+      "titular": "Fernando Henrique Cardoso",
+      "rotulo": "FHC I",
+      "partido": "PSDB",
+      "tipo": "eleito",
+      "inicio": "1995-01-01",
+      "fim": "1998-12-31"
+    },
+    {
       "id": "federal-1999-fhc",
       "titular": "Fernando Henrique Cardoso",
       "rotulo": "FHC II",
@@ -158,12 +167,21 @@ comporta, o dado não é populado. Não preencher com palpite.
 }
 ```
 
-> **Decisão em aberto neste passo.** O arquivo acima começa em **FHC II (1999)** para
-> reproduzir exatamente as contagens medidas na §7.3 e no anexo (104 células = 13 × 8).
-> **FHC I (1995-01-01 – 1998-12-31) existe e as séries o cobrem** — incluí-lo muda as
-> contagens medidas para 117 células e exige atualizar a §7.3/anexo. **Decidir antes de
-> commitar** e registrar a decisão na §7.3. Os testes da tarefa 3 são escritos para
-> **não** depender da contagem total, então esta decisão não bloqueia a fatia.
+> **Decisão (R22): FHC I entra.** O arquivo começa em **FHC I (1995-01-01 – 1998-12-31)**,
+> porque o modelo é **fato** — quem governou quando — e começar em FHC II fingiria que FHC I
+> não existiu, num produto cuja promessa é identificar os governos ao longo da série. As
+> séries o cobrem parcialmente: `caged`, `pib`, `populacao`, `homicidios` começam em
+> 1995-01; `selic-over`, `ipca` e `proporcao-homicidios` em 1995-12; `selic-meta` só em
+> 1999-03 (por isso ele não tem célula em FHC I nem em FHC II completo).
+>
+> **Consequência nas contagens medidas:** a matriz passa de **104 para 117 células** (13 × 9),
+> e a §7.3/anexo precisa registrar isso. **A medição de 8 colunas continua válida** — é uma
+> medição do que foi medido, não uma afirmação sobre o que existe. O teste da tarefa 3
+> **filtra FHC I** para continuar travando exatamente os números publicados, e é por isso que
+> ele não depende desta decisão.
+>
+> **Rejeitado:** começar em FHC II para não mexer nas contagens. Otimiza o documento à custa
+> do dado — e o `AGENTS.md` é explícito que alternativa rejeitada também se registra.
 
 - [ ] **Passo 3: commitar no repo `dados`**
 
@@ -590,7 +608,8 @@ git commit -m "test(domain): trava a medicao de cobertura por mandato da spec"
       49 células em vez de 15.
 - [ ] `deltaNoMandato` **nunca** devolve `delta: 0` para ausência de dado (§9.4).
 - [ ] `ordenarMandatos` põe o mandato em curso na ponta direita.
-- [ ] A decisão sobre incluir **FHC I** está tomada e registrada (na §7.3 ou na spec).
+- [ ] **FHC I está no arquivo** (R22) e o teste da medição continua travando as 8
+      colunas publicadas, filtrando FHC I explicitamente.
 
 ## Auto-revisão
 

@@ -13,6 +13,7 @@ import {
   LIMIAR_ENVELOPE,
   LIMIAR_COLISAO,
   avisoDeColisao,
+  avisosDeColisao,
 } from './color.js';
 
 describe('hex ↔ rgb', () => {
@@ -162,6 +163,38 @@ describe('avisoDeColisao (§1, R25)', () => {
 
   it('não avisa e não quebra quando não há outras séries', () => {
     expect(avisoDeColisao('#6351ca', [])).toEqual({ colide: false, distancia: Infinity, contra: -1 });
+  });
+});
+
+describe('avisosDeColisao — UMA mensagem por PAR (§1, T2)', () => {
+  it('o par em colisão fala UMA vez, pela série de maior índice', () => {
+    const itens = [{ cor: '#309aff' }, { cor: '#9581ff' }];
+    const a = avisosDeColisao(itens);
+    expect(a).toHaveLength(2);
+    expect(a[0]).toEqual({ colide: false, distancia: Infinity, contra: -1 }); // a primeira não tem com quem
+    expect(a[1].colide).toBe(true);
+    expect(a[1].contra).toBe(0);
+    expect(a[1].distancia).toBeCloseTo(0.0067, 3);
+    // Era o defeito da T2: um par colidindo gerava DUAS mensagens simétricas. Agora é UMA.
+    expect(a.filter((x) => x.colide)).toHaveLength(1);
+  });
+
+  it('mantém o alinhamento POSICIONAL com a lista de séries', () => {
+    const itens = [{ cor: '#6351ca' }, { cor: '#ffd000' }, { cor: '#6a58c8' }];
+    const a = avisosDeColisao(itens);
+    expect(a).toHaveLength(3);
+    // #6a58c8 (idx 2) colide com #6351ca (idx 0) — e só com ela; #ffd000 não entra.
+    expect(a[2].colide).toBe(true);
+    expect(a[2].contra).toBe(0);
+    expect(a[0].colide).toBe(false);
+    expect(a[1].colide).toBe(false);
+  });
+
+  it('lista vazia ou de um só não avisa nada', () => {
+    expect(avisosDeColisao([])).toEqual([]);
+    expect(avisosDeColisao([{ cor: '#6351ca' }])).toEqual([
+      { colide: false, distancia: Infinity, contra: -1 },
+    ]);
   });
 });
 

@@ -165,3 +165,29 @@ export function avisoDeColisao(cor, outrasCores) {
   });
   return { colide: distancia < LIMIAR_COLISAO, distancia, contra };
 }
+
+/** O resultado "nada colide" — usado como valor neutro onde não há anterior para comparar. */
+export const SEM_COLISAO = Object.freeze({ colide: false, distancia: Infinity, contra: -1 });
+
+/**
+ * Avisos de colisão — **UMA mensagem por PAR** (§1). É a derivação que as DUAS superfícies
+ * (a legenda §12.2 e os chips §1) consomem, para não divergirem.
+ *
+ * `avisoDeColisao` é **SIMÉTRICO**: se cada série avisasse sobre todas as outras, um par em
+ * colisão geraria DUAS mensagens idênticas trocadas — medido na T2 (2026-10-15). Aqui a série
+ * de **maior índice** fala pelo par, comparando-se só com as **anteriores**, então cada
+ * combinação aparece uma única vez. O aviso é sobre o par, não sobre uma das séries.
+ *
+ * Devolve um array alinhado **posicionalmente** com `itens`: a posição `i` traz o aviso da
+ * série `i` contra as anteriores (`contra` é o ÍNDICE da anterior mais próxima em cor), ou
+ * `SEM_COLISAO` quando não há colisão — inclusive na primeira, que não tem com quem comparar.
+ *
+ * @param {{cor:string}[]} itens
+ * @returns {{colide:boolean, distancia:number, contra:number}[]}
+ */
+export function avisosDeColisao(itens) {
+  return itens.map((item, idx) => {
+    const anteriores = itens.slice(0, idx).map((o) => o.cor);
+    return anteriores.length ? avisoDeColisao(item.cor, anteriores) : SEM_COLISAO;
+  });
+}

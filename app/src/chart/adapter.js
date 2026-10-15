@@ -21,7 +21,23 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
   });
   const porId = new Map();          // id -> ISeriesApi
   let primitivaDeFaixas = null;
-  let jaAjustou = false;            // o fitContent do intervalo completo roda só na PRIMEIRA carga
+
+  // 🔴 O app abre no TODO, não no default da lib (≈ últimos 150 pontos).
+  // Duas armadilhas medidas, e a segunda só apareceu na revisão:
+  //  1. `fitContent()` chamado NA MESMA VOLTA do `setData` é no-op — precisa do frame seguinte.
+  //  2. **No app real as séries entram UMA A UMA** (`adicionarSerie` faz um `store.set` por
+  //     série). Com um flag `jaAjustou`, o fit rodava depois da PRIMEIRA e enquadrava só o
+  //     domínio dela. O harness da T4 carregava as 10 juntas e escondia isso — "verdadeiro no
+  //     harness, falso no app".
+  // Por isso: DEBOUNCE (o fit espera a rajada assentar) + o usuário assume no primeiro gesto.
+  let usuarioAssumiu = false;
+  let fitAgendado = null;
+  const assumir = () => {
+    usuarioAssumiu = true;
+    clearTimeout(fitAgendado);      // o gesto chegou antes do fit: cancela o que estiver pendente
+  };
+  container.addEventListener('pointerdown', assumir, { once: true });
+  container.addEventListener('wheel', assumir, { once: true, passive: true });
 
   // 📌 O clique chega pelo `subscribeClick` da lib: ela consulta o `hitTest` da primitiva
   //    e devolve o `externalId` (o id da faixa) em `hoveredInfo.objectId`. SEM esta assinatura,
@@ -84,14 +100,16 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
       }
       serie.setData(paraPontosDaBiblioteca(item.series?.data ?? []));
     }
-    // Achado da T4 (E): a lib abre no seu default (≈ últimos 150 pontos), não no intervalo
-    // COMPLETO. E o `fitContent()` só tem efeito no FRAME seguinte ao `setData` — medido: chamado
-    // na mesma volta, é um no-op e a janela fica no default. Por isso o fit é ADIADO por um frame.
-    // `jaAjustou` garante que isto roda uma vez só: depois disso o zoom do usuário manda.
-    if (!jaAjustou && porId.size > 0) {
-      jaAjustou = true;
+    // O fit enquadra a UNIÃO de todas as séries: espera a rajada de carga assentar (debounce) e
+    // re-agenda a cada chamada, de modo que só o ÚLTIMO `definirSeries` da rajada dispara o fit —
+    // com todas as séries já no gráfico. Uma vez que o usuário interaja (`pointerdown`/`wheel`),
+    // paramos de re-enquadrar para sempre: a partir dali o zoom é dele. E o fit em si é adiado por
+    // um frame porque `fitContent()` na mesma volta do `setData` é no-op (medido na T4).
+    if (usuarioAssumiu || porId.size === 0) return;
+    clearTimeout(fitAgendado);
+    fitAgendado = setTimeout(() => {
       requestAnimationFrame(() => chart.timeScale().fitContent());
-    }
+    }, 150);   // a rajada de carga assenta; o último enquadra a UNIÃO de todas
   }
 
   /** Anexa a primitiva no PANE — as faixas atravessam o gráfico e não pertencem a uma série. */
@@ -143,6 +161,13 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
     resetarJanela() { chart.timeScale().fitContent(); },
     serieVisivel: () => porId.size,
     destruir() {
+      // ⚠ Limpa o timer E os dois listeners do container: com `{ once: true }` eles só se
+      // removem sozinhos SE dispararem. Se o usuário nunca interagir, sobrevivem ao adapter e,
+      // num app Svelte com navegação, vazam (o container é desanexado, os handlers ficam).
+      clearTimeout(fitAgendado);
+      fitAgendado = null;
+      container.removeEventListener('pointerdown', assumir);
+      container.removeEventListener('wheel', assumir);
       if (primitivaDeFaixas) chart.panes()[0].detachPrimitive(primitivaDeFaixas);
       primitivaDeFaixas = null;
       chart.remove();

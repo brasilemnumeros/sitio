@@ -1,0 +1,83 @@
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { get } from 'svelte/store';
+import {
+  LIMITE_SERIES, seriesStore, adicionarSerie, removerSerie, tentarNovamente,
+  atingiuLimite, motivoDoLimite, corDe, definirCor, restaurarCor, limparSeries,
+} from './series.js';
+import { PALETA_PADRAO } from '../domain/color.js';
+
+const entrada = (id) => ({ id, name: `Indicador ${id}`, datafile: `https://x/${id}.json`, unit: { type: 'percentage', symbol: '%', decimals: 2 } });
+const okSerie = (id) => async () => ({
+  ok: true, status: 200,
+  json: async () => ({ schema: 1, id, unit: { type: 'percentage', symbol: '%', decimals: 2 }, granularity: 'monthly', source: 'fonte', data: [{ date: '2020-01-01', value: 1 }] }),
+});
+
+beforeEach(() => limparSeries());
+
+describe('seriesStore', () => {
+  it('adiciona e carrega, com status por série (§9.2)', async () => {
+    await adicionarSerie(entrada('a'), { fetchImpl: okSerie('a') });
+    const [item] = get(seriesStore).itens;
+    expect(item.status).toBe('ok');
+    expect(item.series.id).toBe('a');
+  });
+
+  it('erro em uma série é degradação parcial — as outras seguem (§9.3)', async () => {
+    await adicionarSerie(entrada('a'), { fetchImpl: okSerie('a') });
+    await adicionarSerie(entrada('b'), { fetchImpl: async () => ({ ok: false, status: 500, json: async () => ({}) }) });
+    const itens = get(seriesStore).itens;
+    expect(itens.map((i) => i.status)).toEqual(['ok', 'erro']);
+    expect(itens[1].error).toMatch(/HTTP 500/);
+  });
+
+  it('tentar de novo recupera a série que falhou — NA URL ORIGINAL (R26)', async () => {
+    await adicionarSerie(entrada('b'), { fetchImpl: async () => ({ ok: false, status: 500, json: async () => ({}) }) });
+    expect(get(seriesStore).itens[0].url).toBe('https://x/b.json'); // a url fica guardada
+
+    // O fetch espia o argumento: a retentativa NÃO pode adivinhar o caminho a partir do id.
+    const espiao = vi.fn(okSerie('b'));
+    await tentarNovamente('b', { fetchImpl: espiao });
+    expect(espiao).toHaveBeenCalledWith('https://x/b.json');
+    expect(get(seriesStore).itens[0].status).toBe('ok');
+  });
+
+  it('o limite é 10 e o motivo é a PALETA, não o layout (§1, §9.5)', async () => {
+    expect(LIMITE_SERIES).toBe(10);
+    for (let i = 0; i < 10; i++) await adicionarSerie(entrada(`s${i}`), { fetchImpl: okSerie(`s${i}`) });
+    expect(atingiuLimite()).toBe(true);
+    expect(motivoDoLimite()).toMatch(/paleta/i);
+  });
+
+  it('no limite, adicionar NÃO remove nada automaticamente (§9.5)', async () => {
+    for (let i = 0; i < 10; i++) await adicionarSerie(entrada(`s${i}`), { fetchImpl: okSerie(`s${i}`) });
+    await adicionarSerie(entrada('s10'), { fetchImpl: okSerie('s10') });
+    expect(get(seriesStore).itens).toHaveLength(10);
+    expect(get(seriesStore).itens.map((i) => i.id)).not.toContain('s10');
+  });
+
+  it('a cor padrão sai da paleta, por índice, SEM ciclo (§1)', async () => {
+    for (let i = 0; i < 10; i++) await adicionarSerie(entrada(`s${i}`), { fetchImpl: okSerie(`s${i}`) });
+    expect(get(seriesStore).itens.map((i) => corDe(i.id))).toEqual([...PALETA_PADRAO]);
+  });
+
+  it('override pessoal é chaveado pelo ID e restaurável (§1)', async () => {
+    await adicionarSerie(entrada('a'), { fetchImpl: okSerie('a') });
+    definirCor('a', '#123456');
+    expect(corDe('a')).toBe('#123456');
+    restaurarCor('a');
+    expect(corDe('a')).toBe(PALETA_PADRAO[0]);
+  });
+
+  it('remover libera a vaga e reindexa as cores', async () => {
+    await adicionarSerie(entrada('a'), { fetchImpl: okSerie('a') });
+    await adicionarSerie(entrada('b'), { fetchImpl: okSerie('b') });
+    removerSerie('a');
+    expect(get(seriesStore).itens.map((i) => corDe(i.id))).toEqual([PALETA_PADRAO[0]]);
+  });
+
+  it('adicionar o mesmo id duas vezes não duplica', async () => {
+    await adicionarSerie(entrada('a'), { fetchImpl: okSerie('a') });
+    await adicionarSerie(entrada('a'), { fetchImpl: okSerie('a') });
+    expect(get(seriesStore).itens).toHaveLength(1);
+  });
+});

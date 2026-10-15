@@ -179,6 +179,30 @@ já estão consolidadas nas seções acima — nominalmente, não se repetem aqu
   adapter; **a alcançabilidade no app foi medida por terceiro, não pelo controlador** — registrado
   como tal, não como provada.
 
+### Migração dos dados — fatia 11 (2026-10-15)
+
+- **Os 13 JSONs publicam o schema canônico** (`dados/`, commit `dbc0035`): `schema:1`, `id`,
+  `unit`, `granularity`, `source`, e `data:[{date, rate, value}]` — **`rate` e `value` iguais** na
+  fase de convivência (§6). Nenhum valor mudou; a conversão é de forma, provada par a par.
+  A **célula de publicação nos notebooks ficou adiada** por decisão do usuário — a conversão é a
+  ponte até uma re-execução no Colab. **Os notebooks são a fonte; o script não os substitui.**
+- **A dedupe de mês repetido atingiu 4 arquivos, não 2** — `caged`, `mvgr-nominal`, `mvgr-real` e
+  `pib-real-anual` (o plano previa só a MVG-R). Em `mvgr-real` os dois valores repetidos eram
+  **diferentes**; ficou o posterior. O efeito não é só na MVG-R: a matriz da §7.3 mudou em
+  **duas colunas** (Lula I e Dilma II), e o anexo mudou contagens (`caged` 371→368, `mvgr-*`
+  259→257, `pib-real-anual` 32→30). Re-medido e escrito com data (`704ac16`); **agregados
+  intactos** (104 células · 4 sem cobertura · 1 ponto único · 15 abaixo do esperado).
+- **🔴 Terceira contradição de documentação: §6 × §12.1, sobre onde mora a `unit`.** A §6 (e a
+  R16, "o catálogo não valida `unit`") põe a unidade em `dados/`; a **§12.1 exige** a unidade no
+  `indicators.json`, porque o **distintivo de escala da linha renderiza ANTES de a série
+  carregar** — sem ela o distintivo fica em branco em silêncio. O código segue a §12.1 e mantém
+  o campo. **A §6 está errada sobre isto, ou a §12.1 está — decidir qual.** Terceira vez nesta
+  série de fatias que dois documentos se contradizem sem nada que os obrigue a se encontrar
+  (as outras duas: §1 × `AGENTS.md` sobre tema; e o caminho relativo que a spec publicava errado).
+- **O `source` saiu do `indicators.json`** (13×): a ficha o lê da **série carregada**, e nenhum
+  template vivo o usava — só o `chart-manager.js` legado, que a fatia 10 apaga.
+
+
 
 
 ## Consequências

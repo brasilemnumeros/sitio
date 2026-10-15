@@ -36,9 +36,16 @@ export function amplitudeRatio(a, b) {
  * (21,2 · 125) particiona os dados de hoje de forma idêntica — 50 é o meio da faixa. */
 export const AMPLITUDE_LIMIT = 50;
 
+/** Acima daqui nem dois eixos salvam — a série menor vira reta colada no zero (§5).
+ * Seis ordens de grandeza. Decidido por medição dos 78 pares reais em 2026-10-14: 14 pares
+ * (18%) caem aqui, todos amplitude de ordem de milhão contra um percentual. NÃO é faixa
+ * vazia como o corte de 50 — a região 92.267–3.759.751 é densa, então o número é declarado,
+ * não livre. Ver a §5 da spec. */
+export const AMPLITUDE_LIMIT_ILEGIVEL = 1_000_000;
+
 /**
  * @typedef {Object} Veredito
- * @property {'convive'|'avisa'} veredito
+ * @property {'convive'|'avisa'|'ilegivel'} veredito
  * @property {number} ratio   pior razão contra as séries já presentes
  * @property {Series|null} contra  a série que produziu a pior razão
  */
@@ -56,9 +63,9 @@ export function comparabilidade(novaSerie, seriesExistentes) {
     const ratio = amplitudeRatio(novaSerie, existente);
     if (ratio > pior.ratio) pior = { ratio, contra: existente };
   }
-  return {
-    veredito: pior.ratio > AMPLITUDE_LIMIT ? 'avisa' : 'convive',
-    ratio: pior.ratio,
-    contra: pior.contra,
-  };
+  const veredito =
+    pior.ratio > AMPLITUDE_LIMIT_ILEGIVEL ? 'ilegivel'
+    : pior.ratio > AMPLITUDE_LIMIT ? 'avisa'
+    : 'convive';
+  return { veredito, ratio: pior.ratio, contra: pior.contra };
 }

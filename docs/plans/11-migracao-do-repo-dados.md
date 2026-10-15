@@ -32,6 +32,22 @@ deploy** entre os repos deixa de poder derrubar o gráfico em produção.
   → retirar `rate`. A publicação única (`value` só) foi **rejeitada**: depende de sorte,
   não de processo.
 - **Custo zero** (D6): sem serviço pago, sem chave de API.
+- 🔴 **Datas duplicadas nas séries publicadas — medido em 2026-10-14, e é conserto desta
+  fatia.** Quatro dos 13 arquivos têm **duas leituras no mesmo mês**:
+
+  | arquivo | datas duplicadas |
+  |---|---|
+  | `caged/caged-total-mensal.json` | `1995-10-01`, `2005-10-01`, `2015-10-01` |
+  | `mvgr/mvgr-nominal.json` | `2005-10-01`, `2015-10-01` |
+  | `mvgr/mvgr-real.json` | `2005-10-01`, `2015-10-01` |
+  | `pib/pib-real-anual.json` | `2005-01-01`, `2015-01-01` |
+
+  **Não quebra o app** — medido no navegador com a lightweight-charts 5.2.1
+  (`~/.hermes/cache/scratch/probe-datas/`): ela **aceita** `time` repetido, guarda todos os
+  pontos e desenha. Mas desenha um **segmento vertical** no mesmo x, e o dado está errado: são
+  duas leituras para o mesmo mês. **Decidir e consertar aqui** — provavelmente a média, ou o
+  descarte da segunda leitura, com o critério escrito. Não deixar passar para a fase 3 sem
+  decisão: é exatamente o tipo de coisa que sobrevive por anos porque "o gráfico funciona".
 - **O risco real está nos notebooks**, não no site — é lá que mora a regressão silenciosa
   nos dados (§6).
 

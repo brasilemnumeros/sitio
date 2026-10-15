@@ -39,7 +39,9 @@ Nada aqui desenha: a fatia 05 liga o resultado ao estado das séries, a fatia 06
 - Produz:
   - `hexParaRgb(hex) -> {r,g,b}` (0–255) e `rgbParaHex({r,g,b}) -> string`
   - `rgbParaOKLab({r,g,b}) -> {L,a,b}` (sRGB **não** linearizado na entrada)
-  - `oklabParaRGB({L,a,b}) -> {r,g,b}` (0–255, com *clamp*)
+  - `oklabParaRGB({L,a,b}) -> {r,g,b}` — devolve valores **possivelmente fora de [0,255]**
+    para entradas fora de gamut (não faz *clamp*: preserva a informação para quem chama).
+    O *clamp* acontece em `rgbParaHex`, que é o ponto de conversão para texto.
   - `deltaEOK(corA, corB) -> number` — distância euclidiana em OKLab
 
 - [ ] **Passo 1: escrever os testes que falham**
@@ -355,7 +357,9 @@ describe('separação (§1)', () => {
   });
 
   it('a paleta otimizada é melhor que a ingênua igualmente espaçada (§1)', () => {
-    // 10 matizes de 36° em HSL — a primeira tentativa, que colapsou no daltonismo.
+    // Uma paleta ingênua de 10 matizes de 36° em HSL. Mede global 0,0216 — NÃO é a
+    // ingênua que a §1 cita (0,0061), que é de outra construção; o teste só compara os
+    // dois globais, então não é contradição.
     const ingenua = Array.from({ length: 10 }, (_, i) => hslParaHex((i * 36) % 360, 70, 55));
     expect(separacaoGlobal(PALETA_PADRAO)).toBeGreaterThan(separacaoGlobal(ingenua));
   });
@@ -464,7 +468,8 @@ git commit -m "feat(domain): paleta de 10 e o teste que trava o envelope no dalt
     paleta**, não um número solto: o que o app já aceita como separação mínima é o que ele
     avisa quando o usuário escolhe abaixo.
   - `avisoDeColisao(cor, outrasCores) -> {colide: boolean, distancia: number, contra: number}` —
-    `distancia` é a **mínima medida** contra as outras; `contra` é o índice da que mais
+    `distancia` é a **mínima medida contra as outras, no pior caso entre as quatro visões**
+    (R25: `separacaoGlobal([cor, outra])`, não `deltaEOK` cru); `contra` é o índice da que mais
     se aproxima (`-1` se não há outras).
 
 - [ ] **Passo 1: escrever os testes que falham**
@@ -472,23 +477,33 @@ git commit -m "feat(domain): paleta de 10 e o teste que trava o envelope no dalt
 ```js
 import { avisoDeColisao, LIMIAR_COLISAO } from './color.js';
 
-describe('avisoDeColisao (§1)', () => {
+describe('avisoDeColisao (§1, R25)', () => {
   it('a régua é o envelope da paleta, não um número solto', () => {
     expect(LIMIAR_COLISAO).toBe(LIMIAR_ENVELOPE);
   });
 
-  it('avisa com a distância medida quando a cor chega perto de outra', () => {
-    // Medido: dE(#6351ca, #6a58c8) = 0,0213 — bem abaixo do envelope (0,09).
-    const r = avisoDeColisao('#6351ca', ['#6a58c8', '#ffd000']);
+  it('mede o PIOR CASO entre as quatro visões — e avisa onde a visão normal não avisaria', () => {
+    // O par que a §1 cita como o colapso do daltonismo: dista 0,1114 em visão normal
+    // (ACIMA do limiar) e colapsa para 0,0067 sob deuteranopia. É o teste que impede a
+    // régua de voltar a medir só visão normal.
+    const r = avisoDeColisao('#309aff', ['#9581ff']);
     expect(r.colide).toBe(true);
-    expect(r.distancia).toBeCloseTo(0.0213, 3);
+    expect(r.distancia).toBeCloseTo(0.0067, 3);
     expect(r.contra).toBe(0);
   });
 
-  it('não avisa quando a cor é bem separada', () => {
-    // Medido: dE(#00fddc, #d25200) = 0,4275 · dE(#6351ca, #9d99ed) = 0,2081
+  it('avisa quando a cor chega perto de outra, mesmo em visão normal', () => {
+    // Medido: pior caso de (#6351ca, #6a58c8) = 0,0208
+    const r = avisoDeColisao('#6351ca', ['#6a58c8', '#ffd000']);
+    expect(r.colide).toBe(true);
+    expect(r.distancia).toBeCloseTo(0.0208, 3);
+    expect(r.contra).toBe(0);
+  });
+
+  it('não avisa quando a cor é bem separada em TODAS as visões', () => {
+    // Medido: pior caso de (#00fddc, #d25200) = 0,3041 · de (#9d99ed, #6351ca) = 0,2049
     expect(avisoDeColisao('#00fddc', ['#d25200']).colide).toBe(false);
-    expect(avisoDeColisao('#6351ca', ['#9d99ed']).colide).toBe(false);
+    expect(avisoDeColisao('#9d99ed', ['#6351ca']).colide).toBe(false);
   });
 
   it('não avisa e não quebra quando não há outras séries', () => {
@@ -511,13 +526,21 @@ export const LIMIAR_COLISAO = LIMIAR_ENVELOPE;
 /**
  * Avisa (com a distância medida) quando a cor escolhida pelo usuário colidir com uma
  * série já selecionada — mas NÃO bloqueia (§1).
+ *
+ * **R25 — a distância é o PIOR CASO entre as quatro visões, não a distância em visão
+ * normal.** O limiar é o envelope da paleta, que é um pior-caso; comparar uma distância
+ * de visão normal contra ele é comparar duas medidas diferentes. Medido (2026-10-14):
+ * o par que a §1 cita como o colapso do daltonismo (`#309aff` × `#9581ff`) dista
+ * **0,1114** em visão normal — acima do limiar, então a régua antiga **não avisava** —
+ * e **0,0067** sob deuteranopia. O aviso ficava cego exatamente no risco que o envelope
+ * existe para pegar.
  */
 export function avisoDeColisao(cor, outrasCores) {
   if (outrasCores.length === 0) return { colide: false, distancia: Infinity, contra: -1 };
   let distancia = Infinity;
   let contra = -1;
   outrasCores.forEach((outra, i) => {
-    const d = deltaEOK(hexParaRgb(cor), hexParaRgb(outra));
+    const d = separacaoGlobal([cor, outra]);   // pior caso entre as quatro visões
     if (d < distancia) {
       distancia = d;
       contra = i;
@@ -548,6 +571,9 @@ git commit -m "feat(domain): aviso de colisao de cor, que informa sem bloquear"
 - [ ] O teste de não-regressão **falha** se alguém ajustar uma cor à mão e derrubar a
       separação no daltonismo (§10.7) — conferir trocando uma cor de propósito.
 - [ ] `avisoDeColisao` **informa sem bloquear** (não existe caminho que rejeite a cor).
+- [ ] `avisoDeColisao` mede o **pior caso entre as quatro visões** (R25): o par `#309aff` ×
+      `#9581ff`, que dista 0,1114 em visão normal e colapsa para 0,0067 sob deuteranopia,
+      **é sinalizado** — com a régua de visão normal ele passava em silêncio.
 - [ ] Nenhuma cor de partido, em nenhuma forma (§7.3.4).
 - [ ] `grep -rE "svelte|fetch|window|document" app/src/domain/color.js` → sem resultado.
 

@@ -64,6 +64,7 @@ fixar versões manualmente neste passo.
 - [ ] **Passo 2: escrever `sitio/app/vite.config.js`**
 
 ```js
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 
@@ -74,6 +75,10 @@ export default defineConfig({
     outDir: '../assets/js/app',
     emptyOutDir: true,
     rollupOptions: {
+      // Entrada de BUILD aponta para o JS: o index.html é só o shell do `vite dev`.
+      // Sem isto o Vite copiaria o index.html para o outDir e ele iria ao ar como
+      // shell órfão — o Jekyll lê a ÁRVORE DE TRABALHO, não o git (ruling R13).
+      input: fileURLToPath(new URL('./src/main.js', import.meta.url)),
       output: {
         // Nome fixo: o HTML não precisa de manifest para descobrir o nome gerado.
         inlineDynamicImports: true,
@@ -89,6 +94,15 @@ export default defineConfig({
   },
 });
 ```
+
+> **R13 — o app NÃO emite CSS próprio.** Com a entrada de build no JS, o `vite build`
+> emite **só `app.js`**. O `app.css` que a §10.1 menciona era o Vite seguindo o
+> `<link rel="stylesheet">` do `index.html` — ou seja, era o próprio `main.dist.css` do
+> site re-empacotado, não um CSS do app. O app é estilizado pelo **`main.dist.css`**
+> (Tailwind sobre o site inteiro, que já varre `app/src` — é exatamente por isso que a
+> §10.3 exige que `app/src` não seja ignorado, e por isso existe a classe-canário). O
+> `_layouts/default.html` já carrega esse CSS. A fatia 10 **não** deve referenciar
+> `app.css`.
 
 - [ ] **Passo 3: escrever o shell de desenvolvimento `sitio/app/index.html`**
 
@@ -242,14 +256,14 @@ Esperado: `main.dist.css` (re)gerado sem erro.
 
 - [ ] **Passo 2: rodar o build de produção**
 
-Run: `cd sitio/app && npm run build`
-Esperado: `../assets/js/app/app.js` e `../assets/js/app/app.css` criados. Conferir:
+Run: `NODE_ENV=development npm run build` (dentro de `sitio/app`; ver ruling R11 sobre o
+`NODE_ENV` desta máquina)
+Esperado: **apenas** `../assets/js/app/app.js`, com nome fixo e **sem hash** — e **nenhum**
+`index.html` (R13). Conferir:
 
 ```bash
 ls -la ../assets/js/app/
 ```
-
-Esperado: exatamente os nomes `app.js` e `app.css` — **sem hash**.
 
 - [ ] **Passo 3: confirmar que o artefato está ignorado pelo git**
 
@@ -274,8 +288,9 @@ commitar com `chore(app): ...`.
 Todos verificáveis por comando, não por opinião:
 
 - [ ] `cd sitio/app && npm ci && npm test` → **1 teste passa**, zero falhas.
-- [ ] `cd sitio/app && npm run build` → cria `sitio/assets/js/app/app.js` e `app.css`,
-      com **nome fixo** (nenhum hash).
+- [ ] `npm run build` → cria **`sitio/assets/js/app/app.js`**, com **nome fixo** (nenhum
+      hash) e **sem `index.html`** no `outDir` (R13). O app não emite CSS próprio: ele usa
+      o `main.dist.css` do site.
 - [ ] `cd sitio/app && npm run dev` → serve o shell; `App.svelte` renderiza a linha
       `schema v1`.
 - [ ] `cd sitio && git status --porcelain assets/js/app/` → vazio (artefato ignorado).

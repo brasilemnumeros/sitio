@@ -126,7 +126,7 @@ describe('paraPontosDaBiblioteca', () => {
     ]);
   });
 
-  it('ordena por tempo — a lib exige série ordenada', () => {
+  it('ordena por tempo — determinismo nosso, não exigência da lib', () => {
     const pontos = paraPontosDaBiblioteca([
       { date: '2004-04-01', value: 43 },
       { date: '2004-03-01', value: 42 },
@@ -163,6 +163,10 @@ describe('paraISO', () => {
  * O tempo da lib é em SEGUNDOS UNIX UTC. O corte em 10 caracteres não é cosmético: o dado
  * já veio com hora em algum arquivo, e sem ele o fuso desloca o ponto de dia. */
 export function paraPontosDaBiblioteca(data) {
+  // Medido em 2026-10-14 (sonda no navegador, lightweight-charts 5.2.1): a lib **aceita**
+  // tanto fora de ordem quanto `time` repetido — não lança, e guarda todos os pontos. O `sort`
+  // é nosso, para o resultado não depender da ordem de chegada do arquivo, não uma exigência
+  // dela. `.map` antes do `.sort` para não mutar a entrada.
   return data
     .map(({ date, value }) => ({
       time: Math.floor(Date.parse(`${date.slice(0, 10)}T00:00:00Z`) / 1000),
@@ -563,6 +567,10 @@ git commit -m "feat(chart): Chart.svelte liga store e adapter na direcao unica"
       na ponta. A **fatia 07** precisa da legenda externa.
 - [ ] **A conversão pura está testada sem DOM** (`points.test.js`): segundos UNIX UTC, ordem
       por tempo, corte da data em 10 caracteres, e série vazia devolvendo lista vazia.
+- [ ] **Datas duplicadas no dado publicado** (medido em 2026-10-14: `caged` 3×, `mvgr-nominal`
+      e `mvgr-real` 2×, `pib-real-anual` 2×) **não quebram o gráfico** — a lib aceita e desenha
+      um segmento vertical no mesmo x. É problema de **dado**, não de conversão: vai para a
+      **fatia 11**. A sonda provou que não lança.
 - [ ] **Nenhuma série recebe `title`** (§12.2) e `lastValueVisible` segue ligado — conferido no
       código do adapter, não por impressão.
 - [ ] `grep -rn "lightweight-charts" app/src` → só em `app/src/chart/` (§8, regra 1).

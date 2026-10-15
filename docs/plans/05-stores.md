@@ -454,12 +454,23 @@ it('seleciona e limpa', async () => {
 
 it('R27 — não importa series.js, verificado NO FONTE e não por proxy', async () => {
   // O teste anterior conferia que `celulaDe` não existe e que `seriesStore` não é exportado —
-  // mas um módulo poderia importar series.js SEM exportar nada disso e ainda assim passar.
+  // mas um módulo poderia importar series.js SEM exportar nada disso e ainda passar.
   // O R27 proíbe o IMPORT, então é o import que tem de ser travado.
+  //
+  // ⚠ Casa por ESPECIFICADOR, não por regex sobre o texto inteiro. A versão anterior procurava
+  // `from '…stores/'` e `series.js` no texto — e escapava de três formas que o Vite resolve:
+  //   import { x } from './series'        (sem extensão)
+  //   import '../stores/series'           (efeito colateral, sem `from`)
+  //   const x = require('./series')       (CommonJS)
   const { readFileSync } = await import('node:fs');
   const fonte = readFileSync(new URL('./mandate.js', import.meta.url), 'utf8');
-  expect(fonte).not.toMatch(/from\s+['"][^'"]*stores\//);   // nenhum store
-  expect(fonte).not.toMatch(/\bseries\.js\b/);              // nem por caminho direto
+  const especificadores = [
+    ...fonte.matchAll(/(?:from|require\s*\(|^[ \t]*import)\s*\(?\s*['"]([^'"]+)['"]/gm),
+  ].map((m) => m[1]);
+  // Um extrator que não acha nada faz o teste passar vazio — é o defeito que este teste existe
+  // para evitar. Se isto falhar, o extrator quebrou, não o módulo.
+  expect(especificadores.length).toBeGreaterThan(0);
+  expect(especificadores.filter((e) => /series/i.test(e))).toEqual([]);
 });
 ```
 

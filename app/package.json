@@ -20,5 +20,8 @@
   },
   "dependencies": {
     "lightweight-charts": "^5.2.1"
+  },
+  "engines": {
+    "node": ">=24 <27"
   }
 }

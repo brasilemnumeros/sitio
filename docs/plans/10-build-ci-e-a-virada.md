@@ -124,7 +124,7 @@ Substituir o bloco `build` de `.github/workflows/github-pages.yml`:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 26
           cache: npm
           cache-dependency-path: |
             package-lock.json

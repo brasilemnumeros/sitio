@@ -39,7 +39,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          # 26 — alinhado ao `sitio/.nvmrc` e ao `engines` dos dois `package.json`. Estava em 24,
+          # e o local desenvolvimento rodava em 26: as duas versões funcionavam, mas uma deriva
+          # entre o que se testa e o que se publica é o tipo de coisa que só aparece em produção.
+          # A 26 vira LTS em 2026-10-28; até lá é `Current`, e é a versão que a suíte inteira roda.
+          node-version: 26
           cache: npm
           cache-dependency-path: |
             package-lock.json

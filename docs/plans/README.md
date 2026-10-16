@@ -37,28 +37,52 @@ explícita **antes da fatia que o toca**.
 | Duração visível no trilho (barrinha) | não decidido | 09 | decidir se entra; se sim, é refinamento da 09 |
 | Leitura por espectro político | **descartada** | — | só volta como modo explícito do usuário, com fonte citada |
 
-**Gate atual:** `CONCERNS` — os quatro primeiros são pendências de desenho, não de
-plano. A fatia 06 não deve começar sem a medição dos rótulos; a 08 não deve começar sem
-o desenho mobile.
+**Gate atual:** `PASS` — nada bloqueia fatia nenhuma. (Era `CONCERNS` até 2026-10-15; os quatro
+itens abaixo continuam abertos, mas nenhum bloqueia, e três deles são decisão do usuário.)
+
+---
+
+## Onde o trabalho está — 2026-10-15
+
+**Fatias 00 a 09 e 11 fechadas. A 10 está pela metade (T1 e T2 prontas; T3–T4 pendentes).**
+
+| | |
+|---|---|
+| testes | **126 unitários em 17 arquivos** + **11 E2E** (Playwright) + 3 `fixme` (o gesto do minimapa) |
+| commits | `sitio` **114** à frente do `main` · `dados` **4** · raiz 1 |
+| enviado | **nada.** Nenhuma branch tem upstream — é o que mantém produção intocada |
+
+**O que falta, nesta ordem:**
+
+| ordem | o quê | por que nessa posição |
+|---|---|---|
+| 1 | **`dados` → `main`** | FASE 1 do §6. Sem isto, produção serve o **schema antigo** e `governos/federal.json` dá **404**. Push é decisão do usuário. |
+| 2 | **10/T3–T4 — a virada** | `/` vira o shell e o legado é apagado. Depende do item 1, e **apaga código em produção** — não sem OK. |
+| 3 | **11/T4 — tirar o `rate`** | Só depois do app estar no ar, senão quebra a página antiga na transição. |
+| 4 | **10/T4 — NOTICE + atribuição** | O Lightweight Charts é Apache-2.0 e exige o link no rodapé (§10.6). |
+
+**Ler antes de tocar:** o bloco "Onde o trabalho está" e o "Aberto, sem bloquear" do `AGENTS.md`
+da raiz — é lá que estão as decisões desta sessão (tema escuro fixo, dado local em dev, a §10.7
+reaberta) e as três contradições entre documentos.
 
 ---
 
 ## As fatias
 
-| # | arquivo | unidade de trabalho | entrega | depende de |
-|---|---|---|---|---|
-| 00 | `00-fundacao-app.md` | Fundação do app | projeto Vite + Svelte + Vitest autocontido em `sitio/app/`, build com nome fixo | — |
-| 01 | `01-contrato-de-dados.md` | Contrato de série (§6) | `data/`: schema canônico, validação que falha em voz alta, cache, catálogo | 00 |
-| 02 | `02-dominio-escalas.md` | Escalas (§5) | `domain/scales`: razão de amplitude, corte 50×, sugestão de eixo | 01 |
-| 03 | `03-dominio-mandatos.md` | Governos (§7) | `dados/governos/federal.json` + `domain/mandates`: Δ por mandato, 4 estados de célula | 01 |
-| 04 | `04-dominio-cor.md` | Cor (§1) | `domain/color`: OKLab, simulação de daltonismo, envelope da paleta, aviso de colisão | 00 |
-| 05 | `05-stores.md` | Estado (§8) | `stores/`: series · mandate · axes · viewport · catalog | 01,02,03,04 |
-| 06 | `06-grafico-adapter-faixas-minimapa.md` | Gráfico (§2, §8.1) | `chart/`: adapter, faixas de governo (`ISeriesPrimitive`), minimapa | 05 |
-| 07 | `07-shell-chips-filtros.md` | Casca da página (§1) | `components`: App · SeriesChips · TimeFilters | 06 |
-| 08 | `08-modal-de-busca.md` | Busca (§1.1) | `components/SearchModal`: cascata de três colunas, teclado, ficha com aviso de escala | 07 |
-| 09 | `09-trilho-e-painel-de-comparacao.md` | Mandatos na UI (§3, §4) | `components`: MandateRail · ComparisonPanel | 06,07 |
-| 10 | `10-build-ci-e-a-virada.md` | Integração e virada (§10) | CI com canário, `/` vira o shell, remoção do legado, NOTICE + atribuição | 09 |
-| 11 | `11-migracao-do-repo-dados.md` | Contrato no repo `dados` (§6) | notebooks publicam `value`; convivência de chaves; retirada de `rate` | — (coordena com 10) |
+| # | arquivo | unidade de trabalho | entrega | depende de | estado |
+|---|---|---|---|---|---|
+| 00 | `00-fundacao-app.md` | Fundação do app | projeto Vite + Svelte + Vitest autocontido em `sitio/app/`, build com nome fixo | — | ✅ fechada |
+| 01 | `01-contrato-de-dados.md` | Contrato de série (§6) | `data/`: schema canônico, validação que falha em voz alta, cache, catálogo | 00 | ✅ fechada |
+| 02 | `02-dominio-escalas.md` | Escalas (§5) | `domain/scales`: razão de amplitude, corte 50×, sugestão de eixo | 01 | ✅ fechada |
+| 03 | `03-dominio-mandatos.md` | Governos (§7) | `dados/governos/federal.json` + `domain/mandates`: Δ por mandato, 4 estados de célula | 01 | ✅ fechada |
+| 04 | `04-dominio-cor.md` | Cor (§1) | `domain/color`: OKLab, simulação de daltonismo, envelope da paleta, aviso de colisão | 00 | ✅ fechada |
+| 05 | `05-stores.md` | Estado (§8) | `stores/`: series · mandate · axes · viewport · catalog | 01,02,03,04 | ✅ fechada |
+| 06 | `06-grafico-adapter-faixas-minimapa.md` | Gráfico (§2, §8.1) | `chart/`: adapter, faixas de governo (`ISeriesPrimitive`), minimapa | 05 | ✅ fechada |
+| 07 | `07-shell-chips-filtros.md` | Casca da página (§1) | `components`: App · SeriesChips · TimeFilters | 06 | ✅ fechada |
+| 08 | `08-modal-de-busca.md` | Busca (§1.1) | `components/SearchModal`: cascata de três colunas, teclado, ficha com aviso de escala | 07 | ✅ fechada |
+| 09 | `09-trilho-e-painel-de-comparacao.md` | Mandatos na UI (§3, §4) | `components`: MandateRail · ComparisonPanel | 06,07 | ✅ fechada (T4/logos e T5/barrinha não feitas — decisão do usuário) |
+| 10 | `10-build-ci-e-a-virada.md` | Integração e virada (§10) | CI com canário, `/` vira o shell, remoção do legado, NOTICE + atribuição | 09 | ⚠️ **T1 e T2 prontas; T3–T4 pendentes** (a virada apaga o legado) |
+| 11 | `11-migracao-do-repo-dados.md` | Contrato no repo `dados` (§6) | notebooks publicam `value`; convivência de chaves; retirada de `rate` | — (coordena com 10) | ✅ fechada, menos a **T4** (tirar o `rate`) — só depois do app no ar |
 
 ### Ordem e paralelismo
 
@@ -103,15 +127,18 @@ superfície que os exibe:
 Três coisas apareceram ao escrever o plano, todas **medidas**, e ficam registradas aqui
 para não se perderem:
 
-1. **A MVG-R tem meses duplicados.** `mvgr-nominal` e `mvgr-real` têm **259 pontos para
-   257 meses** — **2005-10** e **2015-10** aparecem duas vezes cada. É por isso que o
-   Lula I conta **35** pontos (e não 34). Corrigir muda números que a spec já publicou
-   (35 → 34; a matriz da §7.3 muda em duas células) — a fatia 11 corrige **e** atualiza a
-   spec.
-2. **`sitio/app/` e `sitio/scripts/` precisam entrar no `exclude:` do `_config.yml`.**
-   É o **mesmo trap do `docs/`** já documentado no `AGENTS.md`: o Jekyll copia arquivo sem
-   front matter verbatim, e o fonte do app seria publicado em `/app/...`. A fatia 10
-   trata.
+1. **Meses duplicados no dado publicado — e eram 4 arquivos, não 2.** O plano previu a MVG-R
+   (`mvgr-nominal` e `mvgr-real`: **259 pontos para 257 meses**, com **2005-10** e **2015-10**
+   repetidos). Ao migrar, mediu-se: **`caged` e `pib-real-anual` também tinham**, e em
+   **`mvgr-real` os dois valores repetidos eram DIFERENTES** (ficou o posterior). O efeito não é
+   de uma célula: a matriz da §7.3 mudou em **duas colunas** (Lula I **e** Dilma II) e o anexo
+   mudou contagens (`caged` 371→368, `mvgr-*` 259→257, `pib-real-anual` 32→30). **Feito na
+   fatia 11**, com a spec re-medida e datada (`704ac16`); **os agregados não mudaram** (104
+   células · 4 sem cobertura · 1 ponto único · 15 abaixo do esperado).
+2. **`sitio/app/` e `sitio/scripts/` no `exclude:` do `_config.yml` — ✅ feito.** O app já estava
+   (fatia 00); o **`scripts/` NÃO estava** e o `checar-canario.sh` seria publicado em
+   `/scripts/checar-canario.sh` — o **mesmo trap do `docs/`** já documentado no `AGENTS.md`.
+   Corrigido em 2026-10-15.
 3. **A medição da §7.3 se reproduz exatamente.** A matriz de cobertura do anexo
    (13 × 8 = 104 células, 4 sem cobertura, 1 ponto único) foi recomputada sobre os dados
    reais e bate **célula a célula** — o que permitiu transformá-la em teste de aceite

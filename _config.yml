@@ -24,7 +24,6 @@ blog_categories:
     color: "purple"
 
 plugins:
-  - jekyll-analytics
   - jekyll-feed
   - jekyll-sitemap
 

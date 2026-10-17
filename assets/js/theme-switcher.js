@@ -96,7 +96,7 @@ class ThemeSwitcher {
     this.trackThemeChange(newTheme, previousTheme);
   }
 
-  // Envia evento para GTM
+  // Envia evento para o GA4
   trackThemeChange(newTheme, previousTheme) {
     if (typeof gtag !== "undefined") {
       gtag("event", "theme_changed", {

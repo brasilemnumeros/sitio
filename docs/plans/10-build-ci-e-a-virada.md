@@ -32,11 +32,13 @@ obrigatória do TradingView.
 ### Tarefa 1: A classe-canário e o script que falha o build
 
 **Arquivos:**
+
 - Modificar: `sitio/app/src/App.svelte` (acrescentar a classe-canário)
 - Criar: `sitio/scripts/checar-canario.sh`
 - Modificar: `sitio/package.json` (script `canario`)
 
 **Interfaces:**
+
 - Consome: o `main.dist.css` gerado pelo Tailwind.
 - Produz: um comando que **falha** (exit 1) se a classe exclusiva do app não estiver no
   CSS — a única forma de a falha silenciosa da §10.3 virar barulhenta.
@@ -79,6 +81,7 @@ echo "canário OK: o Tailwind varreu o app."
 - [ ] **Passo 3: provar que o canário falha de verdade**
 
 Run (dentro de `sitio/`):
+
 ```bash
 npx -y @tailwindcss/cli -i ./assets/css/main.css -o ./assets/css/main.dist.css
 bash scripts/checar-canario.sh   # esperado: canário OK
@@ -103,9 +106,11 @@ git commit -m "feat(build): classe-canario que falha o build se o Tailwind parar
 ### Tarefa 2: O pipeline do CI (§10.2, §10.7)
 
 **Arquivos:**
+
 - Modificar: `sitio/.github/workflows/github-pages.yml`
 
 **Interfaces:**
+
 - Consome: os scripts de `sitio/app/` e de `sitio/`.
 - Produz: a ordem — `checkout` → Node → `npm ci` em `sitio/` → `npm ci && vite build` em
   `sitio/app/` → Tailwind da raiz de `sitio/` → **canário** → `jekyll-build-pages` →
@@ -116,40 +121,40 @@ git commit -m "feat(build): classe-canario que falha o build se o Tailwind parar
 Substituir o bloco `build` de `.github/workflows/github-pages.yml`:
 
 ```yaml
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 26
-          cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            app/package-lock.json
+build:
+  runs-on: ubuntu-latest
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 26
+        cache: npm
+        cache-dependency-path: |
+          package-lock.json
+          app/package-lock.json
 
-      # Falhar rápido: as contas que erram calado são testadas antes de gastar o build (§10.7)
-      - name: Testes do app
-        run: npm ci --prefix app && npm test --prefix app
+    # Falhar rápido: as contas que erram calado são testadas antes de gastar o build (§10.7)
+    - name: Testes do app
+      run: npm ci --prefix app && npm test --prefix app
 
-      - name: Build do app (Vite, saída de nome fixo)
-        run: npm ci --prefix app && npm run build --prefix app
+    - name: Build do app (Vite, saída de nome fixo)
+      run: npm ci --prefix app && npm run build --prefix app
 
-      - name: CSS do site (Tailwind CLI, da raiz de sitio/)
-        run: npm ci && npx -y @tailwindcss/cli -i ./assets/css/main.css -o ./assets/css/main.dist.css
+    - name: CSS do site (Tailwind CLI, da raiz de sitio/)
+      run: npm ci && npx -y @tailwindcss/cli -i ./assets/css/main.css -o ./assets/css/main.dist.css
 
-      - name: Canário do Tailwind (§10.3)
-        run: bash scripts/checar-canario.sh
+    - name: Canário do Tailwind (§10.3)
+      run: bash scripts/checar-canario.sh
 
-      - name: Setup Pages
-        id: pages
-        uses: actions/configure-pages@v5
-      - name: Build (Jekyll)
-        uses: actions/jekyll-build-pages@v1
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+    - name: Setup Pages
+      id: pages
+      uses: actions/configure-pages@v5
+    - name: Build (Jekyll)
+      uses: actions/jekyll-build-pages@v1
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
 ```
 
 > `npm ci` exige `package-lock.json` commitado — os dois (site e app) entram no git
@@ -167,29 +172,35 @@ git commit -m "ci: testa antes de buildar, constroi o app e roda o canario"
 ### Tarefa 3: O `/` vira o shell do app (§10.6)
 
 **Arquivos:**
+
 - Modificar: `sitio/index.html`
 - Modificar: `sitio/_layouts/default.html`
 - Modificar: `sitio/_config.yml`
 
 **Interfaces:**
+
 - Consome: o bundle `assets/js/app/app.js` + `assets/css/app.css` (fatia 00) e o app
   (fatias 05–09).
 - Produz: o `/` como shell (`<div id="app">` + bundle), e o fim do bloco de Chart.js.
 
-- [ ] **Passo 1: reescrever `index.html`**
+- [x] **Passo 1: reescrever `index.html`** _(feito em 2026-10-17)_
 
 ```html
 ---
 layout: default
 title: Início
 ---
+
 <div id="app"></div>
 <!-- Sem <link> de CSS do app: o main.dist.css (Tailwind sobre o site inteiro, que já
      varre app/src) é carregado pelo _layouts/default.html — ver R13. -->
-<script type="module" src="{{ '/assets/js/app/app.js' | relative_url }}?v={{ site.time | date: '%s' }}"></script>
+<script
+  type="module"
+  src="{{ '/assets/js/app/app.js' | relative_url }}?v={{ site.time | date: '%s' }}"
+></script>
 ```
 
-- [ ] **Passo 2: apagar o bloco de Chart.js de `default.html`**
+- [x] **Passo 2: apagar o bloco de Chart.js de `default.html`** _(feito em 2026-10-17)_
 
 Remover **inteiro** o `{% if page.title == 'Início' %} … {% endif %}` (linhas ~74–108):
 os cinco CDNs (hammerjs, chart.js, adaptador de data-fns, annotation, datalabels, zoom) e
@@ -212,8 +223,8 @@ exclude:
   - package.json
   - package-lock.json
   - docs/
-  - app/            # ← novo: o fonte do app não é publicado
-  - scripts/        # ← novo: o canário não é publicado
+  - app/ # ← novo: o fonte do app não é publicado
+  - scripts/ # ← novo: o canário não é publicado
 ```
 
 - [ ] **Passo 4: verificar a exclusão — sem depender do render do Jekyll**
@@ -243,28 +254,25 @@ end'
 `assets/js/app/app.js` aparecer excluído, o padrão está largo demais** — o app não seria
 publicado.
 
-*(Se, por acaso, o render completo rodar na sua máquina, rode-o e confirme `_site/app/`
-ausente — mas ele não é o critério.)*
+_(Se, por acaso, o render completo rodar na sua máquina, rode-o e confirme `_site/app/`
+ausente — mas ele não é o critério.)_
 
-- [ ] **Passo 5: commitar**
-
-```bash
-cd sitio && git add index.html _layouts/default.html _config.yml
-git commit -m "feat(site): a raiz vira o shell do app e o fonte do app sai do build"
-```
+- [x] **Passo 5: commitar** _(feito em 2026-10-17, junto com a T4 num commit)_
 
 ---
 
 ### Tarefa 4: Apagar o legado (§11)
 
 **Arquivos:**
+
 - Remover: os arquivos da §11 e o que ficou sem referência
 
 **Interfaces:**
+
 - Consome: nada (é remoção).
 - Produz: a camada antiga fora do repositório.
 
-- [ ] **Passo 1: confirmar que nada mais referencia cada arquivo**
+- [x] **Passo 1: confirmar que nada mais referencia cada arquivo** _(confirmado por `grep` em 2026-10-17: só `docs/` e `.superpowers/` citam os nomes)_
 
 ```bash
 cd sitio
@@ -276,33 +284,23 @@ done
 Esperado: cada um só aparece em si mesmo (ou em nada). **Se aparecer em um template,
 parar** — a virada não pode deixar referência pendurada.
 
-- [ ] **Passo 2: remover**
+- [x] **Passo 2: remover** _(feito em 2026-10-17: os 10 arquivos removidos; `indicators.json` NÃO — virou catálogo do app)_
 
-```bash
-cd sitio
-git rm assets/js/chart-creator.js assets/js/chart-integration.js assets/js/multiselect-manager.js \
-       assets/js/chart-manager.js assets/js/index-functions.js assets/js/indicator-color-manager.js \
-       assets/js/simple-mobile-zoom-fix.js assets/js/mobile-landscape-nav.js \
-       _includes/config-modal.html _includes/multiselect.html
-```
+_(confirmar os dois `_includes` no Passo 1 — eles são citados pela §11.)_
 
-*(confirmar os dois `_includes` no Passo 1 — eles são citados pela §11.)*
-
-- [ ] **Passo 3: commitar**
-
-```bash
-cd sitio && git commit -m "refactor: remove a camada de graficos antiga (Chart.js e o multiselect)"
-```
+- [x] **Passo 3: commitar** _(feito em 2026-10-17 — a virada no repo está completa; **falta o push**, que é o passo de deploy do T5)_
 
 ---
 
 ### Tarefa 5: Atribuição do TradingView (§10.5)
 
 **Arquivos:**
+
 - Criar: `sitio/NOTICE`
 - Modificar: `sitio/_includes/footer.html`
 
 **Interfaces:**
+
 - Consome: nada.
 - Produz: o **link no rodapé global** (vale para todas as páginas, e não depende de o
   gráfico continuar na página em que está hoje) + o arquivo **`NOTICE`** no repo, como a

@@ -1,4 +1,4 @@
-import { test, expect, abrirApp } from './apoio.js';
+import { test, expect, abrirApp, carregarExemplo } from './apoio.js';
 
 /**
  * A CASCA (§1, §10.3). Não basta afirmar que o app montou — há dois defeitos silenciosos que só
@@ -38,7 +38,19 @@ test('a casca carrega, o Tailwind aplicou (classe-canário) e o tema é escuro',
     `fundo do <body> deveria ser escuro (luminância baixa), veio ${corCorpo}`,
   ).toBeLessThan(80);
 
-  // 5 · ordem da §1: os seis blocos aparecem, e o do gráfico vem antes dos filtros/trilho/matriz.
+  // 5 · §9.1 / ADR 0001 (2026-10-17) — DIVULGAÇÃO PROGRESSIVA: sem série não há o que controlar,
+  //     então os blocos 4/5/6 NÃO existem. Era o defeito que a decisão corrige: três controles
+  //     mortos (filtros desabilitados, trilho inerte, painel-promessa) já na abertura.
+  await expect(page.locator('[data-bloco="inicial"]')).toBeVisible();
+  await expect(page.locator('[data-bloco="filtros"]')).toHaveCount(0);
+  await expect(page.locator('[data-bloco="trilho"]')).toHaveCount(0);
+  await expect(page.locator('[data-bloco="comparacao"]')).toHaveCount(0);
+
+  // a captura registra o ABRIR MINIMALISTA (só busca + exemplo), já em tema escuro.
+  await page.screenshot({ path: 'e2e/.artefatos/casca-tema-escuro.png', fullPage: true });
+
+  // 6 · ordem da §1: com série, os blocos aparecem e o do gráfico vem antes dos filtros/trilho/matriz.
+  await carregarExemplo(page);
   await expect(page.locator('[data-bloco="chips"]')).toHaveCount(1);
   await expect(page.locator('[data-bloco="filtros"]')).toHaveCount(1);
   await expect(page.locator('[data-bloco="trilho"]')).toHaveCount(1);
@@ -49,8 +61,44 @@ test('a casca carrega, o Tailwind aplicou (classe-canário) e o tema é escuro',
   expect(ordem.indexOf('chips')).toBeLessThan(ordem.indexOf('filtros'));
   expect(ordem.indexOf('filtros')).toBeLessThan(ordem.indexOf('trilho'));
   expect(ordem.indexOf('trilho')).toBeLessThan(ordem.indexOf('comparacao'));
+});
 
-  await page.screenshot({ path: 'e2e/.artefatos/casca-tema-escuro.png', fullPage: true });
+/**
+ * §9.1 / ADR 0001 (2026-10-17) — A OUTRA METADE da regra `mostrarCasca`. Sem ela, bastava
+ * `itens.length > 0`: o shell apareceria assim que a série fosse ADICIONADA, ainda carregando,
+ * e o `Esqueleto` perderia a função. Este teste segura a rede para o app ficar em
+ * `todosCarregando` de forma determinística — é o único jeito de olhar essa janela.
+ */
+test('com série carregando o shell ainda não existe; ele aparece quando o dado resolve', async ({
+  page,
+}) => {
+  await abrirApp(page);
+
+  // segura TODO /dados/** por 2,5s — janela de sobra para afirmar o estado de carregamento.
+  await page.route('**/dados/**', async (route) => {
+    await new Promise((r) => setTimeout(r, 2500));
+    await route.continue();
+  });
+
+  // dispara o exemplo: as duas séries entram com status `carregando`
+  await page.getByRole('button', { name: 'Selic × IPCA' }).click();
+
+  // AINDA CARREGANDO: o ESQUELETO ocupa o lugar do gráfico (§9.2) e o shell 4/5/6 NÃO existe.
+  await expect(page.locator('[data-bloco="esqueleto"]')).toBeVisible();
+  await expect(page.locator('[data-bloco="filtros"]')).toHaveCount(0);
+  await expect(page.locator('[data-bloco="trilho"]')).toHaveCount(0);
+  await expect(page.locator('[data-bloco="comparacao"]')).toHaveCount(0);
+
+  // O DADO RESOLVE: o esqueleto sai e o shell aparece — a transição que a regra descreve.
+  await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(2, {
+    timeout: 15000,
+  });
+  await expect(page.locator('[data-bloco="esqueleto"]')).toHaveCount(0);
+  await expect(page.locator('[data-bloco="filtros"]')).toHaveCount(1);
+  await expect(page.locator('[data-bloco="trilho"]')).toHaveCount(1);
+  await expect(page.locator('[data-bloco="comparacao"]')).toHaveCount(1);
+
+  await page.unroute('**/dados/**');
 });
 
 test('o dado local carrega: o catálogo traz os 7 grupos', async ({ page }) => {

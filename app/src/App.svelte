@@ -27,6 +27,13 @@
     itens.length > 0 && itens.every((i) => i.status === 'carregando'),
   );
 
+  // §9.1 / ADR 0001 (2026-10-17) — DIVULGAÇÃO PROGRESSIVA. Sem série não há nada para controlar,
+  // então os blocos 4/5/6 (filtros, trilho, comparação) só existem quando há série E ela já saiu
+  // do carregamento. Enquanto carrega, o `Esqueleto` do bloco 3 já desenha a forma do conteúdo
+  // (§9.2) — e é justamente ele que evita o salto. A ordem da §1 não muda: os blocos continuam
+  // nesta ordem, apenas deixam de existir no vazio (era um controle morto com explicação).
+  let mostrarCasca = $derived(itens.length > 0 && !todosCarregando);
+
   // O motivo vem das PRÓPRIAS séries: a mensagem do validador já diz o que houve — um `schema`
   // não suportado, por exemplo, chega com a palavra "schema" (§6). NUNCA "erro desconhecido":
   // o vazio sempre diz por quê (§9). Várias séries → um motivo por linha.
@@ -61,6 +68,8 @@
 </script>
 
 <!-- A ORDEM DESTES SEIS BLOCOS É A DA §1, LITERAL. Não reordenar. -->
+<!-- §9.1 (2026-10-17) — a PRESENÇA dos blocos 4/5/6 é condicional (`mostrarCasca`): sem série
+     eles não existem. A ordem entre eles não mudou; ver ADR 0001. -->
 <!-- O `bg` arbitrário no <main> é a CLASSE-CANÁRIO (§10.3): o fundo do app, com a mesma
      cor (#0e1117) do adapter/navigator. ATENÇÃO: escrever a classe aqui, num comentário,
      NÃO é permitido — o Tailwind também varre comentário e criaria um SEGUNDO produtor,
@@ -81,7 +90,7 @@
        de identificação (§12.2) e fica FORA do gráfico de propósito: com 10 séries os
        rótulos da lib ocupam 80% da altura da área de plot. -->
   {#if itens.length === 0}
-    <EstadoInicial aoAbrirBusca={() => (buscaAberta = true)} aoPedirExemplo={pedirExemplo} />
+    <EstadoInicial aoPedirExemplo={pedirExemplo} />
   {:else if todosEmErro}
     <!-- §9.3 — erro TOTAL: nada carregou. Sem marcador próprio (R29) — é um ramo a mais. -->
     <ErroTotal
@@ -97,14 +106,15 @@
   {/if}
 
   <!-- 4 · filtros de tempo — controle do gráfico, escreve no store `viewport` (§8.1). -->
-  <TimeFilters />
-
-  <!-- 5 · trilho de mandatos — seletor de largura igual, desacoplado do eixo do tempo (§3).
-       Fala só com a `mandateStore`, nunca com o gráfico (§8.1). -->
-  <MandateRail />
-
-  <!-- 6 · painel de comparação, SEMPRE visível, largura total (§1) — não é aba. -->
-  <ComparisonPanel />
+  <!-- 5 · trilho de mandatos — seletor de largura igual, desacoplado do eixo do tempo (§3). -->
+  <!-- 6 · painel de comparação, largura total (§1) — não é aba. -->
+  <!-- §9.1 — os TRÊS só existem quando há série a controlar (`mostrarCasca`); a ordem entre eles
+       segue a §1, e a presença é condicional. Ver ADR 0001 (2026-10-17). -->
+  {#if mostrarCasca}
+    <TimeFilters />
+    <MandateRail />
+    <ComparisonPanel />
+  {/if}
 
   {#if buscaAberta}
     <!-- A modal traz o próprio overlay (é um <button>, não um <div> — R31) e fecha por ESC

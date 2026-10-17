@@ -23,6 +23,7 @@ const ROTULOS = [
 
 test('o trilho tem 9 botões, um por governo, com o rótulo por texto', async ({ page }) => {
   await abrirApp(page);
+  await carregarExemplo(page); // §9.1 — o trilho só existe com série (divulgação progressiva)
 
   const trilho = page.locator('[data-bloco="trilho"]');
   const caixas = trilho.getByRole('button');
@@ -69,11 +70,12 @@ test('clicar num mandato destaca (aria-pressed) e clicar de novo limpa', async (
 test('a matriz aparece com série e traz os estados de célula por texto', async ({ page }) => {
   await abrirApp(page);
 
-  // sem série: o painel diz por quê (§9), não fica mudo
-  const painel = page.locator('[data-bloco="comparacao"]');
-  await expect(painel).toContainText(/Adicione um indicador/);
+  // §9.1 — sem série o painel não existe (divulgação progressiva): não fica mudo porque não está lá.
+  await expect(page.locator('[data-bloco="comparacao"]')).toHaveCount(0);
 
   await carregarExemplo(page);
+
+  const painel = page.locator('[data-bloco="comparacao"]');
 
   // cabeçalho: a coluna do indicador + uma por mandato (9)
   const tabela = painel.getByRole('table');

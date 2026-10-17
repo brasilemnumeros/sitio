@@ -76,30 +76,29 @@ test('remover o ✕ do chip tira a série; remover a última com janela ativa n�
 });
 
 /**
- * FILTROS DE TEMPO (§1, posição 4) — desabilitados sem série, habilitados com série, e o clique
- * muda o estado ativo (`aria-pressed`) por DURAÇÃO, derivado da store (§8.1), nunca de estado local.
+ * FILTROS DE TEMPO (§1, posição 4) — §9.1: o bloco NÃO existe sem série (divulgação progressiva);
+ * com série ele aparece habilitado, e o clique muda o estado ativo (`aria-pressed`) por DURAÇÃO,
+ * derivado da store (§8.1), nunca de estado local.
  */
-test('filtros de tempo: mudos sem série, acordam com série, e clicar muda o ativo', async ({
+test('filtros de tempo: não existem sem série, aparecem com série, e clicar muda o ativo', async ({
   page,
 }) => {
   await abrirApp(page);
 
-  // sem série: desabilitados + o motivo visível (§9 — barra cinza sem explicação é lida como defeito)
+  // sem série: o bloco nem existe — não há barra morta para explicar (§9.1)
+  await expect(page.locator('[data-bloco="filtros"]')).toHaveCount(0);
+
+  // com série: aparece habilitado
+  await carregarExemplo(page);
+  await assentar(page);
   const filtros = page.locator('[data-bloco="filtros"]');
   const umAno = filtros.getByRole('button', { name: 'Janela de 1 ano' });
   const cincoAnos = filtros.getByRole('button', { name: 'Janela de 5 anos' });
   const tudo = filtros.getByRole('button', { name: 'Janela completa' });
-  await expect(umAno).toBeDisabled();
-  await expect(tudo).toBeDisabled();
-  await expect(filtros.getByRole('status')).toBeVisible();
-
-  // com série: habilitados
-  await carregarExemplo(page);
-  await assentar(page);
   await expect(umAno).toBeEnabled();
   await expect(cincoAnos).toBeEnabled();
   await expect(tudo).toBeEnabled();
-  // e o motivo do vazio some
+  // com dado carregado não há motivo de vazio
   await expect(filtros.getByRole('status')).toHaveCount(0);
 
   // clicar acende o preset (por duração, derivado da store)

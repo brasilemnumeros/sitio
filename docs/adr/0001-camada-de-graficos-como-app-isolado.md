@@ -258,6 +258,34 @@ já estão consolidadas nas seções acima — nominalmente, não se repetem aqu
 
 
 
+### Estado inicial: divulgação progressiva (decidido) e a busca duplicada (2026-10-17)
+
+- **DECIDIDO — o estado zero vira minimalista: o shell (filtros, trilho, comparação) só aparece
+  quando há série a controlar.** No zero a página mostrava três controles **sem alvo**: filtros
+  desabilitados, 9 caixas de mandato que só acendiam, e uma promessa de matriz. **Medido no app
+  real (2026-10-17):** os três somam **124 px de conteúdo + 48 px de gaps = 172 px**, i.e. **47%
+  do shell de 364 px** no zero; escondendo-os o shell cai para **192 px**. Ao entrar a 1ª série o
+  conteúdo cresce **+665 px** sob a casca fixa contra **+837 px** sob a divulgação — mas **o
+  gráfico domina os dois**, então o custo marginal de esconder (172 px) é pequeno; a preocupação
+  da §9.2 com o salto não se paga aqui. **Regra implementada:** `mostrarCasca = itens.length > 0
+  && !todosCarregando` — enquanto carrega, o `Esqueleto` do bloco 3 já desenha a forma (§9.2). A
+  **ordem** da §1 não muda; só a **presença** vira condicional. **Custo honesto:** três E2E
+  codificavam a filosofia antiga (`casca.spec`, `exemplo.spec`, `trilho.spec` afirmavam os blocos
+  no zero) e tiveram a **intenção** reescrita — não foi troca de seletor. **Alternativas
+  rejeitadas:** (A) manter a casca desabilitada-com-motivo — mostra o que a ferramenta faz, ao
+  custo de encher a abertura de controle morto; (C) substituir os três blocos por **uma linha
+  única** ("Filtros, mandatos e comparação aparecem quando você adicionar uma série") — preserva
+  "nada silencioso" e o layout estável sem controle morto, mas é a **pedagogia que a §9.1 já
+  rejeitou**. A captura do zero está em `app/e2e/.artefatos/casca-tema-escuro.png`.
+- **A busca aparecia DUAS vezes no estado inicial — essa saiu.** A §1 põe a barra de busca no
+  topo (bloco 1, presente em todo estado) e o `EstadoInicial` tinha um segundo "Buscar
+  indicador…" dentro da caixa vazia. No estado em que não há o que controlar, a tela mostrava
+  dois campos idênticos. O campo do `EstadoInicial` foi **removido**; a busca passou a ser só a
+  do topo, e a caixa inicial ficou com o que ela acrescenta de fato — o atalho "Selic × IPCA".
+  **A §9.1 continua valendo** ("um campo que abre a busca, mais um atalho de exemplo"): a página
+  segue com um campo (o bloco 1) e o atalho; o que saiu foi a redundância, não o campo. Sem
+  churn de teste: todos os E2E abrem a busca por `.first()` no botão do topo, que é o que ficou.
+
 ## Consequências
 
 **Positivas**

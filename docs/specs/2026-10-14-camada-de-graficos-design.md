@@ -18,11 +18,11 @@ Uma página única, tema escuro, com as peças empilhadas nesta ordem:
 3. **Gráfico grande** — série temporal com as faixas de governo pintadas ao fundo.
 4. **Barra de filtros de tempo** — saiu da modal de configuração; é controle do gráfico.
 5. **Trilho de mandatos** — o seletor de mandato (seção 3).
-6. **Painel de comparação por mandato** — matriz indicador × mandato, largura total, **sempre visível** (não é aba).
+6. **Painel de comparação por mandato** — matriz indicador × mandato, largura total, **sempre visível quando há série** (não é aba).
 
 Decisão de fundo: o painel de comparação fica **abaixo do gráfico, em largura total**, e não numa coluna lateral. Duas razões: o gráfico não perde largura (o *feel* da série temporal é o produto), e a matriz completa de mandatos é o que responde "quem fez o quê" — o objetivo declarado. Uma coluna lateral forçaria escolher entre os dois.
 
-O painel **não** vem em abas. Ele é sempre visível, mesmo custando página longa.
+O painel **não** vem em abas. Ele é **sempre visível em todo estado com série**, mesmo custando página longa — no **estado inicial** ele não existe, porque não há o que comparar (§9.1, divulgação progressiva decidida em 2026-10-17).
 
 **Limite de 10 séries sobrepostas.** O limite passou por três estados no mesmo dia — **5 → sem limite → 10** — e o registro fica para não se relitigar a discussão.
 
@@ -465,9 +465,11 @@ Escala disso: como o caso "sem dado" é raro (4 de 104 células da matriz, medid
 
 ### 9.1 Estado inicial (nenhum indicador escolhido)
 
-Um campo que abre a busca, mais um **atalho de exemplo** ("Selic × IPCA") para o primeiro uso.
+Um campo que abre a busca — a **barra do topo, bloco 1 da §1**, que existe em todo estado — mais um **atalho de exemplo** ("Selic × IPCA") para o primeiro uso.
 
 **Rejeitado:** tela de boas-vindas com texto explicativo. Ela reaparece toda vez que o usuário limpa a seleção, e quem já conhece o site paga pedágio em toda visita. O atalho de exemplo resolve o primeiro uso sem obrigar ninguém a lê-lo.
+
+**Divulgação progressiva (decidido em 2026-10-17).** No estado inicial, os blocos **4 (filtros), 5 (trilho) e 6 (comparação) não existem** — não há série a controlar. Eles aparecem quando há série **e ela saiu do carregamento** (`itens.length > 0 && !todosCarregando`); enquanto carrega, o **`Esqueleto`** do bloco 3 já desenha a forma do conteúdo (§9.2), e é ele que evita o salto. A **ordem** da §1 não muda — só a **presença** passa a ser condicional. Medido no app real (2026-10-17): os três blocos ocupavam **172 px (47%** do shell de 364 px) no zero; ao entrar a 1ª série o conteúdo cresce **+665 px** sob a casca fixa contra **+837 px** sob a divulgação, mas **o gráfico domina os dois**, então o custo marginal medido é pequeno. **Consequência assumida:** o "sempre visível" do bloco 6 passa a significar *em todo estado com série*. A busca duplicada que havia nesta caixa saiu no mesmo dia (era um segundo "Buscar indicador…"; o campo é o do bloco 1). Ver ADR 0001.
 
 ### 9.2 Carregando
 

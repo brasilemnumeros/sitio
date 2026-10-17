@@ -56,7 +56,7 @@ A LGPD garante a você, como titular dos dados, uma série de direitos. Mesmo co
 - O acesso aos dados que possuímos sobre sua navegação;
 - A anonimização, bloqueio ou eliminação de dados desnecessários.
 
-Para exercer seus direitos ou tirar dúvidas, entre em contato conosco pelo e-mail: [inserir e-mail de contato da ONG, ex: privacidade@brasilemnumeros.ong.br].
+Para exercer seus direitos ou tirar dúvidas sobre o tratamento dos seus dados, você pode abrir uma discussão em nosso repositório público no [GitHub](https://github.com/brasilemnumeros). Não mantemos um canal de e-mail dedicado a esse fim.
 
 ### 7. Segurança dos Dados
 

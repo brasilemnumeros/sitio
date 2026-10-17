@@ -1,20 +1,47 @@
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id={{ site.google_analytics }}"></script>
+<!-- Google tag (gtag.js) — carregado SOMENTE após consentimento (LGPD). -->
 <script>
-  if (
-    readCookie('cookie-notice-dismissed') == 'true' &&
-    !(
+  (function () {
+    function readCookie(name) {
+      var nameEQ = name + '=';
+      var ca = document.cookie.split(';');
+      for (var i = 0; i < ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+      }
+      return null;
+    }
+
+    var doNotTrack =
       window.doNotTrack === '1' ||
       navigator.doNotTrack === '1' ||
       navigator.doNotTrack === 'yes' ||
-      navigator.msDoNotTrack === '1'
-    )
-  ) {
+      navigator.msDoNotTrack === '1';
+
+    // Sem consentimento (ou com DNT ligado) o script do Google NÃO é inserido —
+    // nem a requisição a terceiro acontece. Ver `cookie-consent.html`.
+    if (readCookie('cookie-notice-dismissed') !== 'true' || doNotTrack) return;
+
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id={{ site.google_analytics }}';
+    document.head.appendChild(s);
+
     window.dataLayer = window.dataLayer || [];
     function gtag() {
       dataLayer.push(arguments);
     }
+    window.gtag = gtag;
+
+    // Consent Mode: carregamos só após o "Aprovar", então o sinal já é `granted`.
+    // Os sinais de anúncio ficam negados — não rodamos publicidade.
+    gtag('consent', 'default', {
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      analytics_storage: 'granted',
+    });
     gtag('js', new Date());
     gtag('config', '{{ site.google_analytics }}');
-  }
+  })();
 </script>

@@ -32,6 +32,7 @@ mesmo HTML que o Jekyll servia.
 **Arquivos:**
 
 - Modificar: `src/layouts/Base.astro` (**criado na fatia 00** — aqui ele cresce; não o recrie)
+- Modificar: `src/pages/index.astro` (passar as props novas ao `Base.astro`)
 - Criar: `src/components/Meta.astro`
 - Criar: `scripts/testar-meta.sh`
 - Test: `scripts/testar-meta.sh` (o teste é o script — o projeto não tem harness de unit no site)

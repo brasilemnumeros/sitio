@@ -12,7 +12,10 @@
 import Meta from '../components/Meta.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import CookieConsent from '../components/CookieConsent.astro';
+import Analytics from '../components/Analytics.astro';
 import { VERSAO } from '../versao.js';
+import { GA4_ID } from '../config.js';
 import '../styles/main.css';
 
 interface Props {
@@ -112,6 +115,19 @@ const classesMain =
       </button>
     </div>
     </Fragment>
+
+    <!-- Analytics -->
+    {/* Gate de produção, o `{% if site.google_analytics and jekyll.environment == 'production' %}`
+        do Jekyll. Em `astro dev` (`import.meta.env.PROD === false`) nem o banner de
+        consentimento nem o script do Google aparecem — a falha seria silenciosa e de
+        privacidade (LGPD). Consentimento e analytics entram ANTES do `toast-artigos.js`,
+        como no `default.html`. */}
+    {import.meta.env.PROD && GA4_ID && (
+      <>
+        <CookieConsent />
+        <Analytics />
+      </>
+    )}
 
     <script defer src={`/assets/js/toast-artigos.js?v=${VERSAO}`}></script>
   </body>

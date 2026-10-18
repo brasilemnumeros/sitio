@@ -21,9 +21,8 @@ Viram **um** componente + uma rota dinâmica `src/pages/categorias/[categoria].a
 - **`NODE_ENV=development`** em todo comando npm.
 - **As URLs de hoje são as de amanhã**: `blog.html`, `categorias/analises.html` etc. saem com `.html`
   — `build.format:'file'` (fatia 00) é o que garante isso.
-- **A rota dinâmica depende da coleção de posts** (fatia 03) para as contagens e a listagem. Se a 03
-  ainda não estiver pronta, implementar a estrutura e deixar a listagem vazia — **mas não inventar
-  contagem**.
+- **A rota dinâmica depende da coleção de posts** (fatia 03). **A fatia 03/T1 roda ANTES desta** —
+  sem `getCollection('posts')` não há listagem nem contagem para portar. Não inventar contagem.
 
 ---
 

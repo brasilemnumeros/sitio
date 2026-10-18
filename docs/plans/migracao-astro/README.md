@@ -73,14 +73,24 @@ padrão — a mais provável primeiro. Cada uma ganha o teste na tarefa dona do 
 ### Ordem e paralelismo
 
 ```
-00 ── 01 ─┬─ 02 ──┐
-          └─ 03 ──┴─ 04 ─┐
-                          ├─ 07
-05 (depende de 02) ───────┤
-06 (independente do site) ┘        ← 06 pode correr em paralelo a 01–05
+00 ── 01 ── 03 (T1: a coleção) ── 02 ── 05 ── 07
+                     │                    ↗
+                     └── 04 ─────────────┘
+06 (independente do site) ────────────────────↗   ← 06 pode correr em paralelo a 01–05
 ```
 
-`06` toca **só** `sitio/app/` — é o único trabalho que não depende do Astro.
+**Ordem de execução, com o porquê de cada salto:**
+
+1. `00 → 01` — o layout base é consumido por tudo.
+2. **`03/T1` antes de `02`** — a listagem do `blog` e as contagens das categorias (02/T2) consomem
+   `getCollection('posts')`. Sem a coleção, a 02 só conseguiria entregar páginas vazias.
+3. `02` antes de `05` — a `/` é uma página do conjunto.
+4. **`04` antes de `05/T3`** — o encadeamento do build chama `testar-feed.sh` e `testar-sitemap.sh`,
+   que nascem na 04.
+5. `06` toca **só** `sitio/app/` — é o único trabalho que não depende do Astro.
+
+> **Nota da varredura de conflitos (2026-10-18):** o grafo da primeira redação punha 02 e 03 como
+> irmãs, mas a 02 consome a coleção da 03. Corrigido aqui; a 02 também carrega a nota.
 
 ---
 

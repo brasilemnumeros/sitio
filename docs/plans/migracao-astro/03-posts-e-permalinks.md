@@ -36,46 +36,52 @@ publicado em `/noticias/2025/07/27/hoje-nasce-o-brasil-em-numeros.html`.
 
 - Criar: `src/content.config.ts`
 - Mover: `_posts/*.md` → `src/content/posts/*.md` (com `git mv`, para preservar o histórico)
-- Test: `src/content/posts/posts.test.js` (unitário, rodado por `vitest` — ver Restrições)
+- Criar: `scripts/testar-posts.sh`
 
 **Interfaces:**
 
 - Produz: `getCollection('posts')` devolvendo entradas com
   `{ id, data: { title, description?, categories, tags?, audio?, image?, date }, body }`.
 
+> **Ruling (varredura de conflitos, 2026-10-18):** a primeira redação punha o teste desta tarefa em
+> `src/content/posts/posts.test.js` e o rodava com o `vitest` **do app** (`app/vite.config.js` tem
+> `include: ['src/**/*.test.js']`, que não alcança o site). O site não tem harness próprio, e dar um
+> a ele é decisão da fatia 07. Aqui a verificação vira o mesmo tipo de script que as outras fatias
+> usam — é o que o build encadeia.
+
 - [ ] **Passo 1: escrever o teste que falha**
 
-`src/content/posts/posts.test.js` — o teste lê os **arquivos** e a **URL derivada**, que é o que
-importa:
+`scripts/testar-posts.sh`:
 
-```js
-import { describe, it, expect } from 'vitest';
-import { readdirSync } from 'node:fs';
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+DIR=src/content/posts
+[ -d "$DIR" ] || { echo "posts: falta $DIR" >&2; exit 1; }
 
-const URL_JEKYLL = /^(\d{4})-(\d{2})-(\d{2})-(.+)\.md$/;
+n=$(find "$DIR" -name '*.md' | wc -l | tr -d ' ')
+[ "$n" -eq 10 ] || { echo "posts: $n arquivos, esperado 10" >&2; exit 1; }
 
-describe('URL do post derivada do nome do arquivo', () => {
-  it('todo arquivo casa o padrão data-slug do Jekyll', () => {
-    const arquivos = readdirSync('src/content/posts').filter((f) => f.endsWith('.md'));
-    expect(arquivos.length).toBe(10);
-    for (const f of arquivos) expect(URL_JEKYLL.test(f), f).toBe(true);
-  });
-});
+# O slug da URL vem do NOME DO ARQUIVO (data-slug do Jekyll), não do title:
+falha=0
+while IFS= read -r f; do
+  b=$(basename "$f")
+  [[ "$b" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}-.+\.md$ ]] \
+    || { echo "posts: $b não casa o padrão data-slug do Jekyll" >&2; falha=1; }
+done < <(find "$DIR" -name '*.md')
+[ "$falha" -eq 0 ] || exit 1
+echo "posts ok ($n arquivos)"
 ```
 
 - [ ] **Passo 2: rodar e ver falhar**
 
-Run: `cd app && NODE_ENV=development npx vitest run ../src/content/posts/posts.test.js`
+Run: `bash scripts/testar-posts.sh`
 Expected: FAIL — `src/content/posts` não existe.
-
-> **Nota:** o site ainda não tem `vitest` próprio. Este teste precisa do `vitest` que já existe em
-> `app/node_modules`; a fatia 07 decide se o site ganha um `package.json` de teste próprio. Até lá,
-> rodar pelo app é aceitável e está registrado aqui de propósito.
 
 - [ ] **Passo 3: mover os posts e criar a coleção**
 
 ```bash
-git mv _posts/*.md src/content/posts/
+mkdir -p src/content/posts && git mv _posts/*.md src/content/posts/
 ```
 
 `src/content.config.ts`:
@@ -90,7 +96,8 @@ export const collections = {
     schema: z.object({
       title: z.string(),
       description: z.string().optional(),
-      categories: z.array(z.string()),
+      // min(1): a rota usa categories[0]; um array VAZIO geraria URL sem categoria (Review Focus 3).
+      categories: z.array(z.string()).min(1),
       tags: z.array(z.string()).optional(),
       audio: z.string().optional(),
       image: z.string().optional(),
@@ -101,13 +108,13 @@ export const collections = {
 
 - [ ] **Passo 4: rodar e ver passar**
 
-Run: `cd app && NODE_ENV=development npx vitest run ../src/content/posts/posts.test.js`
-Expected: PASS (10 arquivos, todos casando).
+Run: `bash scripts/testar-posts.sh`
+Expected: `posts ok (10 arquivos)`.
 
 - [ ] **Passo 5: commit**
 
 ```bash
-git add src/content.config.ts src/content/posts src/content/posts/posts.test.js
+git add src/content.config.ts src/content/posts scripts/testar-posts.sh
 git commit -m "feat(astro): coleção de posts (content layer) com os 10 posts migrados"
 ```
 
@@ -145,10 +152,10 @@ export async function getStaticPaths() {
 }
 ```
 
-> **Cuidado (Review Focus):** um post com `categories:` **vazio** geraria
-> `/2025/07/27/slug.html` com categoria vazia na rota — o roteador do Astro quebraria. Garantir
-> `p.data.categories[0]` não seja `undefined` (o schema já exige array **não vazio**: ajustar para
-> `z.array(z.string()).min(1)`).
+> **Cuidado (Review Focus 3):** um post com `categories:` **vazio** geraria
+> `/2025/07/27/slug.html` (categoria vazia na rota) e o roteador do Astro quebraria. O schema já
+> exige `categories: z.array(z.string()).min(1)` (fatia 03/T1) — **é essa a guarda**; não reintroduza
+> `.min(1)` de outra forma nem relaxe o schema.
 
 - [ ] **Passo 2: rodar e ver falhar o Post.astro**
 

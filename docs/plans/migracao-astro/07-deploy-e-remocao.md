@@ -76,10 +76,15 @@ git commit -m "ci: build do Astro no lugar do jekyll-build-pages"
 
 **Arquivos:**
 
-- Apagar: `Gemfile`, `Gemfile.lock`, `_config.yml`, `_layouts/`, `_includes/`, `_posts/` (já movido),
-  `blog.html`, `categorias/`, `links.html`, `index.html`, `sobre.md`, `termos-de-uso.md`,
+- Apagar: `Gemfile`, `Gemfile.lock`, `_config.yml`, `_layouts/`, `_includes/`, `blog.html`,
+  `categorias/`, `links.html`, `index.html`, `sobre.md`, `termos-de-uso.md`,
   `politica-de-privacidade.md`, `assets/css/main.dist.css`
 - Modificar: `.gitignore` (remover o que era do Jekyll, manter o que o Astro publica)
+
+> **Ruling (varredura de conflitos, 2026-10-18):** `_posts/` **não** entra na lista. A fatia 03/T1 já
+> o move para `src/content/posts/` com `git mv` — um `git rm -r _posts` aqui falharia (pasta
+> inexistente) ou, pior, seria inútil. **Não** apague `assets/css/main.css`: ele foi movido para
+> `src/styles/` na fatia 00 e é fonte viva.
 
 **Interfaces:**
 

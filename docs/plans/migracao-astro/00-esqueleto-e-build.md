@@ -109,14 +109,24 @@ git commit -m "feat(astro): projeto Astro com build.format file e Tailwind via V
 
 **Interfaces:**
 
-- Consome: o CSS existente `assets/css/main.css`.
+- Consome: o CSS do site, **movido** de `assets/css/main.css` para `src/styles/main.css`.
 - Produz: `dist/assets/*.css` com as classes do site **e** as de `app/src` (o scan é verificado na
   fatia 05 pelo canário; aqui só se prova que o Tailwind roda).
 
-- [ ] **Passo 1: importar o CSS no layout**
+> **Ruling (varredura de conflitos, 2026-10-18):** o import escrito na primeira redação
+> (`../assets/css/main.css`, a partir de `src/layouts/`) resolvia para `src/assets/…` — **caminho
+> errado**. O CSS é fonte, não asset publicado: `git mv assets/css/main.css src/styles/main.css` e o
+> import passa a ser `../styles/main.css`. O `main.dist.css` continua existindo até a fatia 07
+> (é o que o **app** serve em dev hoje) — não o mova.
 
-Criar `src/layouts/Base.astro` (nasce aqui, cresce na fatia 01) que faz
-`import '../assets/css/main.css';` no frontmatter.
+- [ ] **Passo 1: mover o CSS e importá-lo no layout**
+
+```bash
+mkdir -p src/styles && git mv assets/css/main.css src/styles/main.css
+```
+
+Criar `src/layouts/Base.astro` (nasce aqui, cresce na fatia 01) com
+`import '../styles/main.css';` no frontmatter.
 
 - [ ] **Passo 2: buildar e conferir que o CSS saiu**
 

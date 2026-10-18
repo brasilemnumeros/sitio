@@ -21,6 +21,10 @@ na raiz do `dist/` (imagens, `CNAME`, `.nojekyll`, `indicators.json`, o artefato
 - **`NODE_ENV=development`** em todo comando npm.
 - **`build.format: 'file'`** + **`trailingSlash: 'never'`**: o default do Astro é `'directory'`, que
   mudaria as URLs. Isto é configuração explícita, não preferência.
+- **`build.assets: 'assets'`** (medido e decidido na 00/T2): sem isto o Astro emite o CSS em
+  `_astro/`, e todo o resto do plano (fatias 01 e 05) lê `dist/assets/*.css` e `dist/assets/js/app/`.
+  Os dois caminhos convivem: o `public/` é copiado verbatim para `/assets/`, e os arquivos gerados
+  têm hash no nome, então não colidem.
 - **Não tocar no Jekyll** nesta fatia. `_config.yml`, `_layouts/`, `_posts/` ficam onde estão.
 - **Conferir a API do Astro contra `node_modules/astro/dist/@types/` antes de codar** — nunca contra
   este plano (`AGENTS.md`).
@@ -148,8 +152,13 @@ Expected: um ou mais `.css` em `dist/assets/`. Se não houver, o `@tailwindcss/v
 
 - [ ] **Passo 3: conferir que o CSS não está vazio**
 
-Run: `grep -c "dark:" dist/assets/*.css`
+Run: `grep -o 'dark\\:' dist/assets/*.css | wc -l`
 Expected: > 0 (o site usa `dark:`; se for 0, o Tailwind não varreu o conteúdo).
+
+> ⚠️ **Não use `grep -c 'dark:'`.** O build **escapa** o seletor (`.dark\:`), e o `-c` conta
+> **linhas** — o CSS minificado é uma linha só. Medido em 2026-10-18: `grep -c 'dark:'` devolve
+> **0 mesmo com o Tailwind funcionando**, e devolve 0 também no `main.dist.css` de referência.
+> Este check já foi escrito errado uma vez no plano; `-o … | wc -l` conta ocorrências.
 
 - [ ] **Passo 4: commit**
 

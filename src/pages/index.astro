@@ -1,17 +1,10 @@
 ---
 // Placeholder do shell da home. A página real é a fatia 05 da migração
-// (`docs/plans/migracao-astro/05-app-no-site.md`). O app é escuro, só
-// (decisão de 2026-10-15): daí o `class="dark"` no <html>.
+// (`docs/plans/migracao-astro/05-app-no-site.md`). Renderiza através do
+// `Base.astro`, preservando o `<div id="app">` onde o app monta.
+import Base from '../layouts/Base.astro';
 ---
 
-<!doctype html>
-<html lang="pt-BR" class="dark">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Brasil em Números</title>
-  </head>
-  <body>
-    <div id="app"></div>
-  </body>
-</html>
+<Base>
+  <div id="app"></div>
+</Base>

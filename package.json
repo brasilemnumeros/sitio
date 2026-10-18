@@ -1,9 +1,16 @@
 {
   "scripts": {
-    "canario": "bash scripts/checar-canario.sh"
+    "build": "astro build",
+    "dev": "astro dev",
+    "canario": "bash scripts/checar-canario.sh",
+    "css": "npx -y @tailwindcss/cli -i ./assets/css/main.css -o ./assets/css/main.dist.css"
   },
   "dependencies": {
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/sitemap": "^3.7.4",
     "@tailwindcss/typography": "^0.5.16",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.4.0",
     "tailwindcss": "^4.1.11"
   },
   "devDependencies": {

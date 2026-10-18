@@ -1,4 +1,7 @@
 _site
+# Saída e caches do Astro (fatia 00 da migração).
+dist/
+.astro/
 .sass-cache
 .jekyll-cache
 .jekyll-metadata

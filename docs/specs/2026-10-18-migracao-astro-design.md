@@ -173,10 +173,13 @@ server precisa servir de fora da raiz", que já custou uma rodada silenciosa (§
    **do site tem de varrer `app/src`**, onde vivem as classes dos componentes Svelte. Essa
    varredura é a razão de existir do `scripts/checar-canario.sh`, e ele **não pode** sair na
    migração: sem canário, o modo de falha é "página sem estilo, em silêncio" — medido antes.
-2. **A classe-canário (`bg-[#0e1117]/100`) e o canário precisam de novo alvo.** O script lê
-   `assets/css/main.dist.css`, que deixa de existir; ele passa a ler o CSS emitido no `dist/` do
-   Astro. Se o `@tailwindcss/vite` dentro do Astro, rodando com a raiz do projeto, **não** descobrir
-   `app/src`, o canário tem de **falhar o build** — é para isso que ele existe.
+2. **O canário precisa de novo alvo.** O script lê `assets/css/main.dist.css`, que deixa de existir;
+   ele passa a ler o CSS emitido no `dist/` do Astro (nome com hash → glob). Se o
+   `@tailwindcss/vite` dentro do Astro, rodando com a raiz do projeto, **não** descobrir `app/src`,
+   o canário tem de **falhar o build** — é para isso que ele existe.
+   ⚠️ **O token do canário não pode aparecer na documentação** (o Tailwind varre `docs/` e extrai
+   candidatos de texto — é a armadilha que o próprio `checar-canario.sh` já documenta). Escrito
+   literalmente aqui, ele cria um segundo produtor e **cega** o canário.
 
 ### D9 — O dado continua vindo do repo `dados/`, com uma implementação e dois servidores
 

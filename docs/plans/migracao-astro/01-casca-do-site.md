@@ -40,7 +40,8 @@ mesmo HTML que o Jekyll servia.
 **Interfaces:**
 
 - Consome: nada.
-- Produz: `Base.astro` com props `{ title: string, description: string, image?: string, shell?: 'app'|'pagina', canonical?: string }`; renderiza `<head>` completo + `<slot />`. Ele **delega** o `<head>` a `Meta.astro` (props `{ title, description, canonical, tipo, image?, jsonLd? }`), que é onde vive o contrato medido do passo 3.
+- Produz: `Base.astro` com props `{ title: string, description: string, image?, shell?: 'app'|'pagina', canonical?, tipo?: 'website'|'article', jsonLd?: object }`; renderiza `<head>` completo + `<slot />`. Ele **delega** o `<head>` a `Meta.astro` (props `{ title, description, canonical, tipo, image?, jsonLd? }`), que é onde vive o contrato medido do passo 3.
+- **`tipo` e `jsonLd` são repassados de `Base` para `Meta`**, com default `website` / forma de página. Sem esse canal, a fatia 03 **não teria como** publicar `article`/`BlogPosting` e o post regrediria **em silêncio** — é a mesma classe de falha da D6. (Achado `plan-mandated` da revisão da 01/T1, 2026-10-18.)
 
 - [ ] **Passo 1: escrever o teste que falha**
 

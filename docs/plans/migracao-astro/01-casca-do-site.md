@@ -40,7 +40,7 @@ mesmo HTML que o Jekyll servia.
 **Interfaces:**
 
 - Consome: nada.
-- Produz: `Base.astro` com props `{ title: string, description: string, image?: string, shell?: 'app'|'pagina', canonical?: string }`; renderiza `<head>` completo + `<slot />`.
+- Produz: `Base.astro` com props `{ title: string, description: string, image?: string, shell?: 'app'|'pagina', canonical?: string }`; renderiza `<head>` completo + `<slot />`. Ele **delega** o `<head>` a `Meta.astro` (props `{ title, description, canonical, tipo, image?, jsonLd? }`), que é onde vive o contrato medido do passo 3.
 
 - [ ] **Passo 1: escrever o teste que falha**
 
@@ -54,7 +54,7 @@ set -euo pipefail
 falha=0
 conferir() { grep -qF "$1" "$2" || { echo "meta: falta '$1' em $2" >&2; falha=1; }; }
 
-PAGINA="dist/blog.html"
+PAGINA="${PAGINA:-dist/blog.html}"
 conferir '<meta charset=' "$PAGINA"
 conferir '<link rel="canonical"' "$PAGINA"
 conferir 'property="og:title"' "$PAGINA"
@@ -73,25 +73,63 @@ Expected: FAIL — `dist/blog.html` não existe (a página é a fatia 02).
 
 - [ ] **Passo 3: escrever `Meta.astro` e `Base.astro`**
 
-`Meta.astro` produz, **no mínimo** (o conjunto que o `jekyll-seo-tag` publicava):
+> **Contrato medido ao vivo em 2026-10-18** (`curl` de `/`, `/blog` e de um post publicados). O
+> `jekyll-seo-tag` não tinha `twitter`, `logo` nem `lang` no `_config.yml`, então tudo abaixo é o que
+> ele **de fato** publicava. **A primeira redação deste plano estava errada** em três pontos, todos
+> corrigidos por esta medição: `twitter:card` é `summary` (não `summary_large_image`),
+> `twitter:title` **existe**, e `og:locale` é `en_US`.
 
-```html
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<link rel="canonical" href={canonical} />
-<meta property="og:site_name" content="Brasil em Números" />
-<meta property="og:title" content={title} />
-<meta property="og:description" content={description} />
-<meta property="og:type" content={tipo} />
-<meta property="og:url" content={canonical} />
-<meta property="og:image" content={image} />
-<meta name="twitter:card" content="summary_large_image" />
-<script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+`Meta.astro` — props `{ title, description, canonical, tipo, image?, jsonLd? }` — produz, na ordem
+medida:
+
+| tag | valor medido |
+|---|---|
+| `<meta charset="utf-8">` | literal |
+| `<meta name="viewport" content="width=device-width, initial-scale=1">` | literal |
+| `<title>` | `{title} \| Brasil em Números` |
+| `<meta name="description">` | `{description}` |
+| `<link rel="canonical">` | `{canonical}` |
+| `<meta property="og:title">` | `{title}` — **só** o título da página, **sem** o sufixo do site |
+| `<meta property="og:locale">` | `en_US` — ver nota abaixo |
+| `<meta property="og:description">` | `{description}` |
+| `<meta property="og:url">` | `{canonical}` |
+| `<meta property="og:site_name">` | `Brasil em Números` |
+| `<meta property="og:type">` | `{tipo}` — `website` em página, `article` em post |
+| `<meta name="twitter:card">` | `summary` |
+| `<meta property="twitter:title">` | `{title}` |
+| `<meta property="og:image">` | **só** quando houver `image` (o `/blog` publicado não tem) |
+| `<script type="application/ld+json">` | `{JSON.stringify(jsonLd)}` |
+
+As duas formas de JSON-LD, medidas e **chumbadas** pelo seo-tag (não invente campos; ele não emite
+`author`, `publisher` nem `image` porque o `_config.yml` não os declara):
+
+página:
+```json
+{"@context":"https://schema.org","@type":"WebPage","description":"…","headline":"…","url":"<canonical>"}
 ```
+post:
+```json
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"<iso>","datePublished":"<iso>","description":"…","headline":"…","mainEntityOfPage":{"@type":"WebPage","@id":"<canonical>"},"url":"<canonical>"}
+```
+
+> ⚠️ **`og:locale: en_US` é o default do seo-tag** — o site é pt-BR e não declara `lang` no
+> `_config.yml`. **Reproduza como medido** (a migração não altera metadata publicada) e **registre
+> como item aberto**: mudar para `pt_BR` é decisão de produto, não de migração.
+> **Não** porte `<meta name="generator" content="Jekyll v3.10.0">` — seria mentira.
 
 `Base.astro` reproduz o `<body class="flex min-h-screen flex-col">` e o `<main>` com a regra do
 `shell`: `shell === 'app'` → `pt-14` e sem `prose`; `shell === 'pagina'` → `pt-24 container mx-auto
 px-6 py-8 max-w-4xl prose prose-lg prose-slate dark:prose-invert`.
+
+**`canonical` é calculado, não opcional:** quando a página não passar um, use
+`new URL(Astro.url.pathname, Astro.site).href`. Medido: o canonical de `/blog` é `…/blog.html`, e o
+de `/` é `…/` — exatamente o que `Astro.url.pathname` produz sob `build.format: 'file'` mais
+`trailingSlash: 'never'`. **Não “embeleze” a URL arquivo → sem-extensão.**
+
+A `/` (`src/pages/index.astro`) passa `title="Início"` e a `description` do `_config.yml`
+(medidos: `<title>Início | Brasil em Números</title>` e “Uma plataforma dedicada a fornecer dados e
+informações sobre o Brasil.”). **Não** passe `shell="app"` aqui: a `/` só vira shell do app na
+fatia 02/T*.
 
 > **Nota de API:** `Astro.url`, `Astro.site` e a interpolação de atributos precisam ser conferidos
 > contra `node_modules/astro/dist/@types/` antes de codar.
@@ -104,7 +142,7 @@ Expected: `meta ok` (a `/` já existe desde a fatia 00).
 - [ ] **Passo 5: commit**
 
 ```bash
-git add src/layouts/Base.astro src/components/Meta.astro scripts/testar-meta.sh
+git add src/layouts/Base.astro src/components/Meta.astro src/pages/index.astro scripts/testar-meta.sh
 git commit -m "feat(astro): layout base e meta tags explícitas (substituem jekyll-seo-tag)"
 ```
 
@@ -152,7 +190,7 @@ Expected: `assets ok`.
 - [ ] **Passo 5: commit**
 
 ```bash
-git add src/components public/assets
+git add src/components src/layouts/Base.astro public/assets
 git commit -m "feat(astro): nav, footer, tooltip e assets do site verbatim"
 ```
 
@@ -163,8 +201,16 @@ git commit -m "feat(astro): nav, footer, tooltip e assets do site verbatim"
 **Arquivos:**
 
 - Criar: `src/components/CookieConsent.astro`, `src/components/Analytics.astro`
+- Criar: `scripts/testar-analytics.mjs` (a verificação executável do gate)
 - Modificar: `src/layouts/Base.astro`
-- Criar (ou reaproveitar): verificação manual no navegador
+- Criar: `src/config.js` (o ID do GA4)
+
+> **Ruling (2026-10-18): a verificação desta tarefa vira executável.** A primeira redação mandava
+> “verificar no navegador” à mão — e um subagente **não tem navegador para olhar**, então o caminho
+> natural seria ele declarar sucesso **lendo o próprio código**, que é exatamente a falha que esta
+> fatia existe para impedir. O `playwright` já está instalado no projeto (em `app/node_modules`,
+> onde vivem os 12 E2E do app); o script abaixo o reusa por `createRequire`. Nada de dependência
+> nova, nada de instalar navegador.
 
 **Interfaces:**
 
@@ -184,20 +230,82 @@ O bloco que no Jekyll era `{% if site.google_analytics and jekyll.environment ==
 vira `{import.meta.env.PROD && …}` no `Base.astro` — **consentimento e analytics não aparecem em
 dev**, como hoje.
 
-- [ ] **Passo 3: verificar no navegador — o teste que pega a falha silenciosa**
+- [ ] **Passo 3: a verificação executável — o teste que pega a falha silenciosa**
 
-Run: `NODE_ENV=development npm run build && npx http-server dist -p 8099 &`
-No navegador em `http://localhost:8099/`:
-1. **Sem aceitar**: o `js` do googletagmanager **não** aparece no `<head>` (aba Network vazia para
-   `googletagmanager`).
-2. **Após "Aprovar"**: aparece.
-3. **Com DNT ligado**: não aparece mesmo após aprovar.
-4. **Zero aviso de a11y** no terminal/console.
+`scripts/testar-analytics.mjs` — sobe um servidor estático de `dist/` (sem dependência, `node:http`)
+e roda três cenários com o Playwright. O gate tem de valer **antes** de qualquer requisição a
+terceiro: a falha é silenciosa e é de privacidade (LGPD).
 
-- [ ] **Passo 4: commit**
+```js
+// Verifica o gate de consentimento/DNT do analytics num build de PRODUÇÃO.
+// O playwright é o de app/ (o projeto já o tem; este script não instala nada).
+import { createRequire } from 'node:module';
+import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { extname, join, normalize } from 'node:path';
+
+const require = createRequire(new URL('../app/', import.meta.url));
+const { chromium } = require('playwright');
+
+const DIST = new URL('../dist/', import.meta.url).pathname;
+const TIPOS = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.webp': 'image/webp' };
+
+const servidor = createServer(async (req, res) => {
+  let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+  if (p.endsWith('/')) p += 'index.html';
+  try {
+    const buf = await readFile(join(DIST, normalize(p)));
+    res.writeHead(200, { 'content-type': TIPOS[extname(p)] ?? 'application/octet-stream' });
+    res.end(buf);
+  } catch {
+    res.writeHead(404).end('nao encontrado');
+  }
+});
+await new Promise((r) => servidor.listen(8099, r));
+
+const BASE = 'http://localhost:8099/';
+let falha = 0;
+const conferir = (ok, msg) => { if (!ok) { console.error(`analytics: ${msg}`); falha = 1; } };
+
+async function cenario(rotulo, { dnt = false, consentiu = false }, esperaTerceiro) {
+  const navegador = await chromium.launch();
+  const contexto = await navegador.newContext();
+  // O analytics lê window.doNotTrack / navigator.doNotTrack (analytics.html, verbatim).
+  if (dnt) await contexto.addInitScript(() => Object.defineProperty(navigator, 'doNotTrack', { get: () => '1' }));
+  if (consentiu) await contexto.addCookies([{ name: 'cookie-notice-dismissed', value: 'true', url: BASE }]);
+  const pagina = await contexto.newPage();
+  const terceiros = [];
+  pagina.on('request', (r) => { if (r.url().includes('googletagmanager')) terceiros.push(r.url()); });
+  await pagina.goto(BASE, { waitUntil: 'load' });
+  await pagina.waitForTimeout(1500);
+  conferir(
+    esperaTerceiro ? terceiros.length > 0 : terceiros.length === 0,
+    `${rotulo}: ${terceiros.length} requisicao(oes) ao googletagmanager (esperado ${esperaTerceiro ? '>0' : '0'})`,
+  );
+  await navegador.close();
+}
+
+await cenario('sem consentimento', { consentiu: false, dnt: false }, false);
+await cenario('apos aprovar', { consentiu: true, dnt: false }, true);
+await cenario('com DNT ligado', { consentiu: true, dnt: true }, false);
+
+servidor.close();
+if (falha) process.exit(1);
+console.log('analytics ok');
+```
+
+- [ ] **Passo 4: rodar e ver passar**
+
+Run: `NODE_ENV=development npm run build && NODE_ENV=development node scripts/testar-analytics.mjs`
+Expected: `analytics ok`.
+
+> Se o build **não** for de produção, `import.meta.env.PROD` é falso e os componentes nem renderizam
+> — o cenário 2 falharia. O `npm run build` do Astro já é PROD; não use `astro dev` aqui.
+
+- [ ] **Passo 5: commit**
 
 ```bash
-git add src/components src/config.js src/layouts/Base.astro
+git add src/components src/config.js src/layouts/Base.astro scripts/testar-analytics.mjs
 git commit -m "feat(astro): consentimento e analytics com o gate de produção preservado"
 ```
 
@@ -206,7 +314,8 @@ git commit -m "feat(astro): consentimento e analytics com o gate de produção p
 - [ ] `dist/index.html` e qualquer página têm `canonical`, `og:*`, `twitter:card` e JSON-LD
       (`scripts/testar-meta.sh` passa).
 - [ ] O `id="google_analytics"` é o **mesmo** valor do `_config.yml` (conferido por grep).
-- [ ] Com o GA4 **bloqueado até o aceite**, verificado **no navegador** (não por leitura de código).
+- [ ] Com o GA4 **bloqueado até o aceite**, provado por `scripts/testar-analytics.mjs` (os três
+      cenários) — **não** por leitura de código.
 - [ ] Consentimento e analytics **não** aparecem em dev (`import.meta.env.PROD`).
 - [ ] O HTML do nav/rodapé bate com o de hoje, com **zero aviso de a11y** no terminal.
 - [ ] `dark:` continua presente no CSS (`grep -o 'dark\\:' dist/assets/*.css | wc -l` > 0 — **não**

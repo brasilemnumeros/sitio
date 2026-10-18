@@ -12,6 +12,7 @@
 import Meta from '../components/Meta.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
+import { VERSAO } from '../versao.js';
 import '../styles/main.css';
 
 interface Props {
@@ -44,12 +45,12 @@ const classesMain =
     : 'flex-grow pt-24 container mx-auto px-6 py-8 max-w-4xl prose prose-lg prose-slate dark:prose-invert';
 
 // Cache-bust dos scripts do site, o `?v={{ site.time | date: '%s' }}` do Jekyll: um
-// selo de tempo de build. Os arquivos são copiados verbatim em `public/assets/js/`.
-const versao = Date.now();
+// selo único por build (ver `src/versao.js`). Os arquivos vão verbatim em
+// `public/assets/js/`.
 ---
 
 <!doctype html>
-<html lang="pt-BR" class={shell === 'app' ? 'dark' : ''}>
+<html lang="pt-BR" {...(shell === 'app' ? { class: 'dark' } : {})}>
   <head>
     <Meta title={title} description={description} canonical={canonicalFinal} tipo={tipo} image={image} jsonLd={jsonLd} />
   </head>
@@ -63,8 +64,8 @@ const versao = Date.now();
     <Footer />
 
     <!-- Core Scripts -->
-    <script defer src={`/assets/js/theme-switcher.js?v=${versao}`}></script>
-    <script defer src={`/assets/js/feedback-button.js?v=${versao}`}></script>
+    <script defer src={`/assets/js/theme-switcher.js?v=${VERSAO}`}></script>
+    <script defer src={`/assets/js/feedback-button.js?v=${VERSAO}`}></script>
 
     <!-- Feedback Button -->
     <a
@@ -112,6 +113,6 @@ const versao = Date.now();
     </div>
     </Fragment>
 
-    <script defer src={`/assets/js/toast-artigos.js?v=${versao}`}></script>
+    <script defer src={`/assets/js/toast-artigos.js?v=${VERSAO}`}></script>
   </body>
 </html>

@@ -17,8 +17,14 @@ interface Props {
   // `app` → shell do app (sem `prose`); `pagina` → página de texto. Ausente = `pagina`.
   shell?: 'app' | 'pagina';
   canonical?: string;
+  // Canal da rota de post (fatia 03): publica `og:type = article` e o JSON-LD
+  // `BlogPosting`. Hoje ninguém passa — mas é um canal deliberado, NÃO remova por
+  // "YAGNI": sem ele o post cairia para `website`/`WebPage` SEM erro (falha silenciosa, D6).
+  // Ausente = `website` e a forma de página, cujo fallback mora no `Meta.astro`.
+  tipo?: 'website' | 'article';
+  jsonLd?: Record<string, unknown>;
 }
-const { title, description, image, shell = 'pagina', canonical } = Astro.props;
+const { title, description, image, shell = 'pagina', canonical, tipo = 'website', jsonLd } = Astro.props;
 
 // `canonical` calculado. A normalização da raiz é obrigatória: sob
 // `build.format: 'file'` + `trailingSlash: 'never'`, `Astro.url.pathname` é
@@ -37,7 +43,7 @@ const classesMain =
 <!doctype html>
 <html lang="pt-BR" class="dark">
   <head>
-    <Meta title={title} description={description} canonical={canonicalFinal} tipo="website" image={image} />
+    <Meta title={title} description={description} canonical={canonicalFinal} tipo={tipo} image={image} jsonLd={jsonLd} />
   </head>
   <body class="flex min-h-screen flex-col">
     <main class={classesMain}>

@@ -163,46 +163,69 @@ git commit -m "feat(astro): layout base e meta tags explícitas (substituem jeky
 
 ---
 
-### Tarefa 2: Nav, Footer e Tooltip
+### Tarefa 2: Nav, Footer e os assets do site
 
 **Arquivos:**
 
-- Criar: `src/components/Nav.astro`, `src/components/Footer.astro`, `src/components/TooltipInfo.astro`
+- Criar: `src/components/Nav.astro`, `src/components/Footer.astro`
+- Criar: `src/versao.js` (o selo único de cache-bust do build)
 - Copiar (verbatim, para `public/`): `assets/img/**`, `assets/js/theme-switcher.js`,
   `assets/js/feedback-button.js`, `assets/js/toast-artigos.js`
-- Modificar: `src/layouts/Base.astro` (incluir Nav, Footer, scripts)
+- Modificar: `src/layouts/Base.astro` (incluir Nav, Footer, feedback, toast e scripts)
 
 **Interfaces:**
 
 - Consome: `Base.astro` (T1).
 - Produz: `Nav.astro` com prop `{ shell: 'app'|'pagina' }` (a posição do botão de tema e o `grid`
   dependem dela).
+- Produz: `src/versao.js` — `export const VERSAO = Date.now();` (uma avaliação por build).
 
 > 🔴 **Ruling (2026-10-18, integração medida): a classe `dark` do `<html>` NÃO é fixa.**
 > `_layouts/default.html` declara `<html lang="{{ … }}">` — **sem** `dark` — e o tema é decidido pelo
-> `theme-switcher.js` (lê `localStorage.theme`, cai em `prefers-color-scheme`, e faz
-> `classList.toggle('dark', …)` em `document.documentElement`; lido em `assets/js/theme-switcher.js:46-68`).
-> A 00/T2 deixou `<html … class="dark">` fixo no `Base.astro`, o que **forçaria todas as páginas do
-> site a escuro** — contra a convenção registrada (“o site Jekyll mantém o toggle”). O comportamento
-> correto:
+> `theme-switcher.js`, que faz `classList.toggle('dark', …)`. Comportamento **medido** em
+> `public/assets/js/theme-switcher.js:48-62`: se há `localStorage.theme`, ele vence; **se não há,
+> o padrão é ESCURO** (`shouldUseDarkMode = savedTheme ? … : true`). A 00/T2 deixou
+> `<html … class="dark">` fixo no `Base.astro`, o que engessa o toggle em **todas** as páginas do
+> site — contra a convenção registrada (“o site Jekyll mantém o toggle”). O correto:
 >
 > ```astro
-> <html lang="pt-BR" class={shell === 'app' ? 'dark' : ''}>
+> <html lang="pt-BR" {...(shell === 'app' ? { class: 'dark' } : {})}>
 > ```
 >
-> Só o shell do app é escuro por decreto (decisão de 2026-10-15); página de site não tem classe
-> nenhuma e o switcher decide, **como hoje**. Corrija isto nesta tarefa (o `Base.astro` já é
-> modificado aqui). Custo se errado: o site inteiro abre escuro e o botão de tema parece quebrado.
+> Só o shell do app é escuro por decreto (decisão de 2026-10-15); página de site **não emite o
+> atributo** e o switcher decide, exatamente como hoje. Corrija nesta tarefa (o `Base.astro` já é
+> modificado aqui). Custo se errado: o botão de tema para de funcionar.
 >
 > ⚠️ **Não** tente resolver aqui o tema da `/` (fatia 02/05): se a `/` é escura *por decreto* e o
-> `theme-switcher.js` roda nela, o switcher **pode remover** a classe e clarear o app. Isto é o item
+> `theme-switcher.js` roda nela, o switcher **pode remover** a classe e clarear o app. É o item
 > aberto §8.1 da spec de design, **decisão do usuário** — só não o piore.
+>
+> 🐞 **Achado pré-existente, fora de escopo:** o `theme-switcher.js` calcula
+> `systemPrefersDark` e **nunca o usa** (o default é escuro, não a preferência do sistema). O JS sai
+> **intocado** aqui — a migração não corrige o site. Fica registrado.
+
+> **Ruling (2026-10-18, código morto):** o `_includes/tooltip-info.html` **nunca foi incluído** por
+> nenhum layout nem include do Jekyll (conferido por busca) — é código morto. **Não** crie
+> `TooltipInfo.astro`: portar código morto é dívida sem contrapartida. Custo se errado: nenhum.
+
+> **Ruling (2026-10-18, cache-bust determinístico):** o `?v=` não pode sair de um `Date.now()`
+> avaliado no `Base.astro` — isso varia **por página** (cada arquivo recebe um `?v=` diferente, e o
+> mesmo JS é buscado duas vezes) e torna dois builds do mesmo commit diferentes entre si. Use **uma**
+> constante de módulo: `src/versao.js` com `export const VERSAO = Date.now();` — uma avaliação por
+> build. A prova de que ficou **igual entre páginas** só é possível quando houver mais de uma página
+> (fatia 02) — está anotada lá como asserção.
 
 - [ ] **Passo 1: portar os componentes com o HTML atual**
 
 `Nav.astro` e `Footer.astro` reproduzem `_includes/nav.html` e `_includes/footer.html` **byte a
 byte** (as classes Tailwind, os `<svg>`, o `aria-label="Alternar tema"`). A troca é só Liquid → `{}`:
 `{{ '/blog' | relative_url }}` → `/blog`.
+
+Além deles, o `_layouts/default.html` traz, **fora de includes**, o botão de feedback
+(`#feedback-btn`) e o toast (`#toast-artigos`) — ambos entram no `Base.astro` com o **mesmo HTML**.
+
+**O botão de humor/feedback e o toast não são componentes:** são HTML solto no `default.html`; porte
+os dois verbatim, no lugar em que aparecem (depois do `<main>`, antes dos scripts).
 
 - [ ] **Passo 2: mover os assets verbatim**
 
@@ -225,8 +248,8 @@ Expected: `assets ok`.
 - [ ] **Passo 5: commit**
 
 ```bash
-git add src/components src/layouts/Base.astro public/assets
-git commit -m "feat(astro): nav, footer, tooltip e assets do site verbatim"
+git add src/components src/versao.js src/layouts/Base.astro public/assets
+git commit -m "feat(astro): nav, footer, feedback e assets do site verbatim"
 ```
 
 ---

@@ -192,3 +192,6 @@ git commit -m "feat(astro): página 404 de verdade e teste do contrato de URL"
 - [ ] `dist/404.html` existe e usa o layout (não o `layout: page` inexistente).
 - [ ] As quatro páginas de texto saem com o conteúdo igual ao de hoje (conferido por `diff`).
 - [ ] O `shell` do `Base.astro` é `'pagina'` em todas — nav centralizado, `<main>` com `prose`.
+- [ ] O selo de cache-bust é **o mesmo em todas as páginas** (é o que a fatia 01/T2 prometeu e não
+      pôde provar com uma página só): `grep -oh 'v=[0-9]\+' dist/*.html dist/**/*.html | sort -u | wc -l`
+      → **1**. Se der mais de 1, o `?v=` voltou a ser avaliado por página.

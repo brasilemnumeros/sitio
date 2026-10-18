@@ -1,0 +1,22 @@
+---
+// Shell mínimo do site. Nasce na fatia 00 e cresce na fatia 01, que acrescenta
+// as props `{ title, description, image?, shell, canonical? }`.
+//
+// O import do CSS vive aqui (fonte em `src/styles/main.css`) para que o
+// Tailwind entre no grafo do build: um arquivo não renderizado não emite CSS.
+//
+// O app é escuro, só (decisão de 2026-10-15): daí o `class="dark"` no <html>.
+import '../styles/main.css';
+---
+
+<!doctype html>
+<html lang="pt-BR" class="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Brasil em Números</title>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

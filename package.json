@@ -3,6 +3,7 @@
     "build": "NODE_ENV=production astro build",
     "dev": "NODE_ENV=development astro dev",
     "canario": "bash scripts/checar-canario.sh",
+    "test:analytics": "NODE_ENV=development node scripts/testar-analytics.mjs",
     "css": "npx -y @tailwindcss/cli -i ./src/styles/main.css -o ./assets/css/main.dist.css"
   },
   "dependencies": {

@@ -22,9 +22,12 @@ const servidor = createServer(async (req, res) => {
     res.writeHead(404).end('nao encontrado');
   }
 });
-await new Promise((r) => servidor.listen(8099, r));
+// Porta efêmera (`0`): não colide com nada já na 8099. A porta real só existe
+// depois do listen, então o BASE é montado aqui.
+await new Promise((r) => servidor.listen(0, r));
+const { port } = servidor.address();
 
-const BASE = 'http://localhost:8099/';
+const BASE = `http://localhost:${port}/`;
 let falha = 0;
 const conferir = (ok, msg) => { if (!ok) { console.error(`analytics: ${msg}`); falha = 1; } };
 
@@ -43,6 +46,9 @@ async function cenario(rotulo, { dnt = false, consentiu = false }, esperaTerceir
     esperaTerceiro ? terceiros.length > 0 : terceiros.length === 0,
     `${rotulo}: ${terceiros.length} requisicao(oes) ao googletagmanager (esperado ${esperaTerceiro ? '>0' : '0'})`,
   );
+  // Sem consentimento o banner TEM de estar visível: o gate também pode falhar
+  // escondendo a UI de consentimento (o gtag fica verde sob o cookie semeado).
+  if (!consentiu) conferir(await pagina.isVisible('#cookie-notice'), `${rotulo}: #cookie-notice nao esta visivel`);
   await navegador.close();
 }
 

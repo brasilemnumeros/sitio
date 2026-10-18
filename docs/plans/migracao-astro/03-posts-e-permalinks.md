@@ -133,10 +133,14 @@ git commit -m "feat(astro): coleção de posts (content layer) com os 10 posts m
 - Consome: `getCollection('posts')` (T1), `Base.astro` (fatia 01).
 - Produz: uma rota por post, no formato `/<categoria>/<ano>/<mes>/<dia>/<slug>.html`.
 - **Produz o `Meta` do post, e ele NÃO é o de página**: um post tem de passar `tipo: 'article'` e o
-  `jsonLd` `BlogPosting`. Medido ao vivo em 2026-10-18: um post publica
-  `<meta property="og:type" content="article">` e um JSON-LD `{"@type":"BlogPosting",…}`. Sem isto o
-  post regride **em silêncio** para `website`/`WebPage` — a tabela do contrato medido está na fatia
-  01/T1, passo 3.
+  `jsonLd` `BlogPosting` (o canal existe em `Base` desde a fatia 01/T1). Medido ao vivo em
+  2026-10-18: um post publica `<meta property="og:type" content="article">` e um JSON-LD
+  `{"@type":"BlogPosting",…}`. Sem isto o post regride **em silêncio** para `website`/`WebPage` — a
+  tabela do contrato medido está na fatia 01/T1, passo 3.
+- **E isto é verificado, não presumido:** estender `scripts/testar-urls.sh` (ou o `testar-meta.sh`)
+  para conferir, **num arquivo de post em `dist/`**, as duas asserções: `property="og:type"
+  content="article"` e `"@type":"BlogPosting"`. Conferir isso só no site inteiro não serve — a
+  página continua passando e o post continua errado.
 
 - [ ] **Passo 1: escrever o `getStaticPaths` e rodar o contrato**
 

@@ -119,7 +119,7 @@ git commit -m "feat(astro): projeto Astro com build.format file e Tailwind via V
 - Produz: `dist/assets/*.css` com as classes do site **e** as de `app/src` (o scan é verificado na
   fatia 05 pelo canário; aqui só se prova que o Tailwind roda).
 - Produz: `Base.astro` — um shell mínimo com `import '../styles/main.css'` no frontmatter e um
-  `<slot />`; a fatia 01 acrescenta a ele as props `{ title, description, image?, shell, canonical? }`.
+  `<slot />`; a fatia 01 acrescenta a ele as props `{ title, description, image?, shell, canonical?, tipo?, jsonLd? }`.
 
 > **Ruling (varredura de conflitos, 2026-10-18):** o import escrito na primeira redação
 > (`../assets/css/main.css`, a partir de `src/layouts/`) resolvia para `src/assets/…` — **caminho

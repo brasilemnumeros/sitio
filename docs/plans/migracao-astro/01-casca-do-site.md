@@ -121,15 +121,29 @@ post:
 `shell`: `shell === 'app'` → `pt-14` e sem `prose`; `shell === 'pagina'` → `pt-24 container mx-auto
 px-6 py-8 max-w-4xl prose prose-lg prose-slate dark:prose-invert`.
 
-**`canonical` é calculado, não opcional:** quando a página não passar um, use
-`new URL(Astro.url.pathname, Astro.site).href`. Medido: o canonical de `/blog` é `…/blog.html`, e o
-de `/` é `…/` — exatamente o que `Astro.url.pathname` produz sob `build.format: 'file'` mais
-`trailingSlash: 'never'`. **Não “embeleze” a URL arquivo → sem-extensão.**
+**`canonical` é calculado, não opcional** — mas com a normalização do `index.html`; a expressão
+exata e a medição que a justifica estão no quadro vermelho logo abaixo. **Não “embeleze” a URL
+arquivo → sem-extensão** (as páginas não-raiz publicam **com** `.html`).
 
 A `/` (`src/pages/index.astro`) passa `title="Início"` e a `description` do `_config.yml`
 (medidos: `<title>Início | Brasil em Números</title>` e “Uma plataforma dedicada a fornecer dados e
 informações sobre o Brasil.”). **Não** passe `shell="app"` aqui: a `/` só vira shell do app na
 fatia 02/T*.
+
+> 🔴 **A normalização do `index.html` é obrigatória — medido, não deduzido (2026-10-18).** Sob
+> `build.format: 'file'`, o `Astro.url.pathname` **da raiz** é `/index.html`, e o canonical que sai
+> disso (`…/index.html`) **não é o que o site publica**: ao vivo, `/` publica o canonical
+> `https://www.brasilemnumeros.ong.br/`. Numa página não-raiz o pathname é o certo (sonda medida:
+> `/sonda-temp.html` → `…/sonda-temp.html`, casando com o `/blog.html` ao vivo). A expressão é:
+>
+> ```js
+> const caminho = Astro.url.pathname.replace(/\/index\.html$/, '/');
+> const canonical = new URL(caminho, Astro.site).href;
+> ```
+>
+> Isto é exatamente a semântica de `page.url` do Jekyll (a raiz é `/`, e as outras páginas têm
+> extensão). **A primeira redação desta fatia afirmava que a expressão crua bastava — estava errada
+> na raiz.**
 
 > **Nota de API:** `Astro.url`, `Astro.site` e a interpolação de atributos precisam ser conferidos
 > contra `node_modules/astro/dist/@types/` antes de codar.

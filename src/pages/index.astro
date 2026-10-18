@@ -2,9 +2,12 @@
 // Placeholder do shell da home. A página real é a fatia 05 da migração
 // (`docs/plans/migracao-astro/05-app-no-site.md`). Renderiza através do
 // `Base.astro`, preservando o `<div id="app">` onde o app monta.
+//
+// A `/` ainda NÃO é o shell do app (isso é a fatia 02): usa o shell `pagina`,
+// o default do `Base.astro`. É a `title="Início"` que o Jekyll servia.
 import Base from '../layouts/Base.astro';
 ---
 
-<Base>
+<Base title="Início" description="Uma plataforma dedicada a fornecer dados e informações sobre o Brasil.">
   <div id="app"></div>
 </Base>

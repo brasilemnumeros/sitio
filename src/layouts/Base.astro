@@ -1,22 +1,43 @@
 ---
-// Shell mínimo do site. Nasce na fatia 00 e cresce na fatia 01, que acrescenta
-// as props `{ title, description, image?, shell, canonical? }`.
+// Shell único do site. Nasceu mínimo na fatia 00; aqui cresce com as props
+// `{ title, description, image?, shell?, canonical? }` e delega o `<head>` ao
+// `Meta.astro`, onde vive o contrato medido das meta tags (D6).
 //
 // O import do CSS vive aqui (fonte em `src/styles/main.css`) para que o
 // Tailwind entre no grafo do build: um arquivo não renderizado não emite CSS.
 //
 // O app é escuro, só (decisão de 2026-10-15): daí o `class="dark"` no <html>.
+import Meta from '../components/Meta.astro';
 import '../styles/main.css';
+
+interface Props {
+  title: string;
+  description: string;
+  image?: string;
+  // `app` → shell do app (sem `prose`); `pagina` → página de texto. Ausente = `pagina`.
+  shell?: 'app' | 'pagina';
+  canonical?: string;
+}
+const { title, description, image, shell = 'pagina', canonical } = Astro.props;
+
+// `canonical` calculado: sob `build.format: 'file'` + `trailingSlash: 'never'`,
+// `Astro.url.pathname` produz `/` e `/blog.html` — exatamente o que o site publicava.
+const canonicalFinal = canonical ?? new URL(Astro.url.pathname, Astro.site).href;
+
+const classesMain =
+  shell === 'app'
+    ? 'flex-grow pt-14'
+    : 'flex-grow pt-24 container mx-auto px-6 py-8 max-w-4xl prose prose-lg prose-slate dark:prose-invert';
 ---
 
 <!doctype html>
 <html lang="pt-BR" class="dark">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Brasil em Números</title>
+    <Meta title={title} description={description} canonical={canonicalFinal} tipo="website" image={image} />
   </head>
-  <body>
-    <slot />
+  <body class="flex min-h-screen flex-col">
+    <main class={classesMain}>
+      <slot />
+    </main>
   </body>
 </html>

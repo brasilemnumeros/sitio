@@ -178,6 +178,26 @@ git commit -m "feat(astro): layout base e meta tags explícitas (substituem jeky
 - Produz: `Nav.astro` com prop `{ shell: 'app'|'pagina' }` (a posição do botão de tema e o `grid`
   dependem dela).
 
+> 🔴 **Ruling (2026-10-18, integração medida): a classe `dark` do `<html>` NÃO é fixa.**
+> `_layouts/default.html` declara `<html lang="{{ … }}">` — **sem** `dark` — e o tema é decidido pelo
+> `theme-switcher.js` (lê `localStorage.theme`, cai em `prefers-color-scheme`, e faz
+> `classList.toggle('dark', …)` em `document.documentElement`; lido em `assets/js/theme-switcher.js:46-68`).
+> A 00/T2 deixou `<html … class="dark">` fixo no `Base.astro`, o que **forçaria todas as páginas do
+> site a escuro** — contra a convenção registrada (“o site Jekyll mantém o toggle”). O comportamento
+> correto:
+>
+> ```astro
+> <html lang="pt-BR" class={shell === 'app' ? 'dark' : ''}>
+> ```
+>
+> Só o shell do app é escuro por decreto (decisão de 2026-10-15); página de site não tem classe
+> nenhuma e o switcher decide, **como hoje**. Corrija isto nesta tarefa (o `Base.astro` já é
+> modificado aqui). Custo se errado: o site inteiro abre escuro e o botão de tema parece quebrado.
+>
+> ⚠️ **Não** tente resolver aqui o tema da `/` (fatia 02/05): se a `/` é escura *por decreto* e o
+> `theme-switcher.js` roda nela, o switcher **pode remover** a classe e clarear o app. Isto é o item
+> aberto §8.1 da spec de design, **decisão do usuário** — só não o piore.
+
 - [ ] **Passo 1: portar os componentes com o HTML atual**
 
 `Nav.astro` e `Footer.astro` reproduzem `_includes/nav.html` e `_includes/footer.html` **byte a
@@ -333,5 +353,7 @@ git commit -m "feat(astro): consentimento e analytics com o gate de produção p
       cenários) — **não** por leitura de código.
 - [ ] Consentimento e analytics **não** aparecem em dev (`import.meta.env.PROD`).
 - [ ] O HTML do nav/rodapé bate com o de hoje, com **zero aviso de a11y** no terminal.
+- [ ] A `<html>` de uma página de site **não** tem a classe `dark` fixa (o `theme-switcher.js` decide,
+      como no Jekyll) — só o `shell === 'app'` a fixa.
 - [ ] `dark:` continua presente no CSS (`grep -o 'dark\\:' dist/assets/*.css | wc -l` > 0 — **não**
       use `grep -c 'dark:'`, que devolve 0 porque o build escapa o seletor e o CSS é uma linha só).

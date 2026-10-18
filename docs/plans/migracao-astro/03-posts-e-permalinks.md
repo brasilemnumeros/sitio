@@ -36,12 +36,64 @@ publicado em `/noticias/2025/07/27/hoje-nasce-o-brasil-em-numeros.html`.
 
 - Criar: `src/content.config.ts`
 - Mover: `_posts/*.md` → `src/content/posts/*.md` (com `git mv`, para preservar o histórico)
+- Criar: `src/lib/posts.ts` (a data vem do **nome do arquivo**; o helper é de todos)
 - Criar: `scripts/testar-posts.sh`
 
 **Interfaces:**
 
 - Produz: `getCollection('posts')` devolvendo entradas com
-  `{ id, data: { title, description?, categories, tags?, audio?, image?, date }, body }`.
+  `{ id, data: { title, description?, categories, tags?, audio?, image? }, body }` — **sem `date`**.
+- Produz: `src/lib/posts.ts` com `dataDoId(id)`, `isoDoJekyll(d)` e `dataPorExtenso(d)`.
+
+> 🔴 **A data NÃO está no front matter — medido em 2026-10-18.** Conferi os 10 arquivos de
+> `_posts/`: as chaves usadas são **só** `layout`, `title`, `categories`, `tags` e, em um post cada,
+> `audio` e `image`. **Nenhum** tem `date:`. A data vem do **nome do arquivo**, como no Jekyll.
+> Por isso o schema não tem `date` e as outras fatias (a listagem da 02, a rota da T2, o RSS da 04)
+> **derivam** a data do `id` por `dataDoId` — se cada uma derivar por conta própria, uma delas vai
+> divergir em silêncio.
+>
+> **Os três formatos, medidos no site publicado (não deduzidos):**
+>
+> | onde | saída medida |
+> |---|---|
+> | atributo `datetime` | `2025-07-27T00:00:00+00:00` (**com** `+00:00`, **não** `Z`) |
+> | texto | `27 de July de 2025` |
+> | dia de um dígito | `07 de August de 2025` (dia **com zero à esquerda**) |
+> | ordem da listagem | decrescente (2025-11-14 → … → 2025-07-27) |
+>
+> 🔴 **Tudo em UTC.** A data do arquivo é meia-noite **UTC**; formatar no fuso local
+> (America/Sao_Paulo, UTC−3) devolve o **dia anterior** — e o defeito aparece só em alguns posts.
+>
+> ```ts
+> // src/lib/posts.ts
+> // A data NÃO está no front matter: ela vem do nome do arquivo, como no Jekyll.
+> // Tudo em UTC — a data do arquivo é meia-noite UTC e o fuso local (UTC-3)
+> // jogaria a formatação para o DIA ANTERIOR.
+> export function dataDoId(id: string): Date {
+>   const m = id.match(/^(\d{4})-(\d{2})-(\d{2})/);
+>   if (!m) throw new Error(`post: id não começa com data: ${id}`);
+>   return new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00Z`);
+> }
+>
+> // medido no site publicado: "2025-07-27T00:00:00+00:00" (com +00:00, não "Z")
+> export function isoDoJekyll(d: Date): string {
+>   return d.toISOString().replace(/\.\d{3}Z$/, '+00:00');
+> }
+>
+> const MES = new Intl.DateTimeFormat('en-US', { month: 'long', timeZone: 'UTC' });
+>
+> // medido no site publicado: "27 de July de 2025" e "07 de August de 2025".
+> // O mês sai em INGLÊS porque o Jekyll não declara locale — ver o item aberto.
+> export function dataPorExtenso(d: Date): string {
+>   const dia = String(d.getUTCDate()).padStart(2, '0');
+>   return `${dia} de ${MES.format(d)} de ${d.getUTCFullYear()}`;
+> }
+> ```
+>
+> ⚠️ **Item aberto (produto, não migração):** o site publica `27 de July de 2025` — mês em inglês com
+> conectivo em português — e `og:locale: en_US` (fatia 01/T1). Os dois são artefatos de locale default
+> do Jekyll. **Reproduzidos** aqui para não mudar o que o visitante vê durante a migração; **corrigir
+> os dois é decisão do usuário**, e é uma mudança de uma linha cada (`'pt-BR'`).
 
 > **Ruling (varredura de conflitos, 2026-10-18):** a primeira redação punha o teste desta tarefa em
 > `src/content/posts/posts.test.js` e o rodava com o `vitest` **do app** (`app/vite.config.js` tem
@@ -70,8 +122,19 @@ while IFS= read -r f; do
     || { echo "posts: $b não casa o padrão data-slug do Jekyll" >&2; falha=1; }
 done < <(find "$DIR" -name '*.md')
 [ "$falha" -eq 0 ] || exit 1
+
+# O schema VALIDA: o build roda o content layer e falha se um front matter não
+# casar `src/content.config.ts`. Sem esta linha o teste acima prova só nomes de
+# arquivo — um post que o schema rejeita passaria.
+npm run build >/dev/null || { echo "posts: o build falhou (schema?)" >&2; exit 1; }
+
 echo "posts ok ($n arquivos)"
 ```
+
+> **Por que o `npm run build` está no teste:** contar arquivos com o nome certo não prova que a
+> coleção **carrega**. O build sincroniza e valida o content layer; se um `categories:` viesse como
+> string em vez de lista, o teste antigo passaria e o build quebraria na fatia seguinte — longe da
+> causa.
 
 - [ ] **Passo 2: rodar e ver falhar**
 
@@ -114,7 +177,7 @@ Expected: `posts ok (10 arquivos)`.
 - [ ] **Passo 5: commit**
 
 ```bash
-git add src/content.config.ts src/content/posts scripts/testar-posts.sh
+git add src/content.config.ts src/content/posts src/lib/posts.ts scripts/testar-posts.sh
 git commit -m "feat(astro): coleção de posts (content layer) com os 10 posts migrados"
 ```
 

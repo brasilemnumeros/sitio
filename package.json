@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "build": "astro build",
-    "dev": "astro dev",
+    "build": "NODE_ENV=production astro build",
+    "dev": "NODE_ENV=development astro dev",
     "canario": "bash scripts/checar-canario.sh",
     "css": "npx -y @tailwindcss/cli -i ./src/styles/main.css -o ./assets/css/main.dist.css"
   },

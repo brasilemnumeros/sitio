@@ -1,0 +1,44 @@
+---
+// Contrato de meta tags medido ao vivo em 2026-10-18 (curl de `/`, `/blog` e de um
+// post publicados). Antes vinham de carona do `jekyll-seo-tag`; aqui são explícitas.
+// A ordem das tags abaixo é a ordem medida — não reordene.
+interface Props {
+  title: string;
+  description: string;
+  canonical: string;
+  // `website` em página, `article` em post (fatia 02).
+  tipo?: 'website' | 'article';
+  image?: string;
+  // O post passa o JSON-LD explícito (precisa de `datePublished`/`dateModified`);
+  // sem ele, monta-se a forma de página, que é a única usada na fatia 01.
+  jsonLd?: Record<string, unknown>;
+}
+const { title, description, canonical, tipo = 'website', image, jsonLd } = Astro.props;
+
+// Título da aba leva o sufixo do site; o `og:title` NÃO (é só o título da página).
+const tituloCompleto = `${title} | Brasil em Números`;
+
+const dadosEstruturados = jsonLd ?? {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  description,
+  headline: title,
+  url: canonical,
+};
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{tituloCompleto}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+<meta property="og:title" content={title} />
+<meta property="og:locale" content="en_US" />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:site_name" content="Brasil em Números" />
+<meta property="og:type" content={tipo} />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content={title} />
+{image && <meta property="og:image" content={image} />}
+<script type="application/ld+json" set:html={JSON.stringify(dadosEstruturados)} />

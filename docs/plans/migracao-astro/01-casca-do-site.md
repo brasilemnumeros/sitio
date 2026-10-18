@@ -354,11 +354,25 @@ console.log('analytics ok');
 
 - [ ] **Passo 4: rodar e ver passar**
 
-Run: `NODE_ENV=development npm run build && NODE_ENV=development node scripts/testar-analytics.mjs`
+Run: `npm run build && NODE_ENV=development node scripts/testar-analytics.mjs`
 Expected: `analytics ok`.
 
-> Se o build **não** for de produção, `import.meta.env.PROD` é falso e os componentes nem renderizam
-> — o cenário 2 falharia. O `npm run build` do Astro já é PROD; não use `astro dev` aqui.
+> 🔴 **O build FIXA o seu próprio ambiente — não confie no prefixo (medido em 2026-10-18).**
+> `NODE_ENV=development npm run build` produzia um artefato **sem** o banner e **sem** o analytics
+> (`googletagmanager` = 0, `cookie-notice` = 0) **sem erro nenhum** — porque
+> `node_modules/astro/dist/core/util.js:103` (`ensureProcessNodeEnv`) só define `NODE_ENV` quando ele
+> está **ausente**, e o Vite liga `import.meta.env.PROD` a `NODE_ENV`. Ou seja: seguir a regra global
+> do projeto (`NODE_ENV=development` em todo comando npm) **quebrava o gate em silêncio**. A correção
+> está nos **scripts** do `package.json`:
+>
+> ```json
+> "dev": "NODE_ENV=development astro dev",
+> "build": "NODE_ENV=production astro build",
+> ```
+>
+> `npm run build` é **sempre** produção e `npm run dev` é **sempre** dev, independentemente do que o
+> chamador exportar. **Não remova esses prefixos.** E o `testar-analytics.mjs` continua precisando de
+> `NODE_ENV=development` (ele usa o `playwright`, que é devDependency do app).
 
 - [ ] **Passo 5: commit**
 

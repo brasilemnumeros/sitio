@@ -178,8 +178,18 @@ canário está guardando o caminho errado — e um canário que não falha é de
 
 - [ ] **Passo 3: encadear no script de build**
 
-`package.json` (raiz de `sitio/`): `build` = app → `preparar-publico` → `astro build` → canário →
-`testar-*` (URLs, feed, sitemap, público, meta). Falha em qualquer um **falha o build**.
+`package.json` (raiz de `sitio/`): o `build` **chama o `astro build` diretamente** e depois as
+verificações — **nunca** `npm run build` dentro do próprio `build` (recursão). Ordem:
+
+```
+build = app build → preparar-publico → astro build → canário → testar-{urls,feed,sitemap,publico,meta}
+```
+
+Falha em qualquer um **falha o build**.
+
+> **Dependência de ordem (varredura de conflitos):** este passo encadeia scripts que nascem nas
+> fatias 01 (`testar-meta.sh`), 02 (`testar-urls.sh`) e 04 (`testar-feed.sh`, `testar-sitemap.sh`).
+> A **04 precisa estar fechada** antes desta tarefa; o plano põe 05 depois de 04 por isso.
 
 - [ ] **Passo 4: rodar o build completo**
 

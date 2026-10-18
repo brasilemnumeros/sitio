@@ -81,7 +81,8 @@ export default defineConfig({
 });
 ```
 
-`src/pages/index.astro` mínimo com `<html lang="pt-BR" class="dark">` e o `<div id="app">`.
+`src/pages/index.astro` mínimo com o `<div id="app">` (o `<html>` e a classe do tema vêm do
+`Base.astro`; a classe é **condicional** — ver o ruling da fatia 01/T2).
 
 - [ ] **Passo 4: rodar e ver passar**
 
@@ -141,7 +142,9 @@ mkdir -p src/styles && git mv assets/css/main.css src/styles/main.css
 ```
 
 Criar `src/layouts/Base.astro` (nasce aqui, cresce na fatia 01) com
-`import '../styles/main.css';` no frontmatter, o `<html lang="pt-BR" class="dark">` e um `<slot />`
+`import '../styles/main.css';` no frontmatter, um `<html lang="pt-BR">` com a classe do tema
+(**condicional** — ver o ruling da fatia 01/T2: `shell === 'app'` fixa `dark`, página de site **não**
+fixa nada, porque o `theme-switcher.js` decide) e um `<slot />`
 onde hoje está o conteúdo do `index.astro`. O `index.astro` passa a **usar** o `Base.astro`,
 **preservando** `<div id="app">`.
 

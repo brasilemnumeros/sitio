@@ -20,9 +20,13 @@ interface Props {
 }
 const { title, description, image, shell = 'pagina', canonical } = Astro.props;
 
-// `canonical` calculado: sob `build.format: 'file'` + `trailingSlash: 'never'`,
-// `Astro.url.pathname` produz `/` e `/blog.html` — exatamente o que o site publicava.
-const canonicalFinal = canonical ?? new URL(Astro.url.pathname, Astro.site).href;
+// `canonical` calculado. A normalização da raiz é obrigatória: sob
+// `build.format: 'file'` + `trailingSlash: 'never'`, `Astro.url.pathname` é
+// `/index.html` na raiz e `/blog.html` nas demais — mas o site publica a raiz
+// como `/` (semântica de `page.url` do Jekyll) e as demais com `.html`.
+// Medido ao vivo: `/` → `…/`, `/blog` → `…/blog.html`.
+const caminho = Astro.url.pathname.replace(/\/index\.html$/, '/');
+const canonicalFinal = canonical ?? new URL(caminho, Astro.site).href;
 
 const classesMain =
   shell === 'app'

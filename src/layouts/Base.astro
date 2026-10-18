@@ -6,8 +6,12 @@
 // O import do CSS vive aqui (fonte em `src/styles/main.css`) para que o
 // Tailwind entre no grafo do build: um arquivo não renderizado não emite CSS.
 //
-// O app é escuro, só (decisão de 2026-10-15): daí o `class="dark"` no <html>.
+// O tema do <html> NÃO é fixo: só o shell do app é escuro por decreto (decisão de
+// 2026-10-15). Numa página do site não há classe e o `theme-switcher.js` decide
+// (lê `localStorage.theme`; sem preferência salva, cai em escuro), como no Jekyll.
 import Meta from '../components/Meta.astro';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
 import '../styles/main.css';
 
 interface Props {
@@ -38,16 +42,76 @@ const classesMain =
   shell === 'app'
     ? 'flex-grow pt-14'
     : 'flex-grow pt-24 container mx-auto px-6 py-8 max-w-4xl prose prose-lg prose-slate dark:prose-invert';
+
+// Cache-bust dos scripts do site, o `?v={{ site.time | date: '%s' }}` do Jekyll: um
+// selo de tempo de build. Os arquivos são copiados verbatim em `public/assets/js/`.
+const versao = Date.now();
 ---
 
 <!doctype html>
-<html lang="pt-BR" class="dark">
+<html lang="pt-BR" class={shell === 'app' ? 'dark' : ''}>
   <head>
     <Meta title={title} description={description} canonical={canonicalFinal} tipo={tipo} image={image} jsonLd={jsonLd} />
   </head>
   <body class="flex min-h-screen flex-col">
+    <Nav shell={shell} />
+
     <main class={classesMain}>
       <slot />
     </main>
+
+    <Footer />
+
+    <!-- Core Scripts -->
+    <script defer src={`/assets/js/theme-switcher.js?v=${versao}`}></script>
+    <script defer src={`/assets/js/feedback-button.js?v=${versao}`}></script>
+
+    <!-- Feedback Button -->
+    <a
+      href="https://github.com/brasilemnumeros/sitio/discussions/new?category=general"
+      target="_blank"
+      rel="noopener noreferrer"
+      id="feedback-btn"
+      class="fixed top-1/2 -right-25 z-50 min-w-16 -translate-y-1/2 -rotate-90 transform touch-pan-x rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 px-4 py-2.5 text-xs font-bold tracking-wide whitespace-nowrap text-white no-underline shadow-lg transition-all duration-300 hover:scale-105 hover:from-blue-600 hover:to-blue-800 md:-right-30 md:px-5 md:py-3 md:text-sm lg:-right-30 lg:hover:-right-23 dark:from-indigo-600 dark:to-indigo-800 dark:hover:from-indigo-700 dark:hover:to-indigo-900"
+      aria-label="Arraste para a esquerda (mobile) ou passe o mouse para enviar feedback"
+    >
+      💬 Quer comentar algo?
+    </a>
+
+    <!-- Toast convite para artigos -->
+    <!-- `is:raw`: sem ele o Astro normalizaria o `<path … />` para `<path …></path>`,
+         divergindo do HTML do Jekyll. O markup interno fica verbatim. -->
+    <Fragment is:raw>
+    <div
+      id="toast-artigos"
+      class="fixed right-6 bottom-6 z-50 flex max-w-sm items-center gap-3 rounded-lg border border-gray-200 bg-gray-800 px-4 py-3 shadow-lg transition-all duration-300 dark:border-gray-700 dark:bg-white"
+      style="display:none"
+    >
+      <svg class="h-6 w-6 flex-shrink-0 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9v2a7 7 0 11-14 0V9m14 0V7a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m14 0H5m14 0a2 2 0 01-2 2v2a2 2 0 01-2 2H7a2 2 0 01-2-2v-2a2 2 0 012-2h10z" />
+      </svg>
+      <div class="flex-1 text-sm text-gray-100 dark:text-gray-800">
+        Confira nossos
+        <a
+          href="/blog.html"
+          id="toast-artigos-link"
+          class="text-blue-400 underline hover:text-blue-600 dark:text-blue-600 dark:hover:text-blue-800"
+          >artigos e análises</a
+        >!
+      </div>
+      <button
+        id="toast-artigos-close"
+        class="ml-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+        title="Fechar"
+        aria-label="Fechar"
+      >
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    </Fragment>
+
+    <script defer src={`/assets/js/toast-artigos.js?v=${versao}`}></script>
   </body>
 </html>

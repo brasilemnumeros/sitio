@@ -314,7 +314,9 @@ já estão consolidadas nas seções acima — nominalmente, não se repetem aqu
 ## Fora de escopo (não decidido nesta ADR)
 
 - **Automatizar o pipeline de dados** (GitHub Actions em vez de notebooks Colab manuais) — desejável, mas não especificado aqui. A D7 toca os notebooks *manualmente executados*, não a automação deles.
-- Migração de stack do site (Astro / Cloudflare Pages).
+- ~~Migração de stack do site (Astro / Cloudflare Pages)~~ — **a parte do Astro foi decidida na
+  ADR 0002 (2026-10-18)**: o site migra para Astro 7 e o Ruby sai. **Cloudflare Pages continua não
+  avaliado** e segue fora de escopo.
 - Ferramentas de análise (médias móveis). Séries normalizadas a base 100 ficam disponíveis apenas como opção explícita do usuário, nunca como padrão.
 - **Fonte e população dos dados de governos.** O modelo comporta `federal`, `estadual` e `municipal`, mas nesta rodada só federal e estadual são o alvo: a fonte candidata é o TSE, e municipal (~5.570 entidades) é projeto de dados por si só.
 - Correções dos demais achados da revisão que não pertencem à camada de gráficos (ex.: `jekyll-analytics` ausente do Gemfile, `404.html` com `layout: page` inexistente — **confirmado por build local em 2026-10-14**, o Jekyll emite `Layout 'page' requested in 404.html does not exist` —, `blog_categories` não utilizado por nenhum template, e `tailwind.config.js`, que ninguém lê desde a v4 — **confirmado com o CLI v4.3.3 em 2026-10-14**: apontando o `content` dele para uma pasta inexistente, as classes continuam sendo geradas).

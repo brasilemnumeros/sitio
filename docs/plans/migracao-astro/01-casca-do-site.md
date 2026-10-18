@@ -209,4 +209,5 @@ git commit -m "feat(astro): consentimento e analytics com o gate de produção p
 - [ ] Com o GA4 **bloqueado até o aceite**, verificado **no navegador** (não por leitura de código).
 - [ ] Consentimento e analytics **não** aparecem em dev (`import.meta.env.PROD`).
 - [ ] O HTML do nav/rodapé bate com o de hoje, com **zero aviso de a11y** no terminal.
-- [ ] `dark:` continua presente no CSS (`grep -c 'dark:' dist/assets/*.css` > 0).
+- [ ] `dark:` continua presente no CSS (`grep -o 'dark\\:' dist/assets/*.css | wc -l` > 0 — **não**
+      use `grep -c 'dark:'`, que devolve 0 porque o build escapa o seletor e o CSS é uma linha só).

@@ -294,27 +294,39 @@ _(confirmar os dois `_includes` no Passo 1 — eles são citados pela §11.)_
 
 ### Tarefa 5: Atribuição do TradingView (§10.5)
 
+> 🔴 **Correção medida em 2026-10-19 (fatia 10/T5):** o alvo **não** é `sitio/_includes/footer.html`
+> — esse arquivo saiu do repositório com o Jekyll (migração Astro, fatia 07). O rodapé hoje é
+> **`sitio/src/components/Footer.astro`**. A tarefa também ganhou uma **guarda**, porque uma
+> atribuição legal que pode sumir em silêncio não é obrigação, é promessa.
+
 **Arquivos:**
 
-- Criar: `sitio/NOTICE`
-- Modificar: `sitio/_includes/footer.html`
+- Criar: `sitio/NOTICE` (com o **texto da licença**, não só o link — a Apache-2.0 exige entregar uma
+  cópia a quem recebe o binário)
+- Modificar: `sitio/src/components/Footer.astro`
+- Criar: `sitio/scripts/testar-atribuicao.sh` (a guarda)
+- Modificar: `sitio/package.json` (encadear a guarda no `verificar`)
 
 **Interfaces:**
 
-- Consome: nada.
+- Consome: `sitio/app/node_modules/lightweight-charts/` (versão **5.2.1** e o `LICENSE`).
 - Produz: o **link no rodapé global** (vale para todas as páginas, e não depende de o
   gráfico continuar na página em que está hoje) + o arquivo **`NOTICE`** no repo, como a
-  Apache-2.0 exige.
+  Apache-2.0 exige + a guarda que falha o build se a atribuição sumir do `dist/`.
 
-- [ ] **Passo 1: escrever o `NOTICE`** com o nome do produto (TradingView Lightweight
-      Charts), a licença (Apache-2.0) e o endereço do repositório upstream.
-- [ ] **Passo 2: acrescentar uma linha ao `footer.html`** com o link para
+- [ ] **Passo 1: escrever a guarda PRIMEIRO e vê-la falhar** (TDD: a atribuição ainda não existe).
+- [ ] **Passo 2: escrever o `NOTICE`** com o nome do produto (TradingView Lightweight Charts), a
+      versão (5.2.1), a licença (Apache-2.0), o endereço do repositório upstream
+      (`https://github.com/tradingview/lightweight-charts`) e o texto da licença verbatim.
+- [ ] **Passo 3: acrescentar uma linha ao `Footer.astro`** com o link para
       `https://www.tradingview.com/`.
-- [ ] **Passo 3: commitar**
+- [ ] **Passo 4: rebuild, guarda verde, e SABOTAR** (tirar a linha do rodapé → a guarda tem de
+      falhar → restaurar).
+- [ ] **Passo 5: commitar**
 
 ```bash
-cd sitio && git add NOTICE _includes/footer.html
-git commit -m "docs: atribuicao do TradingView Lightweight Charts no rodape e no NOTICE"
+cd sitio && git add NOTICE src/components/Footer.astro scripts/testar-atribuicao.sh package.json
+git commit -m "docs: atribuicao do TradingView Lightweight Charts no rodape, no NOTICE e no build"
 ```
 
 ---

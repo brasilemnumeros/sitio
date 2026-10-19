@@ -55,6 +55,13 @@ deploy** entre os repos deixa de poder derrubar o gráfico em produção.
 
 ### Tarefa 1: Os notebooks publicam o schema canônico (fase da convivência)
 
+> **Nota medida (2026-10-19):** esta tarefa **não** foi executada como escrita — nenhum notebook
+> ganhou célula canônica. A canonicalização foi feita por um **script único**,
+> `dados/converter-schema-canonico.py` (commit `dbc0035`), que lê o JSON legado do notebook e
+> regrava no schema canônico. O resultado (os 13 JSONs publicados) está correto e é o que a T2
+> valida; o que muda é o **caminho**. O pipeline é: notebook → JSON legado → converter → JSON
+> canônico.
+
 **Arquivos:**
 - Modificar: os 8 notebooks em `dados/` (`selic/`, `ipca/`, `igp-m/`, `pib/`, `mvgr/`,
   `caged/`, `populacao/`, `homicidios/`)
@@ -253,6 +260,17 @@ git commit -m "test(data): valida os 13 arquivos reais contra o contrato canonic
 
 ### Tarefa 3: Tirar o metadado duplicado do `indicators.json` (§6)
 
+> 🔴 **SUPERSEDIDA (2026-10-19) — NÃO EXECUTAR.** A `unit` **fica** no `indicators.json`. A **§12.1**
+> é emenda posterior à §6 e é a autoridade: o **distintivo de escala tem de renderizar ANTES de a
+> série carregar**, e para isso o app lê a unidade do próprio registry (medido: os 13 registros têm
+> `unit`, e é o que a fatia 05 usa). Remover a `unit` apagaria o distintivo **em silêncio**.
+> O `comparabilidade` também **não** entra à mão: a **§5** diz que ele é **função pura dos dados**,
+> não campo curado (spec, l.276). O `granularity` do registry é rótulo de exibição
+> ("Acumulado 12 meses"), **não** o enum da série (`monthly`) — não é duplicata, e o rename para
+> `granularityLabel` fica **fora** (churn sem ganho).
+>
+> Registrado no ledger do plano: `.superpowers/sdd/11-migracao-do-repo-dados/progress.md`.
+
 **Arquivos:**
 - Modificar: `sitio/indicators.json`
 
@@ -290,28 +308,51 @@ git commit -m "refactor(registry): tira o metadado de serie do indicators.json, 
 
 ### Tarefa 4: A retirada de `rate` (FASE 3 da ordem de deploy)
 
-- [ ] **Passo 0: pré-condição — o app novo está no ar.** Conferir
-      `https://www.brasilemnumeros.ong.br/` servindo o shell do app (fatia 10). **Não
-      retirar `rate` antes disso.**
-- [ ] **Passo 1: retirar `rate` dos notebooks e republicar**
+> 🔴 **Correção medida em 2026-10-19:** os notebooks **não** têm célula de publicação canônica
+> (`grep 'schema'` nos 7 `*.ipynb` = **0**). Eles seguem escrevendo o shape **legado**
+> (`indicatorName` + `rate`), e quem canonicaliza é o script único
+> **`dados/converter-schema-canonico.py`** (commit `dbc0035` do repo `dados`). O alvo desta tarefa é
+> a função `_dedupe` dele — não um notebook.
+>
+> **A pré-condição do Passo 0 foi dispensada pelo usuário em 2026-10-19** (nada será enviado). A
+> consequência fica registrada: no push, `dados` (só `value`) tem de sair **antes** de `sitio`, e a
+> página ANTIGA — que lê `rate` — quebra na janela entre os dois.
+
+- [ ] **Passo 1: o converter publica só `value`**
 
 ```python
+# dados/converter-schema-canonico.py, _dedupe (~l.109)
 # de:
-[{"date": d, "rate": v, "value": v} for d, v in dados]
+({"date": d, "rate": v, "value": v} for d, v in meses.values())
 # para:
-[{"date": d, "value": v} for d, v in dados]
+({"date": d, "value": v} for d, v in meses.values())
 ```
+
+⚠️ **`_valor()` NÃO muda** (l.94-96): é ele que lê o `rate` do JSON legado que o notebook escreve.
+Atualizar o docstring do módulo ("Fase da convivência") e documentar o pipeline.
+
+- [ ] **Passo 2: republicar os 13 arquivos e conferir**
 
 ```bash
 cd dados
-git add . && git commit -m "refactor(dados): retira rate; o contrato fica so com value"
-git push origin main
+python3 converter-schema-canonico.py
+grep -c '"rate"' */*.json      # tem de dar 0 em TODOS os 13
 ```
 
-- [ ] **Passo 2: confirmar que nada regrediu**
+Nenhum **valor** muda; a contagem de pontos por arquivo é a mesma.
 
-Run: `cd sitio/app && npm test` — o teste de integração (tarefa 2) continua verde, agora
-com um campo só.
+- [ ] **Passo 3: confirmar que nada regrediu**
+
+Run: `cd sitio/app && NODE_ENV=development npm test` — o teste de integração (tarefa 2) continua
+verde, agora com um campo só.
+
+- [ ] **Passo 4: commitar** (no repo `dados`; **sem `git push`**)
+
+```bash
+cd dados
+git add converter-schema-canonico.py */*.json
+git commit -m "refactor(dados): retira rate; o contrato publicado fica so com value"
+```
 
 ---
 

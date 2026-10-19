@@ -1,0 +1,31 @@
+---
+// Rota de post, no permalink default do Jekyll: `/:categories/:year/:month/:day/:title`.
+// O `title` da URL é o NOME DO ARQUIVO (id), não o `title:` do front matter — o
+// post `2025-07-27-hoje-nasce-o-brasil-em-numeros.md` (cujo `title:` é "Início de
+// tudo...") está publicado em `/noticias/2025/07/27/hoje-nasce-o-brasil-em-numeros.html`.
+//
+// A `categoria` é o PRIMEIRO `categories:`. O schema da coleção exige
+// `categories: z.array(z.string()).min(1)` (fatia 03/T1): array vazio geraria
+// `/2025/07/27/slug.html` e quebraria o roteador — a guarda é o schema, não um
+// `??` aqui.
+import { getCollection } from 'astro:content';
+import Post from '../../../../../layouts/Post.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts');
+  return posts.map((p) => {
+    const m = p.id.match(/^(\d{4})-(\d{2})-(\d{2})-(.+)$/);
+    // Sem o round-trip `data-slug` a rota sairia errada em silêncio.
+    if (!m) throw new Error(`rota de post: id fora do padrão data-slug: ${p.id}`);
+    const [, ano, mes, dia, slug] = m;
+    return {
+      params: { categoria: p.data.categories[0], ano, mes, dia, slug },
+      props: { post: p },
+    };
+  });
+}
+
+const { post } = Astro.props;
+---
+
+<Post post={post} />

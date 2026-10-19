@@ -1,0 +1,350 @@
+---
+// Portado de `_layouts/post.html`. O conteúdo entra pelo slot do `Base.astro`
+// (shell `pagina`, que já traz o `<main class="prose …">`).
+//
+// ARMADILHAS MEDIDAS (o plano original não as tinha — ver `f03-t2-brief.md`):
+//
+// 1. **A caixa do player NÃO é condicional.** O post SEM áudio publica
+//    `<div id="podcast-player">` com `<div class="shk-player" data-src="">` — uma
+//    caixa cinza vazia. Só o aviso e o `<script>` dependem de `audio`. Aqui a
+//    caixa fica FORA do `if`, como no Jekyll.
+// 2. **O título entra DENTRO de string JS.** O Jekyll faz isso em dois sabores:
+//    `{{ page.title }}` (cru, sem escapar — mantém as aspas retas do `"Taxaço"`)
+//    no `audio.title`, e `{{ page.title | escape }}` (escapa `"` → `&quot;`) no
+//    `audio_title` do GA4. Reproduzimos os dois: `tituloRaw` e `tituloEscapado`.
+//    A interpolação `{…}` do Astro escapa para HTML — sozinha, não serve para
+//    string JS, então a montagem do script é por `set:html`.
+// 3. **O post não tem `description:` no front matter e o `Base.astro` a exige.**
+//    A `description` publicada é o EXCERPT COMPLETO (sem corte): `trecho(post,
+//    Number.MAX_SAFE_INTEGER)`.
+import { render, type CollectionEntry } from 'astro:content';
+import Base from './Base.astro';
+import { dataDoId, isoDoJekyll, dataPorExtenso, urlDoPost } from '../lib/posts';
+import { trecho } from '../lib/trecho';
+
+interface Props {
+  post: CollectionEntry<'posts'>;
+}
+const { post } = Astro.props;
+
+// O `<Content />` do entry (content layer do Astro 7) — o `{{ content }}` do
+// `post.html`. `render()` resolve o componente e `entry.rendered.html` (usado pelo
+// `trecho.ts`) é o mesmo material.
+const { Content } = await render(post);
+
+// A URL canônica termina em `.html` (permalink default do Jekyll). Derivada pelo
+// MESMO helper da listagem — uma segunda cópia divergiria em silêncio.
+const SITE_URL = 'https://www.brasilemnumeros.ong.br';
+const caminho = urlDoPost(post.id, post.data.categories[0]);
+const canonical = new URL(caminho, SITE_URL).href;
+
+const data = dataDoId(post.id);
+// O excerpt publicado é o primeiro bloco SEM o corte de 25/30 palavras.
+const descricao = trecho(post, Number.MAX_SAFE_INTEGER);
+
+// Rótulos SINGULARES dos badges — os mesmos do `case` do `blog`
+// (`📊 Análise` / `📈 Indicador` / `📢 Notícia` / `🏷️` + capitalize).
+const ROTULO: Record<string, { icone: string; nome: string }> = {
+  analises: { icone: '📊', nome: 'Análise' },
+  indicadores: { icone: '📈', nome: 'Indicador' },
+  noticias: { icone: '📢', nome: 'Notícia' },
+};
+
+// Liquid `capitalize`: primeira letra maiúscula e o RESTO minúsculo.
+function capitalizar(texto: string): string {
+  return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
+}
+
+// O `escape` do Liquid (CGI.escapeHTML) — usado só no `audio_title` do GA4.
+function escaparHtml(texto: string): string {
+  return texto
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+const audio = post.data.audio ?? '';
+const tituloRaw = post.data.title;
+const tituloEscapado = escaparHtml(post.data.title);
+
+// O `<script>` do Shikwasa, verbatim de `post.html:97-193`. O `is:inline` impede
+// o Vite de empacotar `window.Shikwasa` (é global de CDN); por isso o conteúdo vai
+// por `set:html`, com o título interpolado na string JS.
+const scriptAudio = `
+    const { Player } = window.Shikwasa;
+
+    // Function to get inverted theme
+    function getTheme() {
+      const isDarkMode = document.documentElement.classList.contains('dark');
+      return isDarkMode ? 'dark' : 'light';
+    }
+
+    // Initialize player with inverted theme
+    const player = new Player({
+      container: () => document.querySelector('.shk-player'),
+      audio: {
+        title: '${tituloRaw}',
+        artist: 'Brasil em Números',
+        src: '${audio}',
+      },
+      fixed: {
+        type: 'static',
+      },
+      theme: document.documentElement.classList.contains('dark') ? 'light' : 'dark',
+    });
+
+    // Track audio play events
+    player.on('play', () => {
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'audio_play', {
+          audio_title: '${tituloEscapado}',
+          audio_url: '${audio}',
+          page_url: window.location.href,
+        });
+      }
+    });
+
+    // Track audio pause events
+    player.on('pause', () => {
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'audio_pause', {
+          audio_title: '${tituloEscapado}',
+          audio_url: '${audio}',
+          page_url: window.location.href,
+        });
+      }
+    });
+
+    // Watch for theme changes and update player
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          const newTheme = getTheme();
+          // Recreate player with new theme
+          const container = document.querySelector('.shk-player');
+          container.innerHTML = ''; // Clear container
+
+          const newPlayer = new Player({
+            container: () => container,
+            audio: {
+              title: '${tituloRaw}',
+              artist: 'Brasil em Números',
+              src: '${audio}',
+            },
+            fixed: {
+              type: 'static',
+            },
+            theme: newTheme,
+          });
+
+          // Re-add event listeners for the new player
+          newPlayer.on('play', () => {
+            if (typeof gtag !== 'undefined') {
+              gtag('event', 'audio_play', {
+                audio_title: '${tituloEscapado}',
+                audio_url: '${audio}',
+                page_url: window.location.href,
+              });
+            }
+          });
+
+          newPlayer.on('pause', () => {
+            if (typeof gtag !== 'undefined') {
+              gtag('event', 'audio_pause', {
+                audio_title: '${tituloEscapado}',
+                audio_url: '${audio}',
+                page_url: window.location.href,
+              });
+            }
+          });
+        }
+      });
+    });
+
+    // Start observing theme changes
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+  `;
+
+// O JSON-LD de post (o canal `jsonLd` do `Base` desde a fatia 01/T1). A ORDEM das
+// chaves reproduz o publicado; `JSON.stringify` a preserva.
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BlogPosting',
+  dateModified: isoDoJekyll(data),
+  datePublished: isoDoJekyll(data),
+  description: descricao,
+  headline: post.data.title,
+  mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+  url: canonical,
+};
+---
+
+<Base
+  title={post.data.title}
+  description={descricao}
+  tipo="article"
+  canonical={canonical}
+  image={post.data.image ? `${SITE_URL}${post.data.image}` : undefined}
+  jsonLd={jsonLd}
+>
+  <!-- Post Header -->
+  <header class="mb-8">
+    <h1 class="mb-4 text-4xl font-bold text-gray-900 dark:text-gray-100">{post.data.title}</h1>
+
+    <div class="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+      <time datetime={isoDoJekyll(data)}>{dataPorExtenso(data)}</time>
+
+      {
+        post.data.categories.map((categoria) => (
+          <a
+            href={`/categorias/${categoria}.html`}
+            class="inline-flex items-center gap-1 rounded-md bg-gray-100 px-2 py-1 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700"
+          >
+            {ROTULO[categoria] ? (
+              <>
+                {ROTULO[categoria].icone} <span>{ROTULO[categoria].nome}</span>
+              </>
+            ) : (
+              <>
+                🏷️ <span>{capitalizar(categoria)}</span>
+              </>
+            )}
+          </a>
+        ))
+      }
+
+      {
+        post.data.audio && (
+          <span class="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-1 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+            🎧 <span>Podcast disponível</span>
+          </span>
+        )
+      }
+    </div>
+
+    {
+      post.data.tags && (
+        <div class="mb-4 flex flex-wrap gap-2">
+          {post.data.tags.map((tag) => (
+            <span class="inline-block rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )
+    }
+  </header>
+
+  {
+    post.data.audio && (
+      <Fragment>
+        {/* Podcast Disclaimer */}
+        <div class="my-6 border-l-4 border-blue-400 bg-blue-50 p-4 dark:border-blue-400 dark:bg-blue-900/20">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fill-rule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </div>
+          <div class="ml-3">
+            <p class="text-sm text-blue-700 dark:text-blue-300">
+              <strong>🎧 Versão Podcast:</strong> Prefere escutar? Este post também está disponível em formato de
+              áudio logo abaixo!
+            </p>
+          </div>
+        </div>
+        </div>
+      </Fragment>
+    )
+  }
+
+  <!-- Podcast Player: NÃO condicional — sai vazio nos posts sem áudio.
+       `set:html` é necessário para forçar `data-src=""`: o Astro colapsaria um
+       atributo de valor vazio para `data-src` (sem `=""`), divergindo do Jekyll. -->
+  <div
+    id="podcast-player"
+    class="rounded-lg bg-gray-200 dark:bg-gray-600"
+    set:html={`<div class="shk-player" data-src="${audio}"></div>`}
+  >
+  </div>
+
+  {
+    post.data.image && (
+      <div class="flex justify-center">
+        <img
+          src={`${SITE_URL}${post.data.image}`}
+          alt={`Capa do post: ${post.data.title}`}
+          class="mt-1 mb-1 h-auto max-w-full rounded-lg object-cover shadow"
+          loading="lazy"
+        />
+      </div>
+    )
+  }
+
+  <Content />
+
+  {
+    post.data.audio && (
+      <>
+        <script
+          is:inline
+          src="https://cdn.jsdelivr.net/npm/shikwasa@2.2.1/dist/shikwasa.min.js"
+        />
+        <link
+          href="https://cdn.jsdelivr.net/npm/shikwasa@2.2.1/dist/style.min.css"
+          rel="stylesheet"
+        />
+        <script is:inline set:html={scriptAudio} />
+      </>
+    )
+  }
+
+  <div
+    class="ss-box ss-circle ss-grow my-10 mb-10 text-center"
+    data-ss-content="false"
+    data-ss-social="share,facebook,twitter,linkedin,whatsapp,telegram,reddit,email"
+    data-ss-icon-class="twitter:fab fa-x-twitter"
+  >
+  </div>
+
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/gh/assisfery/SocialShareJS@1.4/social-share.min.css"
+  />
+  <script is:inline src="https://cdn.jsdelivr.net/gh/assisfery/SocialShareJS@1.4/social-share.min.js"
+  ></script>
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+  />
+  <script is:inline src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/js/all.min.js"
+  ></script>
+
+  <script
+    is:inline
+    src="https://giscus.app/client.js"
+    data-repo="brasilemnumeros/sitio"
+    data-repo-id="R_kgDOPKkTgw"
+    data-category="Announcements"
+    data-category-id="DIC_kwDOPKkTg84Ctxve"
+    data-mapping="title"
+    data-strict="1"
+    data-reactions-enabled="1"
+    data-emit-metadata="0"
+    data-input-position="top"
+    data-theme="dark_dimmed"
+    data-lang="pt"
+    data-loading="lazy"
+    crossorigin="anonymous"
+    async
+  ></script>
+</Base>

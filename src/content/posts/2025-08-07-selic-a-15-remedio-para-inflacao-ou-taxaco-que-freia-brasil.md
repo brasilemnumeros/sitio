@@ -15,7 +15,7 @@ Antes de tudo, é crucial diferenciar os dois "sabores" da Selic:
 [![Selic Meta vs Selic Over](/assets/img/selic-meta-vs-selic-over.webp)](/assets/img/selic-meta-vs-selic-over.webp)
 
 <p style="text-align: center; font-size: 0.85em; font-style: italic; margin-top: 0.5em;">
-  <a href="{{ site.url }}/?indicators=selic-meta-acum-12m%2Cselic-over-acum-12m" class="text-blue-600 hover:text-blue-800 underline">Ver gráfico Selic Meta vs Selic Over</a>
+  <a href="https://www.brasilemnumeros.ong.br/?indicators=selic-meta-acum-12m%2Cselic-over-acum-12m" class="text-blue-600 hover:text-blue-800 underline">Ver gráfico Selic Meta vs Selic Over</a>
 </p>
 
 - **Selic Meta:** É o alvo, a taxa oficial que o Comitê de Política Monetária (Copom) do Banco Central define a cada 45 dias. Atualmente, a meta é 15%.
@@ -63,16 +63,16 @@ A análise dos dados é o primeiro passo para essa reflexão. Explore nossos gr�
 
 Este artigo foi elaborado com base em análises de diversas fontes especializadas:
 
-1. **COFECI** - [Como a taxa Selic afeta a economia e o mercado imobiliário](https://www.cofeci.gov.br/post/como-a-taxa-selic-afeta-a-economia-e-o-mercado-imobili%C3%A1rio){:target="\_blank" rel="noopener"}
+1. **COFECI** - <a href="https://www.cofeci.gov.br/post/como-a-taxa-selic-afeta-a-economia-e-o-mercado-imobili%C3%A1rio" target="\_blank" rel="noopener">Como a taxa Selic afeta a economia e o mercado imobiliário</a>
 
-2. **Instituto Humanitas Unisinos** - [Do tarifaço ao taxaço: a taxa Selic em 15% impõe um alto custo ao povo brasileiro](https://www.ihu.unisinos.br/655259-do-tarifaco-ao-taxaco-a-taxa-selic-em-15-impoe-um-alto-custo-ao-povo-brasileiro-artigo-de-sergio-botton-barcellos){:target="\_blank" rel="noopener"}
+2. **Instituto Humanitas Unisinos** - <a href="https://www.ihu.unisinos.br/655259-do-tarifaco-ao-taxaco-a-taxa-selic-em-15-impoe-um-alto-custo-ao-povo-brasileiro-artigo-de-sergio-botton-barcellos" target="\_blank" rel="noopener">Do tarifaço ao taxaço: a taxa Selic em 15% impõe um alto custo ao povo brasileiro</a>
 
-3. **CNN Brasil** - [Focus: mercado mantém Selic até o fim de 2025 e reduz projeções de inflação](https://www.cnnbrasil.com.br/economia/macroeconomia/focus-mercado-mantem-selic-ate-o-fim-de-2025-e-reduz-projecoes-de-inflacao/){:target="\_blank" rel="noopener"}
+3. **CNN Brasil** - <a href="https://www.cnnbrasil.com.br/economia/macroeconomia/focus-mercado-mantem-selic-ate-o-fim-de-2025-e-reduz-projecoes-de-inflacao/" target="\_blank" rel="noopener">Focus: mercado mantém Selic até o fim de 2025 e reduz projeções de inflação</a>
 
-4. **Serasa** - [Entenda o que é taxa Selic e como ela afeta sua vida](https://www.serasa.com.br/blog/entenda-o-que-e-taxa-selic-e-como-ela-afeta-sua-vida/){:target="\_blank" rel="noopener"}
+4. **Serasa** - <a href="https://www.serasa.com.br/blog/entenda-o-que-e-taxa-selic-e-como-ela-afeta-sua-vida/" target="\_blank" rel="noopener">Entenda o que é taxa Selic e como ela afeta sua vida</a>
 
-5. **T2 Educação** - [Selic Meta x Selic Over](https://t2.com.br/blog/selic-meta-x-selic-over/){:target="\_blank" rel="noopener"}
+5. **T2 Educação** - <a href="https://t2.com.br/blog/selic-meta-x-selic-over/" target="\_blank" rel="noopener">Selic Meta x Selic Over</a>
 
-6. **Portal Contábeis** - [Taxa Selic](https://www.contabeis.com.br/tabelas/selic/){:target="\_blank" rel="noopener"} e [Taxa Selic: o que é e como ela afeta as pequenas empresas](https://www.contabeis.com.br/noticias/69087/taxa-selic-o-que-e-e-como-ela-afeta-as-pequenas-empresas/){:target="\_blank" rel="noopener"}
+6. **Portal Contábeis** - <a href="https://www.contabeis.com.br/tabelas/selic/" target="\_blank" rel="noopener">Taxa Selic</a> e <a href="https://www.contabeis.com.br/noticias/69087/taxa-selic-o-que-e-e-como-ela-afeta-as-pequenas-empresas/" target="\_blank" rel="noopener">Taxa Selic: o que é e como ela afeta as pequenas empresas</a>
 
-7. **InfoMoney** - [Taxa Selic: Guia Completo](https://www.infomoney.com.br/guias/taxa-selic/){:target="\_blank" rel="noopener"}
+7. **InfoMoney** - <a href="https://www.infomoney.com.br/guias/taxa-selic/" target="\_blank" rel="noopener">Taxa Selic: Guia Completo</a>

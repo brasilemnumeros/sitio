@@ -24,7 +24,7 @@ Como podemos ver no gráfico abaixo, a trajetória é uma subida quase ininterru
 _(Gráfico mostrando a curva ascendente do valor nominal, de aproximadamente R$ 45.000 a R$ 252.000)_
 
 <p style="text-align: center">
-<a href="{{ site.url }}/?indicators=mvgr-nominal" class="text-blue-600 hover:text-blue-800 underline">Acesse o gráfico do MVG-R Nominal aqui!</a>
+<a href="https://www.brasilemnumeros.ong.br/?indicators=mvgr-nominal" class="text-blue-600 hover:text-blue-800 underline">Acesse o gráfico do MVG-R Nominal aqui!</a>
 </p>
 
 A crítica a esta visão, contudo, é fundamental: ela é enganosa. Grande parte dessa escalada nos preços não é uma valorização real do imóvel em si, mas sim a **desvalorização da moeda (o Real)** ao longo de duas décadas de inflação. Em outras palavras, um imóvel que "subiu de preço" nominalmente pode, na verdade, ter mantido ou até perdido seu valor real de compra.
@@ -40,7 +40,7 @@ Quando plotamos este gráfico, o cenário muda drasticamente. A linha reta ascen
 _(Gráfico mostrando a curva cíclica do valor real, com picos em 2014 e 2022, e vales em 2006 e 2019, começando em aproximadamente R$ 45.000 e terminando em R$ 77.000)_
 
 <p style="text-align: center">
-<a href="{{ site.url }}/?indicators=mvgr-real" class="text-blue-600 hover:text-blue-800 underline">Acesse o gráfico do MVG-R Real aqui!</a>
+<a href="https://www.brasilemnumeros.ong.br/?indicators=mvgr-real" class="text-blue-600 hover:text-blue-800 underline">Acesse o gráfico do MVG-R Real aqui!</a>
 </p>
 
 ### Decifrando os 4 Ciclos Reais do Mercado Imobiliário
@@ -67,4 +67,4 @@ Para quem sonha com a casa própria, busca trocar de imóvel ou simplesmente que
 
 ---
 
-[**Confira nossos outros artigos!**]({{ site.url }}/blog)
+[**Confira nossos outros artigos!**](https://www.brasilemnumeros.ong.br/blog)

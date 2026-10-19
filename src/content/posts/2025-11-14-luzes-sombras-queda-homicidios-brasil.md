@@ -21,10 +21,10 @@ Nossos dados analisados mostram que a **Taxa de Homicídios a cada 100 mil habit
 
 Em paralelo, a **Taxa de Homicídios por Armas de Fogo a cada 100 mil habitantes** atingiu seu ápice no mesmo ano (22,88), representando a maior proporção da série histórica: **72,4% de todas as mortes violentas**. Isso significa que quase três em cada quatro homicídios em 2017 foram cometidos com o uso de armas de fogo.
 
-[![GRÁFICO: Homicídios (100k hab.) / Homicídios por Armas de Fogo (100k hab.) / Proporção de Homicídios por Armas de Fogo (100k hab) (1995-2025)](/assets/img/homicidios.webp)](/assets/img/homicidios.webp){:target="\_blank" rel="noopener"}
+<a href="/assets/img/homicidios.webp" target="\_blank" rel="noopener"><img src="/assets/img/homicidios.webp" alt="GRÁFICO: Homicídios (100k hab.) / Homicídios por Armas de Fogo (100k hab.) / Proporção de Homicídios por Armas de Fogo (100k hab) (1995-2025)" /></a>
 
 <p class="text-center">
-<a href="{{ site.url }}/?indicators=homicidios-anual,homicidios-armas-fogo-anual,proporcao-homicidios-armas-fogo-anual" class="text-blue-600 hover:text-blue-400 underline" target="_blank" rel="noopener">Acesse o gráfico comparativo aqui!</a>
+<a href="https://www.brasilemnumeros.ong.br/?indicators=homicidios-anual,homicidios-armas-fogo-anual,proporcao-homicidios-armas-fogo-anual" class="text-blue-600 hover:text-blue-400 underline" target="_blank" rel="noopener">Acesse o gráfico comparativo aqui!</a>
 </p>
 
 Este pico não foi um evento isolado. Especialistas em segurança pública frequentemente o atribuem a um intenso conflito entre facções criminosas que se espalhou pelo país, notadamente nas regiões Norte e Nordeste, após o rompimento de uma trégua nacional.

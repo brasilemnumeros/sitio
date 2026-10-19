@@ -8,7 +8,7 @@ tags:
 
 ### Entenda o que o número total de carteiras assinadas nos diz sobre a economia e seu impacto no dia a dia.
 
-No "Brasil em Números", estamos sempre buscando trazer indicadores que ajudem você a compreender melhor o cenário do país. E hoje, temos uma novidade que fala diretamente sobre a vida de milhões de brasileiros: o [**Estoque de Empregos Formais**]({{ site.url }}/?indicators=caged-total-mensal){:target="\_blank" rel="noopener" class="text-blue-600 hover:text-blue-400 underline"}.
+No "Brasil em Números", estamos sempre buscando trazer indicadores que ajudem você a compreender melhor o cenário do país. E hoje, temos uma novidade que fala diretamente sobre a vida de milhões de brasileiros: o <a href="https://www.brasilemnumeros.ong.br/?indicators=caged-total-mensal" target="\_blank" rel="noopener" class="text-blue-600 hover:text-blue-400 underline"><strong>Estoque de Empregos Formais</strong></a>.
 
 ### O Que é o Estoque de Empregos Formais (Novo CAGED)?
 
@@ -35,10 +35,10 @@ O Estoque de Empregos Formais é um dos termômetros mais confiáveis da saúde 
 
 Ao analisarmos a série histórica do Estoque de Empregos Formais, de janeiro de 1995 até as projeções de agosto de 2025, podemos traçar um panorama fascinante dos altos e baixos da nossa economia.
 
-[![GRÁFICO: ESTOQUE DE EMPREGOS FORMAIS - TOTAL (1995-2025)](/assets/img/caged.webp)](/assets/img/caged.webp){:target="\_blank" rel="noopener"}
+<a href="/assets/img/caged.webp" target="\_blank" rel="noopener"><img src="/assets/img/caged.webp" alt="GRÁFICO: ESTOQUE DE EMPREGOS FORMAIS - TOTAL (1995-2025)" /></a>
 
 <p class="text-center">
-<a href="{{ site.url }}/?indicators=caged-total-mensal" class="text-blue-600 hover:text-blue-400 underline" target="_blank" rel="noopener">Acesse o gráfico aqui!</a>
+<a href="https://www.brasilemnumeros.ong.br/?indicators=caged-total-mensal" class="text-blue-600 hover:text-blue-400 underline" target="_blank" rel="noopener">Acesse o gráfico aqui!</a>
 </p>
 
 _(Gráfico de linhas mostrando a evolução do número de empregos formais, de 22,1 milhões em 1995 para projeções de 48,7 milhões em 2025)_
@@ -55,10 +55,10 @@ _(Gráfico de linhas mostrando a evolução do número de empregos formais, de 2
 
 Para uma análise ainda mais completa, é fascinante comparar o Estoque de Empregos Formais com o **PIB (Produto Interno Bruto)**. Essa correlação nos mostra como a atividade econômica e a geração de empregos com carteira assinada caminham lado a lado. Em geral, quando o PIB cresce, o número de empregos formais também tende a crescer, e vice-versa.
 
-[![GRÁFICO: COMPARATIVO PIB X ESTOQUE DE EMPREGOS FORMAIS (1995-2025)](/assets/img/caged-x-pib.webp)](/assets/img/caged-x-pib.webp){:target="\_blank" rel="noopener"}
+<a href="/assets/img/caged-x-pib.webp" target="\_blank" rel="noopener"><img src="/assets/img/caged-x-pib.webp" alt="GRÁFICO: COMPARATIVO PIB X ESTOQUE DE EMPREGOS FORMAIS (1995-2025)" /></a>
 
 <p class="text-center">
-<a href="{{ site.url }}/?indicators=caged-total-mensal,pib-real-anual" class="text-blue-600 hover:text-blue-400 underline" target="_blank" rel="noopener">Acesse o gráfico comparativo aqui!</a>
+<a href="https://www.brasilemnumeros.ong.br/?indicators=caged-total-mensal,pib-real-anual" class="text-blue-600 hover:text-blue-400 underline" target="_blank" rel="noopener">Acesse o gráfico comparativo aqui!</a>
 </p>
 
 ### Conclusão

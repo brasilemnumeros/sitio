@@ -59,6 +59,6 @@ Compreender a dinâmica de ambos é essencial para ter uma visão completa da ec
 
 **Quer ver essa "dança" dos indicadores na prática? Explore os gráficos e compare as curvas históricas de cada um.**
 
-[**Acessar o Gráfico Comparativo de Inflação**]({{ site.url }}/?indicators=ipca-acum-12m,igpm-acum-12m)
+[**Acessar o Gráfico Comparativo de Inflação**](https://www.brasilemnumeros.ong.br/?indicators=ipca-acum-12m,igpm-acum-12m)
 
 **O que você pensa sobre isso? Acredita que o IGP-M deveria ser substituído nos contratos de aluguel? Deixe sua opinião nos comentários!**

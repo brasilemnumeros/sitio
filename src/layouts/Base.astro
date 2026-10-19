@@ -8,7 +8,7 @@
 //
 // O tema do <html> NÃO é fixo: só o shell do app é escuro por decreto (decisão de
 // 2026-10-15). Numa página do site não há classe e o `theme-switcher.js` decide
-// (lê `localStorage.theme`; sem preferência salva, cai em escuro), como no Jekyll.
+// (lê `localStorage.theme`; sem preferência salva, cai em escuro), como no site antigo.
 import Meta from '../components/Meta.astro';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
@@ -56,7 +56,7 @@ if (!description) throw new Error(`${Astro.url.pathname}: página sem 'descripti
 // `canonical` calculado. A normalização da raiz é obrigatória: sob
 // `build.format: 'file'` + `trailingSlash: 'never'`, `Astro.url.pathname` é
 // `/index.html` na raiz e `/blog.html` nas demais — mas o site publica a raiz
-// como `/` (semântica de `page.url` do Jekyll) e as demais com `.html`.
+// como `/` (semântica de `page.url` do site antigo) e as demais com `.html`.
 // Medido ao vivo: `/` → `…/`, `/blog` → `…/blog.html`.
 const caminho = Astro.url.pathname.replace(/\/index\.html$/, '/');
 const canonicalFinal = canonical ?? new URL(caminho, Astro.site).href;
@@ -66,7 +66,7 @@ const classesMain =
     ? 'flex-grow pt-14'
     : 'flex-grow pt-24 container mx-auto px-6 py-8 max-w-4xl prose prose-lg prose-slate dark:prose-invert';
 
-// Cache-bust dos scripts do site, o `?v={{ site.time | date: '%s' }}` do Jekyll: um
+// Cache-bust dos scripts do site, o `?v={{ site.time | date: '%s' }}` do site antigo: um
 // selo único por build (ver `src/versao.js`). Os arquivos vão verbatim em
 // `public/assets/js/`.
 ---
@@ -105,7 +105,7 @@ const classesMain =
 
     <!-- Toast convite para artigos -->
     {/* `is:raw`: sem ele o Astro normalizaria o `<path … />` para `<path …></path>`,
-        divergindo do HTML do Jekyll. O markup interno fica verbatim. */}
+        divergindo do HTML do site antigo. O markup interno fica verbatim. */}
     <Fragment is:raw>
     <div
       id="toast-artigos"
@@ -138,8 +138,8 @@ const classesMain =
     </Fragment>
 
     <!-- Analytics -->
-    {/* Gate de produção, o `{% if site.google_analytics and jekyll.environment == 'production' %}`
-        do Jekyll. Em `astro dev` (`import.meta.env.PROD === false`) nem o banner de
+    {/* Gate de produção (equivalente ao do site antigo). Em `astro dev`
+        (`import.meta.env.PROD === false`) nem o banner de
         consentimento nem o script do Google aparecem — a falha seria silenciosa e de
         privacidade (LGPD). Consentimento e analytics entram ANTES do `toast-artigos.js`,
         como no `default.html`. */}

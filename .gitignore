@@ -1,14 +1,14 @@
-_site
-# Saída e caches do Astro (fatia 00 da migração).
+# Saída e caches do Astro. O site deixou de ser Jekyll na fatia 07 — os
+# caches do Ruby (`_site`, `.sass-cache`, `.jekyll-cache`, `.jekyll-metadata`,
+# `vendor`) saíram daqui com ele.
 dist/
 .astro/
-.sass-cache
-.jekyll-cache
-.jekyll-metadata
-vendor
 node_modules
+# Gerado pelo Tailwind CLI (`npm run css`) e AINDA usado: o dev server do app o
+# linka, e é ele que o E2E serve. Não é tracked e não é saída de produção.
 assets/css/main.dist.css
-data/*
+# `.github` continua ignorado por convenção, mas o workflow já é tracked —
+# para alterá-lo basta `git add`; só arquivo NOVO sob `.github/` precisa de `-f`.
 .github
 
 # Artefato de build do app (fatia 00) — src/ NÃO é ignorado (§10.3).

@@ -10,7 +10,7 @@
 // `urlDoPost` divergiria da rota do post em silêncio — a categoria Critical.
 import { dataDoId, urlDoPost } from './posts.ts';
 
-// O RSS 2.0 NÃO tem `xml:base` (o Atom do `jekyll-feed` tinha): um `href="/…"` ou
+// O RSS 2.0 NÃO tem `xml:base` (o Atom do feed do site antigo tinha): um `href="/…"` ou
 // `src="/…"` dentro do `description` sairia relativo e QUEBRADO no leitor.
 // Absolutizamos contra o `site`. Só a raiz (`="/`), que é o que o markdown do
 // site produz — URLs já absolutas não casam o padrão.

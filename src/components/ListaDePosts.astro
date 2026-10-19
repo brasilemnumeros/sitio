@@ -12,7 +12,7 @@
 // A página decide o corte da lista (o `limit: 10` do blog); este componente só
 // desenha os cartões que recebe.
 import type { CollectionEntry } from 'astro:content';
-import { dataDoId, isoDoJekyll, dataPorExtenso, urlDoPost } from '../lib/posts';
+import { dataDoId, isoDoPost, dataPorExtenso, urlDoPost } from '../lib/posts';
 import { trecho } from '../lib/trecho';
 
 interface Props {
@@ -25,15 +25,15 @@ const ehBlog = variante === 'blog';
 const maxPalavras = ehBlog ? 25 : 30;
 const Titulo = ehBlog ? 'h3' : 'h2';
 
-// Nomes SINGULARES da etiqueta do cartão do blog: vêm do `case` do Liquid em
-// `blog.html:102-111`, não do `_config.yml`.
+// Nomes SINGULARES da etiqueta do cartão do blog: vêm do `case` do template
+// antigo (`blog.html:102-111`), não do `_config.yml` do site antigo.
 const ROTULO: Record<string, { icone: string; nome: string }> = {
   analises: { icone: '📊', nome: 'Análise' },
   indicadores: { icone: '📈', nome: 'Indicador' },
   noticias: { icone: '📢', nome: 'Notícia' },
 };
 
-// Liquid `capitalize`: primeira letra maiúscula e o RESTO minúsculo.
+// Filtro `capitalize` do template antigo: primeira letra maiúscula e o RESTO minúsculo.
 function capitalizar(texto: string): string {
   return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
 }
@@ -56,7 +56,7 @@ function capitalizar(texto: string): string {
             </Titulo>
 
             <div class="mb-3 flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-              <time datetime={isoDoJekyll(data)}>{dataPorExtenso(data)}</time>
+              <time datetime={isoDoPost(data)}>{dataPorExtenso(data)}</time>
 
               {ehBlog &&
                 post.data.categories.map((categoria) => (

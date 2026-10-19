@@ -1,14 +1,14 @@
 ---
-// Portado de `blog.html`. O `limit: 10` do Liquid é reproduzido de propósito:
+// Portado do `blog.html` do site antigo. O `limit: 10` do template antigo é reproduzido de propósito:
 // hoje há exatamente 10 posts, mas com 11 o blog não pode passar a mostrar o
-// 11º (o Jekyll cortava).
+// 11º (o site antigo cortava).
 import Base from '../layouts/Base.astro';
 import ListaDePosts from '../components/ListaDePosts.astro';
 import NavegacaoDeCategorias from '../components/NavegacaoDeCategorias.astro';
 import { getCollection } from 'astro:content';
 import { dataDoId } from '../lib/posts';
 
-// `site.posts` do Jekyll é ordenado por data DECRESCENTE; `getCollection` não
+// `site.posts` do site antigo é ordenado por data DECRESCENTE; `getCollection` não
 // promete ordem nenhuma.
 const posts = (await getCollection('posts')).sort(
   (a, b) => dataDoId(b.id).getTime() - dataDoId(a.id).getTime(),
@@ -37,7 +37,7 @@ const feed = new URL('/feed.xml', Astro.site).href;
         target="_blank"
       >
         {/* `is:raw`: sem ele o Astro normaliza o `<path … />` para
-            `<path …></path>`, divergindo do HTML do Jekyll — mesma razão do
+            `<path …></path>`, divergindo do HTML do site antigo — mesma razão do
             bloco do toast em `Base.astro`. */}
         <Fragment is:raw>
         <svg class="h-5 w-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">

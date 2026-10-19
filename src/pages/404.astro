@@ -1,5 +1,5 @@
 ---
-// Portado de `404.html` do Jekyll (fatia 02/T3). Deixa de apontar para o
+// Portado do `404.html` do site antigo (fatia 02/T3). Deixa de apontar para o
 // `layout: page` inexistente (achado da ADR 0001) e passa a usar o `Base.astro`.
 //
 // O corpo era em INGLÊS no site publicado (resíduo de template: "Page not found :(").
@@ -15,7 +15,7 @@ import { SITE } from '../config.js';
 ---
 
 <Base title={SITE.nome} description={SITE.descricao} tituloDoSite>
-  {/* `is:inline`: o `<style>` é VERBATIM do Jekyll. Sem ele, o Astro escopa o CSS
+  {/* `is:inline`: o `<style>` é VERBATIM do site antigo. Sem ele, o Astro escopa o CSS
       (acrescenta atributo aos seletores e aos elementos) e o `.container`/`h1`
       deixariam de casar — o corpo perderia o estilo em silêncio. */}
   <style is:inline type="text/css" media="screen">

@@ -463,6 +463,48 @@ O que isso compra: a tela inteira é reconstruível a partir do estado — link 
 
 **Alternativa rejeitada:** deixar a janela visível morar dentro do gráfico e a UI só ler. Tem menos sincronização, porque não há duas cópias — mas o estado real passa a viver dentro de um objeto de terceiros, e reconstruir a tela exige perguntar ao gráfico. É o caminho curto de volta ao problema que motivou a reconstrução: quem desenha mandando no resto.
 
+#### Autoria da janela (2026-10-19)
+
+**Quem ESCOLHE a janela DECLARA; a partir daí, o dado não a move.** Esta é a regra, e ela existe
+porque duas coisas fora do usuário escreviam na mesma store e eram indistinguíveis dentro dela:
+
+- o **enquadramento automático** (`fitContent`, adiado 150ms para esperar a rajada de carga), que
+  enquadra a união das séries — mas re-enquadrava **depois** de o usuário escolher um preset, porque
+  só era desarmado por gesto **no gráfico grande**; e
+- o **`setData` de uma série que ESTENDE o domínio de tempo**, que desloca o range visível **por
+  conta da lib** (medido: `selic-meta-acum-12m`, 320 barras, `2015-06→2025-06` → `2020-08-31→
+  2025-10-31`; re-setar a mesma data não move).
+
+O **adapter** decide a autoria (§8.1), e o desenho é:
+
+| quem | o que faz | como |
+|---|---|---|
+| o app (filtro de tempo, minimapa) | declara a escolha | `definirJanela(j, { escolhaDoUsuario: true })` |
+| o gráfico grande (`pointerdown`/`wheel`) | declara a escolha | listeners no container → `assumir()` |
+| o eco do próprio adapter | **não** declara nada | `definirJanela(j)` — é reação, não escolha |
+| "Tudo" (`resetarJanela`) | avisa o **contrário** | `aoEscolherJanela(false)` **rearma** o fit |
+
+A autoria viaja como **evento** (`aoEscolherJanela`, em `stores/viewport.js`), **não** como campo de
+estado: a forma da store segue `{from, to}` — é o que a barra de filtros lê (duração) e o que o
+teste unitário afirma. **Alternativa rejeitada:** um booleano na store, que muda a forma lida pelos
+dois lados.
+
+Quando a janela é do usuário, uma atualização de **DADO** não a move: o adapter guarda a janela
+antes do `definirSeries` e a **devolve no frame seguinte** (`devolverJanela`) — no mesmo frame o
+`setVisibleRange` não pega, o mesmo motivo pelo qual o fit também espera um frame. **Alternativa
+rejeitada:** suprimir a escrita da store durante o `definirSeries`; o valor transitório vive **um
+frame** (medido: 155ms → 171ms) e a devolução acontece **antes do paint do mesmo frame**, então não
+há piscada — e uma guarda que não guarda nada é um defeito silencioso.
+
+O fit adiado tem **duas etapas** (`setTimeout` → `requestAnimationFrame`): `assumir()` precisa
+cancelar **as duas**, senão o rAF já agendado enquadra tudo depois da escolha (corrida de **um
+frame**, que fazia o E2E "redimensionar" falhar 1/30).
+
+**Medição:** `app/scripts/medir-janela.mjs` reproduz os dois defeitos (precisa do dev server no ar).
+**Teste:** `e2e/minimapa.spec.js` (o gesto, um por contrato, **sem retry**) e `e2e/exemplo.spec.js`
+("a janela escolhida sobrevive a adicionar série"), este último **sabotado nos dois mecanismos e
+vermelho nos dois**.
+
 ---
 
 ## 9. Estados: carregando, erro e vazio
@@ -578,6 +620,25 @@ três. A classe-canário cobre **um** caso (o Tailwind); os outros dois eram inv
 A verificação por captura de tela **continua necessária** — é ela que pega o desenho —, mas
 **não é suficiente**: ela exige que alguém olhe, e nada obriga que alguém olhe. O E2E é o que
 transforma "alguém precisa olhar" em "o CI recusa".
+
+**Emenda de 2026-10-19 — o E2E pega o que a captura pegaria, e cobrou isso do minimapa.** Os três
+testes do gesto do minimapa, que estavam `fixme` desde 2026-10-15 com a nota "o gesto não tem
+teste", **saíram do `fixme`** — e o bloqueio não era o gesto, eram **dois defeitos do app** (§8.1,
+"Autoria da janela"). Duas decisões de metodologia ficam registradas aqui, porque valem para
+qualquer teste de gesto daqui em diante:
+
+1. **Retry é proibido num teste de contrato.** Havia um `gestoAte` que tentava até 4 vezes; foi
+   **removido**. Afirmar "arrastar desloca a janela" com retry transforma falha determinística em
+   sorte e deixa de provar a **primeira** tentativa, que é a que o usuário faz. Um gesto, uma
+   asserção — se não bastar, o teste tem de ficar vermelho.
+2. **O teste tem de arrastar na direção que o PRODUTO permite.** O preset "10 anos" ancora a janela
+   na **última data** ("voltar de qualquer zoom", §2), então arrastar para a direita é **clampeado**
+   (0/4 medições de efeito) e o teste acusava "o gesto não funciona" quando ele funcionava. Metade do
+   falso vermelho era isso.
+
+Evidência: **60 execuções** do gesto (`--repeat-each=10` × duas baterias) com **0 falhas** no código
+final (antes: 3/30 e 1/30), e o teste de regressão do `exemplo.spec.js` **sabotado nos dois
+mecanismos e vermelho nos dois**.
 
 
 **Dois testes travam decisões medidas neste documento:**

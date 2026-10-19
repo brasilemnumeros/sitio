@@ -35,7 +35,7 @@ function esperarCatalogo() {
  * @param {{window?: Window, fetchImpl?: typeof fetch}} [opcoes]
  * @returns {Promise<() => void>} o cancelamento da assinatura (útil para testes)
  */
-export async function iniciarPermanlink({ window: win = window, fetchImpl } = {}) {
+export async function iniciarPermalink({ window: win = window, fetchImpl } = {}) {
   const searchAtual = () => (win.location.search || '').replace(/^\?/, '');
   const ids = lerIds(searchAtual());
 

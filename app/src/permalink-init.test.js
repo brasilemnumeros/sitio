@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { get } from 'svelte/store';
-import { seriesStore, adicionarSerie, limparSeries } from './stores/series.js';
+import { seriesStore, adicionarSerie, limparSeries, definirCor, motivoDoLimite } from './stores/series.js';
 import { catalogStore } from './stores/catalog.js';
 import { clearSeriesCache } from './data/series.js';
-import { iniciarPermanlink } from './permalink-init.js';
+import { iniciarPermalink } from './permalink-init.js';
 
 /** O `window`/`history` falso: só o que a integração toca (`location` e `replaceState`). */
 function janelaFalsa(search = '') {
@@ -56,7 +56,7 @@ beforeEach(() => {
   catalogStore.set({ status: 'idle', groups: {}, indicators: [], error: null });
 });
 
-// Cada `iniciarPermanlink` deixa uma assinatura viva; sem desfazê-la, a assinatura de um
+// Cada `iniciarPermalink` deixa uma assinatura viva; sem desfazê-la, a assinatura de um
 // teste dispararia com o `window` falso do teste seguinte.
 let parar;
 afterEach(() => {
@@ -64,9 +64,9 @@ afterEach(() => {
   parar = undefined;
 });
 
-describe('iniciarPermanlink', () => {
+describe('iniciarPermalink', () => {
   it('restaura as séries na ORDEM da query (?)indicators=selic,ipca', async () => {
-    parar = await iniciarPermanlink({
+    parar = await iniciarPermalink({
       window: janelaFalsa('?indicators=selic,ipca'),
       fetchImpl: fixture(['selic', 'ipca']),
     });
@@ -76,7 +76,7 @@ describe('iniciarPermanlink', () => {
 
   // Review Focus 1 — id desconhecido
   it('ignora id desconhecido em silêncio, sem lançar', async () => {
-    parar = await iniciarPermanlink({
+    parar = await iniciarPermalink({
       window: janelaFalsa('?indicators=nao-existe,selic'),
       fetchImpl: fixture(['selic']),
     });
@@ -86,16 +86,19 @@ describe('iniciarPermanlink', () => {
   // Review Focus 2 — mais de 10 ids
   it('15 ids → exatamente 10 séries (o teto da paleta)', async () => {
     const ids = Array.from({ length: 15 }, (_, i) => `s${i}`);
-    parar = await iniciarPermanlink({
+    parar = await iniciarPermalink({
       window: janelaFalsa(`?indicators=${ids.join(',')}`),
       fetchImpl: fixture(ids),
     });
     expect(get(seriesStore).itens).toHaveLength(10);
+    // O teto e a frase do motivo vêm da MESMA fonte já existente (§9.5) — não é uma
+    // segunda regra inventada no permalink.
+    expect(motivoDoLimite()).toMatch(/Limite de 10 séries/);
   });
 
   it('sem query: store vazia e NENHUM replaceState espúrio', async () => {
     const win = janelaFalsa('');
-    parar = await iniciarPermanlink({ window: win, fetchImpl: fixture(['selic']) });
+    parar = await iniciarPermalink({ window: win, fetchImpl: fixture(['selic']) });
     expect(get(seriesStore).itens).toEqual([]);
     expect(win.history.replaceState).not.toHaveBeenCalled();
   });
@@ -103,7 +106,7 @@ describe('iniciarPermanlink', () => {
   it('adicionar série atualiza a URL com replaceState (store → URL)', async () => {
     const win = janelaFalsa('');
     const fetchImpl = fixture(['selic', 'ipca']);
-    parar = await iniciarPermanlink({ window: win, fetchImpl });
+    parar = await iniciarPermalink({ window: win, fetchImpl });
     expect(win.history.replaceState).not.toHaveBeenCalled(); // nada mudou ainda
 
     await adicionarSerie(
@@ -117,18 +120,37 @@ describe('iniciarPermanlink', () => {
   });
 
   it('a query NÃO é relida depois de escrita (sem laço de eco)', async () => {
-    const win = janelaFalsa('?indicators=nao-existe,selic');
-    // Se a integração relesse a URL, o id desconhecido voltaria a ser "descoberto"; aqui a
-    // leitura é UMA só: depois de escrever, mexer na URL não mexe na store.
-    parar = await iniciarPermanlink({ window: win, fetchImpl: fixture(['selic']) });
-    expect(win.history.replaceState.mock.calls.at(-1)[2]).toBe('/?indicators=selic');
-
-    win.location.search = '?indicators=outro';
-    await adicionarSerie(
-      { id: 'selic', name: 'Ind selic', datafile: 'data:selic', unit: null },
-      { fetchImpl: fixture(['selic']) },
-    );
-    // a store obedece só a si mesma, não a URL mexida à mão
+    const win = janelaFalsa('?indicators=selic');
+    const fetchImpl = fixture(['selic', 'ipca']);
+    parar = await iniciarPermalink({ window: win, fetchImpl });
     expect(get(seriesStore).itens.map((i) => i.id)).toEqual(['selic']);
+
+    // A URL passa a pedir um id **válido e ausente** (`ipca`). Se a integração relesse a URL
+    // dentro do caminho de escrita — o defeito do `adapter.js:79`, em que a escrita
+    // programática volta como estado — `ipca` entraria na store AQUI.
+    win.location.search = '?indicators=ipca';
+    definirCor('selic', '#123456'); // força uma emissão da store (o subscribe reescreve a URL)
+    await new Promise((r) => setTimeout(r, 0)); // deixa qualquer caminho assíncrono se revelar
+
+    // A store obedece só a si mesma: a URL mexida à mão não trouxe série nenhuma.
+    expect(get(seriesStore).itens.map((i) => i.id)).toEqual(['selic']);
+    // E nada do que a integração escreveu pode conter o id injetado.
+    const escritas = win.history.replaceState.mock.calls.map((c) => c[2]).join(' ');
+    expect(escritas).not.toContain('ipca');
+    // A escrita é unidirecional e corrige a URL de volta para a store.
+    expect(win.history.replaceState.mock.calls.at(-1)[2]).toBe('/?indicators=selic');
+  });
+
+  it('não reescreve a URL quando ela já reflete a store (guarda do ruído)', async () => {
+    const win = janelaFalsa('?indicators=selic');
+    parar = await iniciarPermalink({ window: win, fetchImpl: fixture(['selic']) });
+    const antes = win.history.replaceState.mock.calls.length;
+
+    // Emissão da store com a MESMA lista que a URL já tem: a guarda `proximo === atual`
+    // impede um `replaceState` inútil (que poluiria o histórico do navegador).
+    definirCor('selic', '#abcdef');
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(win.history.replaceState.mock.calls.length).toBe(antes);
   });
 });

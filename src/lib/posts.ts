@@ -4,7 +4,14 @@
 export function dataDoId(id: string): Date {
   const m = id.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!m) throw new Error(`post: id não começa com data: ${id}`);
-  return new Date(`${m[1]}-${m[2]}-${m[3]}T00:00:00Z`);
+  const iso = `${m[1]}-${m[2]}-${m[3]}`;
+  const d = new Date(`${iso}T00:00:00Z`);
+  // Data que ROLA é erro de digitação no nome do arquivo (2025-02-30 vira 2 de
+  // março) e publicaria URL e data erradas em silêncio — o round-trip é o que pega.
+  if (Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== iso) {
+    throw new Error(`post: data inválida no id: ${id}`);
+  }
+  return d;
 }
 
 // medido no site publicado: "2025-07-27T00:00:00+00:00" (com +00:00, não "Z")

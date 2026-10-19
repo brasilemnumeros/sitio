@@ -124,7 +124,7 @@ Justificativa: se o clique desse zoom, o mandato selecionado sairia de contexto 
 
 ### Rejeitado
 
-**Filtro/isolamento de mandato** (o mandato vira o enquadramento e o resto é esmaecido mas inalcançável no gráfico). Rejeitado por competir com o zoom pelo mesmo estado.
+**Filtro/isolamento de mandato** (o mandato vira o enquadramento e o resto é esmaecido mas inalcançável no gráfico). Rejeitado por competir com o zoom pelo mesmo estado. ⚠ **Reaberto em 2026-10-19:** o clique no mandato passou a **enquadrar** o período (§3) — a §8.1, posterior, resolveu o conflito de estado (quem escolhe declara a autoria). O que segue rejeitado é o **isolamento**: o resto continua alcançável (basta arrastar o minimapa); nada é esmaecido nem fica inalcançável.
 
 ### Minimapa
 
@@ -162,11 +162,28 @@ Papéis separados por elemento, sem sobreposição:
 |---|---|
 | gráfico | mostra a série |
 | minimapa | tempo e zoom (intervalo completo, sobrevive ao zoom) |
-| trilho | qual mandato está selecionado |
+| trilho | qual mandato está selecionado — e a janela dele (§3, emenda de 2026-10-19) |
 
 Por que não uma régua alinhada ao eixo do tempo: Dilma II durou 1,7 ano contra 4 dos mandatos cheios, o que daria ~27 px de largura num gráfico de 515 px — não cabe o nome nem o alvo de clique. E como o trilho alinhado não acompanha o zoom, clicar num mandato fora da janela faria o gráfico saltar enquanto o trilho fica parado (teleporte).
 
 Com largura igual, todo mandato é alcançável e legível em qualquer zoom, inclusive no celular.
+
+#### O clique no mandato FILTRA o período (emenda de 2026-10-19)
+
+**Clicar num mandato enquadra o gráfico no período dele** — e continua destacando a faixa, no mesmo clique (um clique, um efeito só). Antes o trilho era um seletor puro: realçava sem mexer na janela. A §2 tinha **rejeitado** "o mandato vira o enquadramento" por competir com o zoom pelo mesmo estado; a **§8.1**, que veio depois, é justamente o que tornou isso seguro (quem escolhe DECLARA a autoria, então o fit automático não desfaz a escolha). Decisão do usuário: reverter.
+
+| situação | o que acontece |
+|---|---|
+| clicar num mandato fechado | janela = `inicio`…`fim` do mandato (e a faixa acende) |
+| clicar no mandato **em curso** (`fim: null`) | janela = `inicio`…**última data disponível** — a janela precisa de ponta direita, e `null` no adapter quer dizer "mantenha a borda ATUAL", o que amarraria o filtro à janela anterior |
+| clicar de novo no mesmo | limpa a seleção e volta ao intervalo completo (`resetarJanela`) |
+| clicar num preset de tempo | **desmarca o mandato** — um dono da janela por vez |
+
+**Um dono por vez é regra, não coincidência.** Com um mandato escolhido a barra de filtros não acende preset nenhum (nem o "Tudo") — a duração de um mandato quase nunca casa com um preset (4 anos ficam a 1,0 do "5a", fora da tolerância de 0,5), e "quase" não é guarda. A sincronia vale nos dois sentidos: escolher um preset chama `limparSelecao()`, e o realce sai junto com a janela.
+
+**Resíduo conhecido:** arrastar no minimapa (ou dar zoom no gráfico) move a janela **sem** desmarcar o mandato — o realce continua aceso enquanto a janela é outra. O gesto não estava na decisão; fica aberto (AGENTS.md).
+
+**Quem escolhe declara as DUAS pontas.** O preset de tempo passou a declarar `from` **e** `to` (`to: dataMaxima`): ele declarava só a esquerda, e o adapter completava a direita com a janela ATUAL — que, com um mandato no passado, produzia `from = 2015-10` e `to = 2006-12`. A lib lança `right should be >= left` em DEV, mas o build de **produção remove as asserções** e desenharia errado em silêncio (medido em 2026-10-19). A guarda ficou em `adapter.definirJanela`, a última linha antes da lib.
 
 **Refinamento em aberto (não decidido):** uma barrinha proporcional à duração dentro de cada caixa, caso a perda da leitura visual de duração incomode. Entra na seção 12.
 
@@ -483,7 +500,7 @@ O **adapter** decide a autoria (§8.1), e o desenho é:
 
 | quem | o que faz | como |
 |---|---|---|
-| o app (filtro de tempo, minimapa) | declara a escolha | `definirJanela(j, { escolhaDoUsuario: true })` |
+| o app (filtro de tempo, minimapa, **trilho de mandatos** — §3) | declara a escolha | `definirJanela(j, { escolhaDoUsuario: true })` |
 | o gráfico grande (`pointerdown`/`wheel`) | declara a escolha | listeners no container → `assumir()` |
 | o eco do próprio adapter | **não** declara nada | `definirJanela(j)` — é reação, não escolha |
 | "Tudo" (`resetarJanela`) | avisa o **contrário** | `aoEscolherJanela(false)` **rearma** o fit |

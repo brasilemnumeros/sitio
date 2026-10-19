@@ -1,4 +1,4 @@
-import { writable, get } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store';
 import { loadSeries } from '../data/series.js';
 import { PALETA_PADRAO } from '../domain/color.js';
 
@@ -9,6 +9,19 @@ export const LIMITE_SERIES = 10;
  *             status:'carregando'|'ok'|'erro', series:object|null, error:string|null}} Item */
 
 export const seriesStore = writable({ itens: [] });
+
+/** A DATA DE REFERÊNCIA (§8): a mais recente entre as séries `ok`. Mora aqui, e não no componente,
+ *  porque desde 2026-10-19 DOIS a usam — o filtro de tempo (o "10a" conta a partir dela) e o
+ *  trilho de mandatos (o mandato em curso termina nela). Uma fonte só: duas cópias divergiriam.
+ *  Série com erro não conta: a referência não pode vir de dado que não chegou (§9.3). */
+export const dataMaximaStore = derived(seriesStore, ({ itens }) => {
+  let max = null;
+  for (const item of itens) {
+    if (item.status !== 'ok' || !Array.isArray(item.series?.data)) continue;
+    for (const { date } of item.series.data) if (max === null || date > max) max = date;
+  }
+  return max;
+});
 
 const escrever = (fn) => seriesStore.update((s) => ({ ...s, itens: fn(s.itens) }));
 

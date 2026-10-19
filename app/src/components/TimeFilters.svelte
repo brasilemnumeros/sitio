@@ -9,24 +9,21 @@
   //
   // A data de referência vem do ESTADO (§8): a última data de `item.series.data` entre as
   // séries com `status === 'ok'` em `$seriesStore.itens`. Nunca se pergunta ao gráfico.
-  import { seriesStore } from '../stores/series.js';
+  import { seriesStore, dataMaximaStore } from '../stores/series.js';
   import { viewportStore, definirJanela, resetarJanela } from '../stores/viewport.js';
+  import { mandateStore, limparSelecao } from '../stores/mandate.js';
 
   let itens = $derived($seriesStore.itens);
   let janela = $derived($viewportStore);
+  // ⚠ Um DONO por vez (§3, emenda de 2026-10-19): com um mandato escolhido a janela é DELE, e a
+  // barra não acende preset nenhum — nem o "Tudo". A duração de um mandato quase nunca casa com um
+  // preset (4 anos ficam a 1,0 do "5a", fora da tolerância), mas "quase" não é guarda: sem esta
+  // linha a tela diria duas coisas na coincidência, e a coincidência depende do dado.
+  let selecionado = $derived($mandateStore.selecionado);
 
-  /** A data mais recente entre TODAS as séries com dados, em ISO 'AAAA-MM-DD'.
-   * Compara como string — em ISO o ordem lexicográfica é a cronológica, sem `Date`. */
-  let dataMaxima = $derived.by(() => {
-    let max = null;
-    for (const item of itens) {
-      if (item.status !== 'ok' || !Array.isArray(item.series?.data)) continue;
-      for (const { date } of item.series.data) {
-        if (max === null || date > max) max = date;
-      }
-    }
-    return max;
-  });
+  /** A data mais recente entre TODAS as séries com dados, em ISO 'AAAA-MM-DD'. Vem da store
+   * (fonte única): o trilho de mandatos precisa da MESMA para fechar a janela do mandato em curso. */
+  let dataMaxima = $derived($dataMaximaStore);
 
   /** A data mais antiga entre TODAS as séries com dados, em ISO 'AAAA-MM-DD' — o par de
    * `dataMaxima`, para reconhecer quando a janela já É o intervalo completo. */
@@ -73,10 +70,19 @@
 
   function aplicar(preset) {
     if (!temDados) return;
+    // O preset TOMA a janela do mandato (§3): a seleção do trilho sai, senão o realce diria
+    // "Lula II" enquanto a janela mostra o último ano.
+    limparSelecao();
+    // ⚠ `to: dataMaxima` é o que a doc acima já dizia ("ancora a janela na última data") e
+    //   NÃO era declarado: o adapter preenchia a ponta direita com a janela ATUAL — que, com um
+    //   mandato escolhido, está no PASSADO. Resultado medido em 2026-10-19: `from = 2015-10`,
+    //   `to = 2006-12`, e a lib lançou `right should be >= left` (só em DEV; em produção
+    //   desenharia errado, em silêncio). Com as duas pontas o preset não depende do que está na tela.
+    //
     // ⚠ `escolhaDoUsuario`: clicar num preset é o usuário ESCOLHENDO a janela. Sem isto o fit
     //   automático do adapter (adiado 150ms) voltava e jogava a escolha no lixo — e o preset
     //   "não pegava" (medido 2026-10-19).
-    definirJanela({ from: fromDe(preset) }, { escolhaDoUsuario: true });
+    definirJanela({ from: fromDe(preset), to: dataMaxima }, { escolhaDoUsuario: true });
   }
 
   const ANO_MS = 365.25 * 24 * 60 * 60 * 1000;
@@ -93,6 +99,7 @@
   // o realce do "30a" justamente onde ele pediu mais do que existe. Se o usuário arrastar no
   // minimapa, a duração deixa de casa com qualquer preset e nenhum acende: correto.
   const ativo = (preset) => {
+    if (selecionado) return false;    // a janela é do mandato — ver a nota do `selecionado`
     const d = duracaoAnos(janela);
     return temDados && d !== null && Math.abs(d - preset.anos) < 0.5;
   };
@@ -101,7 +108,8 @@
    * adapter ecoa de volta depois de um `fitContent` — senão a barra ficaria sem nada aceso
    * justamente quando a tela mostra o intervalo inteiro. Nulo = sem limite daquele lado. */
   let tudoAtivo = $derived(
-    temDados &&
+    !selecionado &&
+      temDados &&
       (janela.from === null || janela.from <= dataMinima) &&
       (janela.to === null || janela.to >= dataMaxima),
   );
@@ -145,7 +153,10 @@
       aria-label="Janela completa"
       aria-pressed={tudoAtivo}
       disabled={!temDados}
-      onclick={() => resetarJanela()}
+      onclick={() => {
+        limparSelecao();
+        resetarJanela();
+      }}
     >
       Tudo
     </button>

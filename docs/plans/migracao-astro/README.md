@@ -98,15 +98,15 @@ padrão — a mais provável primeiro. Cada uma ganha o teste na tarefa dona do 
 
 | item aberto (spec §8) | estado | toca a fatia | resolução |
 |---|---|---|---|
-| Tema da `/` | **aberto** | 02/05 | decidir antes de fechar a 05: `/` escura fixa (a) **ou** app com tema claro (b) |
-| Conteúdo do `/feed.xml` (itens, resumo × completo) | a comparar | 04 | comparar com o `jekyll-feed` atual antes de fechar |
+| Tema da `/` | **RESOLVIDO 2026-10-18** | 02/05 | `/` escura fixa sem alternador (opção (a)); preserva a paleta das 10 séries |
+| Conteúdo do `/feed.xml` (itens, resumo × completo) | **RESOLVIDO 2026-10-18** | 04 | medido: o publicado é **Atom**; o `@astrojs/rss` emite **RSS 2.0**. Aceito. `description` = HTML integral com URLs absolutizadas |
 | `git mv` dos 10 posts | **decidido: `git mv`** | 03 | preserva o histórico (`git log --follow` tem de funcionar) |
 | Cloudflare Pages | **não avaliado** | — | fora; só volta como decisão do usuário |
 | `blog_categories` / `tailwind.config.js` | mortos | 07 | **não portar** |
 | **Permalink do app** | **decidido: entra antes de publicar** | 06 | — |
+| Decisões de produto (2026-10-18) | **RESOLVIDO** | 04 | `og:locale`→`pt_BR`; mês em português; 404 traduzido; `target`/`rel` corrigidos; `/` carrega o `app.css`. Detalhe no §8.1 do desenho |
 
-**Gate atual:** `CONCERNS` — o **tema da `/`** (item 1) precisa de decisão **antes da fatia 05**, e é
-do usuário. Nada mais bloqueia.
+**Gate atual:** `PASS` — o tema da `/` foi decidido (2026-10-18) e **nada** bloqueia fatia nenhuma.
 
 ---
 

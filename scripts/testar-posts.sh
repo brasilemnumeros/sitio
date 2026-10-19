@@ -15,9 +15,14 @@ while IFS= read -r f; do
 done < <(find "$DIR" -name '*.md')
 [ "$falha" -eq 0 ] || exit 1
 
+# A coleção tem de EXISTIR: sem ela o build passa e nada valida (o script ficaria
+# verde contando arquivos de um diretório que ninguém lê).
+grep -q 'posts:' src/content.config.ts \
+  || { echo "posts: falta a coleção 'posts' em src/content.config.ts" >&2; exit 1; }
+
 # O schema VALIDA: o build roda o content layer e falha se um front matter não
 # casar `src/content.config.ts`. Sem esta linha o teste acima prova só nomes de
 # arquivo — um post que o schema rejeita passaria.
-npm run build >/dev/null || { echo "posts: o build falhou (schema?)" >&2; exit 1; }
+npm run build >/dev/null || { echo "posts: o build falhou (veja o erro do Astro acima)" >&2; exit 1; }
 
 echo "posts ok ($n arquivos)"

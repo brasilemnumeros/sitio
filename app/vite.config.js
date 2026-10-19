@@ -98,8 +98,11 @@ export default defineConfig(({ command }) => ({
   },
   plugins: [servirArquivosDoSite(), svelte()],
   build: {
-    // Artefato publicado em sitio/assets/js/app/ (gitignored) — §10.1
-    outDir: '../assets/js/app',
+    // Artefato publicado em sitio/public/assets/js/app/ (gitignored) — §10.1.
+    // O `astro build` só copia o `publicDir` (`public/`) para o `dist/`; um
+    // `outDir` fora dele (o antigo `../assets/js/app`) existe no disco e NUNCA
+    // chega ao `dist/` — falha silenciosa (medição 1 do brief da fatia 05).
+    outDir: '../public/assets/js/app',
     emptyOutDir: true,
     rollupOptions: {
       // Entrada de build aponta para o JS: o index.html é só o shell do `vite dev`.

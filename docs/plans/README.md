@@ -1,4 +1,8 @@
-# Planos de implementação — Camada de gráficos
+# Planos de implementação — Camada de gráficos e migração Astro
+
+> **Migração do site para Astro: CONCLUÍDA (fatias 00–07).** Os planos dela vivem em
+> `sitio/docs/plans/migracao-astro/` (`README.md` + `00` a `07`); o Jekyll/Ruby já saiu do
+> repositório e o CI constrói o Astro. A decisão é a `docs/adr/0002-migracao-do-site-para-astro.md`.
 
 Planos **fatiados por unidade de trabalho**. Um arquivo por fatia, cada um com os
 critérios de aceite explícitos. Não existe plano monolítico — a decisão de método está
@@ -42,14 +46,15 @@ itens abaixo continuam abertos, mas nenhum bloqueia, e três deles são decisão
 
 ---
 
-## Onde o trabalho está — 2026-10-15
+## Onde o trabalho está — 2026-10-19
 
-**Fatias 00 a 09 e 11 fechadas. A 10 está pela metade (T1 e T2 prontas; T3–T4 pendentes).**
+**Camada de gráficos: fatias 00–09 e 11 fechadas. Migração Astro: fatias 00–07 fechadas. A 10
+(vírada) está no repo; falta o push.**
 
 | | |
 |---|---|
-| testes | **126 unitários em 17 arquivos** + **11 E2E** (Playwright) + 3 `fixme` (o gesto do minimapa) |
-| commits | `sitio` **114** à frente do `main` · `dados` **4** · raiz 1 |
+| testes | **140 unitários / 19 arquivos** + **16 E2E** (Playwright) + 3 `fixme` (o gesto do minimapa) |
+| stack do site | **uma só: Node** (Astro 7) — o Jekyll saiu na fatia 07 da migração |
 | enviado | **nada.** Nenhuma branch tem upstream — é o que mantém produção intocada |
 
 **O que falta, nesta ordem:**
@@ -57,13 +62,12 @@ itens abaixo continuam abertos, mas nenhum bloqueia, e três deles são decisão
 | ordem | o quê | por que nessa posição |
 |---|---|---|
 | 1 | **`dados` → `main`** | FASE 1 do §6. Sem isto, produção serve o **schema antigo** e `governos/federal.json` dá **404**. Push é decisão do usuário. |
-| 2 | **10/T3–T4 — a virada** | `/` vira o shell e o legado é apagado. Depende do item 1, e **apaga código em produção** — não sem OK. |
+| 2 | **Push do `sitio`** | A virada (10) e a migração Astro (07) já estão no repo. Em `main` o E2E traz o `dados` da mesma branch (`ref: github.ref_name`) — por isso o item 1 vem primeiro. |
 | 3 | **11/T4 — tirar o `rate`** | Só depois do app estar no ar, senão quebra a página antiga na transição. |
-| 4 | **10/T4 — NOTICE + atribuição** | O Lightweight Charts é Apache-2.0 e exige o link no rodapé (§10.6). |
+| 4 | **10/T5 — NOTICE + atribuição** | O Lightweight Charts é Apache-2.0 e exige o link no rodapé (§10.6). |
 
 **Ler antes de tocar:** o bloco "Onde o trabalho está" e o "Aberto, sem bloquear" do `AGENTS.md`
-da raiz — é lá que estão as decisões desta sessão (tema escuro fixo, dado local em dev, a §10.7
-reaberta) e as três contradições entre documentos.
+da raiz, e o `README.md` da migração (`docs/plans/migracao-astro/`).
 
 ---
 

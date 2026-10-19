@@ -37,6 +37,35 @@
   /** §12.1 — o filtro da fileira de chips do celular: `null` = "Todos"; senão um id de grupo. */
   let filtroMobile = $state(null);
 
+  /**
+   * §12.1 — a PISTA da fileira de chips. Medido em 2026-10-19 (Pixel 7): são **1300px de chips
+   * numa caixa de 372px** — mais de 3/4 dos grupos ficam fora da tela, e sem pista nenhuma o
+   * usuário não sabe que há mais à direita. A pista é um degradê na borda direita que aparece
+   * SÓ quando há conteúdo escondido, e sai quando a rolagem chega ao fim (uma pista que
+   * mentisse ensinaria a não confiar nela).
+   *
+   * O estado sai do DOM (posição de rolagem + largura do próprio elemento), não de `window`
+   * — a §8 vale aqui também, e o componente não pergunta ao navegador que tamanho de tela é.
+   */
+  let chipsEl = $state(null);
+  let chipsTemMais = $state(false);
+
+  function medirChips() {
+    if (!chipsEl) return;
+    chipsTemMais = chipsEl.scrollLeft + chipsEl.clientWidth < chipsEl.scrollWidth - 1;
+  }
+
+  $effect(() => {
+    if (!chipsEl) return;
+    medirChips();
+    // A caixa muda de tamanho SEM rolagem: o catálogo chega depois (os chips não existem
+    // antes dele), o celular gira, o teclado virtual abre. Sem o observador a pista ficaria
+    // decidida pelo primeiro render.
+    const observador = new ResizeObserver(medirChips);
+    observador.observe(chipsEl);
+    return () => observador.disconnect();
+  });
+
   let buscando = $derived(termo.trim() !== '');
   let grupos = $derived(Object.entries($catalogStore.groups));
   let grupoAtivo = $derived(grupos[focoGrupo]?.[0] ?? null);
@@ -89,9 +118,14 @@
 
   const prender = (i, n) => (n === 0 ? 0 : Math.max(0, Math.min(n - 1, i)));
 
+  // 🔴 O `min-w-0` NÃO é enfeite: sem ele o botão (filho flex com `w-full`) não encolhe abaixo
+  //    do seu tamanho de conteúdo, e no celular a linha empurrava o "i" para fora da caixa
+  //    (medido em 2026-10-19: `scrollW 417` num `clientW 372` — a lista rolava na horizontal e
+  //    o botão ficava fora do alcance). O `truncate` do nome, sozinho, não resolvia: quem
+  //    precisava poder encolher era o botão, não o texto dentro dele.
   const classeLinha = (ativo) =>
     [
-      'flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm',
+      'flex w-full min-w-0 items-center gap-2 rounded px-3 py-2 text-left text-sm',
       ativo
         ? 'bg-slate-100 text-slate-900 dark:bg-slate-700 dark:text-white'
         : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800',
@@ -390,32 +424,48 @@
 
         <!-- §12.1 — celular: chips roláveis + lista de uma coluna com cabeçalho grudado -->
         <div class="flex min-h-0 min-w-0 flex-1 flex-col md:hidden" data-mobile data-bloco="lista-mobile">
-          <div
-            role="group"
-            aria-label="Grupos"
-            class="flex shrink-0 gap-2 overflow-x-auto border-b border-slate-200 p-2 dark:border-slate-700"
-          >
-            <button
-              type="button"
-              onclick={() => escolherGrupoMobile(null)}
-              onkeydown={aoTeclado}
-              class={chipClasse(filtroMobile === null)}>Todos</button
+          <!-- §12.1 — a fileira de chips: cabe o "Todos" e ~2 grupos; o resto rola. O invólucro
+               `relative` existe só para a pista (o degradê) poder ser ancorada na borda direita. -->
+          <div class="relative shrink-0 border-b border-slate-200 dark:border-slate-700">
+            <div
+              bind:this={chipsEl}
+              onscroll={medirChips}
+              role="group"
+              aria-label="Grupos"
+              class="flex gap-2 overflow-x-auto p-2"
             >
-            {#each grupos as [id, g] (id)}
               <button
                 type="button"
-                onclick={() => escolherGrupoMobile(id)}
+                onclick={() => escolherGrupoMobile(null)}
                 onkeydown={aoTeclado}
-                class={chipClasse(filtroMobile === id)}
+                class={chipClasse(filtroMobile === null)}>Todos</button
               >
-                {g.name}
-                <span
-                  class="ml-1.5 rounded-full bg-black/10 px-1.5 text-[10px] leading-4 tabular-nums dark:bg-white/15"
-                  aria-label="{contagens[id] ?? 0} indicadores"
-                  >{contagens[id] ?? 0}</span
+              {#each grupos as [id, g] (id)}
+                <button
+                  type="button"
+                  onclick={() => escolherGrupoMobile(id)}
+                  onkeydown={aoTeclado}
+                  class={chipClasse(filtroMobile === id)}
                 >
-              </button>
-            {/each}
+                  {g.name}
+                  <span
+                    class="ml-1.5 rounded-full bg-black/10 px-1.5 text-[10px] leading-4 tabular-nums dark:bg-white/15"
+                    aria-label="{contagens[id] ?? 0} indicadores"
+                    >{contagens[id] ?? 0}</span
+                  >
+                </button>
+              {/each}
+            </div>
+
+            {#if chipsTemMais}
+              <!-- Só decorativa: quem anuncia "há mais" é a própria rolagem. `pointer-events-none`
+                   para não roubar o toque dos chips que ela cobre. -->
+              <span
+                data-testid="chips-tem-mais"
+                aria-hidden="true"
+                class="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent dark:from-slate-900"
+              ></span>
+            {/if}
           </div>
 
           <ul

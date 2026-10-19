@@ -1,4 +1,5 @@
 import { defineConfig } from 'astro/config';
+import { satteri } from '@astrojs/markdown-satteri';
 import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
@@ -10,9 +11,11 @@ export default defineConfig({
   // e `dist/assets/js/...`. O `public/` é copiado para a mesma pasta.
   build: { format: 'file', assets: 'assets' },
   trailingSlash: 'never',
-  // `gfm: false`: o Jekyll usa kramdown, que NÃO autolinka URL crua (`www.…`); o
-  // GFM do remark transformaria esse texto em <a>, mudando o que o visitante vê.
-  // Medido em 2026-10-18: nenhum conteúdo atual usa tabela, `~~` ou task list.
-  markdown: { gfm: false },
+  // Sätteri é o processador nativo do Astro 7 (o `markdown.gfm` está deprecado).
+  // `gfm: false`: o kramdown do Jekyll NÃO autolinka URL crua (`www.…`); o GFM
+  // transformaria esse texto em <a> e mudaria o que o visitante vê.
+  // `smartPunctuation` fica no default (true) DE PROPÓSITO: o kramdown também faz
+  // smartypants — o site publicado tem aspas curvas geradas de aspas retas.
+  markdown: { processor: satteri({ features: { gfm: false, smartPunctuation: true } }) },
   vite: { plugins: [tailwindcss()] },
 });

@@ -664,6 +664,8 @@ Ordem sugerida de ataque:
    rejeição de duas delas.
 
 2. ~~**Sobreposição dos rótulos na ponta das linhas**~~ — **FECHADO por medição em 2026-10-14.**
+   ↳ A **reabertura de 2026-10-15** (os rótulos de último valor no **eixo**) foi **MEDIDA e
+   FECHADA em 2026-10-19** — decisão no fim deste item: **opção 3, manter e conviver**.
    Spike com lightweight-charts 5.2.1, 10 séries, área de plot de 392px. Medição por dois
    caminhos independentes: `series.priceToCoordinate()` para a posição **natural** de cada último
    valor, e **análise de pixel** do canvas para a posição **renderizada**.
@@ -784,8 +786,19 @@ Ordem sugerida de ataque:
    pior caso *não* é raro, "porque 10 séries é o teto da §1". Medido: **o teto de 10 séries (§1)
    produz 11% (esq) e 8% (dir) da altura, com zero sobreposição** — o teto não é o pior caso. Quem
    produz a faixa grande é o caso **degenerado** (últimos valores idênticos), que um fechamento real
-   distinto não alcança. Ou seja: a objeção contra a opção 3 caiu; **a decisão continua do usuário**,
-   mas agora sobre números em vez de sobre a leitura de uma captura.
+   distinto não alcança. Ou seja: a objeção contra a opção 3 caiu; a decisão passou a ser sobre
+   números, não sobre a leitura de uma captura.
+
+   **DECIDIDO em 2026-10-19 — opção 3: manter e conviver.** O `lastValueVisible: true` fica em
+   toda série; **nada muda no código** (`app/src/chart/adapter.js`). A decisão se apoia no medido:
+   o custo do teto de 10 séries (§1) é **11% (esq) / 8% (dir)** da altura, com **zero sobreposição**
+   — a lib desconflita —, e o pior caso realista é 15%. As outras duas saídas foram rejeitadas:
+   (1) *só sob o crosshair* custa um handler e um re-render por movimento para resolver um problema
+   que a medição mostrou ser de 11%, não de 80%; (2) *desligar acima de N* faria o rótulo do último
+   valor **sumir** justamente na seleção de 10 séries — o caso mais informativo — e o corte teria de
+   ser inventado contra um custo que já se sabe pequeno. **Resíduo aceito conscientemente:** sob a
+   pilha, alguns **ticks do eixo** deixam de ser desenhados (confirmado na captura; a contagem exata
+   não foi medida). Se um dia incomodar, a spec já tem o número para reabrir com medição.
 
 3. **Logos dos partidos** — assets (SVG em `sitio/assets/img/partidos/`), tamanho no trilho e na ficha, e a **questão de uso de marca num repositório público**, que não é decisão técnica e não foi resolvida aqui.
 4. **Duração visível no trilho** — a barrinha proporcional dentro da caixa de largura igual, caso a perda da leitura visual de duração incomode (seção 3).

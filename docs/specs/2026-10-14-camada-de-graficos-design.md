@@ -725,6 +725,68 @@ Ordem sugerida de ataque:
    eixo, quantos se sobrepõem, e qual a fração da altura do gráfico a pilha ocupa — o mesmo
    método e as mesmas quatro posturas (A–D) que fecharam a §12.2. **Não estimar: medir.**
 
+   ---
+
+   **MEDIDO em 2026-10-19** — no **app real** (o caminho do produto), lightweight-charts 5.2.1,
+   Chromium 1440×900, área de plot **952×452 px**, enquadramento padrão ("Tudo"), com
+   `title: ''` e `lastValueVisible: true`. Método: análise de pixel dos canvases do eixo — o pill
+   do último valor é desenhado com a **cor da série** como fundo, então cada pill é o bounding box
+   dos pixels daquela cor; a ponta de cada linha (posição **natural**) sai do canvas do gráfico,
+   que os pills não apagam. Instrumento versionado em `app/scripts/medir-eixo.mjs` (reauditável).
+
+   | cenário | eixo | séries | pills | sobrepostos | maior pilha contígua | faixa da pilha | % do plot |
+   |---|---|---|---|---|---|---|---|
+   | A2 · escalas misturadas (2) | esq / dir | 1 / 1 | 1 / 1 | 0 | 1 | 17 px | **4%** |
+   | A3 · misturadas (3) | esq | 2 | 2 | 0 | 1 | 17 px | 4% |
+   | A5 · misturadas (5) | esq / dir | 3 / 2 | 3 / 2 | 0 | 2 / 1 | 34 / 17 px | **8% / 4%** |
+   | **A10 · misturadas (10)** | esq / dir | 6 / 4 | 6 / 4 | **0** | 3 / 2 | 51 / 34 px | **11% / 8%** |
+   | B2/B3/B5/B7 · só % (2/3/5/7) | esq | 2/3/5/7 | 2/3/5/7 | 0 | 1/2/3/4 | 17/34/51/**68** px | 4/8/11/**15%** |
+   | **C8/C10 · pior caso realista** | esq | 8 | 8 | **0** | **4** | **68 px** | **15%** |
+   | C10 · idem | dir | 2 | 2 | 0 | 1 | 17 px | 4% |
+   | **D10 · 10 valores IDÊNTICOS** (extremo) | esq | 10 | 10 | **2** | **10 (bloco único)** | **170 px** | **38%** |
+
+   **O que os números dizem:**
+
+   1. **A lib desenha um pill para CADA série** — em todos os 17 eixos medidos, `pills == séries`.
+      Nenhum rótulo é omitido (ao contrário do que a medição de 2026-10-14 viu na **ponta**, onde
+      um dos 10 não era desenhado).
+   2. **A lib desconflita no eixo:** as pilhas são **adjacentes** (gap ≤ 1 px), não sobrepostas —
+      **0 pares sobrepostos em 16 dos 17 eixos**. A única exceção é o extremo D (2 pares).
+   3. **O pior caso realista ocupa 15% da altura do plot** (pilha de 4 rótulos, 68 px); o caso de
+      **10 séries em dois eixos** ocupa **11% (esq) e 8% (dir)**. Isso está muito longe dos **80%
+      da altura** que a §12.2 mediu nos rótulos da **ponta** — a pilha do eixo é uma fração dela.
+   4. **O extremo** — 10 séries com o **mesmo** último valor — forma um **bloco contíguo de 170 px
+      (38% da altura)**, com 2 pares sobrepostos, e ~6 rótulos de tick deixam de ser desenhados (a
+      sequência salta de `10.07` para `9.99`). É o único cenário em que o sintoma descrito na
+      reabertura aparece de fato — e ele não é alcançável com um dado real de fechamento distinto.
+   5. 🔴 **A premissa da reabertura de 2026-10-15 NÃO se reproduz.** Lá se leu, de uma captura da
+      fatia 07, *"~8 rótulos empilhados e sobrepostos, todos lendo `10.00`, ocupando uma faixa
+      vertical grande"*. No código atual a desconflição **existe** e o pior caso realista é 15% com
+      **zero** sobreposição. Ou a captura era de outro estado do código, ou foi lida grosso modo (o
+      "todos lendo 10.00" é assinatura de leitura de imagem, não de pixel — e no cenário D, que é o
+      único que produz rótulos idênticos, o bloco é de 38%, não de 80%).
+   6. **O eixo ainda perde rótulos de tick sob a pilha** — confirmado na captura: em C10 o tick
+      `70.00` some sob o pill `72.36`; em D10 somem ~6 ticks (`10.06`…`10.01`). Medido como
+      "buracos" na sequência regular de ticks, coincidindo com a faixa de um pill na maioria dos
+      eixos — **evidência, não prova**: o pill e o texto dos ticks dividem o **mesmo** canvas, e o
+      pill apaga a tinta debaixo. **A contagem exata de ticks encobertos NÃO foi medida.**
+
+   **Limites declarados da medição** (para não ser lida como mais do que é): enquadramento padrão
+   ("Tudo") — o zoom do usuário muda a janela visível e não foi varrido; uma tela (1440×900); e a
+   contagem exata de ticks encobertos, que o instrumento não fechou.
+
+   **O que segue NÃO decidido:** qual das três saídas adotar. O que a medição **elimina** é a
+   premissa de que a pilha do eixo custa 80% da altura; o que ela **acrescenta** é o custo real
+   (15% no pior caso realista, zero sobreposição; 38% no extremo) e o fato de os **ticks do eixo**
+   serem o que se perde.
+
+   Isso muda o insumo da **opção 3** (manter e conviver). A objeção registrada acima era que o
+   pior caso *não* é raro, "porque 10 séries é o teto da §1". Medido: **o teto de 10 séries (§1)
+   produz 11% (esq) e 8% (dir) da altura, com zero sobreposição** — o teto não é o pior caso. Quem
+   produz a faixa grande é o caso **degenerado** (últimos valores idênticos), que um fechamento real
+   distinto não alcança. Ou seja: a objeção contra a opção 3 caiu; **a decisão continua do usuário**,
+   mas agora sobre números em vez de sobre a leitura de uma captura.
+
 3. **Logos dos partidos** — assets (SVG em `sitio/assets/img/partidos/`), tamanho no trilho e na ficha, e a **questão de uso de marca num repositório público**, que não é decisão técnica e não foi resolvida aqui.
 4. **Duração visível no trilho** — a barrinha proporcional dentro da caixa de largura igual, caso a perda da leitura visual de duração incomode (seção 3).
 5. **Leitura por espectro político** — descartada do gráfico em 2026-10-14. Se voltar, será como **modo explícito do usuário**, nunca como padrão, e com a fonte da classificação citada e visível — porque é juízo editorial, não dado.

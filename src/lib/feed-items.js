@@ -14,6 +14,8 @@ import { dataDoId, urlDoPost } from './posts.ts';
 // `src="/…"` dentro do `description` sairia relativo e QUEBRADO no leitor.
 // Absolutizamos contra o `site`. Só a raiz (`="/`), que é o que o markdown do
 // site produz — URLs já absolutas não casam o padrão.
+// LIMITE: o padrão casaria `href="//cdn…"` (protocol-relative) e viraria
+// `…ong.br//cdn…`; não há ocorrência hoje — se surgir, tratar à parte.
 export function absolutizar(html, site) {
   return html.replace(/(href|src)="\//g, `$1="${site}/`);
 }

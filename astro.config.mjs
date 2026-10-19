@@ -10,5 +10,9 @@ export default defineConfig({
   // e `dist/assets/js/...`. O `public/` é copiado para a mesma pasta.
   build: { format: 'file', assets: 'assets' },
   trailingSlash: 'never',
+  // `gfm: false`: o Jekyll usa kramdown, que NÃO autolinka URL crua (`www.…`); o
+  // GFM do remark transformaria esse texto em <a>, mudando o que o visitante vê.
+  // Medido em 2026-10-18: nenhum conteúdo atual usa tabela, `~~` ou task list.
+  markdown: { gfm: false },
   vite: { plugins: [tailwindcss()] },
 });

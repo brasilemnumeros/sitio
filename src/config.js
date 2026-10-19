@@ -12,4 +12,8 @@ export const SITE = {
   nome: 'Brasil em Números',
   descricao: 'Uma plataforma dedicada a fornecer dados e informações sobre o Brasil.',
   tagline: 'Dados e informações sobre o Brasil em um só lugar',
+  // O publicado emitia `og:locale: en_US` (o `jekyll-seo-tag` cai no default en quando
+  // o `_config.yml` não declara idioma). Decisão do usuário em 2026-10-18: corrigir
+  // para pt_BR — não é fiel, é conserto deliberado de uma meta errada.
+  idioma: 'pt_BR',
 };

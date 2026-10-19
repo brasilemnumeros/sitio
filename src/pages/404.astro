@@ -2,10 +2,9 @@
 // Portado de `404.html` do Jekyll (fatia 02/T3). Deixa de apontar para o
 // `layout: page` inexistente (achado da ADR 0001) e passa a usar o `Base.astro`.
 //
-// O corpo sai em INGLÊS porque é o que o site publica hoje (resíduo de template):
-// as strings foram medidas com `curl` e são REPRODUZIDAS como estão — traduzir é
-// decisão do usuário (item aberto, junto de `og:locale`, do mês em inglês e do
-// `target="\_blank"`). A única adição deliberada é o link de volta para `/`.
+// O corpo era em INGLÊS no site publicado (resíduo de template: "Page not found :(").
+// Decisão do usuário em 2026-10-18: traduzir — o inglês é defeito visível, não estilo.
+// O link de volta para `/` também é adição deliberada (o original não tinha nenhum).
 //
 // O 404 NÃO tem título de página: publica o título do SITE. `tituloDoSite` faz o
 // `Meta` emitir `<title>` = `Brasil em Números | <tagline>` (medido no publicado).
@@ -36,8 +35,8 @@ import { SITE } from '../config.js';
   <div class="container">
     <h1>404</h1>
 
-    <p><strong>Page not found :(</strong></p>
-    <p>The requested page could not be found.</p>
+    <p><strong>Página não encontrada :(</strong></p>
+    <p>A página que você procura não existe ou foi movida.</p>
 
     <p><a href="/">Voltar para a página inicial</a></p>
   </div>

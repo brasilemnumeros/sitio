@@ -406,7 +406,7 @@ Por que não cor, em uma frase por caminho: **cor de marca** colide entre partid
 
 **5. Cobertura parcial é marcada — e não é só o mandato em curso.** A regra é uma só: **qualquer célula cujo Δ não cobre o mandato inteiro leva marca**, qualquer que seja o motivo (o mandato está em curso, ou a série começa depois do início dele). Célula com Δ parcial que aparece sem aviso é atribuir a um governo uma variação que ele não produziu inteiro.
 
-A medição que motivou a generalização (remedida em 2026-10-15, sobre os 13 arquivos já deduplicados e 8 mandatos — a dedupe da fatia 11 alterou a contagem de pontos de 4 séries): **15 das 104 células** ficam abaixo do esperado, e o caso que importa não é o mandato em curso — esse já era conhecido. É este: o **MVG-R** só começa em **03/2004**, então no mandato rotulado "Lula I" ele tem **34 dos 48 pontos possíveis**, e o Δ cobriria **34 de 48 meses** enquanto a coluna se chama "Lula I". No "FHC II" ele tem **0 pontos** e nem existe célula.
+A medição que motivou a generalização (remedida em 2026-10-15, sobre os 13 arquivos já deduplicados e 8 mandatos — a dedupe da fatia 11 alterou a contagem de pontos de 4 séries): **18 das 104 células** ficam abaixo do esperado, e o caso que importa não é o mandato em curso — esse já era conhecido. É este: o **MVG-R** só começa em **03/2004**, então no mandato rotulado "Lula I" ele tem **34 dos 48 pontos possíveis**, e o Δ cobriria **34 de 48 meses** enquanto a coluna se chama "Lula I". No "FHC II" ele tem **0 pontos** e nem existe célula.
 
 Por isso a célula não carrega **contagem de pontos** — carrega o **período real usado**. Contagem de pontos é um número que ninguém sabe interpretar (2 pontos numa série anual é normal; 2 numa mensal é defeito); o período real é informação de verdade, e responde a mesma pergunta. *(A contagem de pontos chegou a ser proposta como uma coluna; a medição a tornou desnecessária.)*
 
@@ -957,7 +957,7 @@ Pares mais compatíveis medidos: `igpm` × `selic-meta` (1,056) · `selic-meta` 
 
 Pares menos compatíveis medidos: `populacao-total` × `populacao-variacao` (20.921.102) · `caged` × `populacao-variacao` (11.540.627) · `homicidios-armas-fogo` × `populacao-total` (5.880.513).
 
-### Cobertura por mandato (medida em 2026-10-15; o quadro original era de 2026-10-14)
+### Cobertura por mandato (remedida em 2026-10-19; antes em 2026-10-15 e 2026-10-14)
 
 Pontos de cada série dentro de cada mandato federal, conforme o modelo da seção 7 (exercício efetivo). **Δ precisa de 2+ pontos; "—" é ausência de cobertura.**
 
@@ -967,20 +967,24 @@ Pontos de cada série dentro de cada mandato federal, conforme o modelo da seç�
 | `homicidios-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | **1** |
 | `homicidios-armas-fogo-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | **—** |
 | `proporcao-homicidios-armas-fogo-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | **—** |
-| `igpm-acum-12m` | 48 | 48 | 48 | 48 | 20 | 32 | 48 | 31 |
+| `igpm-acum-12m` | 48 | 48 | 48 | 48 | 20 | 31 | 48 | 31 |
 | `ipca-acum-12m` | 48 | 48 | 48 | 48 | 20 | 31 | 48 | 30 |
 | `mvgr-nominal` | **—** | **34** | 48 | 48 | 20 | 31 | 48 | 31 |
 | `mvgr-real` | **—** | **34** | 48 | 48 | 20 | 31 | 48 | 31 |
 | `pib-real-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | 2 |
 | `populacao-total-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | 2 |
 | `populacao-variacao-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | 2 |
-| `selic-meta-acum-12m` | 46 | 48 | 48 | 48 | 20 | 32 | 48 | 34 |
-| `selic-over-acum-12m` | 48 | 48 | 48 | 48 | 20 | 32 | 48 | 34 |
+| `selic-meta-acum-12m` | 46 | 48 | 48 | 48 | 20 | 31 | 48 | 34 |
+| `selic-over-acum-12m` | 48 | 48 | 48 | 48 | 20 | 31 | 48 | 34 |
 
-Resumo: **104 células possíveis** (13 × 8) · **99 calculáveis (95%)** · **4 sem cobertura (3%)** — `mvgr-*` no FHC II (a série começa em 2004-03) e os dois `homicidios-*` no Lula III (as séries terminam em 2022) · **1 indefinida** — `homicidios-anual` no Lula III, com 1 ponto só.
+Resumo: **104 células possíveis** (13 × 8) · **96 calculáveis (92%)** · **3 parciais** · **4 sem cobertura (3%)** — `mvgr-*` no FHC II (a série começa em 2004-03) e os dois `homicidios-*` no Lula III (as séries terminam em 2022) · **1 indefinida** — `homicidios-anual` no Lula III, com 1 ponto só.
 
 > **Nota (2026-10-15):** quadro remedido após a dedupe da fatia 11. As células que mudaram foram só das 4 séries deduplicadas: `caged-total-mensal` no Lula I (49→48) e Dilma II (21→20); `mvgr-nominal` e `mvgr-real` no Lula I (35→34) e Dilma II (21→20); `pib-real-anual` no Lula I (5→4) e Dilma II (3→2). O resumo **não muda** — 104 células, 99 calculáveis, 4 sem cobertura, 1 indefinida — e o total de células abaixo do esperado **continua 15**.
 
+> **Nota (2026-10-19) — a data passou a ser o dia 01 do mês de referência.** Motivo e medição em `dados/canonicalizar-dados.py`: com o carimbo no fim do mês, `selic-meta`, `selic-over` e `igpm` tinham **zero** datas em comum com o `ipca` (união de 675 = 320 + 355), e o crosshair da lib só desenha a bolinha da série que tem ponto exato no índice — 0 de 271 posições com as duas. Células que mudaram: `igpm-acum-12m`, `selic-meta-acum-12m` e `selic-over-acum-12m` no **Temer**, 32 → 31 — o ponto de maio/2016 era `2016-05-31` (dentro de um mandato que começa em 2016-05-12) e virou `2016-05-01`, que é mês de referência da Dilma II. O resumo passa a **96 calculáveis + 3 parciais**, e as células abaixo do esperado vão de **15 para 18** — as três novas são exatamente essas, e o `ipca-acum-12m` no Temer já era 31 pelo mesmo motivo (ele já usava o dia 01).
+
+> ⚠️ **A régua da §7.3 ficou desalinhada da convenção e isso é item aberto, não decisão.** `pontosEsperados()` conta `meses(fim) − meses(inicio) + 1`, o que supõe que o mês do início pertence ao mandato — verdade com carimbo no fim do mês, falso com carimbo no dia 01. Medido: a régua correta (meses cujo dia 01 cai dentro do mandato) tiraria o alerta de **13 células do Temer**, entre mensais e anuais, e o total abaixo do esperado cairia de 18 para 5. A correção mexe em código do app, então ficou fora desta fatia (decisão do usuário: só o dado).
+
 > **Nota (2026-10-14, decisão R22):** esta tabela mede **8 colunas** porque foi assim que a medição foi feita — não porque FHC I não exista. O arquivo `dados/governos/federal.json` **inclui FHC I (1995-01-01 – 1998-12-31)**, e com ele a matriz passa a **117 células** (13 × 9). A medição acima continua válida como medição; o que muda é o total. O teste que a trava filtra FHC I explicitamente, para continuar afirmando exatamente os números publicados aqui.
 
-**15 células** ficam abaixo do esperado para a própria granularidade da série. A maioria é consequência do mandato em curso (Lula III) ou do início tardio da série. O caso que motivou a regra de cobertura parcial da seção 7.3 é `mvgr-nominal` e `mvgr-real` no **Lula I**: 34 pontos onde caberiam 48, porque as séries começam em **03/2004** — o Δ cobriria 34 dos 48 meses sob um rótulo que diz "Lula I".
+**18 células** ficam abaixo do esperado para a própria granularidade da série. A maioria é consequência do mandato em curso (Lula III) ou do início tardio da série. O caso que motivou a regra de cobertura parcial da seção 7.3 é `mvgr-nominal` e `mvgr-real` no **Lula I**: 34 pontos onde caberiam 48, porque as séries começam em **03/2004** — o Δ cobriria 34 dos 48 meses sob um rótulo que diz "Lula I".

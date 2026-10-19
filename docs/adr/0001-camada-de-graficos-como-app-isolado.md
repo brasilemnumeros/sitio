@@ -412,6 +412,54 @@ o texto do comentário). Provado: com o título de uma Discussion existente a me
 canário e o ramo de transbordo do `testar-mobile.mjs` **sabotados na causa exata** — servindo o
 `.css` como `text/plain` e medindo a 150px — e o script **sai 1** nos dois.
 
+### A data do dado: uma convenção só, medida no crosshair (2026-10-19)
+
+**O gatilho foi uma observação de tela, não um teste:** ao passar o mouse sobre "Selic × IPCA" (o
+exemplo do próprio site), a bolinha do crosshair aparecia **ora numa linha, ora na outra, nunca nas
+duas**. O usuário levantou a hipótese: "será que as datas das séries estão divergentes?". Estavam.
+
+**O que a medição achou.** `selic-meta-acum-12m` (320 pontos) carimbava no **último dia do mês** e
+`ipca-acum-12m` (355) no **dia 01**: **zero datas em comum** (a união tinha 675 = 320 + 355, ou seja,
+nenhuma colisão), com 315 dos 320 pontos da Selic a **1 dia** de um ponto do IPCA — as duas grades se
+intercalavam. No catálogo inteiro havia três convenções: fim do mês (`selic-meta`, `selic-over`,
+`igpm`), dia 01 (as outras nove) e dia 15 (`homicidios-armas-fogo-anual`, cujo irmão usa dia 01).
+
+**Por que a bolinha não podia aparecer nas duas.** Lido no fonte da lib (e não inferido): o crosshair
+resolve **um** `timePointIndex` a partir do x, e cada série só desenha o marcador se tiver um ponto
+**exato** naquele índice (`valueAt` com `MismatchDirection.None`); o `CrosshairMode.Magnet` (default
+da v5) ajusta só o **y**. Medido num spike com o dado real, varrendo 271 posições: **0** com as duas
+bolinhas; com a mesma grade em ambas, **254 de 254**.
+
+**Decisão: a data é o primeiro dia do período de referência — dia 01 do mês (anual: 1º de janeiro).**
+É a convenção da própria fonte (o SGS carimba `01/04/2022` para abril) e a que 9 das 13 séries já
+usavam. Aplicada **só aos JSON publicados**, por `dados/canonicalizar-dados.py`; os notebooks **não**
+foram tocados (decisão do usuário). Alternativas rejeitadas: **(a) desenhar o marcador no ponto mais
+próximo de cada série** — o marcador sairia do x do crosshair e passaria a mentir sobre quando o
+valor existe; **(b) avisar que as grades divergem** — honesto, mas deixaria a comparação no mesmo x
+misturando **meses diferentes** (Selic de maio desenhada ao lado do IPCA de junho); **(c) não fazer
+nada** — a divergência de ~29 dias entre o mesmo mês de referência cresce com o zoom.
+
+**Achado colateral, corrigido junto: o acumulado de 12 meses era soma aritmética.** `ipca-acum-12m`
+e `igpm-acum-12m` faziam `.rolling(12).sum()` — soma de 12 taxas mensais, não capitalização
+composta. Provado que a fonte era a mesma antes de trocar o valor: a soma aritmética do SGS
+**reproduz o disco** em 355/355 e 349/349 pontos (Δ máx 3,5e-15); e o composto
+(`prod(1+r) − 1`) bate com a série **oficial** 13522 em **355 meses, Δ máx 0,01**. O valor muda até
+**2,00 p.p.** (IPCA, 1995-12) e **5,06 p.p.** (IGP-M, 2021-05). A Selic já era composta (produto
+diário) e o `MVG-R` também — eram os dois acumulados os desvios.
+
+**Custo medido na matriz da §7.3:** `igpm`, `selic-meta` e `selic-over` no **Temer** caem de 32 para
+31 pontos (o ponto de maio/2016 era `2016-05-31`, dentro de um mandato que começa em `2016-05-12`, e
+virou `2016-05-01`, mês de referência da Dilma II). O resumo vira **96 calculáveis + 3 parciais** e as
+células abaixo do esperado vão de **15 para 18**.
+
+**Limite honesto, e ele é o preço da decisão:** os notebooks continuam gerando a forma antiga, então
+**rodar um notebook reverte o arquivo**. O `--check` do script é a guarda que pega a reversão, e o
+item aberto está registrado na spec (junto com a régua da §7.3, que supõe o mês do início dentro do
+mandato e por isso marca 13 células do Temer como "abaixo do esperado" sem que estejam).
+
+**Verificação:** 144 unitários e 44 E2E verdes (o teste de medição da §7.3 remedido); captura de tela
+no app real mostrando **as duas bolinhas e os dois rótulos de eixo** na mesma vertical.
+
 ## Consequências
 
 **Positivas**

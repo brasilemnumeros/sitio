@@ -1,0 +1,81 @@
+---
+// Portado de `links.html` do Jekyll. A única mudança de comportamento é o loop
+// `{% for post in site.posts %}`: o Jekyll ordena `site.posts` por data
+// DECRESCENTE, então a ordenação é explícita aqui — `getCollection` não promete
+// ordem nenhuma.
+//
+// A URL do post é a do Jekyll, com `.html`: `/categoria/AAAA/MM/DD/slug.html`.
+// A categoria vem de `categories[0]` e o slug é o `id` sem o prefixo de data
+// (mesma derivação da rota da fatia 03/T2).
+//
+// Sobre o `escape` do Liquid: os títulos com aspas duplas do Jekyll saem como
+// `&quot;` no `aria-label`. O Astro escapa o mesmo `"` na forma `&#34;` — HTML
+// equivalente, e o texto do link (que não é atributo) sai com as aspas cruas,
+// igual ao publicado.
+import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import { dataDoId } from '../lib/posts';
+
+const posts = (await getCollection('posts')).sort(
+  (a, b) => dataDoId(b.id).getTime() - dataDoId(a.id).getTime(),
+);
+
+function urlDoPost(id: string, categoria: string): string {
+  const [ano, mes, dia] = id.slice(0, 10).split('-');
+  const slug = id.replace(/^\d{4}-\d{2}-\d{2}-/, '');
+  return `/${categoria}/${ano}/${mes}/${dia}/${slug}.html`;
+}
+---
+
+<Base
+  title="Links"
+  description="Uma plataforma dedicada a fornecer dados e informações sobre o Brasil."
+>
+  <div class="flex min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 dark:bg-gray-900">
+    <div class="w-full max-w-md">
+      <div class="mb-6 text-center">
+        <p class="text-sm text-gray-500 dark:text-gray-400">Conecte-se com nossos recursos</p>
+      </div>
+
+      <div id="linktree-container" class="not-prose space-y-3">
+        <a
+          href="/"
+          class="flex w-full transform items-center justify-center rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 focus:ring-2 focus:ring-offset-1 focus:outline-none active:translate-y-0 dark:!text-white"
+          aria-label="Ir para a página inicial"
+          >Acessar o Brasil em Números</a
+        >
+        <a
+          href="/categorias/analises.html"
+          class="flex w-full transform items-center justify-center rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 focus:ring-2 focus:ring-offset-1 focus:outline-none active:translate-y-0 dark:!text-white"
+          aria-label="Ler artigos e análises"
+          >Artigos e Análises</a
+        >
+        <a
+          href="https://github.com/brasilemnumeros/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex w-full transform items-center justify-center rounded-lg bg-gray-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 focus:ring-2 focus:ring-offset-1 focus:outline-none active:translate-y-0 dark:!text-white"
+          aria-label="Ir para o GitHub"
+        >
+          Código-fonte (GitHub)
+        </a>
+      </div>
+
+      <!-- Posts list -->
+      <div class="mt-6">
+        <h2 class="mb-3 text-sm font-semibold text-gray-700 dark:text-gray-300">Últimas publicações</h2>
+        <div class="not-prose space-y-3">
+          {posts.map((post) => (
+            <a
+              href={urlDoPost(post.id, post.data.categories[0])}
+              class="flex w-full transform items-center justify-center rounded-lg bg-gray-100 px-4 py-3 text-sm font-medium text-gray-900 shadow-sm transition hover:-translate-y-0.5 focus:ring-2 focus:ring-offset-1 focus:outline-none active:translate-y-0 dark:bg-gray-800 dark:!text-white"
+              aria-label={`Ver post ${post.data.title}`}
+            >
+              {post.data.title}
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</Base>

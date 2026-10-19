@@ -19,8 +19,15 @@ import { GA4_ID } from '../config.js';
 import '../styles/main.css';
 
 interface Props {
-  title: string;
-  description: string;
+  // `title`/`description` vêm do front matter das páginas `.astro`, mas uma página
+  // `.md` NÃO recebe os campos do front matter como props de topo no Astro 7: o
+  // layout recebe `{ file, url, content, frontmatter, headings, ... }` (medido em
+  // `node_modules/astro/dist/vite-plugin-markdown/index.js:114-131`). Sem o
+  // fallback abaixo, `sobre.md` renderiza `undefined | Brasil em Números` e
+  // `<meta name="description">` VAZIO — e sem erro nenhum no build.
+  title?: string;
+  description?: string;
+  frontmatter?: { title?: string; description?: string };
   image?: string;
   // `app` → shell do app (sem `prose`); `pagina` → página de texto. Ausente = `pagina`.
   shell?: 'app' | 'pagina';
@@ -32,7 +39,9 @@ interface Props {
   tipo?: 'website' | 'article';
   jsonLd?: Record<string, unknown>;
 }
-const { title, description, image, shell = 'pagina', canonical, tipo = 'website', jsonLd } = Astro.props;
+const { frontmatter, image, shell = 'pagina', canonical, tipo = 'website', jsonLd } = Astro.props;
+const title = Astro.props.title ?? frontmatter?.title ?? '';
+const description = Astro.props.description ?? frontmatter?.description ?? '';
 
 // `canonical` calculado. A normalização da raiz é obrigatória: sob
 // `build.format: 'file'` + `trailingSlash: 'never'`, `Astro.url.pathname` é

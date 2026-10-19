@@ -1,6 +1,7 @@
 ---
-layout: default
+layout: ../layouts/Base.astro
 title: Sobre o Brasil em Números
+description: Uma plataforma dedicada a fornecer dados e informações sobre o Brasil.
 ---
 
 # Sobre o Brasil em Números
@@ -11,11 +12,11 @@ Acreditamos que dados governamentais, muitas vezes complexos e dispersos, devem 
 
 Toda a nossa metodologia, da coleta dos dados brutos à geração dos gráficos, é transparente e está disponível em nosso repositório público. Convidamos você a explorar, auditar nosso trabalho e utilizar os dados para fortalecer suas próprias análises e fomentar um debate público mais qualificado.
 
-[Acesse nossa página no GitHub](https://github.com/brasilemnumeros){:target="\_blank"}
+<a href="https://github.com/brasilemnumeros" target="\_blank">Acesse nossa página no GitHub</a>
 
 ---
 
 **Informações importantes:**
 
-- [Termos de Uso]({{ "/termos-de-uso" | relative_url }}) - Conheça as condições de uso do site
-- [Política de Privacidade]({{ "/politica-de-privacidade" | relative_url }}) - Saiba como tratamos seus dados
+- [Termos de Uso](/termos-de-uso) - Conheça as condições de uso do site
+- [Política de Privacidade](/politica-de-privacidade) - Saiba como tratamos seus dados

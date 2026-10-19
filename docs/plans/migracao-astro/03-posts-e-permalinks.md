@@ -189,7 +189,7 @@ git commit -m "feat(astro): coleção de posts (content layer) com os 10 posts m
 
 - Criar: `src/layouts/Post.astro` (de `_layouts/post.html`, 224 linhas)
 - Criar: `src/pages/[categoria]/[ano]/[mes]/[dia]/[slug].astro`
-- Test: `scripts/testar-urls.sh` (fatia 02) — passa a incluir o post de verdade
+- Test: `scripts/testar-meta.sh` (estendido: meta de post + caixa do player)
 
 **Interfaces:**
 
@@ -200,10 +200,15 @@ git commit -m "feat(astro): coleção de posts (content layer) com os 10 posts m
   2026-10-18: um post publica `<meta property="og:type" content="article">` e um JSON-LD
   `{"@type":"BlogPosting",…}`. Sem isto o post regride **em silêncio** para `website`/`WebPage` — a
   tabela do contrato medido está na fatia 01/T1, passo 3.
-- **E isto é verificado, não presumido:** estender `scripts/testar-urls.sh` (ou o `testar-meta.sh`)
-  para conferir, **num arquivo de post em `dist/`**, as duas asserções: `property="og:type"
-  content="article"` e `"@type":"BlogPosting"`. Conferir isso só no site inteiro não serve — a
-  página continua passando e o post continua errado.
+- **E isto é verificado, não presumido**, e o lugar é o **`scripts/testar-meta.sh`**, que já é o teste
+  do contrato de meta — **não** o `testar-urls.sh` (que a 02/T3 cria **depois** desta tarefa). Estenda
+  o `testar-meta.sh` para aceitar um arquivo de **post** e, num post real em `dist/`, assertir:
+  `property="og:type" content="article"`, `"@type":"BlogPosting"`, `description` **não vazia** e o
+  `canonical` terminando em **`.html`**. Conferir o site inteiro não serve: a página continua passando
+  e o post continua errado.
+- **Assertir também a caixa do player no post SEM áudio** (a armadilha 1 vira teste): um post sem
+  `audio:` tem de ter `id="podcast-player"` **e** `data-src=""`. Se alguém a puser dentro do `if`, o
+  teste avisa.
 
 - [ ] **Passo 1: escrever o `getStaticPaths` e rodar o contrato**
 
@@ -229,16 +234,84 @@ export async function getStaticPaths() {
 > exige `categories: z.array(z.string()).min(1)` (fatia 03/T1) — **é essa a guarda**; não reintroduza
 > `.min(1)` de outra forma nem relaxe o schema.
 
-- [ ] **Passo 2: rodar e ver falhar o Post.astro**
+- [ ] **Passo 2: rodar e ver falhar**
 
-Run: `NODE_ENV=development npm run build && bash scripts/testar-urls.sh`
-Expected: FAIL só no post (`dist/noticias/2025/...` falta).
+Run: `npm run build && bash scripts/testar-meta.sh` (com a asserção de post recém-acrescentada)
+Expected: FAIL — não existe nenhum `dist/<cat>/<aaaa>/<mm>/<dd>/<slug>.html` para conferir.
+
+> 🔴 **Gap medido em 2026-10-18 — há Liquid no CORPO de um post, e ninguém o tira.**
+> `src/content/posts/2025-07-29-completando-o-quebra-cabeca-lancamos-o-indicador-de-inflacao-ipca.md:8`
+> tem `[post de lançamento]({% post_url 2025-07-27-hoje-nasce-o-brasil-em-numeros %})`. O Jekyll
+> resolve essa tag na URL do post — medido no publicado:
+> `<a href="/noticias/2025/07/27/hoje-nasce-o-brasil-em-numeros.html">post de lançamento</a>`.
+> O Astro **não tem `post_url`**: sem tratamento, o corpo publicaria os `{% %}` **literais**, e o
+> critério de aceite "nenhum Liquid sobrou no markdown" fica violado **sem erro**. É a mesma classe do
+> `{% post_url %}` que o `trecho.ts` mascara na listagem (fatia 02/T2) — mas ali era só o trecho; aqui
+> é a página inteira.
+>
+> **Correção (é uma edição de conteúdo, deliberada e isolada):** troque a tag pela URL resolvida,
+> mantendo o link markdown:
+>
+> ```markdown
+> No nosso [post de lançamento](/noticias/2025/07/27/hoje-nasce-o-brasil-em-numeros.html), falamos …
+> ```
+>
+> É a **única** ocorrência de Liquid no corpo de um post (medido: `grep -rn '{%' src/content/posts`
+> dá 1 linha). Confira o link gerado contra o publicado — a URL acima é a medida, não deduzida.
+> **Não** invente um plugin de remark para isso: uma tag, uma vez.
 
 - [ ] **Passo 3: portar `Post.astro`**
 
-Reproduzir `_layouts/post.html`: `<h1>` do título, `<time datetime>` + data formatada, os badges de
-categoria, as tags, e os blocos **condicionais** de áudio (`page.audio`) e imagem (`page.image`). O
-player de áudio (`shk-player`, com o `<script>` que o inicializa) **sai verbatim**.
+**Inventário medido do `_layouts/post.html` (2026-10-18) — o plano dizia só “os blocos condicionais de
+áudio e imagem”, e há duas armadilhas:**
+
+| bloco | linhas | condicional? |
+|---|---|---|
+| `<h1>` do título | 6 | não |
+| `<time>` + data | 9-10 | não |
+| badges de categoria (`<a href="/categorias/<cat>.html">`) | 13-31 | sim (`categories`) |
+| selo `🎧 Podcast disponível` | 33-37 | sim (`audio`) |
+| tags (`#tag`) | 40-48 | sim (`tags`) |
+| aviso do podcast (“Versão Podcast: Prefere escutar?”) | 51-68 | sim (`audio`) |
+| 🔴 **caixa do player** `<div id="podcast-player">` + `.shk-player` | 70-73 | **NÃO — sai em TODO post** |
+| imagem de capa (`site.url` + `image`) | 75-84 | sim (`image`) |
+| o corpo (`{{ content }}`) | 86 | não |
+| script do Shikwasa + GA4 de áudio + `MutationObserver` | 88-194 | sim (`audio`) |
+| SocialShareJS + Font Awesome (2 css + 2 js, CDN) | 196-206 | não |
+| giscus | 208-224 | não |
+
+> 🔴 **Armadilha 1 — o player não é condicional.** Medido no site publicado: o post dos homicídios
+> (**sem** `audio:`) publica `<div id="podcast-player">` com `<div class="shk-player" data-src="">` —
+> uma **caixa cinza vazia**. Só o aviso (51-68) e o script (88-194) dependem de `audio`. Se você
+> deixar a caixa dentro do `if`, **10 posts mudam** (9 perdem a caixa). Reproduza o
+> `data-src={post.data.audio ?? ''}` como o Jekyll faz.
+>
+> 🔴 **Armadilha 2 — o script de áudio substitui o título DENTRO de JS.** `{{ page.title | escape }}`
+> e `{{ page.audio }}` aparecem dentro de string JS (`audio_title: '…'`, `src: '…'`). No Astro, use a
+> interpolação do componente (`{post.data.title}`) — ela escapa para HTML, **não** para string JS.
+> Confira o HTML gerado no post da Selic: as aspas do título (`"Taxaço"`) **não podem** quebrar o
+> `audio_title: '…'`. Se precisar, escape para JS explicitamente e diga no relatório o que usou.
+>
+> O `<script>` do Shikwasa, o do SocialShareJS, o do Font Awesome e o do giscus **saem verbatim** —
+> mesmas URLs, mesmos `data-*`, mesma ordem. O `MutationObserver`/`getTheme` fica (é a troca de tema
+> do player), mesmo que o app seja escuro: é o que o site faz hoje.
+>
+> 🔴 **Armadilha 3 — o post não tem `description` no front matter, e o `Base.astro` a exige.**
+> Medido nos 10 posts publicados: a `<meta name="description">` do post é o **excerpt completo** (o
+> mesmo primeiro bloco do `trecho.ts`, **sem** o corte de 25/30 palavras) — e há exemplos de **408** e
+> **291** caracteres, então **não há truncagem em 200**. O `Base.astro` (fatia 02/T1) **derruba o
+> build** sem `description`: passe `trecho(post, Number.MAX_SAFE_INTEGER)` (a assinatura real é
+> `trecho(entry, maxPalavras)` — `src/lib/trecho.ts:88`) e confira a string contra o publicado.
+>
+> Medido também: o `og:title` do post é o `title` do front matter, o `og:type` é `article`, e o
+> `canonical` termina em **`.html`** (`…/luzes-sombras-queda-homicidios-brasil.html`).
+>
+> Os badges de categoria do post usam o **mesmo** `case` singular do `blog`
+> (`📊 Análise` / `📈 Indicador` / `📢 Notícia` / `🏷️` + capitalize) — **reutilize o mapa de
+> `categorias.ts`**, não recrie. O link é `/categorias/<cat>.html`.
+>
+> Medido também: 9 dos 10 posts são sem áudio; **1** tem `image:` (o do PIB, `2025-09-04`) — a URL da
+> capa é `https://www.brasilemnumeros.ong.br` + o caminho do `image:`.
 
 > **Conferir a data contra o HTML produzido pelo Jekyll** (o filtro `date: '%d de %B de %Y'` usa o
 > locale **en** por padrão; o Astro não usa esse filtro). Se o texto de hoje for "27 de July de
@@ -246,8 +319,8 @@ player de áudio (`shk-player`, com o `<script>` que o inicializa) **sai verbati
 
 - [ ] **Passo 4: rodar e ver passar**
 
-Run: `bash scripts/testar-urls.sh`
-Expected: `contrato de URL ok`.
+Run: `bash scripts/testar-meta.sh`
+Expected: `meta ok` (incluindo as asserções novas do post).
 
 - [ ] **Passo 5: conferir as 10 URLs**
 
@@ -257,7 +330,7 @@ Expected: 10 caminhos, todos casando `<cat>/<aaaa>/<mm>/<dd>/<slug>.html`.
 - [ ] **Passo 6: commit**
 
 ```bash
-git add src/layouts/Post.astro 'src/pages/[categoria]'
+git add src/layouts/Post.astro 'src/pages/[categoria]' src/content/posts/2025-07-29-completando-o-quebra-cabeca-lancamos-o-indicador-de-inflacao-ipca.md
 git commit -m "feat(astro): rota de post com o permalink default do Jekyll"
 ```
 
@@ -270,5 +343,7 @@ git commit -m "feat(astro): rota de post com o permalink default do Jekyll"
 - [ ] `git log --follow src/content/posts/<arquivo>` mostra o histórico do `_posts/` (o `git mv`
       preservou).
 - [ ] Nenhum Liquid (`{{`, `{%`) sobrou no markdown: `grep -rn '{{\|{%' src/content/posts | wc -l`
-      = 0.
+      = 0. **Conferir no `dist/` também** — o teste é no artefato, não no fonte: a página do post do
+      IPCA tem de conter `<a href="/noticias/2025/07/27/hoje-nasce-o-brasil-em-numeros.html">`, não
+      `{%`.
 - [ ] As tags e os badges de categoria aparecem no HTML.

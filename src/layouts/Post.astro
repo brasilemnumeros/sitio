@@ -21,6 +21,7 @@ import { render, type CollectionEntry } from 'astro:content';
 import Base from './Base.astro';
 import { dataDoId, isoDoJekyll, dataPorExtenso, urlDoPost } from '../lib/posts';
 import { trecho } from '../lib/trecho';
+import { smartify } from '../lib/smartify';
 
 interface Props {
   post: CollectionEntry<'posts'>;
@@ -41,6 +42,9 @@ const canonical = new URL(caminho, SITE_URL).href;
 const data = dataDoId(post.id);
 // O excerpt publicado é o primeiro bloco SEM o corte de 25/30 palavras.
 const descricao = trecho(post, Number.MAX_SAFE_INTEGER);
+// A URL absoluta da capa (o publicado usa a URL do Pages no `og:image`, no
+// `twitter:image` e no `image` do JSON-LD). Sem capa, `undefined`.
+const imagemAbsoluta = post.data.image ? `${SITE_URL}${post.data.image}` : undefined;
 
 // Rótulos SINGULARES dos badges — os mesmos do `case` do `blog`
 // (`📊 Análise` / `📈 Indicador` / `📢 Notícia` / `🏷️` + capitalize).
@@ -171,14 +175,17 @@ const scriptAudio = `
   `;
 
 // O JSON-LD de post (o canal `jsonLd` do `Base` desde a fatia 01/T1). A ORDEM das
-// chaves reproduz o publicado; `JSON.stringify` a preserva.
+// chaves reproduz o publicado; `JSON.stringify` a preserva. O `headline` passa pelo
+// `smartify` (as aspas curvas do `“Taxaço”` do `selic`) e o `image` — presente só com
+// capa — entra entre `headline` e `mainEntityOfPage`, onde o publicado o tem.
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'BlogPosting',
   dateModified: isoDoJekyll(data),
   datePublished: isoDoJekyll(data),
   description: descricao,
-  headline: post.data.title,
+  headline: smartify(post.data.title),
+  ...(imagemAbsoluta ? { image: imagemAbsoluta } : {}),
   mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
   url: canonical,
 };
@@ -189,7 +196,8 @@ const jsonLd = {
   description={descricao}
   tipo="article"
   canonical={canonical}
-  image={post.data.image ? `${SITE_URL}${post.data.image}` : undefined}
+  image={imagemAbsoluta}
+  publicadoEm={isoDoJekyll(data)}
   jsonLd={jsonLd}
 >
   <!-- Post Header -->

@@ -38,8 +38,10 @@ interface Props {
   // Ausente = `website` e a forma de página, cujo fallback mora no `Meta.astro`.
   tipo?: 'website' | 'article';
   jsonLd?: Record<string, unknown>;
+  // Repassa o `article:published_time` do post (fatia 03/T2) ao `Meta`.
+  publicadoEm?: string;
 }
-const { frontmatter, image, shell = 'pagina', canonical, tipo = 'website', jsonLd } = Astro.props;
+const { frontmatter, image, shell = 'pagina', canonical, tipo = 'website', jsonLd, publicadoEm } = Astro.props;
 // Sem fallback para string vazia: um `title`/`description` ausente sairia como
 // `<title> | Brasil em Números</title>` e `<meta name="description" content="">`,
 // e o `testar-meta.sh` não pega (ele grepa a PRESENÇA da tag). D6: falha em voz alta.
@@ -69,7 +71,7 @@ const classesMain =
 <!doctype html>
 <html lang="pt-BR" {...(shell === 'app' ? { class: 'dark' } : {})}>
   <head>
-    <Meta title={title} description={description} canonical={canonicalFinal} tipo={tipo} image={image} jsonLd={jsonLd} />
+    <Meta title={title} description={description} canonical={canonicalFinal} tipo={tipo} image={image} jsonLd={jsonLd} publicadoEm={publicadoEm} />
   </head>
   <body class="flex min-h-screen flex-col">
     <Nav shell={shell} />

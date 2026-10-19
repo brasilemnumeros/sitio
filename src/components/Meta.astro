@@ -2,6 +2,8 @@
 // Contrato de meta tags medido ao vivo em 2026-10-18 (curl de `/`, `/blog` e de um
 // post publicados). Antes vinham de carona do `jekyll-seo-tag`; aqui são explícitas.
 // A ordem das tags abaixo é a ordem medida — não reordene.
+import { smartify } from '../lib/smartify';
+
 interface Props {
   title: string;
   description: string;
@@ -9,20 +11,27 @@ interface Props {
   // `website` em página, `article` em post (fatia 02).
   tipo?: 'website' | 'article';
   image?: string;
+  // Só o post publica `article:published_time` (o `jekyll-seo-tag` o emite depois de
+  // `og:type`); ausente = a tag não sai.
+  publicadoEm?: string;
   // O post passa o JSON-LD explícito (precisa de `datePublished`/`dateModified`);
   // sem ele, monta-se a forma de página, que é a única usada na fatia 01.
   jsonLd?: Record<string, unknown>;
 }
-const { title, description, canonical, tipo = 'website', image, jsonLd } = Astro.props;
+const { title, description, canonical, tipo = 'website', image, publicadoEm, jsonLd } = Astro.props;
 
+// As saídas de TÍTULO passam pelo `smartify` (o `jekyll-seo-tag` roda `smartify` antes
+// de escrevê-las) — só o título, NUNCA a `description`: a do post já vem smartificada
+// do markdown (`“inflação”`) e reaplicar corromperia o par.
+const tituloSmart = smartify(title);
 // Título da aba leva o sufixo do site; o `og:title` NÃO (é só o título da página).
-const tituloCompleto = `${title} | Brasil em Números`;
+const tituloCompleto = `${tituloSmart} | Brasil em Números`;
 
 const dadosEstruturados = jsonLd ?? {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   description,
-  headline: title,
+  headline: tituloSmart,
   url: canonical,
 };
 ---
@@ -32,13 +41,15 @@ const dadosEstruturados = jsonLd ?? {
 <title>{tituloCompleto}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonical} />
-<meta property="og:title" content={title} />
+<meta property="og:title" content={tituloSmart} />
 <meta property="og:locale" content="en_US" />
 <meta property="og:description" content={description} />
 <meta property="og:url" content={canonical} />
 <meta property="og:site_name" content="Brasil em Números" />
 <meta property="og:type" content={tipo} />
+{publicadoEm && <meta property="article:published_time" content={publicadoEm} />}
 <meta name="twitter:card" content="summary" />
-<meta property="twitter:title" content={title} />
+{image && <meta property="twitter:image" content={image} />}
+<meta property="twitter:title" content={tituloSmart} />
 {image && <meta property="og:image" content={image} />}
 <script type="application/ld+json" set:html={JSON.stringify(dadosEstruturados)} />

@@ -42,12 +42,29 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
   // Por isso: DEBOUNCE (o fit espera a rajada assentar) + o usuário assume no primeiro gesto.
   let usuarioAssumiu = false;
   let fitAgendado = null;
+  let fitNoFrame = null;
   const assumir = () => {
     usuarioAssumiu = true;
-    clearTimeout(fitAgendado);      // o gesto chegou antes do fit: cancela o que estiver pendente
+    // ⚠ O fit adiado tem DUAS etapas (`setTimeout` → `requestAnimationFrame`). Cancelar só o
+    //   timeout deixa o rAF já agendado rodar `fitContent()` DEPOIS da escolha, e a janela vai
+    //   para o alcance total. Medido 2026-10-19: é uma corrida de UM frame (o timeout dispara,
+    //   o rAF fica pendente, o usuário clica no preset, o rAF enquadra tudo) — foi o que fez
+    //   "redimensionar" falhar 1/30 com o teste correto.
+    clearTimeout(fitAgendado);
+    if (fitNoFrame != null) cancelAnimationFrame(fitNoFrame);
+    fitNoFrame = null;
   };
   container.addEventListener('pointerdown', assumir, { once: true });
   container.addEventListener('wheel', assumir, { once: true, passive: true });
+
+  /** Quem decide se a janela é do usuário (§8.1): um gesto NO GRÁFICO (acima) ou uma escolha feita
+   *  FORA dele — o preset do filtro de tempo e o arrasto do minimapa avisam por aqui. Sem isto a
+   *  escolha era desfeita pela próxima série adicionada: o fit automático voltava e a janela ia
+   *  para o alcance total (medido 2026-10-19). `false` (o "Tudo") devolve a janela ao fit. */
+  const aJanelaEDoUsuario = (doUsuario) => {
+    if (doUsuario) return assumir();
+    usuarioAssumiu = false;         // "Tudo" não é janela: o enquadramento automático volta a mandar
+  };
 
   // 📌 O clique chega pelo `subscribeClick` da lib: ela consulta o `hitTest` da primitiva
   //    e devolve o `externalId` (o id da faixa) em `hoveredInfo.objectId`. SEM esta assinatura,
@@ -81,9 +98,27 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
     aoMudarJanela?.({ from: paraISO(range.from), to: paraISO(range.to) });
   });
 
+  /** Devolve a janela que o `setData`/`removeSeries` moveu. Vai no FRAME SEGUINTE: `setVisibleRange`
+   *  na MESMA volta do `setData` não pega (medido 2026-10-19 — o mesmo motivo pelo qual o fit
+   *  também é adiado por um frame). `setVisibleRange` sobre gráfico SEM barra LANÇA — daí a guarda. */
+  function devolverJanela(antes) {
+    if (!antes || !temDado) return;
+    requestAnimationFrame(() => {
+      if (!temDado) return;             // o gráfico pode ter esvaziado entre o `setData` e o frame
+      const agora = chart.timeScale().getVisibleRange();
+      if (agora && agora.from === antes.from && agora.to === antes.to) return;
+      chart.timeScale().setVisibleRange(antes);
+    });
+  }
+
   /** Cria, atualiza ou REUSA uma LineSeries por id. Série que sai do store é removida do gráfico.
    * `atribuicao` vem do `axesStore` (fatia 05) — o ADAPTER não decide eixo, só obedece (§8.1). */
   function definirSeries(itens, atribuicao = {}) {
+    // 🔴 `setData` de uma série cuja data ESTENDE o domínio de tempo MOVE a janela visível — a lib
+    //    a desloca (medido 2026-10-19: `selic-meta-acum-12m`, 320 barras, levou `2015-06→2025-06`
+    //    a `2020-08→2025-10`; re-setar a MESMA data não move). Se a janela é do usuário, uma
+    //    atualização de DADO não pode movê-la: guardamos aqui e devolvemos no fim.
+    const janelaAntes = usuarioAssumiu ? chart.timeScale().getVisibleRange() : null;
     const vivos = new Set(itens.map((i) => i.id));
     for (const [id, serie] of porId) {
       if (!vivos.has(id)) { chart.removeSeries(serie); porId.delete(id); }
@@ -114,13 +149,23 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
     temDado = itens.some((i) => (i.series?.data?.length ?? 0) > 0);
     // O fit enquadra a UNIÃO de todas as séries: espera a rajada de carga assentar (debounce) e
     // re-agenda a cada chamada, de modo que só o ÚLTIMO `definirSeries` da rajada dispara o fit —
-    // com todas as séries já no gráfico. Uma vez que o usuário interaja (`pointerdown`/`wheel`),
-    // paramos de re-enquadrar para sempre: a partir dali o zoom é dele. E o fit em si é adiado por
-    // um frame porque `fitContent()` na mesma volta do `setData` é no-op (medido na T4).
-    if (usuarioAssumiu || porId.size === 0) return;
+    // com todas as séries já no gráfico. Uma vez que o usuário TENHA a janela (§8.1 — gesto NO
+    // gráfico, preset do filtro de tempo, ou arrasto do minimapa), paramos de re-enquadrar para
+    // sempre: a partir dali o zoom é dele — e nem uma atualização de DADO a move (o `devolverJanela`
+    // acima devolve o que o `setData`/`removeSeries` empurrou). O fit é adiado por um frame porque
+    // `fitContent()` na mesma volta do `setData` é no-op (medido na T4).
+    if (usuarioAssumiu) {
+      // A janela do usuário manda: uma atualização de DADO não a move — ver `devolverJanela`.
+      devolverJanela(janelaAntes);
+      return;
+    }
+    if (porId.size === 0) return;
     clearTimeout(fitAgendado);
     fitAgendado = setTimeout(() => {
-      requestAnimationFrame(() => chart.timeScale().fitContent());
+      fitNoFrame = requestAnimationFrame(() => {
+        fitNoFrame = null;
+        chart.timeScale().fitContent();
+      });
     }, 150);   // a rajada de carga assenta; o último enquadra a UNIÃO de todas
   }
 
@@ -155,6 +200,9 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
   });
 
   return {
+    /** §8.1 — quem ESCOLHEU a janela (filtro de tempo, minimapa) avisa a autoria por aqui;
+     *  o eco do próprio gráfico não declara nada. */
+    aJanelaEDoUsuario,
     definirSeries,
     definirFaixas,
     destacarMandato,
@@ -179,6 +227,9 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
       // num app Svelte com navegação, vazam (o container é desanexado, os handlers ficam).
       clearTimeout(fitAgendado);
       fitAgendado = null;
+      // ⚠ E o rAF também: com ele pendente, o `fitContent` rodaria num gráfico já removido.
+      if (fitNoFrame != null) cancelAnimationFrame(fitNoFrame);
+      fitNoFrame = null;
       container.removeEventListener('pointerdown', assumir);
       container.removeEventListener('wheel', assumir);
       if (primitivaDeFaixas) chart.panes()[0].detachPrimitive(primitivaDeFaixas);

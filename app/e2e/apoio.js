@@ -43,3 +43,16 @@ export async function abrirBusca(page) {
   await page.getByRole('button', { name: 'Buscar indicador…' }).first().click();
   await expect(page.getByRole('dialog', { name: 'Buscar indicadores' })).toBeVisible();
 }
+
+/** Adiciona uma série pelo caminho REAL da §1.1 — busca por nome, ⏎ abre a ficha, ⏎ confirma,
+ *  Esc fecha a ficha, Esc fecha a modal. Devolve quando a modal fechou. */
+export async function adicionarPorBusca(page, termo) {
+  await abrirBusca(page);
+  const campo = page.getByRole('searchbox');
+  await campo.fill(termo);
+  await campo.press('Enter'); // ⏎ abre a ficha do primeiro resultado
+  await campo.press('Enter'); // ⏎ de novo confirma o "Adicionar"
+  await campo.press('Escape'); // fecha a ficha (a modal continua)
+  await campo.press('Escape'); // fecha a modal
+  await expect(page.getByRole('dialog', { name: 'Buscar indicadores' })).toBeHidden();
+}

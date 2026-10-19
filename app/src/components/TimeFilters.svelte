@@ -73,7 +73,10 @@
 
   function aplicar(preset) {
     if (!temDados) return;
-    definirJanela({ from: fromDe(preset) });
+    // ⚠ `escolhaDoUsuario`: clicar num preset é o usuário ESCOLHENDO a janela. Sem isto o fit
+    //   automático do adapter (adiado 150ms) voltava e jogava a escolha no lixo — e o preset
+    //   "não pegava" (medido 2026-10-19).
+    definirJanela({ from: fromDe(preset) }, { escolhaDoUsuario: true });
   }
 
   const ANO_MS = 365.25 * 24 * 60 * 60 * 1000;

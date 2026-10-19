@@ -1,31 +1,45 @@
-import { test, expect, abrirApp } from './apoio.js';
+import { test, expect, abrirApp, adicionarPorBusca } from './apoio.js';
 
 /**
  * O MINIMAPA (§2) — o gesto que devolve "voltar de qualquer zoom".
  *
- * 🔴 **Os três testes estão `fixme`, e isto é registro, não desleixo.** O defeito que eles
- * descrevem era REAL e foi corrigido (2026-10-15): o arrasto era ABSOLUTO — cada `pointermove`
- * re-centrava a janela no cursor, então mover o mouse **10px** saltava ~5 anos e, com a ponta
- * batendo no limite do dado, a janela colapsava na borda (o "zoom numa fatia mínima" relatado
- * pelo usuário). E as PONTAS não tinham alça: redimensionar não existia.
+ * O defeito que motivou esta spec era REAL e foi corrigido em 2026-10-15: o arrasto era ABSOLUTO —
+ * cada `pointermove` re-centrava a janela no cursor, então mover o mouse **10px** saltava ~5 anos e,
+ * com a ponta batendo no limite do dado, a janela colapsava na borda (o "zoom numa fatia mínima"
+ * relatado pelo usuário). E as PONTAS não tinham alça: redimensionar não existia.
  *
- * **A correção está provada por medição direta** — sonda no navegador, com arrasto de mouse de
- * verdade: mover 120px desloca ~2,9 anos **mantendo a largura**; agarrar a borda esquerda move
- * **só** `from` (`1995-12 → 2002-08`) com `to` parado em `2025-10`.
+ * **O que manteve estes três testes em `fixme` não era o gesto** — ele sempre esteve certo (sonda
+ * no navegador: mover 120px desloca ~2,9 anos MANTENDO a largura; agarrar a borda esquerda move só
+ * `from`, `1995-12 → 2002-08`, com `to` parado). Eram DOIS defeitos do app, medidos em 2026-10-19,
+ * ambos jogando fora a janela do usuário logo depois de ele a escolher:
  *
- * **O que não se conseguiu foi automatizar isso de forma confiável.** Medido: rodando só esta
- * spec, em 3 execuções seguidas falharam 3/3, 1/3 e 2/3 — as falhas migram entre os três testes,
- * então não é o gesto. Tentado e descartado, para não se repetir: (a) esperar o filtro pelo
- * estado (`toBeEnabled`) em vez de por tempo; (b) 1,2s de assentamento após o filtro; (c) achar
- * as alças pelo cursor em vez de calcular a posição (isto FICOU — é o certo, e é o que prova que
- * a alça existe); (d) `scrollIntoViewIfNeeded` (o minimapa fica abaixo da dobra num viewport de
- * 900px); (e) repetir o gesto até 4 vezes. Nenhum estabilizou. Hipótese ainda não confirmada: o
- * laço gráfico↔store do `adapter.js:79` — `setVisibleRange` dispara o mesmo callback que escreve
- * na store, então a escrita programática volta com o valor que o gráfico aplicou (com clamp e
- * arredondamento). Uma guarda de eco foi tentada e **piorou** (5 falhas em vez de 2); revertida.
+ *  1. **O fit automático não ouvia o filtro.** O `fitContent` adiado de `adapter.js` (150ms) só era
+ *     desarmado por gesto NO GRÁFICO GRANDE (`pointerdown`/`wheel`) — clicar num preset não contava.
+ *     A corrida: o fit dispara ~20-40ms depois de o filtro habilitar, e o preset só escreve
+ *     ~60-86ms depois do clique; quando a ordem invertia, o preset ia para o lixo e o poll abaixo
+ *     estourava. (E o mesmo fit, com uma série a mais, enquadrava o alcance TOTAL.)
+ *  2. **`setData` movia a janela.** Uma série cuja data ESTENDE o domínio de tempo desloca o range
+ *     visível ao entrar (medido: `selic-meta-acum-12m`, 320 barras, levou `2015-06→2025-06` a
+ *     `2020-08→2025-10`; re-setar a MESMA data não move). O eco do adapter aceitava isso como se
+ *     fosse o usuário.
  *
- * **Enquanto isto não fechar, o gesto do minimapa NÃO tem teste.** A verificação dele é captura
- * de tela — que é exatamente o que a §10.7 reabriu para não depender de alguém olhar.
+ * Os dois são reproduzíveis por medição, não por leitura: `app/scripts/medir-janela.mjs` (precisa do
+ * dev server no ar) mede a janela antes e depois de adicionar a série, nas DUAS cenas, e acusa
+ * FALHOU se a escolha do usuário for jogada fora. Foi com ele que se mediu, aqui, o
+ * `2020-08-31 → 2025-10-31` (1887d) do mecanismo 2.
+ *
+ * A correção (2026-10-19) é um conceito só — **AUTORIA da janela**: quem ESCOLHE (preset do filtro,
+ * arrasto do minimapa, gesto no gráfico grande) declara, e daí em diante (a) o fit não roda e (b)
+ * uma atualização de DADO não move a janela — o adapter guarda e devolve no frame seguinte, porque
+ * `setVisibleRange` na MESMA volta do `setData` não pega (o mesmo motivo pelo qual o fit espera um
+ * frame). A hipótese que estava escrita aqui — o "laço de eco do `adapter.js`" — estava ERRADA: o
+ * eco devolve o mesmo valor e converge; o que voltava era o fit e o `setData`.
+ *
+ * Tentado e descartado, para não se repetir: (a) esperar o filtro pelo estado (`toBeEnabled`) em
+ * vez de por tempo — FICOU, é o certo; (b) 1,2s de assentamento — SAIU junto com a corrida;
+ * (c) achar as alças pelo cursor em vez de calcular a posição — FICOU, e é o que prova que a alça
+ * existe; (d) `scrollIntoViewIfNeeded` — FICOU (o minimapa fica abaixo da dobra num viewport de
+ * 900px); (e) repetir o gesto até 4x — SAIU (ver abaixo).
  */
 
 const MINI = 'div[data-testid="minimapa"]';
@@ -42,37 +56,28 @@ async function janela(page) {
 
 async function preparar(page) {
   await abrirApp(page);
-  // duas séries: o minimapa precisa de dado para ter alcance de tempo
-  await page.getByRole('button', { name: 'Buscar indicador…' }).first().click();
-  const campo = page.getByRole('searchbox');
-  await campo.fill('IPCA');
-  await campo.press('Enter');
-  await page.locator('[data-bloco="ficha"]').getByRole('button', { name: 'Adicionar' }).click();
-  await campo.press('Escape');
-  await campo.press('Escape');
-  // ⚠ O filtro fica DESABILITADO enquanto não há série carregada (§9.5) — clicar antes disso
-  // não faz nada e a janela fica no alcance total, o que trava "mover" nas duas pontas e faz
-  // dois testes falharem por um motivo que não é o deles. Esperar o ESTADO, não o tempo.
+  // uma série basta: o minimapa precisa de dado para ter alcance de tempo
+  await adicionarPorBusca(page, 'IPCA');
+  // ⚠ O filtro fica DESABILITADO enquanto não há série carregada (§9.5) — clicar antes disso não
+  // faz nada e a janela fica no alcance total, o que trava "mover" nas duas pontas e faz os testes
+  // falharem por um motivo que não é o deles. Esperar o ESTADO, não o tempo.
   const filtro = page.getByRole('button', { name: 'Janela de 10 anos' });
   await expect(filtro).toBeEnabled({ timeout: 20000 });
   // estreita: com o alcance total a janela está travada nas duas pontas e nada poderia mover.
   // O nome acessível é o `aria-label` do preset, não o texto do botão.
   await filtro.click();
-  // ⚠ Esperar o preset ASSENTAR, não só a janela deixar de ser nula: entre uma coisa e outra o
-  // filtro ainda não foi aplicado, a janela segue no alcance total, e as bordas ficam nas pontas
-  // — aí "mover" é travado dos dois lados e o teste falha por um motivo que não é o dele.
-  // O timeout é folgado de propósito: o padrão do `expect.poll` (5s) é curto para o filtro
-  // recarregar e o gráfico redesenhar, e a falha aparece como flake em vez de defeito.
+  // ⚠ Esperar o preset ASSENTAR — e não há mais `waitForTimeout` aqui: o preset agora DECLARA a
+  // autoria da janela (§8.1, `escolhaDoUsuario`), então nem o fit automático nem o `setData` de uma
+  // série posterior podem desfazê-lo. Era o `waitForTimeout` que mascarava a corrida acima.
+  //
+  // 📌 E o preset ANCORA a janela na última data ("voltar de qualquer zoom"): `from` fica em
+  // `dataMaxima - 10 anos` e `to` no fim do dado. Consequência para quem escrever teste aqui: a
+  // janela está COLADA na borda direita, então arrastar para a DIREITA é clampado e não tem efeito.
   await expect.poll(async () => {
     const j = await janela(page);
     return j.from ? (Date.parse(j.to) - Date.parse(j.from)) / 86400000 : Infinity;
   }, { message: 'o filtro de 10 anos tem de estreitar a janela', timeout: 20000 })
     .toBeLessThan(365 * 12);
-  // ⚠ E deixar ASSENTAR. O poll acima vê a janela estreitar, mas o gráfico ainda está
-  // redesenhando: um gesto no meio disso é aplicado e depois sobrescrito pelo `setVisibleRange`
-  // que vem a caminho. O sintoma é o pior tipo — a janela volta exatamente ao valor antigo, e o
-  // teste falha dizendo "não moveu", que não é o que aconteceu.
-  await page.waitForTimeout(1200);
 }
 
 /** Centro do minimapa em coordenadas de VIEWPORT (o que o mouse usa).
@@ -119,28 +124,12 @@ async function bordas(page) {
 /** Largura da janela em dias — a grandeza que "mover" tem de preservar. */
 const dias = (j) => (Date.parse(j.to) - Date.parse(j.from)) / 86400000;
 
-/**
- * ⚠ Repete o gesto até o efeito aparecer, com teto.
- *
- * O app tem um laço gráfico↔store (§8.1): `setVisibleRange` dispara o callback que escreve na
- * store, e o que o gráfico REALMENTE aplicou (com clamp e arredondamento) volta como se fosse o
- * usuário. Uma escrita programática pode, portanto, ser revertida — intermitente, medido: o
- * mesmo arrasto funciona em 1 de 3 execuções seguidas e falha nas outras. Não é o gesto que
- * está errado (medido à parte, com sonda: ele é proporcional e preserva a largura); é a corrida.
- *
- * O que se afirma aqui é o CONTRATO — "arrastar desloca a janela" —, não que a primeira
- * tentativa vença a corrida. Por isso o teto: se TODAS falharem, o gesto não funciona, e aí o
- * teste cai, que é o que ele deve fazer.
- */
-async function gestoAte(page, gesto, condicao, { tentativas = 4 } = {}) {
-  for (let i = 1; i <= tentativas; i++) {
-    await gesto();
-    if (await condicao()) return i;
-  }
-  return null; // esgotou: quem chamou decide o que dizer
-}
+// ⚠ O gesto NÃO é repetido. Havia um `gestoAte` que tentava até 4 vezes, e ele saiu junto com a
+// corrida que o justificava: afirmar o CONTRATO ("arrastar desloca a janela") com retry transforma
+// falha determinística em sorte, e o teste passa a não provar nada sobre a primeira tentativa —
+// que é a que o usuário faz. Se um gesto só não bastar, isto tem de ficar vermelho.
 
-test.fixme('mover: arrastar desloca a janela e PRESERVA a largura', async ({ page }) => {
+test('mover: arrastar desloca a janela e PRESERVA a largura', async ({ page }) => {
   await preparar(page);
   const b = await bordas(page);
   expect(b.esquerda, 'a alça esquerda tem de existir').not.toBeNull();
@@ -154,70 +143,64 @@ test.fixme('mover: arrastar desloca a janela e PRESERVA a largura', async ({ pag
   // pode estar fora dela, e aí o gesto é "centrar", que é outro comportamento.
   const meio = (b.esquerda + b.direita) / 2;
   const c = await caixa(page);
-  const arrastar = async () => {
-    await page.mouse.move(meio, c.y);
-    await page.mouse.down();
-    await page.mouse.move(meio - 60, c.y, { steps: 10 });
-    await page.mouse.up();
-  };
-
-  const tentativa = await gestoAte(page, arrastar, async () =>
-    Date.parse((await janela(page)).from) < Date.parse(antes.from));
-  expect(tentativa, 'o arrasto tem de deslocar a janela').not.toBeNull();
+  await page.mouse.move(meio, c.y);
+  await page.mouse.down();
+  await page.mouse.move(meio - 60, c.y, { steps: 10 });
+  await page.mouse.up();
 
   const depois = await janela(page);
+  // para a ESQUERDA: a janela do preset está colada na borda direita do dado, então para a direita
+  // o arrasto é clampado e não move (ver `preparar`)
+  expect(Date.parse(depois.from), 'o arrasto tem de deslocar a janela').toBeLessThan(Date.parse(antes.from));
   // a largura ficou (o defeito antigo colapsava a janela)
   expect(Math.abs(dias(depois) - dias(antes))).toBeLessThan(60); // menos de ~2 meses de folga
 });
 
-test.fixme('redimensionar: a alça da ponta esquerda move UMA borda só', async ({ page }) => {
+test('redimensionar: a alça da ponta esquerda move UMA borda só', async ({ page }) => {
   await preparar(page);
   const b = await bordas(page);
   expect(b.esquerda, 'a alça esquerda tem de existir').not.toBeNull();
   const c = await caixa(page);
   const antes = await janela(page);
 
-  const arrastar = async () => {
-    await page.mouse.move(b.esquerda, c.y);
-    await page.mouse.down();
-    await page.mouse.move(b.esquerda + 80, c.y, { steps: 10 });
-    await page.mouse.up();
-  };
-
-  const tentativa = await gestoAte(page, arrastar, async () =>
-    Date.parse((await janela(page)).from) > Date.parse(antes.from));
-  expect(tentativa, 'a alça tem de redimensionar').not.toBeNull();
+  await page.mouse.move(b.esquerda, c.y);
+  await page.mouse.down();
+  await page.mouse.move(b.esquerda + 80, c.y, { steps: 10 });
+  await page.mouse.up();
 
   const depois = await janela(page);
   // a ponta agarrada andou…
-  expect(Date.parse(depois.from)).toBeGreaterThan(Date.parse(antes.from));
+  expect(Date.parse(depois.from), 'a alça tem de redimensionar').toBeGreaterThan(Date.parse(antes.from));
   // …e a OUTRA não. É isto que separa redimensionar de mover.
   expect(depois.to).toBe(antes.to);
 });
 
-test.fixme('um arrasto pequeno NÃO causa um salto grande (o relato: "fatia minúscula")', async ({ page }) => {
+test('um arrasto pequeno NÃO causa um salto grande (o relato: "fatia minúscula")', async ({ page }) => {
   await preparar(page);
   const b = await bordas(page);
+  // ⚠ Sem esta guarda o teste mente: sem alça achada, `meio` vira `NaN`, o mouse vai a lugar nenhum
+  // e a falha aparece como "não teve efeito" — o falso negativo que ajudou a manter este teste em
+  // `fixme` (a alça existia; era a LEITURA que não era conferida).
+  expect(b.esquerda, 'a alça esquerda tem de existir').not.toBeNull();
+  expect(b.direita, 'a alça direita tem de existir').not.toBeNull();
   const c = await caixa(page);
   const antes = await janela(page);
 
   // 1% da largura do minimapa, agarrando DENTRO da janela. O defeito antigo convertia isto em
   // ANOS de salto, porque cada movimento re-centrava a janela em vez de deslocá-la.
+  // ⚠ Para a ESQUERDA — o preset ancora a janela na última data, então para a direita é clampado
+  // (0/4 medições de efeito). Arrastar para a direita aqui acusa "o gesto não funciona" quando o
+  // gesto funciona, só não naquela direção: a outra metade do que mantinha este teste vermelho.
   const passo = c.w * 0.01;
   const meio = (b.esquerda + b.direita) / 2;
-  const arrastar = async () => {
-    await page.mouse.move(meio, c.y);
-    await page.mouse.down();
-    await page.mouse.move(meio + passo, c.y, { steps: 5 });
-    await page.mouse.up();
-  };
-
-  const tentativa = await gestoAte(page, arrastar, async () =>
-    Date.parse((await janela(page)).from) !== Date.parse(antes.from));
-  expect(tentativa, 'o arrasto pequeno tem de ter efeito').not.toBeNull();
+  await page.mouse.move(meio, c.y);
+  await page.mouse.down();
+  await page.mouse.move(meio - passo, c.y, { steps: 5 });
+  await page.mouse.up();
 
   const depois = await janela(page);
   const deslocamento = Math.abs(Date.parse(depois.from) - Date.parse(antes.from)) / 86400000;
-  // proporcional: 1% do alcance total (~30 anos) ≈ 110 dias. Antes eram ~5 ANOS para 10px.
+  expect(deslocamento, 'o arrasto pequeno tem de ter efeito').toBeGreaterThan(0);
+  // proporcional: 1% da largura da janela de 10 anos ≈ 36 dias. Antes eram ~5 ANOS para 10px.
   expect(deslocamento).toBeLessThan(400); // ~13 meses — folga generosa, mas longe de "5 anos"
 });

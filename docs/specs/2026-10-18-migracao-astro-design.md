@@ -295,20 +295,40 @@ migração sem custo extra.
 > **Nota (2026-10-18):** o **permalink do app** era o item 1 desta lista — foi **decidido** (entra
 > antes de publicar; ver D13) e saiu daqui. O que segue aberto:
 
-1. **O tema da `/`** (D11). Duas saídas: (a) a `/` é uma página escura fixa, sem o botão de tema,
-   e as outras páginas do site mantêm o alternador; (b) a `/` mantém o alternador do site e o app
-   ganha suporte a tema claro — o que **invalidaria a paleta medida para 10 séries** (§7 e §12 da
-   spec antiga) e exigiria remedição.
-2. **`/feed.xml` muda de produtor** (do `jekyll-feed` para o `@astrojs/rss`). O path fica; o
-   conteúdo (quantos itens, `description` completa ou resumo) **não** foi comparado com o atual.
+1. ~~**O tema da `/`**~~ — **DECIDIDO (2026-10-18):** a opção **(a)**. A `/` é uma página **escura
+   fixa**, sem o botão de tema; as outras páginas do site mantêm o alternador. Preserva a paleta
+   medida para as 10 séries (o canvas do app é `#0e1117`); a opção (b) invalidaria essa paleta.
+2. ~~**`/feed.xml` muda de produtor**~~ — **RESOLVIDO (2026-10-18), o item foi medido e fechado.** O
+   publicado é **Atom** (10 `<entry>`, conteúdo HTML integral em `<content type="html" xml:base>`);
+   o `@astrojs/rss` emite **RSS 2.0** (10 `<item>`). A mudança é maior do que "produtor": é de
+   **dialeto**. **Decisão do usuário: aceitar RSS 2.0** (o path `/feed.xml` não muda; leitores aceitam
+   os dois). O `description` leva o HTML integral do post com `href="/`/`src="/` **absolutizados** —
+   o RSS 2.0 não tem `xml:base` e o relativo quebraria no leitor. Mesmos 10 posts, mesmos links.
 3. **O histórico do git e a pasta `_posts/`**: renomear para a estrutura do Astro cria *rename*
    em 10 arquivos. Decidir se vale um commit dedicado (histórico preservado por `git mv`).
 4. **Cloudflare Pages**, citado junto na ADR 0001 como alternativa, **não foi avaliado** nesta
    sessão. Não entra.
 5. **`blog_categories`** do `_config.yml` é usado por **nenhum** template (achado da ADR 0001).
-   Na migração: apagar, não portar.
+   Na migração: apagar, não portar. *(Medido na execução: os valores `name`/`description` coincidem
+   com os do front matter das páginas de categoria, que são a fonte real — por isso apagar não perde
+   nada; ver `src/lib/categorias.ts`.)*
 6. **`tailwind.config.js`** é config morta desde a v4 (medido na ADR 0001: apontando o `content`
    para pasta inexistente, as classes continuam sendo geradas). Não portar.
+
+### 8.1 Decisões de produto tomadas em 2026-10-18 (todas resolvidas)
+
+Fechadas pelo usuário; aplicadas e verificadas no repo (commit `8fed17c`):
+
+| # | item | decisão |
+|---|---|---|
+| 1 | `og:locale` publicado é `en_US` (default do `jekyll-seo-tag`) | **corrigir para `pt_BR`** — não é fiel, é conserto de meta errada |
+| 2 | datas com o mês em inglês (`27 de July de 2025`) | **traduzir** (`27 de julho de 2025`) — texto visível; `Intl` em `pt-BR` |
+| 3 | corpo do 404 em inglês (`Page not found :(`) | **traduzir**; o link de volta para `/` (que não existia) entra |
+| 4 | `target="\_blank"` (barra invertida — `target` inerte) e sem `rel` | **corrigir** para `target="_blank" rel="noopener noreferrer"` (13 ocorrências em posts + `sobre.md`) |
+| 5 | feed Atom → RSS 2.0 (item 2 acima) | **aceitar** |
+
+> A migração vinha reproduzindo **byte a byte** o publicado, inclusive defeitos (mês em inglês,
+> `target` quebrado). Estas cinco são a exceção deliberada: o usuário preferiu consertar.
 
 ## 9. Alternativas rejeitadas, e por quê
 

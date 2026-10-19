@@ -99,15 +99,24 @@ dia a dia; é peso e perenidade:
 - Risco principal: **quebrar uma URL publicada** ou perder meta tag em silêncio. Ambos são
   cobertos por verificação no §10 do desenho.
 
+## Resolvido durante a execução (2026-10-18)
+
+- **O tema da `/`: `/` escura fixa, sem o botão de tema** (opção (a) do §8). As outras páginas mantêm
+  o alternador. Preserva a paleta medida para as 10 séries — a opção (b) a invalidaria. Fecha o item
+  que estava aberto acima; a fatia 05 implementa.
+- **O feed mudou de produtor *e de dialeto*: `jekyll-feed` (Atom) → `@astrojs/rss` (RSS 2.0).** O path
+  `/feed.xml` não muda. O conteúdo foi comparado item a item (10 posts, mesmos links; o `description`
+  leva o HTML integral com as URLs absolutizadas). Aceito pelo usuário.
+- **Quatro defeitos do site atual foram consertados em vez de reproduzidos** (decisão do usuário):
+  `og:locale` `en_US`→`pt_BR`; o mês em inglês nas datas → português; o corpo do 404 em inglês →
+  português; `target="\_blank"`/falta de `rel` → `target="_blank" rel="noopener noreferrer"`. A
+  migração vinha reproduzindo o publicado **byte a byte**, inclusive os defeitos; estas são a
+  exceção deliberada. Detalhe no §8.1 do desenho.
+
 ## Fora de escopo (não decidido aqui)
 
 - **Cloudflare Pages** e qualquer mudança de hospedagem.
 - **Automatizar o pipeline de dados** (os notebooks seguem manuais).
-- **O tema da `/`**: hoje existem duas cascas divergentes (dev com `class="dark"` hardcoded;
-  produção sem, com o botão de tema visível) e o E2E só cobre a de dev. A migração resolve o
-  *mecanismo*, mas a **escolha** entre `/` escura fixa e app com tema claro está **aberta** no §8
-  do desenho — e a segunda invalidaria a paleta medida para 10 séries.
-- **Comparar o conteúdo do feed** antigo (`jekyll-feed`) com o novo, item a item.
 
 ## Referências
 

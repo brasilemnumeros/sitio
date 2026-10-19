@@ -91,7 +91,7 @@ medida:
 | `<meta name="description">` | `{description}` |
 | `<link rel="canonical">` | `{canonical}` |
 | `<meta property="og:title">` | `{title}` — **só** o título da página, **sem** o sufixo do site |
-| `<meta property="og:locale">` | `en_US` — ver nota abaixo |
+| `<meta property="og:locale">` | `pt_BR` — **decidido em 2026-10-18** (o medido era `en_US`; ver nota abaixo) |
 | `<meta property="og:description">` | `{description}` |
 | `<meta property="og:url">` | `{canonical}` |
 | `<meta property="og:site_name">` | `Brasil em Números` |
@@ -114,8 +114,10 @@ post:
 ```
 
 > ⚠️ **`og:locale: en_US` é o default do seo-tag** — o site é pt-BR e não declara `lang` no
-> `_config.yml`. **Reproduza como medido** (a migração não altera metadata publicada) e **registre
-> como item aberto**: mudar para `pt_BR` é decisão de produto, não de migração.
+> `_config.yml`.
+> **RESOLVIDO em 2026-10-18: saiu `pt_BR`** (`SITE.idioma` em `src/config.js`). O plano mandava
+> reproduzir `en_US` e registrar como item aberto; o usuário decidiu consertar (§8.1 do desenho).
+> **Não** reverte para `en_US`.
 > **Não** porte `<meta name="generator" content="Jekyll v3.10.0">` — seria mentira.
 
 `Base.astro` reproduz o `<body class="flex min-h-screen flex-col">` e o `<main>` com a regra do

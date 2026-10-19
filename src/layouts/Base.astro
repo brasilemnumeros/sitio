@@ -40,8 +40,13 @@ interface Props {
   jsonLd?: Record<string, unknown>;
 }
 const { frontmatter, image, shell = 'pagina', canonical, tipo = 'website', jsonLd } = Astro.props;
-const title = Astro.props.title ?? frontmatter?.title ?? '';
-const description = Astro.props.description ?? frontmatter?.description ?? '';
+// Sem fallback para string vazia: um `title`/`description` ausente sairia como
+// `<title> | Brasil em Números</title>` e `<meta name="description" content="">`,
+// e o `testar-meta.sh` não pega (ele grepa a PRESENÇA da tag). D6: falha em voz alta.
+const title = Astro.props.title ?? frontmatter?.title;
+if (!title) throw new Error(`${Astro.url.pathname}: página sem 'title' (nem prop, nem front matter)`);
+const description = Astro.props.description ?? frontmatter?.description;
+if (!description) throw new Error(`${Astro.url.pathname}: página sem 'description' (nem prop, nem front matter)`);
 
 // `canonical` calculado. A normalização da raiz é obrigatória: sob
 // `build.format: 'file'` + `trailingSlash: 'never'`, `Astro.url.pathname` é

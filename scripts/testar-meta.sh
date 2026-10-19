@@ -66,6 +66,15 @@ else
   fi
   # E o post SEM capa continua `summary` — a outra metade da regra.
   conferir 'name="twitter:card" content="summary"' "$POST"
+  # Reticência: o `smartify` do publicado troca `...` por `…` (medido 2026-10-19, no
+  # primeiro post). O `<h1>` mantém os três pontos; SÓ as metas mudam. Sem esta
+  # asserção, a regressão volta em silêncio (o `<h1>` passaria igual).
+  PRIMEIRO="dist/noticias/2025/07/27/hoje-nasce-o-brasil-em-numeros.html"
+  if [ -f "$PRIMEIRO" ]; then
+    conferir 'content="Início de tudo…"' "$PRIMEIRO"
+    grep -qF 'content="Início de tudo..."' "$PRIMEIRO" && { echo "meta: reticência não smartificada em $PRIMEIRO" >&2; falha=1; }
+    conferir_exato '<title>Início de tudo… | Brasil em Números</title>' "$PRIMEIRO"
+  fi
 fi
 
 [ "$falha" -eq 0 ] || exit 1

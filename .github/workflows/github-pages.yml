@@ -1,10 +1,5 @@
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
-# Sample workflow for building and deploying a Jekyll site to GitHub Pages
-name: Deploy Jekyll site to Pages
+# Constrói o site (Astro) e o app (Svelte/Vite) e publica o `dist/` no GitHub Pages.
+name: Deploy do site (Astro) para o GitHub Pages
 
 on:
   # Runs on pushes targeting the default branch
@@ -56,15 +51,17 @@ jobs:
       - name: Build do app (Vite, saída de nome fixo)
         run: npm ci --prefix app && npm run build --prefix app
 
+      # O passo do Tailwind CLI FICA: o dev server do app linka `assets/css/main.dist.css` e é
+      # ele que serve o E2E (a fatia 05 depende disto). A entrada é `src/styles/main.css` desde
+      # a fatia 00 — o `assets/css/main.css` era caminho morto.
       - name: CSS do site (Tailwind CLI, da raiz de sitio/)
-        run: npm ci && npx -y @tailwindcss/cli -i ./assets/css/main.css -o ./assets/css/main.dist.css
-
-      - name: Canário do Tailwind (§10.3)
-        run: bash scripts/checar-canario.sh
+        run: npm ci && npx -y @tailwindcss/cli -i ./src/styles/main.css -o ./assets/css/main.dist.css
 
       # O E2E precisa do repo `dados/` para servir as séries e os governos. Ele é um repo
       # SEPARADO, então o checkout padrão não o traz. O `path: dados` o põe na raiz do
       # workspace — que de `app/` é `../dados/` (é o valor que o `DADOS_DIR` recebe abaixo).
+      # ⚠️ `ref: ${github.ref_name}`: numa branch de feature o repo `dados` não tem essa branch
+      #    → este passo falha. Em `main` (a branch que dispara este deploy) ele existe.
       - name: Checkout do repo de dados
         uses: actions/checkout@v4
         with:
@@ -76,19 +73,26 @@ jobs:
         run: npx --prefix app playwright install --with-deps chromium
 
       # O teste que faz o CI recusar o que só uma captura de tela pegava (§10.7, reaberta).
-      # Roda DEPOIS do Tailwind e do canário: o E2E sobe o dev server, que precisa do CSS.
+      # Roda DEPOIS do Tailwind: o E2E sobe o dev server, que precisa do CSS.
       - name: Testes de navegação (E2E)
         env:
           DADOS_DIR: ../dados/
         run: npx --prefix app playwright test --config app/playwright.config.js
 
+      # O build do site (Astro) encadeia app → public/ → site → verificações (o `verificar` do
+      # `package.json` roda o canário e os `testar-*`). Substitui o build do gerador anterior.
+      # ⚠️ `path: dist` (e NÃO `sitio/dist`): o checkout põe a raiz do repo `sitio` na raiz do
+      #    workspace, e é ali que o Astro emite `dist/`.
+      - name: Build do site (Astro)
+        run: npm run build
+
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
-      - name: Build (Jekyll)
-        uses: actions/jekyll-build-pages@v1
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
 
   deploy:
     runs-on: ubuntu-latest

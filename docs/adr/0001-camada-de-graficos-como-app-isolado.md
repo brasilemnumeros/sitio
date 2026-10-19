@@ -253,6 +253,9 @@ já estão consolidadas nas seções acima — nominalmente, não se repetem aqu
   guarda de eco foi tentada e **piorou** (5 falhas em vez de 2); revertida. Enquanto isto não
   fechar, a verificação do minimapa é captura de tela — o que é precisamente o que a §10.7
   reabriu para não depender.
+  **→ Fechado em 2026-10-19:** a hipótese do eco estava **errada** (o eco converge); o que tirava a
+  janela do usuário era o fit automático e o `setData`. Ver a seção *"O gesto do minimapa tem teste,
+  e ele achou DOIS defeitos do app"*, abaixo.
 
 
 
@@ -318,6 +321,57 @@ já estão consolidadas nas seções acima — nominalmente, não se repetem aqu
   registrado no próprio script:** ele verifica **forma** (chave `rate` residual, metadados, contagem,
   deduplicação, chaves extras) e **não** integridade de **valor** — como o converter normaliza o
   arquivo em disco, um valor trocado é ponto fixo da conversão, e não há fonte independente no repo.
+
+### O gesto do minimapa tem teste, e ele achou DOIS defeitos do app (2026-10-19)
+
+Os três E2E do minimapa saíram do `fixme` — e o caminho até lá é o registro que importa, porque o
+obstáculo **não era o gesto** (já corrigido em 2026-10-15). Eram dois defeitos do app, ambos
+jogando fora a janela do usuário **logo depois** de ele a escolher. Medidos, não inferidos
+(`app/scripts/medir-janela.mjs` reproduz os dois; foi o instrumento que produziu estes números):
+
+- **O fit automático não ouvia o filtro de tempo.** O `fitContent` adiado de `adapter.js` (150ms)
+  era desarmado só por gesto **no gráfico grande** (`pointerdown`/`wheel`); **clicar num preset não
+  contava**. Corrida medida: o fit dispara ~20-40ms depois de o filtro habilitar, e o preset só
+  escreve ~60-86ms depois do clique — quando a ordem invertia, o preset ia para o lixo.
+- **`setData` move a janela visível.** Uma série cuja data **ESTENDE o domínio de tempo** desloca o
+  range ao entrar: medido, `selic-meta-acum-12m` (320 barras) levou `2015-06→2025-06` a
+  `2020-08-31→2025-10-31` (1887d); **re-setar a MESMA data não move**. O eco do adapter aceitava a
+  mudança como se fosse escolha do usuário.
+- **A hipótese que estava registrada acima (o "laço de eco do `adapter.js`") estava ERRADA.** O eco
+  devolve o **mesmo** valor e converge; o que clobberava a janela era o fit e o `setData`.
+- **Terceiro achado, de um frame:** o fit adiado tem **duas etapas** (`setTimeout` →
+  `requestAnimationFrame`), e o `assumir()` cancelava só o timeout. Escolhendo o preset entre as
+  duas, o rAF pendente ainda rodava `fitContent()` e enquadrava o alcance TOTAL — uma corrida de um
+  frame, que fazia "redimensionar" falhar **1/30** com o teste correto.
+
+**A decisão: AUTORIA da janela** — um conceito só, no lugar de dois remendos. Quem **ESCOLHE** a
+janela (preset do filtro de tempo, arrasto do minimapa, gesto no gráfico grande) **declara**; daí
+em diante (a) o fit não roda e (b) uma atualização de **DADO** não a move (o adapter guarda a janela
+e a devolve no **frame seguinte**, porque `setVisibleRange` na mesma volta do `setData` não pega).
+`"Tudo"` (`resetarJanela`) avisa `false`: não é uma janela, é a **ausência** dela — o fit é
+**rearmado**.
+
+Três decisões de forma, com alternativa rejeitada:
+
+- **A autoria viaja como EVENTO, não como estado** (`aoEscolherJanela` em `stores/viewport.js`). A
+  forma da store fica `{from, to}` — é o que a barra de filtros lê e o que o `viewport.test.js`
+  afirma. **Alternativa rejeitada:** um campo booleano na store (muda a forma que os dois lados leem).
+- **O adapter guarda e DEVOLVE a janela, em vez de a store nunca saber da mudança.** **Alternativa
+  rejeitada:** suprimir a escrita da store durante o `definirSeries`. O valor errado vive **um
+  frame** (medido: escrita aos 155ms, devolução aos 171ms), e a devolução acontece **antes do paint
+  do mesmo frame** — não há piscada a corrigir, e uma guarda que não guarda nada é exatamente o que
+  este projeto trata como defeito silencioso.
+- **Sem retry no teste.** O `gestoAte` (até 4 tentativas) foi **removido**: afirmar "arrastar desloca
+  a janela" com retry transforma falha determinística em sorte e o teste deixa de provar a primeira
+  tentativa, que é a que o usuário faz. O teste agora arrasta **para a esquerda**, porque o preset
+  ancora a janela na **última data** (`"voltar de qualquer zoom"`) e para a direita o arrasto é
+  clampeado — 0/4 medições de efeito, que era a outra metade do falso vermelho.
+
+**Verificação:** 60 execuções do gesto (`--repeat-each=10` × duas baterias) com **0 falhas** no
+código final (antes: 3/30 e 1/30). O teste de regressão novo (`exemplo.spec.js`, "a janela escolhida
+sobrevive a adicionar série") foi sabotado **nos dois mecanismos, na causa exata**, e fica **vermelho
+nos dois**. Referência: `app/e2e/minimapa.spec.js` tem o registro completo, inclusive as cinco
+abordagens descartadas.
 
 ## Consequências
 

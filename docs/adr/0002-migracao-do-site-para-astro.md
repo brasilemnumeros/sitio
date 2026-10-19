@@ -1,7 +1,7 @@
 # ADR 0002 — Migrar o site de Jekyll/Liquid para Astro
 
 **Data da decisão:** 2026-10-18
-**Estado:** decidido. **Não publicado** — o push está segurado por decisão do usuário.
+**Estado:** **implementado** (fatias 00–07, 2026-10-19). **Não publicado** — o push está segurado por decisão do usuário.
 **Desenho (detalhe canônico):** `sitio/docs/specs/2026-10-18-migracao-astro-design.md`
 **Relação com a ADR 0001:** a 0001 listava "Migração de stack do site (Astro / Cloudflare Pages)"
 como **fora de escopo**. Esta ADR decide a parte do Astro; o Cloudflare Pages continua não avaliado.
@@ -117,6 +117,19 @@ dia a dia; é peso e perenidade:
 
 - **Cloudflare Pages** e qualquer mudança de hospedagem.
 - **Automatizar o pipeline de dados** (os notebooks seguem manuais).
+
+## Implementado (2026-10-19)
+
+A migração foi executada em 7 fatias (`sitio/docs/plans/migracao-astro/`, 00 a 07). O Jekyll saiu do
+repositório — `Gemfile`, `Gemfile.lock`, `_config.yml`, `_layouts/`, `_includes/` e as páginas
+`.html` (fatia 07). O CI (`.github/workflows/github-pages.yml`) passou a rodar `npm run build`
+(Astro → `dist/`) e a publicar `dist/` via `upload-pages-artifact`; o `jekyll-build-pages` saiu.
+
+O build roda **do zero nesta máquina** (`npm ci && npm run build`, sem Ruby): 20 páginas, feed,
+sitemap, catálogo e o app. O critério "uma stack" (spec §10.6) fecha: nenhuma linha **viva** fora de
+`docs/` menciona jekyll/liquid/ruby (sobram só os comentários de história e um metadado de
+`peerDependencies` de terceiro em `package-lock.json`). **Falta só o push**, que segue sendo decisão
+do usuário.
 
 ## Referências
 

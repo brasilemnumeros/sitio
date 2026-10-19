@@ -253,8 +253,36 @@ git commit -m "feat(astro): listagem de posts e categorias a partir de um compon
 
 - [ ] **Passo 1: escrever `404.astro`**
 
-Página de verdade (título + link para a `/`), usando `Base.astro`. **Não** repetir o `layout: page`
-inexistente.
+Página de verdade, usando `Base.astro`. **Não** repetir o `layout: page` inexistente.
+
+**O que o publicado faz hoje (medido em 2026-10-18, `curl …/404.html`):** Jekyll **aplica o
+`default.html`** mesmo com o `layout: page` ausente (o `theme-switcher.js`, o `feedback-button.js` e o
+GA4 estão lá) — então o chrome é o de sempre. O **corpo** é o de `404.html`: um `<style>` inline com
+`.container`/`h1` e o `<div class="container">` com `404`, `Page not found :(`, `The requested page
+could not be found.` — **em inglês**, resíduo de um template. Reproduza o corpo **como está**.
+
+⚠️ **A meta do 404 NÃO é de página, é a de SITE** — é o que o `default.html` emite quando a página não
+tem `title:` no front matter (medido):
+
+| tag | valor publicado |
+|---|---|
+| `<title>` | `Brasil em Números \| Dados e informações sobre o Brasil em um só lugar` |
+| `og:title` | `Brasil em Números` |
+| `description` / `og:description` | `Uma plataforma dedicada a fornecer dados e informações sobre o Brasil.` |
+| `canonical` | `https://www.brasilemnumeros.ong.br/404.html` |
+| `og:type` | `website` |
+
+Como o `Base.astro` **exige** `title` e acrescenta ` | Brasil em Números`, isso não sai sem um canal:
+acrescente ao `Meta.astro` um prop booleano opcional (ex.: `tituloDoSite`) que, quando verdadeiro,
+emite `<title>` = `Brasil em Números | Dados e informações sobre o Brasil em um só lugar` e
+`og:title` = `Brasil em Números`. O `description` do 404 é a **descrição do site** — passe-a do
+`404.astro` (o `Base` continua exigindo). **As três strings acima são medidas; copie-as.**
+
+> **Item aberto (produto):** o corpo do 404 está em inglês. **Reproduzido**; traduzir é decisão do
+> usuário (junto com `og:locale`, o mês em inglês e o `target="\_blank"`).
+>
+> O link “voltar para a `/`” **entra** (o plano o manda e ele não existe hoje) — é uma adição
+> deliberada a uma página de erro, e o teste abaixo confere que ele existe.
 
 - [ ] **Passo 2: escrever o teste do contrato de URL**
 
@@ -280,6 +308,13 @@ for f in index.html 404.html blog.html sobre.html links.html termos-de-uso.html 
   grep -qE '\{\{|\{%|\{:' "$arq" \
     && { echo "contrato: $f tem Liquid/IAL cru" >&2; falha=1; }
 done
+[ "$falha" -eq 0 ] || exit 1
+
+# O 404 não tem título de PÁGINA: publica o título do SITE (medido no publicado).
+grep -qF '<title>Brasil em Números | Dados e informações sobre o Brasil em um só lugar</title>' dist/404.html \
+  || { echo "contrato: título do 404 divergiu do publicado" >&2; falha=1; }
+grep -qF 'href="/"' dist/404.html \
+  || { echo "contrato: o 404 perdeu o link de volta para /" >&2; falha=1; }
 [ "$falha" -eq 0 ] || exit 1
 echo "contrato de URL ok"
 ```

@@ -199,7 +199,10 @@ inexistente.
 
 - [ ] **Passo 2: escrever o teste do contrato de URL**
 
-`scripts/testar-urls.sh` (lista da spec §4 — as mesmas 13 URLs, na forma `.html` que o build gera):
+`scripts/testar-urls.sh` (lista da spec §4 — as mesmas 13 URLs, na forma `.html` que o build gera).
+**Ele confere conteúdo, não só existência** (a lição da 03/T1: um teste que só conta arquivos não
+prova que alguém os lê). Para cada arquivo: existe, tem `<title>` **não vazio** (não
+`<title> | Brasil em Números</title>`), e não tem Liquid/IAL cru (`{{`, `{%`, `{:`).
 
 ```bash
 #!/usr/bin/env bash
@@ -209,19 +212,27 @@ for f in index.html 404.html blog.html sobre.html links.html termos-de-uso.html 
          politica-de-privacidade.html categorias/analises.html \
          categorias/indicadores.html categorias/noticias.html \
          noticias/2025/07/27/hoje-nasce-o-brasil-em-numeros.html; do
-  [ -f "dist/$f" ] || { echo "contrato: falta dist/$f" >&2; falha=1; }
+  arq="dist/$f"
+  [ -f "$arq" ] || { echo "contrato: falta dist/$f" >&2; falha=1; continue; }
+  # título não vazio: `title` ausente agora derruba o build, mas um título em
+  # branco ainda passaria — e é meta invisível, a falha silenciosa do D6.
+  grep -qE '<title>[^<]*[^ <][^<]*</title>' "$arq" \
+    || { echo "contrato: $f sem <title> util" >&2; falha=1; }
+  grep -qE '\{\{|\{%|\{:' "$arq" \
+    && { echo "contrato: $f tem Liquid/IAL cru" >&2; falha=1; }
 done
 [ "$falha" -eq 0 ] || exit 1
 echo "contrato de URL ok"
 ```
 
-> O post entra na lista na fatia 03. Aqui ele provavelmente **falha** — é isso que a fatia 03 fecha.
+> **Ruling (2026-10-18): esta tarefa roda DEPOIS da 03/T2** (a rota do post). Escrita antes, a lista
+> acima nasce **vermelha** por causa do post — um teste deliberadamente quebrado no repo. Depois da
+> 03/T2 ela nasce verde.
 
 - [ ] **Passo 3: rodar**
 
-Run: `NODE_ENV=development npm run build && bash scripts/testar-urls.sh`
-Expected: `contrato de URL ok` (com o post da fatia 03) **ou** falha apontando só o post — nenhuma
-outra URL.
+Run: `npm run build && bash scripts/testar-urls.sh`
+Expected: `contrato de URL ok`.
 
 - [ ] **Passo 4: commit**
 
@@ -235,7 +246,13 @@ git commit -m "feat(astro): página 404 de verdade e teste do contrato de URL"
 - [ ] `dist/blog.html`, `dist/categorias/{analises,indicadores,noticias}.html` existem com `.html`.
 - [ ] As contagens batem com `_posts/` (4 · 5 · 1 · 10).
 - [ ] `dist/404.html` existe e usa o layout (não o `layout: page` inexistente).
-- [ ] As quatro páginas de texto saem com o conteúdo igual ao de hoje (conferido por `diff`).
+- [ ] As quatro páginas de texto saem com o conteúdo **equivalente** ao de hoje (conferido em texto e
+      links contra o site publicado — não `diff` byte a byte: o renderizador de markdown não é o
+      kramdown). Drift conhecido e aceito: a seção 6 da política no repositório está **à frente** do
+      publicado. Registrar qualquer outra diferença.
+- [ ] **Nota de contrato nascida na 02/T1:** `title` e `description` passaram a ser **obrigatórios**
+      em toda página (o `Base.astro` **derruba o build** sem eles — antes saía `<title>` vazio em
+      silêncio). Toda página nova precisa dos dois, seja por prop, seja por front matter.
 - [ ] O `shell` do `Base.astro` é `'pagina'` em todas — nav centralizado, `<main>` com `prose`.
 - [ ] O selo de cache-bust é **o mesmo em todas as páginas** (é o que a fatia 01/T2 prometeu e não
       pôde provar com uma página só): `grep -oh 'v=[0-9]\+' dist/*.html dist/**/*.html | sort -u | wc -l`

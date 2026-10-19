@@ -23,7 +23,10 @@ done
 # O 404 não tem título de PÁGINA: publica o título do SITE (medido no publicado).
 grep -qF '<title>Brasil em Números | Dados e informações sobre o Brasil em um só lugar</title>' dist/404.html \
   || { echo "contrato: título do 404 divergiu do publicado" >&2; falha=1; }
-grep -qF 'href="/"' dist/404.html \
-  || { echo "contrato: o 404 perdeu o link de volta para /" >&2; falha=1; }
+# O link de volta tem de estar no CORPO do 404 — `href="/"` sozinho não prova
+# nada: o nav e o rodapé já têm um. Medido no gerado: o corpo traz exatamente
+# este `<p>`.
+grep -qF '<p><a href="/">Voltar para a página inicial</a></p>' dist/404.html \
+  || { echo "contrato: o 404 perdeu o link de volta para / no corpo" >&2; falha=1; }
 [ "$falha" -eq 0 ] || exit 1
 echo "contrato de URL ok"

@@ -57,8 +57,8 @@ publicado em `/noticias/2025/07/27/hoje-nasce-o-brasil-em-numeros.html`.
 > | onde | saída medida |
 > |---|---|
 > | atributo `datetime` | `2025-07-27T00:00:00+00:00` (**com** `+00:00`, **não** `Z`) |
-> | texto | `27 de July de 2025` |
-> | dia de um dígito | `07 de August de 2025` (dia **com zero à esquerda**) |
+> | texto | `27 de July de 2025` (**medido**) → **decidido em 2026-10-18: `27 de julho de 2025`** |
+> | dia de um dígito | `07 de August de 2025` (medido) → `07 de agosto de 2025` (dia **com zero à esquerda**) |
 > | ordem da listagem | decrescente (2025-11-14 → … → 2025-07-27) |
 >
 > 🔴 **Tudo em UTC.** A data do arquivo é meia-noite **UTC**; formatar no fuso local
@@ -80,20 +80,19 @@ publicado em `/noticias/2025/07/27/hoje-nasce-o-brasil-em-numeros.html`.
 >   return d.toISOString().replace(/\.\d{3}Z$/, '+00:00');
 > }
 >
-> const MES = new Intl.DateTimeFormat('en-US', { month: 'long', timeZone: 'UTC' });
+> const MES = new Intl.DateTimeFormat('pt-BR', { month: 'long', timeZone: 'UTC' });
 >
-> // medido no site publicado: "27 de July de 2025" e "07 de August de 2025".
-> // O mês sai em INGLÊS porque o Jekyll não declara locale — ver o item aberto.
+> // O publicado saía "27 de July de 2025" (mês em inglês). **Decisão de 2026-10-18: traduzir**
+> // para "27 de julho de 2025" — o inglês no meio de uma data em português é defeito visível.
 > export function dataPorExtenso(d: Date): string {
 >   const dia = String(d.getUTCDate()).padStart(2, '0');
 >   return `${dia} de ${MES.format(d)} de ${d.getUTCFullYear()}`;
 > }
 > ```
 >
-> ⚠️ **Item aberto (produto, não migração):** o site publica `27 de July de 2025` — mês em inglês com
-> conectivo em português — e `og:locale: en_US` (fatia 01/T1). Os dois são artefatos de locale default
-> do Jekyll. **Reproduzidos** aqui para não mudar o que o visitante vê durante a migração; **corrigir
-> os dois é decisão do usuário**, e é uma mudança de uma linha cada (`'pt-BR'`).
+> ⚠️ **Item aberto (produto, não migração):** ~~o site publica `27 de July de 2025` … **corrigir os
+> dois é decisão do usuário**~~ — **RESOLVIDO em 2026-10-18**: o mês saiu em português e o `og:locale`
+> em `pt_BR` (§8.1 do desenho). O plano mandava reproduzir os dois; o usuário decidiu consertar.
 
 > **Ruling (varredura de conflitos, 2026-10-18):** a primeira redação punha o teste desta tarefa em
 > `src/content/posts/posts.test.js` e o rodava com o `vitest` **do app** (`app/vite.config.js` tem
@@ -313,9 +312,9 @@ Expected: FAIL — não existe nenhum `dist/<cat>/<aaaa>/<mm>/<dd>/<slug>.html` 
 > Medido também: 9 dos 10 posts são sem áudio; **1** tem `image:` (o do PIB, `2025-09-04`) — a URL da
 > capa é `https://www.brasilemnumeros.ong.br` + o caminho do `image:`.
 
-> **Conferir a data contra o HTML produzido pelo Jekyll** (o filtro `date: '%d de %B de %Y'` usa o
-> locale **en** por padrão; o Astro não usa esse filtro). Se o texto de hoje for "27 de July de
-> 2025", reproduzir exatamente isso — a migração não corrige o idioma, isso é outra decisão.
+> **Conferir a data contra o HTML produzido pelo Jekyll.** O filtro `date: '%d de %B de %Y'` usa o
+> locale **en** por padrão; o publicado saía "27 de July de 2025". **Decisão de 2026-10-18: o Astro
+> publica em português** (`27 de julho de 2025`) — não é regressão, é a decisão (§8.1 do desenho).
 
 - [ ] **Passo 4: rodar e ver passar**
 

@@ -3,6 +3,7 @@
 // post publicados). Antes vinham de carona do `jekyll-seo-tag`; aqui são explícitas.
 // A ordem das tags abaixo é a ordem medida — não reordene.
 import { smartify } from '../lib/smartify';
+import { SITE } from '../config.js';
 
 interface Props {
   title: string;
@@ -17,21 +18,30 @@ interface Props {
   // O post passa o JSON-LD explícito (precisa de `datePublished`/`dateModified`);
   // sem ele, monta-se a forma de página, que é a única usada na fatia 01.
   jsonLd?: Record<string, unknown>;
+  // Canal do 404 (fatia 02/T3): a página não tem título próprio, então publica o
+  // título do SITE — `<title>` = `title | tagline`. É o que o `default.html` emite
+  // quando a página não tem `title:` no front matter (medido no publicado). O `title`
+  // que a página passa vira só o `og:title`/`twitter:title`/`headline`, como o SITE.
+  tituloDoSite?: boolean;
 }
-const { title, description, canonical, tipo = 'website', image, publicadoEm, jsonLd } = Astro.props;
+const { title, description, canonical, tipo = 'website', image, publicadoEm, jsonLd, tituloDoSite = false } = Astro.props;
 
 // As saídas de TÍTULO passam pelo `smartify` (o `jekyll-seo-tag` roda `smartify` antes
 // de escrevê-las) — só o título, NUNCA a `description`: a do post já vem smartificada
 // do markdown (`“inflação”`) e reaplicar corromperia o par.
 const tituloSmart = smartify(title);
 // Título da aba leva o sufixo do site; o `og:title` NÃO (é só o título da página).
-const tituloCompleto = `${tituloSmart} | Brasil em Números`;
+// Com `tituloDoSite`, a aba vira `SITE | tagline` (o título do site, não o da página).
+const tituloCompleto = tituloDoSite ? `${SITE.nome} | ${SITE.tagline}` : `${tituloSmart} | ${SITE.nome}`;
+// O `og:title` (e o `twitter:title`/`headline`) publicam o título do SITE quando a
+// página não tem título próprio — a aba leva o `tagline`, as demais não.
+const tituloMeta = tituloDoSite ? SITE.nome : tituloSmart;
 
 const dadosEstruturados = jsonLd ?? {
   '@context': 'https://schema.org',
   '@type': 'WebPage',
   description,
-  headline: tituloSmart,
+  headline: tituloMeta,
   url: canonical,
 };
 ---
@@ -41,11 +51,11 @@ const dadosEstruturados = jsonLd ?? {
 <title>{tituloCompleto}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonical} />
-<meta property="og:title" content={tituloSmart} />
+<meta property="og:title" content={tituloMeta} />
 <meta property="og:locale" content="en_US" />
 <meta property="og:description" content={description} />
 <meta property="og:url" content={canonical} />
-<meta property="og:site_name" content="Brasil em Números" />
+<meta property="og:site_name" content={SITE.nome} />
 <meta property="og:type" content={tipo} />
 {publicadoEm && <meta property="article:published_time" content={publicadoEm} />}
 <!-- O `jekyll-seo-tag` sobe o card para `summary_large_image` quando o post tem
@@ -53,6 +63,6 @@ const dadosEstruturados = jsonLd ?? {
      capa (`selic`, `/blog`, `/sobre`) → `summary`. -->
 <meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />
 {image && <meta property="twitter:image" content={image} />}
-<meta property="twitter:title" content={tituloSmart} />
+<meta property="twitter:title" content={tituloMeta} />
 {image && <meta property="og:image" content={image} />}
 <script type="application/ld+json" set:html={JSON.stringify(dadosEstruturados)} />

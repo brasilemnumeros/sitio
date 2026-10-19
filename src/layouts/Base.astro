@@ -40,8 +40,11 @@ interface Props {
   jsonLd?: Record<string, unknown>;
   // Repassa o `article:published_time` do post (fatia 03/T2) ao `Meta`.
   publicadoEm?: string;
+  // Canal do 404 (fatia 02/T3): sem `title` de página, o `<title>` vira o do SITE
+  // (`Brasil em Números | <tagline>`) e o `og:title` vira `Brasil em Números`.
+  tituloDoSite?: boolean;
 }
-const { frontmatter, image, shell = 'pagina', canonical, tipo = 'website', jsonLd, publicadoEm } = Astro.props;
+const { frontmatter, image, shell = 'pagina', canonical, tipo = 'website', jsonLd, publicadoEm, tituloDoSite } = Astro.props;
 // Sem fallback para string vazia: um `title`/`description` ausente sairia como
 // `<title> | Brasil em Números</title>` e `<meta name="description" content="">`,
 // e o `testar-meta.sh` não pega (ele grepa a PRESENÇA da tag). D6: falha em voz alta.
@@ -71,7 +74,7 @@ const classesMain =
 <!doctype html>
 <html lang="pt-BR" {...(shell === 'app' ? { class: 'dark' } : {})}>
   <head>
-    <Meta title={title} description={description} canonical={canonicalFinal} tipo={tipo} image={image} jsonLd={jsonLd} publicadoEm={publicadoEm} />
+    <Meta title={title} description={description} canonical={canonicalFinal} tipo={tipo} image={image} jsonLd={jsonLd} publicadoEm={publicadoEm} tituloDoSite={tituloDoSite} />
   </head>
   <body class="flex min-h-screen flex-col">
     <Nav shell={shell} />

@@ -7,4 +7,11 @@ for f in dist/indicators.json dist/assets/js/app/app.js dist/assets/js/app/app.c
   [ -f "$f" ] || { echo "publico: falta $f" >&2; falha=1; }
 done
 [ "$falha" -eq 0 ] || exit 1
+# Os arquivos existirem NÃO basta: se o `<link>`/`<script>` sair do `index.astro`, a `/`
+# publicada monta vazia e a suíte inteira ficaria verde (falha silenciosa). Confira a
+# PÁGINA, que é o que o produto percorre.
+for t in 'js/app/app.js' 'js/app/app.css' 'id="app"'; do
+  grep -q "$t" dist/index.html || { echo "publico: / não inclui \"$t\"" >&2; falha=1; }
+done
+[ "$falha" -eq 0 ] || exit 1
 echo "publico ok"

@@ -1,7 +1,11 @@
 {
   "scripts": {
-    "build": "NODE_ENV=production astro build",
-    "dev": "NODE_ENV=development astro dev",
+    "build": "npm run build:app && npm run preparar-publico && npm run build:site && npm run verificar",
+    "build:app": "cd app && NODE_ENV=production npm run build",
+    "build:site": "NODE_ENV=production astro build",
+    "preparar-publico": "bash scripts/preparar-publico.sh",
+    "verificar": "bash scripts/checar-canario.sh && bash scripts/testar-urls.sh && bash scripts/testar-feed.sh && bash scripts/testar-sitemap.sh && bash scripts/testar-publico.sh && bash scripts/testar-meta.sh",
+    "dev": "npm run build:app && npm run preparar-publico && NODE_ENV=development astro dev",
     "canario": "bash scripts/checar-canario.sh",
     "test:analytics": "NODE_ENV=development node scripts/testar-analytics.mjs",
     "css": "npx -y @tailwindcss/cli -i ./src/styles/main.css -o ./assets/css/main.dist.css"

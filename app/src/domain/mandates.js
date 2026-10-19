@@ -106,3 +106,18 @@ export function ordenarMandatos(mandatos) {
     return a.inicio < b.inicio ? -1 : a.inicio > b.inicio ? 1 : 0;
   });
 }
+
+/**
+ * A JANELA de um mandato, em ISO — o período que o clique no trilho enquadra (§3, emenda
+ * de 2026-10-19: o botão de mandato é um atalho de janela, além do realce).
+ *
+ * O mandato EM CURSO (`fim: null`) termina na **última data disponível**: a janela precisa de uma
+ * ponta direita, e `null` aqui NÃO quer dizer "até o fim" — o adapter o lê como "mantenha a borda
+ * direita atual", o que amarraria o filtro à janela anterior. Sem dado (`dataMaxima` nulo) não há
+ * data a inventar e `to` sai nulo de propósito.
+ */
+export function janelaDoMandato(mandato, dataMaxima = null) {
+  const from = ymd(mandato.inicio);
+  const to = mandato.fim ? ymd(mandato.fim) : dataMaxima ? ymd(dataMaxima) : null;
+  return { from, to };
+}

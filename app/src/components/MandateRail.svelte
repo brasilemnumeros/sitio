@@ -12,16 +12,26 @@
   // não há — e não pode haver — nenhum import de `chart/` aqui, nem nada em `window`: o
   // gráfico é espelho, não dono do estado.
   //
+  // ...e ELE ESCREVE A JANELA (§3, emenda de 2026-10-19): o clique no mandato FILTRA o período
+  // daquele governo. `viewport` é outro store de tela (o `TimeFilters` faz o mesmo), não o
+  // gráfico — a regra da §8.1 continua valendo.
+  //
   // §1 e §7.3.4 — a identificação é por TEXTO (`Lula III · PT`), NUNCA por cor de partido:
   // cor por partido colide entre siglas e, pior, exigiria afirmar uma classificação no lugar
   // de publicar um dado. Sem cor, o trilho fica com uma paleta só e o partido se lê pela sigla.
   import { mandateStore, selecionarMandato, limparSelecao } from '../stores/mandate.js';
-  import { ordenarMandatos } from '../domain/mandates.js';
+  import { definirJanela, resetarJanela } from '../stores/viewport.js';
+  import { dataMaximaStore } from '../stores/series.js';
+  import { ordenarMandatos, janelaDoMandato } from '../domain/mandates.js';
 
   // A store já guarda os mandatos ordenados (§7.3.6); reordenar é barato e mantém a regra
   // ("cronológica, com o em curso na ponta direita") verdadeira mesmo se a store mudar.
   let ordenados = $derived(ordenarMandatos($mandateStore.mandatos));
   let selecionado = $derived($mandateStore.selecionado);
+
+  // A data de referência vem do ESTADO (§8) — a mesma fonte do filtro de tempo, porque o mandato
+  // EM CURSO termina nela (`janelaDoMandato`). §1: nada de perguntar ao gráfico.
+  let dataMaxima = $derived($dataMaximaStore);
 
   const CLASSE_BASE =
     'w-full rounded border px-2 py-1 text-xs leading-tight font-medium transition-colors';
@@ -33,10 +43,19 @@
   const classeCaixa = (m) =>
     `${CLASSE_BASE} ${m.id === selecionado ? CLASSE_SELECIONADO : CLASSE_APAGADO}`;
 
-  /** Clicar seleciona; clicar de novo limpa (§3 — um clique, um efeito: seleção, não zoom). */
-  function alternar(id) {
-    if (id === selecionado) limparSelecao();
-    else selecionarMandato(id);
+  /** §3 — o clique FILTRA o período do mandato (emenda de 2026-10-19) **e** o destaca. Clicar de
+   *  novo limpa e volta ao intervalo completo ("Tudo"), que é o par do `limparSelecao`.
+   *
+   *  ⚠ `escolhaDoUsuario`: quem escolheu foi o usuário, então o fit automático para e uma série
+   *  adicionada depois não move a janela (§8.1). Sem isto o filtro duraria ~150ms. */
+  function alternar(m) {
+    if (m.id === selecionado) {
+      limparSelecao();
+      resetarJanela();
+    } else {
+      selecionarMandato(m.id);
+      definirJanela(janelaDoMandato(m, dataMaxima), { escolhaDoUsuario: true });
+    }
   }
 </script>
 
@@ -60,7 +79,7 @@
             class={classeCaixa(m)}
             class:hachurada={m.emCurso}
             aria-pressed={m.id === selecionado}
-            onclick={() => alternar(m.id)}
+            onclick={() => alternar(m)}
           >
             <!-- Governo e sigla POR TEXTO — a única identificação de partido permitida (§1). -->
             <span class="block">{m.rotulo} · {m.partido}</span>

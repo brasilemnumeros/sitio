@@ -232,10 +232,22 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
       // ⚠ Com só UMA ponta, a outra tem de vir do que está na tela — NÃO de 0.
       // `{from: 0, to: 1}` é 1970: a janela saltaria para o início dos tempos, em silêncio.
       const atual = chart.timeScale().getVisibleRange();
-      chart.timeScale().setVisibleRange({
+      const alvo = {
         from: t.from ?? atual?.from ?? t.to,
         to: t.to ?? atual?.to ?? t.from,
-      });
+      };
+      // 🔴 Um par INVERTIDO (`to` antes de `from`) não pode chegar à lib: em DEV ela lança
+      //    (`right should be >= left`), mas o build de produção REMOVE as asserções e desenha
+      //    errado, em SILÊNCIO — a armadilha que o AGENTS registra.
+      //    Aconteceu de verdade (2026-10-19): o preset escrevia só o `from` e a ponta direita
+      //    herdada era a de um MANDATO (no passado). Aqui o gráfico não se mexe e o aviso sai —
+      //    a fonte foi corrigida junto (o preset declara as duas pontas), mas o adapter é a
+      //    última linha antes da lib.
+      if (alvo.from != null && alvo.to != null && alvo.to < alvo.from) {
+        console.warn('[janela] intervalo invertido ignorado — nada foi aplicado ao gráfico', alvo);
+        return;
+      }
+      chart.timeScale().setVisibleRange(alvo);
     },
     resetarJanela() { if (temDado) chart.timeScale().fitContent(); },
     serieVisivel: () => porId.size,

@@ -506,6 +506,88 @@ resize e o valor volta a 0,709. Não vale mais código para 1,5px; o número est
 área de plotagem, não com o container — comparar com o container passaria com o defeito); capturas
 no app (5173) e no **site** (4321) com as faixas presentes e alinhadas.
 
+### O clique no mandato FILTRA o período — e a §2 reaberta (2026-10-19)
+
+**Pedido do usuário, literal:** *"os botões abaixo de mandato desejo que filtrem o período"* →
+*"simples, filtra apenas aquele mandato"*. Até aqui o trilho era um SELETOR puro: o clique realçava a
+faixa e não mexia na janela. Agora o mesmo clique **enquadra** o gráfico no período do governo.
+
+**A §2 tinha rejeitado exatamente isto** ("o mandato vira o enquadramento... rejeitado por competir
+com o zoom pelo mesmo estado"), e o motivo era bom *quando foi escrito*: sem autoria de janela,
+enquadrar pelo mandato seria mais um escritor no mesmo estado, e o fit automático desfaria a escolha.
+A **§8.1** (posterior) resolveu o conflito — quem escolhe **declara** a autoria (`escolhaDoUsuario`)
+e o dado deixa de mover a janela. Com isso a rejeição perdeu o fundamento e o usuário decidiu
+reverter. **O que segue rejeitado é o isolamento** (esmaecer o resto e torná-lo inalcançável): a
+janela enquadra, mas o resto continua alcançável pelo minimapa.
+
+**Decidido:**
+
+| situação | comportamento |
+|---|---|
+| clique num mandato fechado | janela = `inicio`…`fim`, com `escolhaDoUsuario: true`; a faixa acende |
+| clique no mandato **em curso** (`fim: null`) | janela = `inicio`…**última data disponível** (`dataMaxima`) |
+| clique de novo no mesmo | `limparSelecao()` + `resetarJanela()` → intervalo completo |
+| clique num preset de tempo | `limparSelecao()` — **um dono por vez** |
+
+**A última data disponível é a peça que exigiu código, e não é cosmética.** `fim: null` não pode ir
+cru para o adapter: lá o `null` significa "mantenha a borda direita ATUAL", então o filtro do mandato
+em curso ficaria amarrado à janela anterior (medido: a ponta direita tinha de ser recente e não
+nula). A função pura `janelaDoMandato(mandato, dataMaxima)` (em `domain/mandates.js`) fecha a ponta.
+`dataMaxima` deixou de ser cálculo local do `TimeFilters`: virou `dataMaximaStore`
+(`stores/series.js`), **uma fonte só** — o filtro de tempo conta os "10a" a partir dela e o trilho
+fecha a janela nela; duas cópias divergiriam.
+
+**Um dono por vez é regra, não coincidência.** Os presets de tempo derivam o "aceso" da **duração**
+da janela. Um mandato de 4 anos contra o preset de 5 anos fica a **1,0** (tolerância 0,5), então hoje
+nenhum preset acenderia por acidente — mas "quase" não é guarda: a coincidência depende do dado (um
+mandato de 5 anos exatos acenderia o "5a", e Dilma I tem 2011-01-01→2014-12-31 = 4,00 anos, medido).
+Por isso `ativo()` e `tudoAtivo` ganharam a guarda `selecionado === null`, e os dois lados limpam a
+seleção do outro.
+
+**Resíduo declarado:** arrastar no minimapa (ou dar zoom no gráfico) move a janela **sem** desmarcar
+o mandato — o botão segue aceso enquanto a janela é outra. O gesto não estava na decisão; fica aberto
+em AGENTS.md ("Aberto, sem bloquear").
+
+#### O defeito que o caminho novo acordou: intervalo invertido
+
+Ao escrever o teste "escolher um preset desmarca o mandato", a lib lançou
+`Assertion failed: right should be >= left`. A causa **não** era o mandato: o preset de tempo
+declarava só a ponta ESQUERDA (`from: dataMaxima − N anos`) e o adapter completava a direita com a
+janela **ATUAL** — o que sempre foi verdade *por acidente*, porque a janela atual sempre terminava em
+`dataMaxima`. Com um mandato escolhido a atual está no **passado**: medido `from = 2015-10` e
+`to = 2006-12`.
+
+Dois consertos, e a razão de serem dois:
+
+1. **A fonte** (o que estava errado): o preset passou a declarar as DUAS pontas
+   (`from: fromDe(preset)`, `to: dataMaxima`) — que é o que a própria documentação dele já dizia
+   ("ancora a janela na última data"). Ele deixa de depender do que está na tela.
+2. **A guarda** (o que impede o silêncio): 🔴 em DEV a lib **lança**, mas o build
+   `standalone.production.mjs` **remove as asserções** e desenharia errado em silêncio — a armadilha
+   que o AGENTS registra. `adapter.definirJanela` passou a recusar um par invertido (`to < from`) com
+   `console.warn` e **sem tocar no gráfico**. A guarda mora no adapter (a última linha antes da lib)
+   e não na store: um par de UMA ponta continua sendo preenchido com o que está na tela, e é **essa**
+   combinação que inverte — uma validação na store não pegaria o caso.
+
+**Provado por sabotagem** (regra do projeto): removida a guarda, o teste novo falha com o erro exato
+da lib (`pageerror ... right should be >= left`); com ela, passa e o `console.warn` mostra o par
+recusado (`{from: 1748736000, to: 1167609600}`).
+
+#### Achado pré-existente, medido — e NÃO corrigido aqui
+
+Com o exemplo carregado, num viewport **estreito** o botão "Tudo" fica **apagado** embora o gráfico
+mostre o intervalo completo. Causa: o `fitContent` arredonda o `barSpacing` e a borda esquerda ecoa
+em **1996-02-01** contra o dado começando em **1995-12-01** (`dataMinima`) → `tudoAtivo` falso. No
+desktop a mesma medida fecha exata. **Confirmado com e sem esta mudança** (probe na app dev, 412px,
+antes e depois do `git stash`: idêntico) — não é regressão do mandato. Fora do escopo desta decisão;
+registrado em AGENTS.md como aberto.
+
+**Verificação:** **150 unitários** (19 arquivos) e **54 E2E** verdes (2 puladas), nos dois projetos;
+capturas no app (5173) e no **site** (4321, servindo dado local) com a janela da Dilma I (eixo
+2011–2015), a faixa acesa e **nenhum preset aceso**; nenhuma falha de rede nem exceção. E2E novos no
+`trilho.spec.js`: filtra e limpa, mandato em curso com ponta direita, preset desmarca o mandato, e a
+guarda do intervalo invertido.
+
 ## Consequências
 
 **Positivas**

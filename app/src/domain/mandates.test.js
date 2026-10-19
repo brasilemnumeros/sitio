@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { COBERTURA, deltaNoMandato, formatarPeriodo, ordenarMandatos, pontosEsperados } from './mandates.js';
+import {
+  COBERTURA, deltaNoMandato, formatarPeriodo, janelaDoMandato, ordenarMandatos, pontosEsperados,
+} from './mandates.js';
 
 const LULA_I = { id: 'federal-2003-lula', rotulo: 'Lula I', inicio: '2003-01-01', fim: '2006-12-31' };
 const LULA_III = { id: 'federal-2023-lula', rotulo: 'Lula III', inicio: '2023-01-01', fim: null, emCurso: true };
@@ -81,6 +83,26 @@ describe('pontosEsperados — a régua da cobertura (§7.3.5)', () => {
 
   it('mandato em curso não tem régua', () => {
     expect(pontosEsperados('monthly', LULA_III)).toBeNull();
+  });
+});
+
+describe('janelaDoMandato — clicar no mandato FILTRA o período (§3)', () => {
+  it('o mandato fechado devolve as DUAS pontas do mandato', () => {
+    expect(janelaDoMandato(LULA_I, '2025-06-01')).toEqual({ from: '2003-01-01', to: '2006-12-31' });
+  });
+
+  it('o mandato EM CURSO termina na última data disponível — a janela precisa de ponta direita', () => {
+    expect(janelaDoMandato(LULA_III, '2025-06-01')).toEqual({ from: '2023-01-01', to: '2025-06-01' });
+  });
+
+  it('em curso e SEM dado não inventa data: `to` fica nulo (sem janela, o fit decide)', () => {
+    // `null` não é "até o fim": o adapter o lê como "mantenha a borda direita atual".
+    expect(janelaDoMandato(LULA_III, null)).toEqual({ from: '2023-01-01', to: null });
+  });
+
+  it('corta a hora, como o resto da camada de mandatos (`ymd`)', () => {
+    const comHora = { ...LULA_I, inicio: '2003-01-01T00:00:00Z', fim: '2006-12-31T00:00:00Z' };
+    expect(janelaDoMandato(comHora, '2025-06-01')).toEqual({ from: '2003-01-01', to: '2006-12-31' });
   });
 });
 

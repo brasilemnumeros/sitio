@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { get } from 'svelte/store';
 import {
-  LIMITE_SERIES, seriesStore, adicionarSerie, removerSerie, tentarNovamente,
+  LIMITE_SERIES, seriesStore, dataMaximaStore, adicionarSerie, removerSerie, tentarNovamente,
   atingiuLimite, motivoDoLimite, corDe, definirCor, restaurarCor, limparSeries,
 } from './series.js';
 import { clearSeriesCache } from '../data/series.js';
@@ -16,6 +16,28 @@ const okSerie = (id) => async () => ({
 // O cache de `loadSeries` é por URL e vive no módulo — sem zerá-lo, um sucesso de um teste
 // vaza para o próximo (o R28 usa a MESMA url do R26) e o teste deixa de provar o que diz.
 beforeEach(() => { limparSeries(); clearSeriesCache(); });
+
+describe('dataMaximaStore (§8 — a data de referência vem do estado)', () => {
+  it('é a MAIOR data entre as séries `ok`; nulo sem série', async () => {
+    expect(get(dataMaximaStore)).toBeNull();
+
+    const duasDatas = async () => ({
+      ok: true, status: 200,
+      json: async () => ({
+        schema: 1, id: 'a', unit: { type: 'percentage', symbol: '%', decimals: 2 },
+        granularity: 'monthly', source: 'fonte',
+        data: [{ date: '2020-01-01', value: 1 }, { date: '2021-05-01', value: 2 }],
+      }),
+    });
+    await adicionarSerie(entrada('a'), { fetchImpl: duasDatas });
+    expect(get(dataMaximaStore)).toBe('2021-05-01');
+  });
+
+  it('ignora série com ERRO — a data de referência não vem de dado que não chegou (§9.3)', async () => {
+    await adicionarSerie(entrada('b'), { fetchImpl: async () => ({ ok: false, status: 500, json: async () => ({}) }) });
+    expect(get(dataMaximaStore)).toBeNull();
+  });
+});
 
 describe('seriesStore', () => {
   it('adiciona e carrega, com status por série (§9.2)', async () => {

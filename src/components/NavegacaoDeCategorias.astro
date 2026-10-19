@@ -1,0 +1,85 @@
+---
+// A navegação entre categorias existe em duas formas, também medidas em
+// 2026-10-18:
+//
+// - `blog` (de `blog.html`): "Filtrar por:", "Todos" COM contagem e as três
+//   categorias COM contagem, todas como links;
+// - `categoria` (de `categorias/*.html`): "Navegar:", "Todos" SEM contagem, e a
+//   categoria atual como `<span>` destacado (as outras continuam links).
+//
+// As contagens vêm da coleção filtrada, não de `site.categories`.
+import { getCollection } from 'astro:content';
+import { CATEGORIAS, ORDEM_CATEGORIAS, type Categoria } from '../lib/categorias';
+
+interface Props {
+  atual: Categoria | null;
+}
+
+const { atual } = Astro.props;
+const ehBlog = atual === null;
+
+const posts = await getCollection('posts');
+const contar = (categoria: Categoria) =>
+  posts.filter((post) => post.data.categories.includes(categoria)).length;
+
+// As classes têm de estar LITERAIS no fonte: o Tailwind varre o `src/` e não
+// monta classe por string.
+const LINK_CATEGORIA: Record<string, string> = {
+  blue: 'text-blue-700 transition-colors hover:bg-blue-50 hover:text-blue-900 dark:text-blue-300 dark:hover:bg-blue-900/20 dark:hover:text-blue-100',
+  green:
+    'text-green-700 transition-colors hover:bg-green-50 hover:text-green-900 dark:text-green-300 dark:hover:bg-green-900/20 dark:hover:text-green-100',
+  purple:
+    'text-purple-700 transition-colors hover:bg-purple-50 hover:text-purple-900 dark:text-purple-300 dark:hover:bg-purple-900/20 dark:hover:text-purple-100',
+};
+
+const CONTAGEM: Record<string, string> = {
+  blue: 'text-xs text-blue-500 dark:text-blue-400',
+  green: 'text-xs text-green-500 dark:text-green-400',
+  purple: 'text-xs text-purple-500 dark:text-purple-400',
+};
+
+const DESTAQUE: Record<string, string> = {
+  blue: 'inline-flex items-center gap-1 rounded-md bg-blue-100 px-3 py-1.5 text-blue-900 dark:bg-blue-900/40 dark:text-blue-100',
+  green:
+    'inline-flex items-center gap-1 rounded-md bg-green-100 px-3 py-1.5 text-green-900 dark:bg-green-900/40 dark:text-green-100',
+  purple:
+    'inline-flex items-center gap-1 rounded-md bg-purple-100 px-3 py-1.5 text-purple-900 dark:bg-purple-900/40 dark:text-purple-100',
+};
+
+const LINK_TODOS =
+  'inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100';
+const BASE = 'inline-flex items-center gap-1 rounded-md px-3 py-1.5';
+---
+
+<div class="flex flex-wrap items-center gap-2 text-sm">
+  <span class="font-medium text-gray-600 dark:text-gray-400">
+    {ehBlog ? 'Filtrar por:' : 'Navegar:'}
+  </span>
+
+  <a href="/blog.html" class={LINK_TODOS}>
+    📄 <span>Todos</span>
+    {ehBlog && <span class="text-xs text-gray-500 dark:text-gray-400">({posts.length})</span>}
+  </a>
+
+  {
+    ORDEM_CATEGORIAS.map((categoria) => {
+      const dados = CATEGORIAS[categoria];
+      if (categoria === atual) {
+        return (
+          <span class={DESTAQUE[dados.color]}>
+            {dados.icon} <span>{dados.name}</span>
+          </span>
+        );
+      }
+      return (
+        <a
+          href={`/categorias/${categoria}.html`}
+          class={`${BASE} ${LINK_CATEGORIA[dados.color]}`}
+        >
+          {dados.icon} <span>{dados.name}</span>
+          {ehBlog && <span class={CONTAGEM[dados.color]}>({contar(categoria)})</span>}
+        </a>
+      );
+    })
+  }
+</div>

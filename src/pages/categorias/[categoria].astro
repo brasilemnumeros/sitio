@@ -1,0 +1,57 @@
+---
+// Portado de `categorias/{analises,indicadores,noticias}.html`. As três páginas
+// NÃO são a mesma página: os textos divergentes (intro, estado vazio e
+// "voltar") estão em `src/lib/categorias.ts`, com as inconsistências do site
+// reproduzidas de propósito.
+import Base from '../../layouts/Base.astro';
+import ListaDePosts from '../../components/ListaDePosts.astro';
+import NavegacaoDeCategorias from '../../components/NavegacaoDeCategorias.astro';
+import { getCollection } from 'astro:content';
+import { CATEGORIAS, ORDEM_CATEGORIAS, type Categoria } from '../../lib/categorias';
+import { dataDoId } from '../../lib/posts';
+
+export function getStaticPaths() {
+  return ORDEM_CATEGORIAS.map((categoria) => ({ params: { categoria } }));
+}
+
+const categoria = Astro.params.categoria as Categoria;
+const dados = CATEGORIAS[categoria];
+if (!dados) throw new Error(`categorias: categoria desconhecida: ${categoria}`);
+
+const posts = (await getCollection('posts'))
+  .filter((post) => post.data.categories.includes(categoria))
+  .sort((a, b) => dataDoId(b.id).getTime() - dataDoId(a.id).getTime());
+---
+
+<Base title={dados.name} description={dados.description}>
+  <div class="mb-8">
+    <h1 class="mb-4 text-3xl font-bold text-gray-900 dark:text-gray-100">
+      {dados.icon} {dados.name}
+    </h1>
+    <p class="mb-6 text-lg text-gray-600 dark:text-gray-300">
+      {dados.intro}
+    </p>
+
+    <!-- Navegação entre categorias -->
+    <NavegacaoDeCategorias atual={categoria} />
+  </div>
+
+  <div class="space-y-6">
+    {
+      posts.length > 0 ? (
+        <ListaDePosts posts={posts} variante="categoria" />
+      ) : (
+        <p class="py-8 text-center text-gray-500 dark:text-gray-400">{dados.estadoVazio}</p>
+      )
+    }
+  </div>
+
+  <div class="mt-8 text-center">
+    <a
+      href="/blog.html"
+      class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+    >
+      {dados.voltar}
+    </a>
+  </div>
+</Base>

@@ -1,0 +1,109 @@
+---
+// Um componente para os DOIS cartões de listagem, que NÃO são o mesmo cartão
+// (medido em 2026-10-18 contra `blog.html` e `categorias/*.html`):
+//
+// | | blog | categoria |
+// |---|---|---|
+// | título | h3 | h2 |
+// | etiqueta de categoria | sim (`📊 Análise`) | não |
+// | podcast | `Podcast` | `Podcast disponível` |
+// | trecho | 25 palavras | 30 palavras |
+//
+// A página decide o corte da lista (o `limit: 10` do blog); este componente só
+// desenha os cartões que recebe.
+import type { CollectionEntry } from 'astro:content';
+import { dataDoId, isoDoJekyll, dataPorExtenso } from '../lib/posts';
+import { trecho } from '../lib/trecho';
+
+interface Props {
+  posts: CollectionEntry<'posts'>[];
+  variante: 'blog' | 'categoria';
+}
+
+const { posts, variante } = Astro.props;
+const ehBlog = variante === 'blog';
+const maxPalavras = ehBlog ? 25 : 30;
+const Titulo = ehBlog ? 'h3' : 'h2';
+
+// Nomes SINGULARES da etiqueta do cartão do blog: vêm do `case` do Liquid em
+// `blog.html:102-111`, não do `_config.yml`.
+const ROTULO: Record<string, { icone: string; nome: string }> = {
+  analises: { icone: '📊', nome: 'Análise' },
+  indicadores: { icone: '📈', nome: 'Indicador' },
+  noticias: { icone: '📢', nome: 'Notícia' },
+};
+
+// Liquid `capitalize`: primeira letra maiúscula e o RESTO minúsculo.
+function capitalizar(texto: string): string {
+  return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
+}
+
+// Mesma derivação de `links.astro`: a URL do Jekyll com `.html`.
+function urlDoPost(id: string, categoria: string): string {
+  const [ano, mes, dia] = id.slice(0, 10).split('-');
+  const slug = id.replace(/^\d{4}-\d{2}-\d{2}-/, '');
+  return `/${categoria}/${ano}/${mes}/${dia}/${slug}.html`;
+}
+---
+
+{
+  posts.map((post) => {
+    const data = dataDoId(post.id);
+    return (
+      <article class="border-b border-gray-200 pb-6 dark:border-gray-700">
+        <div class="flex items-start justify-between">
+          <div class="flex-1">
+            <Titulo class="mb-2 text-xl font-semibold">
+              <a
+                href={urlDoPost(post.id, post.data.categories[0])}
+                class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                {post.data.title}
+              </a>
+            </Titulo>
+
+            <div class="mb-3 flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+              <time datetime={isoDoJekyll(data)}>{dataPorExtenso(data)}</time>
+
+              {ehBlog &&
+                post.data.categories.map((categoria) => (
+                  <span class="inline-flex items-center gap-1">
+                    {ROTULO[categoria] ? (
+                      <>
+                        {ROTULO[categoria].icone} <span>{ROTULO[categoria].nome}</span>
+                      </>
+                    ) : (
+                      <>
+                        🏷️ <span>{capitalizar(categoria)}</span>
+                      </>
+                    )}
+                  </span>
+                ))}
+
+              {post.data.audio && (
+                <span class="flex items-center gap-1">
+                  {' '}
+                  🎧 <span>{ehBlog ? 'Podcast' : 'Podcast disponível'}</span>{' '}
+                </span>
+              )}
+            </div>
+
+            {post.rendered && (
+              <p class="mb-3 text-gray-600 dark:text-gray-300">{trecho(post, maxPalavras)}</p>
+            )}
+
+            {post.data.tags && (
+              <div class="flex flex-wrap gap-2">
+                {post.data.tags.map((tag) => (
+                  <span class="inline-block rounded-md bg-gray-100 px-2 py-1 text-xs text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </article>
+    );
+  })
+}

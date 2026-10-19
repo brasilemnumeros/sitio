@@ -48,8 +48,8 @@ itens abaixo continuam abertos, mas nenhum bloqueia, e três deles são decisão
 
 ## Onde o trabalho está — 2026-10-19
 
-**Camada de gráficos: fatias 00–09 e 11 fechadas. Migração Astro: fatias 00–07 fechadas. A 10
-(vírada) está no repo; falta o push.**
+**Camada de gráficos: fatias 00–11 fechadas. Migração Astro: fatias 00–07 fechadas. Nada foi
+publicado — o que resta é o push.**
 
 | | |
 |---|---|
@@ -57,14 +57,16 @@ itens abaixo continuam abertos, mas nenhum bloqueia, e três deles são decisão
 | stack do site | **uma só: Node** (Astro 7) — o Jekyll saiu na fatia 07 da migração |
 | enviado | **nada.** Nenhuma branch tem upstream — é o que mantém produção intocada |
 
-**O que falta, nesta ordem:**
+**O que falta, nesta ordem (tudo depende de aval do usuário):**
 
 | ordem | o quê | por que nessa posição |
 |---|---|---|
-| 1 | **`dados` → `main`** | FASE 1 do §6. Sem isto, produção serve o **schema antigo** e `governos/federal.json` dá **404**. Push é decisão do usuário. |
-| 2 | **Push do `sitio`** | A virada (10) e a migração Astro (07) já estão no repo. Em `main` o E2E traz o `dados` da mesma branch (`ref: github.ref_name`) — por isso o item 1 vem primeiro. |
-| 3 | **11/T4 — tirar o `rate`** | Só depois do app estar no ar, senão quebra a página antiga na transição. |
-| 4 | **10/T5 — NOTICE + atribuição** | O Lightweight Charts é Apache-2.0 e exige o link no rodapé (§10.6). |
+| 1 | **`dados` → `main`, no commit da convivência (`dbc0035`)** | FASE 1 do §6. Sem isto, produção serve o **schema antigo** e `governos/federal.json` dá **404**. O commit publica `rate` **e** `value`, então a página antiga continua de pé. Push é decisão do usuário. |
+| 2 | **Push do `sitio`** | A virada (10), a migração Astro (07) e a atribuição (10/T5) já estão no repo. Em `main` o E2E traz o `dados` da mesma branch (`ref: github.ref_name`) — por isso o item 1 vem primeiro. |
+| 3 | **`dados` → `main`, no commit da retirada (`f9741ed`)** | FASE 3 do §6. Só **depois** de o app novo estar no ar: aí o `rate` sai sem quebrar a página antiga em nenhum instante. O trabalho já está **escrito**; falta só o push. |
+| 4 | ~~10/T5 — NOTICE + atribuição~~ | ✅ **feito em 2026-10-19** — `NOTICE` (com o texto da licença), link no rodapé e guarda no build. |
+| 5 | ~~11/T4 — tirar o `rate`~~ | ✅ **feito em 2026-10-19** — escrito no repo `dados`; a **publicação** é o item 3 acima. |
+| 6 | ~~11/T3 — tirar a `unit` do registry~~ | ⛔ **superseded em 2026-10-19** — conflitava com a §12.1; a `unit` **fica** (o distintivo de escala precisa dela antes da série carregar). |
 
 **Ler antes de tocar:** o bloco "Onde o trabalho está" e o "Aberto, sem bloquear" do `AGENTS.md`
 da raiz, e o `README.md` da migração (`docs/plans/migracao-astro/`).
@@ -85,8 +87,8 @@ da raiz, e o `README.md` da migração (`docs/plans/migracao-astro/`).
 | 07 | `07-shell-chips-filtros.md` | Casca da página (§1) | `components`: App · SeriesChips · TimeFilters | 06 | ✅ fechada |
 | 08 | `08-modal-de-busca.md` | Busca (§1.1) | `components/SearchModal`: cascata de três colunas, teclado, ficha com aviso de escala | 07 | ✅ fechada |
 | 09 | `09-trilho-e-painel-de-comparacao.md` | Mandatos na UI (§3, §4) | `components`: MandateRail · ComparisonPanel | 06,07 | ✅ fechada (T4/logos e T5/barrinha não feitas — decisão do usuário) |
-| 10 | `10-build-ci-e-a-virada.md` | Integração e virada (§10) | CI com canário, `/` vira o shell, remoção do legado, NOTICE + atribuição | 09 | ⚠️ **T1 e T2 prontas; T3–T4 pendentes** (a virada apaga o legado) |
-| 11 | `11-migracao-do-repo-dados.md` | Contrato no repo `dados` (§6) | notebooks publicam `value`; convivência de chaves; retirada de `rate` | — (coordena com 10) | ✅ fechada, menos a **T4** (tirar o `rate`) — só depois do app no ar |
+| 10 | `10-build-ci-e-a-virada.md` | Integração e virada (§10) | CI com canário, `/` vira o shell, remoção do legado, NOTICE + atribuição | 09 | ✅ **fechada** (T1–T4 entregues pela migração Astro; **T5** feita em 2026-10-19) |
+| 11 | `11-migracao-do-repo-dados.md` | Contrato no repo `dados` (§6) | séries publicam `value`; convivência de chaves; retirada de `rate` | — (coordena com 10) | ✅ **fechada** — **T4** feita em 2026-10-19 (falta só o push); **T3 superseded** (a `unit` fica — §12.1) |
 
 ### Ordem e paralelismo
 

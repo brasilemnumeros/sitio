@@ -1,3 +1,16 @@
+// URL publicada do post, no formato do Jekyll: `/categoria/AAAA/MM/DD/slug.html`.
+// A categoria vem de `categories[0]` e o slug é o `id` sem o prefixo de data.
+//
+// Helper ÚNICO de propósito: é lógica de URL de conteúdo crítico. Duas cópias
+// (`links.astro` e `ListaDePosts.astro`) tendem a divergir com o tempo, e uma
+// divergência aqui muda a URL publicada — que é exatamente a categoria Critical.
+// A rota do post (fatia 03/T2) também importa daqui.
+export function urlDoPost(id: string, categoria: string): string {
+  const [ano, mes, dia] = id.slice(0, 10).split('-');
+  const slug = id.replace(/^\d{4}-\d{2}-\d{2}-/, '');
+  return `/${categoria}/${ano}/${mes}/${dia}/${slug}.html`;
+}
+
 // A data NÃO está no front matter: ela vem do nome do arquivo, como no Jekyll.
 // Tudo em UTC — a data do arquivo é meia-noite UTC e o fuso local (UTC-3)
 // jogaria a formatação para o DIA ANTERIOR.

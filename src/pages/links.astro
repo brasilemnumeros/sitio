@@ -13,17 +13,11 @@
 // também na forma `&quot;` — byte a byte igual ao publicado.
 import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
-import { dataDoId } from '../lib/posts';
+import { dataDoId, urlDoPost } from '../lib/posts';
 
 const posts = (await getCollection('posts')).sort(
   (a, b) => dataDoId(b.id).getTime() - dataDoId(a.id).getTime(),
 );
-
-function urlDoPost(id: string, categoria: string): string {
-  const [ano, mes, dia] = id.slice(0, 10).split('-');
-  const slug = id.replace(/^\d{4}-\d{2}-\d{2}-/, '');
-  return `/${categoria}/${ano}/${mes}/${dia}/${slug}.html`;
-}
 ---
 
 <Base

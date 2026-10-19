@@ -1,4 +1,4 @@
-import { test, expect, abrirApp, carregarExemplo } from './apoio.js';
+import { test, expect, abrirApp, carregarExemplo, adicionarPorBusca } from './apoio.js';
 
 /** Espera a rajada de carga assentar: `definirSeries` faz debounce de 150ms + um rAF até o `fitContent`. */
 const assentar = (page) => page.waitForTimeout(700);
@@ -115,4 +115,36 @@ test('filtros de tempo: não existem sem série, aparecem com série, e clicar m
   await expect(tudo).toHaveAttribute('aria-pressed', 'true');
 
   await page.screenshot({ path: 'e2e/.artefatos/filtros-tempo.png', fullPage: true });
+});
+
+/**
+ * A JANELA QUE O USUÁRIO ESCOLHEU SOBREVIVE A ADICIONAR SÉRIE (§8.1) — a regressão dos DOIS
+ * defeitos medidos em 2026-10-19 (o registro completo está em `minimapa.spec.js`; a medição, em
+ * `scripts/medir-janela.mjs`):
+ *  1. clicar num preset NÃO desarmava o fit automático (o `fitContent` adiado só ouvia gesto no
+ *     gráfico grande) → a próxima série re-enquadrava o alcance TOTAL;
+ *  2. `setData` de uma série que ESTENDE o domínio de tempo MOVE o range visível → o eco do adapter
+ *     aceitava a mudança como se fosse escolha do usuário.
+ * A correção é um conceito só — a AUTORIA da janela. Sem ela este teste fica vermelho nos dois
+ * mecanismos (provado por sabotagem): o preset "10 anos" apaga.
+ */
+test('a janela escolhida sobrevive a adicionar série (o fit não a desfaz)', async ({ page }) => {
+  await abrirApp(page);
+  await adicionarPorBusca(page, 'IPCA');
+
+  const filtros = page.locator('[data-bloco="filtros"]');
+  const dezAnos = filtros.getByRole('button', { name: 'Janela de 10 anos' });
+  // o filtro só habilita com série carregada (§9.5) — esperar o ESTADO, não o tempo
+  await expect(dezAnos).toBeEnabled({ timeout: 20000 });
+  await assentar(page);
+  await dezAnos.click();
+  await expect(dezAnos).toHaveAttribute('aria-pressed', 'true');
+
+  // uma série cuja data ESTENDE o domínio de tempo — é ela que dispara o mecanismo 2
+  await adicionarPorBusca(page, 'SELIC');
+  await assentar(page);
+
+  // o preset continua aceso: a janela é do usuário, e nem o fit nem o `setData` a moveram
+  await expect(dezAnos).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('[data-bloco="chips"] li')).toHaveCount(2);
 });

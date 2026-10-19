@@ -6,7 +6,7 @@
   import { seriesStore } from '../stores/series.js';
   import { axesStore, recalcularEixos } from '../stores/axes.js';
   import { mandateStore, carregarMandatos } from '../stores/mandate.js';
-  import { viewportStore, definirJanela } from '../stores/viewport.js';
+  import { viewportStore, definirJanela, aoEscolherJanela } from '../stores/viewport.js';
 
   let container;
   let containerMini;
@@ -16,7 +16,10 @@
     const adapter = criarAdapter(container, { aoMudarJanela: (j) => definirJanela(j) });
     const navigator = criarNavigator(containerMini, {
       // Arrastar no minimapa muda a janela — e a mudança entra pelo MESMO caminho (a store).
-      aoMudarJanela: (j) => definirJanela(j),
+      // ⚠ E `escolhaDoUsuario`: quem arrastou foi o usuário, então o enquadramento automático para
+      //   e uma série adicionada depois NÃO move a janela (§8.1). O eco do gráfico (`definirJanela`
+      //   do adapter, acima) não declara nada — ele é reação, não escolha.
+      aoMudarJanela: (j) => definirJanela(j, { escolhaDoUsuario: true }),
     });
 
     // As séries `ok` na forma que o `axesStore` entende (`{id, unit, data}`), como na fatia 05.
@@ -64,12 +67,15 @@
       adapter.definirJanela(j);
       navigator.mostrarJanela(j);
     });
+    // ...e o adapter precisa saber se ESSA janela é do usuário: o filtro de tempo e o minimapa
+    // avisam por aqui (o eco do próprio adapter não). É o que separa "re-enquadre" de "não mexa".
+    const pararEscolha = aoEscolherJanela((doUsuario) => adapter.aJanelaEDoUsuario(doUsuario));
 
     // O mandato é contexto: se os governos não vierem, o gráfico segue (§9.3).
     carregarMandatos();
 
     return () => {
-      pararSeries(); pararEixos(); pararMandatos(); pararJanela();
+      pararSeries(); pararEixos(); pararMandatos(); pararJanela(); pararEscolha();
       navigator.destruir();
       adapter.destruir();
     };

@@ -295,6 +295,14 @@ O que sobra da restrição original é uma questão de **ordem de deploy** entre
 
 **Rejeitado:** publicação única (`value` só, aceitando o intervalo de quebra). Mais simples, mas exige que os dois pushes aconteçam em sequência imediata e que ninguém abra o site no meio — depende de sorte, não de processo.
 
+> **Atualização medida em 2026-10-19.** A retirada de `rate` já está **escrita e commitada** na branch de
+> trabalho do repo `dados` (`dbc0035` convivência → `f9741ed` sem `rate`), mas **nada foi enviado**. Como
+> os commits estão **ordenados**, a convivência continua inteira na hora do push: `main` pode receber
+> primeiro o commit que publica `{"date","rate","value"}` e só depois o que tira o `rate`. A ordem de
+> deploy desta seção **segue valendo** — a "publicação única" **continua rejeitada**, e não foi escolhida
+> por acidente: adiantou-se a **autoria** do commit, não a sua **publicação**. O efeito colateral é que a
+> pré-condição da 11/T4 ("o app novo está no ar") passa a morder no **push**, não na escrita.
+
 ### Risco assumido
 
 Republicar `dados` em formato novo sem coordenar com o `sitio` derruba o gráfico em produção. O custo real não está no site — está nos **notebooks Colab**, um por família, que precisam ser ajustados e reexecutados à mão. É lá que mora o risco de regressão silenciosa nos dados.
@@ -537,6 +545,8 @@ Consequências: (a) `sitio/app/src` **não pode** entrar no `.gitignore`; (b) a 
 ### 10.5 Atribuição do TradingView
 
 **Link no rodapé global** — uma linha, vale para todas as páginas, e não depende de o gráfico continuar na página em que está hoje. A alternativa (link só na página do gráfico) quebraria em silêncio no dia em que a página mudasse. Mais o arquivo **`NOTICE`** no repo, como a D3 exige.
+
+> **Implementado em 2026-10-19 (fatia 10/T5).** Duas coisas foram além do texto acima, porque medir mostrou que o texto não bastava: (a) o `NOTICE` carrega o **texto da licença Apache-2.0 verbatim** (lido de `node_modules/lightweight-charts/LICENSE`, v5.2.1) — um link bonito não cumpre a licença de quem **redistribui o binário**; e o `NOTICE` é **publicado** (`scripts/preparar-publico.sh` copia para `public/NOTICE`, que chega a `dist/`), porque é isso que "dar uma cópia a quem recebe" significa. (b) A atribuição ganhou **guarda** (`scripts/testar-atribuicao.sh`, encadeada no `verificar` do build): ela prova o elemento `<a>` **inteiro** — href, o nome como *texto do link* e o `rel="noopener noreferrer"` quando há `target="_blank"`. Uma atribuição que pode sumir em silêncio não é obrigação, é promessa.
 
 ### 10.6 A virada
 

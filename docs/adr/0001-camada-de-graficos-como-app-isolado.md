@@ -286,6 +286,39 @@ já estão consolidadas nas seções acima — nominalmente, não se repetem aqu
   segue com um campo (o bloco 1) e o atalho; o que saiu foi a redundância, não o campo. Sem
   churn de teste: todos os E2E abrem a busca por `.first()` no botão do topo, que é o que ficou.
 
+### Fechamento da fatia 10/T5 e da 11/T4 — e a 11/T3 caindo por conflito (2026-10-19)
+
+- **A atribuição do TradingView saiu (fatia 10/T5).** O `NOTICE` existe com o **texto da licença
+  Apache-2.0 verbatim** (v5.2.1, lido de `node_modules/lightweight-charts/LICENSE`) e o link está no
+  **rodapé global** (`src/components/Footer.astro`) — não na página do gráfico, que era a alternativa
+  que quebraria em silêncio. Duas decisões **além** do texto da spec (§10.5), porque o texto não
+  bastava: a licença é **publicada** (`scripts/preparar-publico.sh` → `public/NOTICE` → `dist/NOTICE`),
+  porque quem redistribui o binário tem de **entregar uma cópia** a quem o recebe; e a atribuição
+  ganhou **guarda** (`scripts/testar-atribuicao.sh`, encadeada no `verificar`), que prova o `<a>`
+  **inteiro** (href, nome como texto do link, `rel="noopener noreferrer"` com `target="_blank"`).
+  **Alternativa rejeitada:** só o `NOTICE` no repo — cumpre a letra do plano, não a licença.
+- **O `rate` saiu do contrato publicado (fatia 11/T4).** Os 13 JSONs publicam **só** `value`; a
+  retirada é de **forma**, não de conteúdo — provado por comparação: 2.439 pontos antes e depois,
+  `date`/valor **idênticos**. O alvo era um **script único**, `dados/converter-schema-canonico.py`,
+  e não "a célula canônica de cada notebook" como o plano dizia (essa célula **não existe**; os
+  notebooks seguem no shape legado e o converter aceita `rate` **ou** `value` — é o único ponto de
+  canonicalização). **A ordem de deploy do §6 não mudou:** os commits estão ordenados
+  (`dbc0035` convivência → `f9741ed` sem `rate`), então `main` pode receber a convivência primeiro.
+  Adiantou-se a **autoria**, não a **publicação**. **Alternativa rejeitada:** deixar o `rate` no repo
+  até o dia do push — custaria refazer o trabalho e não ganharia nada, já que nada foi enviado.
+- **A 11/T3 caiu — e a queda é o registro.** O plano mandava **tirar a `unit` do
+  `sitio/indicators.json`** (§6). A **§12.1** é emenda posterior e manda o contrário: o **distintivo
+  de escala tem de aparecer antes de a série carregar**, e é do registry que o app lê a unidade.
+  Executar a T3 teria apagado o distintivo **em silêncio**. A `unit` **fica**. O `comparabilidade`
+  também **não** entra à mão: a §6 já diz que ele é **função pura dos dados**, não campo curado.
+  Registrado no plano (marcado SUPERSEDED) e no ledger.
+- **O `--check` do converter era um no-op — e virou verificador de verdade.** Ele só chamava
+  `converter(..., escrever=False)`: o `help` prometia "só compara" e não comparava nada. Agora compara
+  o disco com a saída canônica e **falha (exit 1)** apontando arquivo e divergência. **Limite
+  registrado no próprio script:** ele verifica **forma** (chave `rate` residual, metadados, contagem,
+  deduplicação, chaves extras) e **não** integridade de **valor** — como o converter normaliza o
+  arquivo em disco, um valor trocado é ponto fixo da conversão, e não há fonte independente no repo.
+
 ## Consequências
 
 **Positivas**

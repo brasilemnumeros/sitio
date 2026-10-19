@@ -9,9 +9,8 @@
 // (mesma derivação da rota da fatia 03/T2).
 //
 // Sobre o `escape` do Liquid: os títulos com aspas duplas do Jekyll saem como
-// `&quot;` no `aria-label`. O Astro escapa o mesmo `"` na forma `&#34;` — HTML
-// equivalente, e o texto do link (que não é atributo) sai com as aspas cruas,
-// igual ao publicado.
+// `&quot;` no `aria-label`. Medido em 2026-10-18: o Astro escapa o mesmo `"`
+// também na forma `&quot;` — byte a byte igual ao publicado.
 import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 import { dataDoId } from '../lib/posts';

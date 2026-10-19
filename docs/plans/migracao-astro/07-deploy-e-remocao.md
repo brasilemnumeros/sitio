@@ -21,8 +21,48 @@ build` (raiz de `sitio/`, que já encadeia app → site → verificações) → 
 - **🔴 `.gitignore` lista `.github`** (`AGENTS.md`), e o workflow já está *tracked*. Alterá-lo é
   `git add` normal (o arquivo existe); criar **novo** arquivo sob `.github/` exige `git add -f`.
 - **Deploy é CI-only.** Não publicar à mão. **O push continua segurado** até o aval do usuário.
-- **Não apagar nada do Jekyll antes de o build do Astro passar** com o contrato de URL fechado
-  (fatias 02–04). A remoção é o **último** passo.
+
+## 🔴 Medições e rulings do controlador (2026-10-18) — leia antes de codar
+
+1. **O workflow mora em `sitio/.github/workflows/github-pages.yml`** (repo `sitio`, não a raiz) e
+   **já está tracked**, apesar de `sitio/.gitignore:11` listar `.github` — logo `git add` normal
+   funciona (só arquivo **novo** sob `.github/` precisa de `-f`).
+2. **O workflow de hoje já é HÍBRIDO, não é o Jekyll puro.** Ele já roda: os testes do app, o build
+   do app, o **Tailwind CLI**, o **canário**, o checkout do repo `dados`, o Playwright e o **E2E** —
+   e só depois o `jekyll-build-pages`. O que muda é **menos** do que parece:
+   (a) sai o `jekyll-build-pages`, entra `npm run build` (site) e o `upload-pages-artifact` com
+   `path: sitio/dist`;
+   (b) **o passo do Tailwind CLI tem de FICAR** — o dev server do app linka `main.dist.css` e é ele
+   que serve o **E2E** (decisão da fatia 05). Ele **não** é trabalho morto;
+   (c) esse passo usa `-i ./assets/css/main.css`, **caminho morto** desde a fatia 00: a entrada é
+   `src/styles/main.css`;
+   (d) **o canário sai do lugar**: ele agora confere `dist/assets/*.css` (saída do Astro), então
+   roda **depois** do build do site — o mais simples é **remover o passo avulso** (ele já está dentro
+   do `verificar` do `npm run build`).
+3. **`sitio/package-lock.json` EXISTE** (167 KB, atualizado em 2026-10-18) → `npm ci` funciona. O
+   `cache-dependency-path` já aponta para os dois locks (`package-lock.json` e
+   `app/package-lock.json`) — **não** há Gemfile nele.
+4. **`git rm` de `assets/css/main.dist.css` vai FALHAR:** ele está no `.gitignore` (gerado) e **não
+   é tracked**. E ele **continua necessário** (o dev do app e o E2E o usam) — **não** remova a linha
+   do `.gitignore`. A lista de remoção do T2 tem de ser corrigida (ver o Passo 2).
+5. **`_posts/` está VAZIA** e o git não rastreia diretório vazio — não há o que remover (a fatia
+   03/T1 já fez o `git mv`). `data/` **não existe**; `assets/` não tem arquivo tracked.
+6. **`docs/` nunca é publicado pelo Astro** — o `astro build` copia **só** o `publicDir` (`public/`),
+   não varre a raiz como o Jekyll. O trap (ADR/spec publicados como arquivo cru) fica **fechado por
+   construção**; ainda assim **asserte** `test ! -e dist/docs`.
+7. **🔴 `AGENTS.md` está no repo RAIZ, não no `sitio`.** O `git add AGENTS.md docs/...` do passo do
+   T3 é **inválido**: mistura dois repos. O `AGENTS.md` é um commit **no repo raiz**; os `docs/` do
+   `sitio` são outro commit **no repo `sitio`**.
+8. **`sitio/.prettierrc` ainda carrega `@shopify/prettier-plugin-liquid` e os overrides de
+   `liquid-html`** (achado da fatia 00). Com o Liquid fora, isso é história: remover o plugin de
+   `devDependencies` e os overrides é limpeza legítima desta fatia (minor — não bloqueia).
+9. **O checkout do repo `dados` no CI usa `ref: ${{ github.ref_name }}`.** Numa branch de feature o
+   repo `dados` **não tem** essa branch → o passo do E2E falha. Hoje isso não morde (o push está
+   segurado e o `dados` vai a `main` numa decisão à parte), mas **registre** — é o tipo de coisa que
+   só aparece no primeiro push.
+10. **Não apagar nada do Jekyll antes de o build do Astro passar** com o contrato de URL fechado
+    (fatias 02–04): a remoção é o **último** passo, e o `git rm` tem de vir depois de um
+    `npm run build` verde.
 
 ---
 
@@ -49,9 +89,19 @@ Expected: todas as verificações `ok` (URL, feed, sitemap, público, meta, can�
 
 - [ ] **Passo 2: editar o workflow**
 
-Substituir o job do `jekyll-build-pages` por: `setup-node` (node 26) → `npm ci` (app) → `npm ci`
-(raiz) → `npm run build` → `upload-pages-artifact` com `path: sitio/dist`. Remover o
-`cache-dependency-path` do `Gemfile`.
+O workflow **já** roda app-testes, app-build, Tailwind CLI, canário, `dados`, Playwright e E2E
+(medição 2). As mudanças são cirúrgicas:
+
+1. **Remover** o passo `Build (Jekyll)` (`actions/jekyll-build-pages@v1`).
+2. **Corrigir** o passo do Tailwind CLI: `-i ./src/styles/main.css` (o `./assets/css/main.css` é
+   **morto**). **Não** remova o passo — o E2E depende dele (medição 2b).
+3. **Remover** o passo avulso do canário — ele agora confere `dist/assets/*.css` e já roda dentro do
+   `verificar` do `npm run build` (medição 2d).
+4. **Acrescentar**, depois do E2E: `npm run build` (o `build` da raiz de `sitio/`, que encadeia
+   app → site → canário → `testar-*`).
+5. **`upload-pages-artifact` com `path: sitio/dist`** (hoje sem `path`, herdando o default do Jekyll).
+
+O `cache-dependency-path` **já** está certo (medição 3) — não invente `gemfile.lock`.
 
 - [ ] **Passo 3: validar a sintaxe do YAML**
 
@@ -76,15 +126,20 @@ git commit -m "ci: build do Astro no lugar do jekyll-build-pages"
 
 **Arquivos:**
 
-- Apagar: `Gemfile`, `Gemfile.lock`, `_config.yml`, `_layouts/`, `_includes/`, `blog.html`,
-  `categorias/`, `links.html`, `index.html`, `sobre.md`, `termos-de-uso.md`,
-  `politica-de-privacidade.md`, `assets/css/main.dist.css`
-- Modificar: `.gitignore` (remover o que era do Jekyll, manter o que o Astro publica)
+- Apagar (com `git rm`): `Gemfile`, `Gemfile.lock`, `_config.yml`, `_layouts/`, `_includes/`,
+  `404.html`, `blog.html`, `categorias/`, `links.html`, `index.html`, `sobre.md`, `termos-de-uso.md`,
+  `politica-de-privacidade.md`
+- Modificar: `.gitignore` (tirar o que era do Jekyll, manter o que o Astro publica)
+- **Não** entra na lista: `indicators.json` (é a **fonte** do catálogo do app — a cópia publicada é
+  `public/indicators.json`, feita por `preparar-publico.sh`).
 
 > **Ruling (varredura de conflitos, 2026-10-18):** `_posts/` **não** entra na lista. A fatia 03/T1 já
-> o move para `src/content/posts/` com `git mv` — um `git rm -r _posts` aqui falharia (pasta
-> inexistente) ou, pior, seria inútil. **Não** apague `assets/css/main.css`: ele foi movido para
-> `src/styles/` na fatia 00 e é fonte viva.
+> o moveu para `src/content/posts/` com `git mv`; a pasta está **vazia** e o git não rastreia
+> diretório vazio — não há o que remover (medição 5).
+> **Não** apague `assets/css/main.css`: ele foi movido para `src/styles/` na fatia 00 e é fonte viva.
+> 🔴 **Não** tente remover `assets/css/main.dist.css` (medição 4): é **gerado**, não é tracked, e
+> **continua necessário** para o dev do app e para o E2E. A linha do `.gitignore` **fica**.
+> `data/` não existe e `assets/` não tem arquivo tracked (medição 5).
 
 **Interfaces:**
 
@@ -101,8 +156,11 @@ Use `git rm` (não `rm`) para que a remoção fique no histórico com o rastro c
 
 - [ ] **Passo 3: limpar o `.gitignore`**
 
-Remover entradas do Jekyll (`_site/`, `.jekyll-cache/`, `assets/css/main.dist.css`); garantir que
-`dist/`, `.astro/`, `public/assets/js/app/` e `public/indicators.json` estão ignorados.
+Remover o que era do Jekyll e não existe mais: `_site`, `.sass-cache`, `.jekyll-cache`,
+`.jekyll-metadata`, `vendor`. **Manter**: `dist/`, `.astro/`, `node_modules`,
+`assets/css/main.dist.css` (gerado e **ainda usado** — medição 4), `public/assets/js/app/`,
+`public/indicators.json`, os artefatos do Playwright. `data/*` pode sair (`data/` não existe) —
+confira antes com `ls data/`.
 
 - [ ] **Passo 4: build do zero**
 
@@ -122,11 +180,16 @@ git commit -m "chore: remove o Jekyll — o site passa a ser só Astro"
 
 **Arquivos:**
 
-- Modificar: `AGENTS.md` (raiz do repo) — a seção "O site Jekyll" vira história
+- Modificar: **`AGENTS.md` (raiz do repo — repo SEPARADO)** — a seção "O site Jekyll" vira história
 - Modificar: `sitio/docs/adr/0002-migracao-do-site-para-astro.md` (estado: implementado)
 - Modificar: `sitio/docs/plans/README.md` (a migração fecha; aponta para o novo diretório)
 - Criar: `sitio/docs/plans/migracao-astro/progress.md`-equivalente? **Não** — o ledger é
   `.superpowers/sdd/` e é **ignorado pelo git** (convenção)
+
+> 🔴 **Dois repos, dois commits** (medição 7). `AGENTS.md` vive na raiz, que é um repo **próprio**;
+> `sitio/docs/**` vive no repo `sitio`. Um `git add AGENTS.md sitio/docs/...` **falha** (os caminhos
+> não existem no mesmo índice). Faça dois commits: um no `sitio` (ADR + `docs/plans/README.md`) e um
+> na raiz (`AGENTS.md`).
 
 **Interfaces:**
 
@@ -154,16 +217,26 @@ Expected: `docs fora do build ok` — o trap do `AGENTS.md` (publicar ADR/spec c
 Run: `NODE_ENV=development npm run build && bash scripts/testar-urls.sh && bash scripts/testar-feed.sh && bash scripts/testar-sitemap.sh && bash scripts/testar-publico.sh && bash scripts/testar-meta.sh && bash scripts/checar-canario.sh && (cd app && NODE_ENV=development npm test && NODE_ENV=development npm run test:e2e)`
 Expected: tudo verde; **126 + novos** unitários e os E2E no mesmo estado.
 
-- [ ] **Passo 5: commit**
+- [ ] **Passo 5: commit — DOIS repos, DOIS commits**
 
 ```bash
-git add AGENTS.md docs/plans/README.md docs/adr/0002-migracao-do-site-para-astro.md
-git commit -m "docs: AGENTS.md e ADR refletem o site em Astro; uma stack"
+# 1) no repo `sitio`:
+git add docs/plans/README.md docs/adr/0002-migracao-do-site-para-astro.md
+git commit -m "docs: ADR e índice dos planos refletem o site em Astro"
+
+# 2) no repo RAIZ (o AGENTS.md mora lá):
+cd .. && git add AGENTS.md
+git commit -m "docs: AGENTS.md descreve o site em Astro; o Jekyll vira história"
 ```
+
+**Onde está o `AGENTS.md`:** `/Users/lucas/Workspace/brasilemnumeros/AGENTS.md` (raiz). Se você
+rodar `git add AGENTS.md` de dentro de `sitio/`, ele **não** existe nesse repo.
 
 ## Critérios de aceite (fatia 07)
 
 - [ ] O workflow **não** menciona jekyll/ruby/gemfile/bundler e constrói `sitio/dist`.
+- [ ] O workflow **mantém** o passo do Tailwind CLI (com a entrada `src/styles/main.css`) **antes** do
+      E2E, e o canário roda **depois** do build do site (dentro do `verificar`).
 - [ ] `Gemfile`, `Gemfile.lock`, `_config.yml`, `_layouts/`, `_includes/` **não existem**.
 - [ ] `NODE_ENV=development npm ci && npm run build` roda do zero, sem o Jekyll no disco.
 - [ ] `grep` por jekyll/liquid/bundler/ruby só encontra história (docs/planos).

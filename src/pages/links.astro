@@ -1,14 +1,14 @@
 ---
-// Portado de `links.html` do Jekyll. A única mudança de comportamento é o loop
-// `{% for post in site.posts %}`: o Jekyll ordena `site.posts` por data
+// Portado do `links.html` do site antigo. A única mudança de comportamento é o loop
+// `{% for post in site.posts %}`: o site antigo ordenava `site.posts` por data
 // DECRESCENTE, então a ordenação é explícita aqui — `getCollection` não promete
 // ordem nenhuma.
 //
-// A URL do post é a do Jekyll, com `.html`: `/categoria/AAAA/MM/DD/slug.html`.
+// A URL do post é a do site antigo, com `.html`: `/categoria/AAAA/MM/DD/slug.html`.
 // A categoria vem de `categories[0]` e o slug é o `id` sem o prefixo de data
 // (mesma derivação da rota da fatia 03/T2).
 //
-// Sobre o `escape` do Liquid: os títulos com aspas duplas do Jekyll saem como
+// Sobre o `escape` do template antigo: os títulos com aspas duplas do site antigo saem como
 // `&quot;` no `aria-label`. Medido em 2026-10-18: o Astro escapa o mesmo `"`
 // também na forma `&quot;` — byte a byte igual ao publicado.
 import Base from '../layouts/Base.astro';

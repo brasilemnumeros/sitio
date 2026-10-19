@@ -7,8 +7,8 @@
 // 1. **A caixa do player NÃO é condicional.** O post SEM áudio publica
 //    `<div id="podcast-player">` com `<div class="shk-player" data-src="">` — uma
 //    caixa cinza vazia. Só o aviso e o `<script>` dependem de `audio`. Aqui a
-//    caixa fica FORA do `if`, como no Jekyll.
-// 2. **O título entra DENTRO de string JS.** O Jekyll faz isso em dois sabores:
+//    caixa fica FORA do `if`, como no site antigo.
+// 2. **O título entra DENTRO de string JS.** O site antigo fazia isso em dois sabores:
 //    `{{ page.title }}` (cru, sem escapar — mantém as aspas retas do `"Taxaço"`)
 //    no `audio.title`, e `{{ page.title | escape }}` (escapa `"` → `&quot;`) no
 //    `audio_title` do GA4. Reproduzimos os dois: `tituloRaw` e `tituloEscapado`.
@@ -19,7 +19,7 @@
 //    Number.MAX_SAFE_INTEGER)`.
 import { render, type CollectionEntry } from 'astro:content';
 import Base from './Base.astro';
-import { dataDoId, isoDoJekyll, dataPorExtenso, urlDoPost } from '../lib/posts';
+import { dataDoId, isoDoPost, dataPorExtenso, urlDoPost } from '../lib/posts';
 import { trecho } from '../lib/trecho';
 import { smartify } from '../lib/smartify';
 
@@ -33,7 +33,7 @@ const { post } = Astro.props;
 // `trecho.ts`) é o mesmo material.
 const { Content } = await render(post);
 
-// A URL canônica termina em `.html` (permalink default do Jekyll). Derivada pelo
+// A URL canônica termina em `.html` (permalink default do site antigo). Derivada pelo
 // MESMO helper da listagem — uma segunda cópia divergiria em silêncio.
 const SITE_URL = 'https://www.brasilemnumeros.ong.br';
 const caminho = urlDoPost(post.id, post.data.categories[0]);
@@ -54,12 +54,12 @@ const ROTULO: Record<string, { icone: string; nome: string }> = {
   noticias: { icone: '📢', nome: 'Notícia' },
 };
 
-// Liquid `capitalize`: primeira letra maiúscula e o RESTO minúsculo.
+// Filtro `capitalize` do template antigo: primeira letra maiúscula e o RESTO minúsculo.
 function capitalizar(texto: string): string {
   return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
 }
 
-// O `escape` do Liquid (CGI.escapeHTML) — usado só no `audio_title` do GA4.
+// O `escape` do template antigo (CGI.escapeHTML) — usado só no `audio_title` do GA4.
 function escaparHtml(texto: string): string {
   return texto
     .replace(/&/g, '&amp;')
@@ -181,8 +181,8 @@ const scriptAudio = `
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'BlogPosting',
-  dateModified: isoDoJekyll(data),
-  datePublished: isoDoJekyll(data),
+  dateModified: isoDoPost(data),
+  datePublished: isoDoPost(data),
   description: descricao,
   headline: smartify(post.data.title),
   ...(imagemAbsoluta ? { image: imagemAbsoluta } : {}),
@@ -197,7 +197,7 @@ const jsonLd = {
   tipo="article"
   canonical={canonical}
   image={imagemAbsoluta}
-  publicadoEm={isoDoJekyll(data)}
+  publicadoEm={isoDoPost(data)}
   jsonLd={jsonLd}
 >
   <!-- Post Header -->
@@ -205,7 +205,7 @@ const jsonLd = {
     <h1 class="mb-4 text-4xl font-bold text-gray-900 dark:text-gray-100">{post.data.title}</h1>
 
     <div class="mb-4 flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-      <time datetime={isoDoJekyll(data)}>{dataPorExtenso(data)}</time>
+      <time datetime={isoDoPost(data)}>{dataPorExtenso(data)}</time>
 
       {
         post.data.categories.map((categoria) => (
@@ -277,7 +277,7 @@ const jsonLd = {
 
   <!-- Podcast Player: NÃO condicional — sai vazio nos posts sem áudio.
        `set:html` é necessário para forçar `data-src=""`: o Astro colapsaria um
-       atributo de valor vazio para `data-src` (sem `=""`), divergindo do Jekyll. -->
+       atributo de valor vazio para `data-src` (sem `=""`), divergindo do site antigo. -->
   <div
     id="podcast-player"
     class="rounded-lg bg-gray-200 dark:bg-gray-600"

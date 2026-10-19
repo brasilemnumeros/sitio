@@ -1,4 +1,4 @@
-// URL publicada do post, no formato do Jekyll: `/categoria/AAAA/MM/DD/slug.html`.
+// URL publicada do post, no formato do site antigo: `/categoria/AAAA/MM/DD/slug.html`.
 // A categoria vem de `categories[0]` e o slug é o `id` sem o prefixo de data.
 //
 // Helper ÚNICO de propósito: é lógica de URL de conteúdo crítico. Duas cópias
@@ -11,7 +11,7 @@ export function urlDoPost(id: string, categoria: string): string {
   return `/${categoria}/${ano}/${mes}/${dia}/${slug}.html`;
 }
 
-// A data NÃO está no front matter: ela vem do nome do arquivo, como no Jekyll.
+// A data NÃO está no front matter: ela vem do nome do arquivo, como no site antigo.
 // Tudo em UTC — a data do arquivo é meia-noite UTC e o fuso local (UTC-3)
 // jogaria a formatação para o DIA ANTERIOR.
 export function dataDoId(id: string): Date {
@@ -28,17 +28,17 @@ export function dataDoId(id: string): Date {
 }
 
 // medido no site publicado: "2025-07-27T00:00:00+00:00" (com +00:00, não "Z")
-export function isoDoJekyll(d: Date): string {
+export function isoDoPost(d: Date): string {
   return d.toISOString().replace(/\.\d{3}Z$/, '+00:00');
 }
 
 const MES = new Intl.DateTimeFormat('pt-BR', { month: 'long', timeZone: 'UTC' });
 
-// O publicado saía com o mês em INGLÊS ("27 de July de 2025"): o Jekyll não
-// declara locale e o Liquid formata em en por padrão. Reproduzir era fiel, mas o
-// inglês no meio de uma data em português é defeito visível — decisão do usuário em
-// 2026-10-18: traduzir. Sai "27 de julho de 2025" e "07 de agosto de 2025"
-// (dia sempre com dois dígitos, como o `%d` do Liquid).
+// O publicado saía com o mês em INGLÊS ("27 de July de 2025"): o site antigo
+// não declarava locale e o template formatava em en por padrão. Reproduzir era
+// fiel, mas o inglês no meio de uma data em português é defeito visível — decisão do
+// usuário em 2026-10-18: traduzir. Sai "27 de julho de 2025" e "07 de agosto de 2025"
+// (dia sempre com dois dígitos, como o `%d` do template antigo).
 export function dataPorExtenso(d: Date): string {
   const dia = String(d.getUTCDate()).padStart(2, '0');
   return `${dia} de ${MES.format(d)} de ${d.getUTCFullYear()}`;

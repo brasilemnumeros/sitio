@@ -7,13 +7,13 @@
 // integração NÃO fica ligada (senão os `sitemap-*.xml` órfãos são publicados).
 import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
-import { dataDoId, isoDoJekyll, urlDoPost } from '../lib/posts';
+import { dataDoId, isoDoPost, urlDoPost } from '../lib/posts';
 import { ORDEM_CATEGORIAS } from '../lib/categorias';
 
-// As páginas FIXAS publicadas — o `site.pages` do Jekyll, medido contra o
+// As páginas FIXAS publicadas — o `site.pages` do site antigo, medido contra o
 // `sitemap.xml` publicado em 2026-10-18. As categorias saem do mapa
 // (`categorias.ts`) para não divergirem; o resto é a lista publicada. O `404`
-// NÃO entra (nem o Jekyll o publicava) e a raiz sai como `/` (sem nome de
+// NÃO entra (nem o site antigo o publicava) e a raiz sai como `/` (sem nome de
 // arquivo), como no site.
 const FIXAS = [
   '/',
@@ -33,11 +33,11 @@ export const GET: APIRoute = async ({ site }) => {
     (a, b) => dataDoId(a.id).getTime() - dataDoId(b.id).getTime(),
   );
 
-  // Só os POSTS têm `<lastmod>` (formato `isoDoJekyll`); as páginas fixas não.
+  // Só os POSTS têm `<lastmod>` (formato `isoDoPost`); as páginas fixas não.
   const urls = [
     ...posts.map((post) => ({
       loc: `${origem}${urlDoPost(post.id, post.data.categories[0])}`,
-      lastmod: isoDoJekyll(dataDoId(post.id)),
+      lastmod: isoDoPost(dataDoId(post.id)),
     })),
     ...FIXAS.map((caminho) => ({
       loc: caminho === '/' ? `${origem}/` : `${origem}${caminho}`,

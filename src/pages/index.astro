@@ -3,7 +3,7 @@
 // `sitio/app/` (o `build` do site encadeia app → site), e sai como artefato fixo
 // em `public/assets/js/app/{app.js,app.css}`. O site apenas o INCLUI aqui:
 // `<div id="app">` + o `<script>` (idêntico ao `<div id="app">` do `index.html`
-// do Jekyll, §10.1).
+// do site antigo, §10.1).
 //
 // Tema: `shell: 'app'` põe `class="dark"` no `<html>` (decisão de 2026-10-18:
 // escura fixa, sem alternador). O app já pressupõe isso.
@@ -13,7 +13,7 @@
 // hoje; o `<link>` abaixo é a correção deliberada da medição 3 do brief.
 //
 // `?v=${VERSAO}` é o selo de cache-bust do build (uma avaliação por build), o
-// `?v={{ site.time | date: '%s' }}` do Jekyll. O CSS vem ANTES do JS.
+// `?v={{ site.time | date: '%s' }}` do site antigo. O CSS vem ANTES do JS.
 import Base from '../layouts/Base.astro';
 import { VERSAO } from '../versao.js';
 ---

@@ -102,6 +102,7 @@ git commit -m "feat(astro): páginas de texto com as URLs publicadas preservadas
 **Arquivos:**
 
 - Criar: `src/lib/categorias.ts` (o mapa que hoje vive no `_config.yml`)
+- Criar: `src/lib/trecho.ts` (o `post.excerpt` do Jekyll, que o Astro não tem)
 - Criar: `src/components/ListaDePosts.astro`
 - Criar: `src/components/NavegacaoDeCategorias.astro`
 - Criar: `src/pages/blog.astro`
@@ -128,6 +129,58 @@ git commit -m "feat(astro): páginas de texto com as URLs publicadas preservadas
 >
 > A ordem das três na navegação é a do mapa: `analises`, `indicadores`, `noticias`.
 
+> 🔴 **Segundo gap, medido em 2026-10-18 (as três páginas de categoria NÃO são a mesma página):** elas
+> divergem em **cinco** textos, e a `description` do `_config.yml` **não** é a intro do corpo. Cada
+> campo abaixo foi lido do arquivo; **copie, não invente**:
+>
+> | | `analises` | `indicadores` | `noticias` |
+> |---|---|---|---|
+> | ícone | `📊` | `📈` | `📢` |
+> | nome (h1 e navegação) | `Análises` | `Indicadores` | `Notícias` |
+> | `description` (meta, = front matter) | `Análises aprofundadas dos indicadores econômicos brasileiros` | `Novidades sobre indicadores econômicos disponíveis no site` | `Novidades e atualizações do projeto Brasil em Números` |
+> | **intro do corpo** (`<p class="mb-6 …">`) | `Análises aprofundadas dos indicadores econômicos, suas relações e impactos na economia brasileira.` | `Novidades sobre os indicadores econômicos disponíveis, metodologias e interpretações.` | `Novidades, atualizações e marcos do projeto Brasil em Números.` |
+> | estado vazio | `Nenhuma análise encontrada nesta categoria.` | `Nenhum post encontrado nesta categoria.` | `Nenhuma notícia encontrada nesta categoria.` |
+> | texto do “voltar” | `← Voltar para o blog` | `← Voltar para Artigos` | `← Voltar para Artigos` |
+> | cor do destaque | `blue` | `green` | `purple` |
+>
+> ⚠️ As duas últimas linhas são **inconsistências do site de hoje** (o `analises` diz “o blog” e os
+> outros dois “Artigos”; o `indicadores` diz “Nenhum post”). **Reproduza como está** — a migração não
+> conserta texto; vão para a lista de itens abertos com o resto.
+>
+> A cor aparece em **dois** lugares com classes diferentes e ambas precisam existir **estáticas** no
+> fonte (o Tailwind varre o `src/`, não pode montar classe por string):
+>
+> - o destaque da categoria atual na página de categoria:
+>   `bg-blue-100 text-blue-900 dark:bg-blue-900/40 dark:text-blue-100` (idem `green`/`purple`);
+> - o link das outras categorias no `blog`: `text-blue-700 hover:bg-blue-50 …` (idem).
+>
+> As classes já estão no HTML das três páginas — **não invente tons**; leia `categorias/*.html`.
+
+> 🔴 **Terceiro gap, medido: o cartão do `blog` e o cartão da categoria NÃO são o mesmo cartão.**
+>
+> | | `blog.html` | `categorias/*.html` |
+> |---|---|---|
+> | título do post | `<h3>` | `<h2>` |
+> | etiqueta de categoria | **sim** (`📊 Análise` — singular, com `<span>`) | não |
+> | podcast | `🎧 Podcast` | `🎧 Podcast disponível` |
+> | trecho | `truncatewords: **25**` | `truncatewords: **30**` |
+> | lista | `site.posts limit: **10**` | todos os da categoria |
+>
+> Os nomes **singulares** da etiqueta são `case` no Liquid (`blog.html:102-111`), **não** vêm do
+> `_config.yml`: `analises`→`Análise`, `indicadores`→`Indicador`, `noticias`→`Notícia`, qualquer outra
+> → `🏷️ <span>{{ category | capitalize }}</span>`. O `limit: 10` só não corta nada hoje porque há
+> exatamente 10 posts — **reproduza**, senão o 11º post aparece no `blog` e não aparecia antes.
+
+> 🔴 **Quarto gap, medido: o trecho (`post.excerpt`) não existe no Astro.** O Jekyll gera o excerpt
+> como o **primeiro bloco do corpo** renderizado e sem HTML (`strip_html`). Medido: no post dos
+> homicídios, cujo corpo começa com `### Uma análise de quase 30 anos…`, o trecho publicado é
+> `Uma análise de quase 30 anos de dados revela picos, quedas e o complexo papel das armas de fogo na
+> segurança pública do país.` — **sem o `###`**.
+>
+> Então: um helper deriva o trecho do `body` da coleção (primeiro bloco, tirando marcação, espaços
+> colapsados) e trunca em palavras com `…`, como o `truncatewords` do Ruby. A **oracle é o site
+> publicado**: confira os **10** trechos de `/blog` contra os seus, e liste qualquer diferença.
+
 - [ ] **Passo 1: escrever o teste que falha**
 
 `scripts/testar-listagem.sh`:
@@ -136,10 +189,16 @@ git commit -m "feat(astro): páginas de texto com as URLs publicadas preservadas
 #!/usr/bin/env bash
 set -euo pipefail
 falha=0
-for u in blog categorias/analises categorias/indicadores categorias/noticias; do
+# Cada categoria tem de ter a SUA contagem — é o que prova que a coleção foi
+# filtrada, e não que a página renderizou 10 posts em todas.
+for par in "blog:10" "categorias/analises:4" "categorias/indicadores:5" "categorias/noticias:1"; do
+  u=${par%%:*}; esperado=${par##*:}
   f="dist/$u.html"
   [ -f "$f" ] || { echo "listagem: falta $f" >&2; falha=1; continue; }
-  grep -q '<article' "$f" || { echo "listagem: $f sem <article>" >&2; falha=1; }
+  n=$(grep -o '<article' "$f" | wc -l | tr -d ' ')
+  [ "$n" -eq "$esperado" ] || { echo "listagem: $f tem $n <article>, esperado $esperado" >&2; falha=1; }
+  grep -qE '<title>[^<]*[^ <][^<]*</title>' "$f" \
+    || { echo "listagem: $f sem <title> util" >&2; falha=1; }
 done
 [ "$falha" -eq 0 ] || exit 1
 echo "listagem ok"
@@ -174,7 +233,7 @@ Expected: `analises` = 4, `indicadores` = 5, `noticias` = 1, total = 10.
 - [ ] **Passo 7: commit**
 
 ```bash
-git add src/components/ListaDePosts.astro src/components/NavegacaoDeCategorias.astro src/pages/blog.astro src/pages/categorias scripts/testar-listagem.sh
+git add src/lib/categorias.ts src/components/ListaDePosts.astro src/components/NavegacaoDeCategorias.astro src/pages/blog.astro src/pages/categorias src/lib/trecho.ts scripts/testar-listagem.sh
 git commit -m "feat(astro): listagem de posts e categorias a partir de um componente só"
 ```
 

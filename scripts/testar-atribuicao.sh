@@ -26,15 +26,18 @@ for pagina in dist/index.html dist/blog.html; do
 done
 
 # O NOTICE versiona a licença: a Apache-2.0 exige entregar uma CÓPIA a quem recebe o
-# binário. Só o link no rodapé não cumpre (ruling T5).
-NOTICE='NOTICE'
-if [ ! -f "$NOTICE" ]; then
-  echo "atribuicao: falta o NOTICE (cópia da licença Apache-2.0)" >&2
-  falha=1
-else
-  grep -qF 'Apache-2.0' "$NOTICE" \
-    || { echo "atribuicao: o NOTICE não menciona Apache-2.0" >&2; falha=1; }
-fi
+# binário. Só o link no rodapé não cumpre (ruling T5). Confere as DUAS cópias: a do
+# repositório (`NOTICE`) e a PUBLICADA (`dist/NOTICE`) — quem recebe o binário é o
+# visitante do site, então a cópia servida é a que cumpre a licença de fato.
+for notice in 'NOTICE' 'dist/NOTICE'; do
+  if [ ! -f "$notice" ]; then
+    echo "atribuicao: falta $notice (cópia da licença Apache-2.0)" >&2
+    falha=1
+    continue
+  fi
+  grep -qF 'Apache-2.0' "$notice" \
+    || { echo "atribuicao: $notice não menciona Apache-2.0" >&2; falha=1; }
+done
 
 [ "$falha" -eq 0 ] || exit 1
 echo "atribuicao ok"

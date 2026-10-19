@@ -17,6 +17,7 @@ assets/css/main.dist.css
 # catálogo feita por `scripts/preparar-publico.sh`.
 public/assets/js/app/
 public/indicators.json
+public/NOTICE
 assets/js/app/
 app/.vite
 

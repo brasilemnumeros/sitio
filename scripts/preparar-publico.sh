@@ -7,7 +7,10 @@
 #   1. o catálogo `sitio/indicators.json` — copiado para `public/indicators.json`
 #      (gitignored). A cópia publicada mantém o `datafile` do Pages; a reescrita
 #      para `/dados/` é só do middleware, em dev (medição 10);
-#   2. o artefato do app (`app.js` + `app.css`) — que o `app/vite.config.js` já
+#   2. o `sitio/NOTICE` — copiado para `public/NOTICE` (gitignored). A Apache-2.0
+#      exige entregar uma cópia da licença a quem recebe o binário, e quem recebe
+#      o binário é o VISITANTE do site — não basta o arquivo no repositório;
+#   3. o artefato do app (`app.js` + `app.css`) — que o `app/vite.config.js` já
 #      emite DIRETO em `public/assets/js/app/` via `outDir` (medição 1). Aqui só
 #      conferimos que ele existe: um `dev`/`build` que esquecer o build do app
 #      serviria a `/` VAZIA, em silêncio.
@@ -16,6 +19,7 @@ set -euo pipefail
 raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 cp "$raiz/indicators.json" "$raiz/public/indicators.json"
+cp "$raiz/NOTICE" "$raiz/public/NOTICE"
 
 for f in app.js app.css; do
   if [[ ! -f "$raiz/public/assets/js/app/$f" ]]; then

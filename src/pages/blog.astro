@@ -1,0 +1,64 @@
+---
+// Portado de `blog.html`. O `limit: 10` do Liquid é reproduzido de propósito:
+// hoje há exatamente 10 posts, mas com 11 o blog não pode passar a mostrar o
+// 11º (o Jekyll cortava).
+import Base from '../layouts/Base.astro';
+import ListaDePosts from '../components/ListaDePosts.astro';
+import NavegacaoDeCategorias from '../components/NavegacaoDeCategorias.astro';
+import { getCollection } from 'astro:content';
+import { dataDoId } from '../lib/posts';
+
+// `site.posts` do Jekyll é ordenado por data DECRESCENTE; `getCollection` não
+// promete ordem nenhuma.
+const posts = (await getCollection('posts')).sort(
+  (a, b) => dataDoId(b.id).getTime() - dataDoId(a.id).getTime(),
+);
+
+const feed = new URL('/feed.xml', Astro.site).href;
+---
+
+<Base
+  title="Artigos"
+  description="Acompanhe análises, indicadores e novidades do Brasil em Números"
+>
+  <div class="mb-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="mb-4 text-3xl font-bold text-gray-900 dark:text-gray-100">📝 Artigos</h1>
+        <p class="text-lg text-gray-600 dark:text-gray-300">
+          Acompanhe nossa evolução, análises dos indicadores e novidades do projeto.
+        </p>
+      </div>
+
+      <a
+        href={feed}
+        class="inline-flex items-center gap-2 rounded-md px-2 py-2 text-orange-700 transition-colors hover:bg-orange-50 hover:text-orange-900 dark:text-orange-300 dark:hover:bg-orange-900/20 dark:hover:text-orange-100"
+        title="Feed RSS/Atom para acompanhar posts"
+        target="_blank"
+      >
+        {/* `is:raw`: sem ele o Astro normaliza o `<path … />` para
+            `<path …></path>`, divergindo do HTML do Jekyll — mesma razão do
+            bloco do toast em `Base.astro`. */}
+        <Fragment is:raw>
+        <svg class="h-5 w-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M3.429 2.571c9.143 0 16.571 7.429 16.571 16.571h-3.714c0-7.143-5.714-12.857-12.857-12.857v-3.714zM3.429 9.714c5.143 0 9.286 4.143 9.286 9.286h-3.714c0-3.071-2.5-5.571-5.571-5.571v-3.714zM6.857 16.571c0 1.571-1.286 2.857-2.857 2.857s-2.857-1.286-2.857-2.857 1.286-2.857 2.857-2.857 2.857 1.286 2.857 2.857z"/>
+        </svg>
+        </Fragment>
+        <span class="hidden sm:inline">Feed RSS</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Navegação por Categorias -->
+  <div class="mb-8">
+    <NavegacaoDeCategorias atual={null} />
+  </div>
+
+  <!-- Artigos Recentes -->
+  <div>
+    <h2 class="mb-6 text-xl font-semibold text-gray-900 dark:text-gray-100">Artigos Recentes</h2>
+    <div class="space-y-6">
+      <ListaDePosts posts={posts.slice(0, 10)} variante="blog" />
+    </div>
+  </div>
+</Base>

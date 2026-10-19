@@ -86,7 +86,9 @@ const classesMain =
     <Footer />
 
     <!-- Core Scripts -->
-    <script defer src={`/assets/js/theme-switcher.js?v=${VERSAO}`}></script>
+    {/* O theme-switcher NÃO entra no shell do app: a `/` é escura fixa (2026-10-18) e
+        o script reaplicaria o tema do localStorage, podendo clarear a página. */}
+    {shell !== 'app' && <script defer src={`/assets/js/theme-switcher.js?v=${VERSAO}`}></script>}
     <script defer src={`/assets/js/feedback-button.js?v=${VERSAO}`}></script>
 
     <!-- Feedback Button -->

@@ -1,6 +1,7 @@
 ---
-layout: default
+layout: ../layouts/Base.astro
 title: Política de Privacidade
+description: Uma plataforma dedicada a fornecer dados e informações sobre o Brasil.
 ---
 
 # Política de Privacidade

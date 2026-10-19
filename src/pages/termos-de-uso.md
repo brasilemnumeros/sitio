@@ -1,6 +1,7 @@
 ---
-layout: default
+layout: ../layouts/Base.astro
 title: Termos de Uso
+description: Uma plataforma dedicada a fornecer dados e informações sobre o Brasil.
 ---
 
 # Termos de Uso
@@ -13,7 +14,7 @@ Estes Termos de Uso regem o acesso e a utilização do conteúdo e dos serviços
 
 ### 1. Aceitação dos Termos
 
-Ao utilizar o Site, o Usuário confirma que leu, compreendeu e concorda em estar vinculado a estes Termos de Uso e à nossa [Política de Privacidade]({{ "/politica-de-privacidade" | relative_url }}).
+Ao utilizar o Site, o Usuário confirma que leu, compreendeu e concorda em estar vinculado a estes Termos de Uso e à nossa [Política de Privacidade](/politica-de-privacidade).
 
 ### 2. Descrição do Serviço
 

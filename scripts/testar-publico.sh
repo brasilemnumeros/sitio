@@ -14,4 +14,11 @@ for t in 'js/app/app.js' 'js/app/app.css' 'id="app"'; do
   grep -q "$t" dist/index.html || { echo "publico: / não inclui \"$t\"" >&2; falha=1; }
 done
 [ "$falha" -eq 0 ] || exit 1
+# O app publicado busca os governos no Pages — e NÃO em `/dados`, que é o ramo de DEV
+# (`DADOS_LOCAL=1`, posto pelo `dev` do site). Um artefato de dev publicado deixa o gráfico e o
+# minimapa SEM FAIXA, em silêncio: o `catch` de `carregarMandatos` engole a falha (§9.3), e a
+# aparência engana ("minimapa vazio"). A URL do Pages no bundle é o que prova o ramo de produção.
+grep -q 'https://brasilemnumeros.github.io/dados' dist/assets/js/app/app.js \
+  || { echo "publico: app.js não aponta para o Pages (artefato de dev?)" >&2; falha=1; }
+[ "$falha" -eq 0 ] || exit 1
 echo "publico ok"

@@ -460,6 +460,52 @@ mandato e por isso marca 13 células do Temer como "abaixo do esperado" sem que 
 **Verificação:** 144 unitários e 44 E2E verdes (o teste de medição da §7.3 remedido); captura de tela
 no app real mostrando **as duas bolinhas e os dois rótulos de eixo** na mesma vertical.
 
+### O minimapa cobre a área de plotagem — e o dev do site passa a servir dado local (2026-10-19)
+
+**Os dois achados vieram da mesma pergunta do usuário** ("o minimapa não era pra mostrar nada dentro
+dele? e a largura não deveria respeitar os limites do gráfico acima?"), e a captura de tela foi o que
+separou um do outro: a tela dele não tinha **faixa nenhuma** — nem no minimapa, nem no gráfico grande.
+
+**1. Por que a tela estava sem faixa (defeito de ambiente, não de desenho).** O `npm run dev` do
+SITE roda `build:app` em modo BUILD, então `__BASE_DADOS__` caía no ramo de produção e os governos
+eram buscados na URL publicada. Medido: `https://brasilemnumeros.github.io/dados/governos/federal.json`
+responde **404** (é o item 1 do deploy pendente) — e o `catch` de `carregarMandatos` engole a falha
+(§9.3, de propósito). Resultado: gráfico e minimapa sem faixa, sem erro nenhum. **Decidido:** o
+script `dev` do `sitio` exporta `DADOS_LOCAL=1`, e o `vite.config.js` trata isso como o `serve` do
+app — local serve dado local, também no site. O artefato de produção continua com a URL do Pages
+(conferido: `build` sem a variável). Alternativa rejeitada: procurar `/dados` em *runtime* com
+fallback para o Pages (esconderia o 404 em produção, que é o que precisa ser visto).
+
+**2. A largura era mesmo mentira — e não era deslocamento, era ESCALA.** Medido no app a 1280px: a
+área de plotagem do gráfico grande é `[54, 1064)` (as duas escalas de preço da §5 reservam 54px à
+esquerda e 56px à direita) e o minimapa ocupava `[0, 1120)`. A mesma data caía a **−28px** (2003),
+**+1,6px** (2011) e **+31px** (2019) — o erro cruzava zero no meio e chegava a ~55px nas pontas.
+**Decidido:** o container do minimapa recebe margens iguais às larguras das escalas, lidas da
+própria lib (`priceScale('left'|'right').width()`), porque elas acompanham os rótulos. Verificado:
+as duas áreas ficam **idênticas** (erro 0,0px nas pontas) e as faixas caem sob as do gráfico acima.
+
+Rejeitadas, com o motivo medido:
+
+- **`minimumWidth` nas escalas** (a opção que a doc da lib sugere para empilhar gráficos): com a
+  escala **invisível** a lib reserva **0** — medido `width()` = 0 e o canvas ocupando os 600px
+  inteiros do teste. Não reserva nada.
+- **Número fixo (54/56px)**: a largura da escala depende do rótulo; uma série com números maiores
+  alarga o eixo e o minimapa voltaria a desalinhar, em silêncio.
+- **`padding` no container**: a lib posiciona o canvas a partir do *padding box*, então o pane
+  continuaria largo. Com margem, a caixa do container é a própria plotagem.
+- **Não mexer**: a cortina do minimapa é justamente o "onde eu estou"; 31px de erro numa barra de
+  1120 é visível e faz a informação mentir.
+
+**Resíduo aceito e medido:** as áreas são idênticas, mas o `fitContent` do minimapa deixa um range
+lógico fracionário (`0,709…358` contra `0…358` do gráfico), então a mesma data cai até **1,5px** à
+esquerda (0,15% de 1010px). Tentados e descartados: `setVisibleLogicalRange(0…n−1)` e
+`setVisibleRange` com as pontas do dado — a lib **renormaliza** o range do minimapa depois do
+resize e o valor volta a 0,709. Não vale mais código para 1,5px; o número está no código e na spec.
+
+**Verificação:** 144 unitários e **46 E2E** verdes (o teste novo compara a caixa do minimapa com a
+área de plotagem, não com o container — comparar com o container passaria com o defeito); capturas
+no app (5173) e no **site** (4321) com as faixas presentes e alinhadas.
+
 ## Consequências
 
 **Positivas**

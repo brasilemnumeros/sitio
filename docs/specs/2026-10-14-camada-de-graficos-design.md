@@ -130,6 +130,10 @@ Justificativa: se o clique desse zoom, o mandato selecionado sairia de contexto 
 
 Um **minimapa** com o intervalo temporal completo e todas as faixas, sempre visível, é o mapa de navegação: mostra onde está a janela visível e permite voltar de qualquer zoom. É o que torna o clique-destaca seguro — sem ele, ao dar zoom o usuário perderia a referência do todo.
 
+**Alinhamento com a área de plotagem (2026-10-19).** O minimapa desenha na **mesma faixa de x** do gráfico grande: ele é embutido pelas larguras das duas escalas de preço (§5), lidas da lib — medido a 1280px, 54px à esquerda e 56px à direita, e a plotagem tem `[54, 1064)` de `1120`. Não são números fixos: a largura da escala acompanha o rótulo. Sem o alinhamento o minimapa ocupa o container inteiro (`[0, 1120)`) e a **mesma data** cai a −28px (2003), +1,6px (2011) e +31px (2019) — o erro cruza zero no meio, então parecia "quase certo" e mentia nas pontas. `minimumWidth` **não** resolve: com a escala invisível a lib reserva **0** (medido). **Resíduo aceito:** as áreas ficam idênticas, mas o `fitContent` do minimapa deixa um range lógico fracionário (`0,709…358` contra `0…358`), então a mesma data cai até **1,5px** à esquerda (0,15%); `setVisibleLogicalRange`/`setVisibleRange` explícitos foram tentados e a lib renormaliza o range depois do resize.
+
+⚠ **O minimapa NÃO desenha as séries** — as faixas e a janela são o conteúdo; o dado das séries entra só como âncora invisível para o gráfico ter domínio de tempo. Se o minimapa aparece **vazio**, a causa provável é **não ter chegado faixa** (e não o desenho): os governos vêm de `governos/federal.json`, e a falha é engolida (§9.3). Em dev o `sitio` serve o dado local (`DADOS_LOCAL=1`); em produção, um `federal.json` publicado em 404 deixa o minimapa sem faixa, em silêncio.
+
 ### Faixas de governo no gráfico
 
 Renderizadas por um `ISeriesPrimitive` customizado do Lightweight Charts (a lib não tem anotação nativa). Requisitos:

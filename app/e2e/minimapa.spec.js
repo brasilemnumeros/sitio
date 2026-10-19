@@ -204,3 +204,36 @@ test('um arrasto pequeno NÃO causa um salto grande (o relato: "fatia minúscula
   // proporcional: 1% da largura da janela de 10 anos ≈ 36 dias. Antes eram ~5 ANOS para 10px.
   expect(deslocamento).toBeLessThan(400); // ~13 meses — folga generosa, mas longe de "5 anos"
 });
+
+/**
+ * O minimapa é um MAPA do gráfico acima: ele só informa "onde eu estou" se o x dele for o
+ * MESMO x do gráfico. Não era — medido em 2026-10-19 num app de 1280px: a plotagem do gráfico
+ * grande é `[54, 1064)` (as duas escalas de preço reservam as pontas) e o minimapa ocupava
+ * `[0, 1120)`. Não era deslocamento, era ESCALA: a mesma data caía a −28px em 2003, +1,6px em
+ * 2011 e +31px em 2019, e a cortina não ficava sob a faixa correspondente.
+ *
+ * A guarda compara a CAIXA do minimapa com a ÁREA DE PLOTAGEM — o canvas do pane, que é o mais
+ * largo que não ocupa o container. Comparar com o container passaria com o defeito.
+ */
+test('o minimapa cobre a MESMA área de plotagem do gráfico acima', async ({ page }) => {
+  await abrirApp(page);
+  await adicionarPorBusca(page, 'IPCA');
+
+  const medir = () => page.evaluate(() => {
+    const g = document.querySelector('[data-testid="grafico"]');
+    const r = g.getBoundingClientRect();
+    const pane = [...g.querySelectorAll('canvas')]
+      .map((cv) => cv.getBoundingClientRect())
+      .filter((b) => b.width < r.width - 1)
+      .sort((a, b) => b.width - a.width)[0];
+    const m = document.querySelector('[data-testid="minimapa"]').getBoundingClientRect();
+    return { plotagem: { left: pane.left, width: pane.width }, minimapa: { left: m.left, width: m.width } };
+  });
+
+  // o alinhamento é aplicado depois de a lib assentar as escalas (medido: 1–2 quadros).
+  await expect.poll(async () => {
+    const { plotagem, minimapa } = await medir();
+    return Math.max(Math.abs(minimapa.left - plotagem.left), Math.abs(minimapa.width - plotagem.width));
+  }, { message: 'o minimapa tem de cobrir exatamente a plotagem do gráfico', timeout: 10000 })
+    .toBeLessThan(1.5);
+});

@@ -12,6 +12,12 @@ const FUNDO = '#0e1117';
 export function criarNavigator(container, { aoMudarJanela } = {}) {
   const chart = createChart(container, {
     height: 48,
+    // ⚠ Sem `autoSize` a lib NÃO segue o container: ela dimensiona uma vez e pronto. E o
+    // minimapa MUDA de largura por construção — é assim que ele se alinha à plotagem do gráfico
+    // grande (`alinharCom`). Medido sem esta linha: container de 1010px com canvas de **1120px**
+    // transbordando, e as faixas continuavam na escala antiga (116/266/415… contra 106/240/375…
+    // do gráfico). `autoSize` liga o `ResizeObserver` e é o que faz a margem virar tamanho.
+    autoSize: true,
     layout: { background: { color: FUNDO }, textColor: 'transparent', fontSize: 9 },
     grid: { vertLines: { visible: false }, horzLines: { visible: false } },
     rightPriceScale: { visible: false },
@@ -34,6 +40,8 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
   let cortinaAnexada = false;
   let gesto = null;            // { modo: 'mover'|'redimensionar', lado?, agarrePx }
   let pedirRedesenho = null;   // vem do `attached` da cortina — a lib redesenha por aqui
+  let alinhado = { esquerda: -1, direita: -1 }; // margens já aplicadas (o alinhamento é idempotente)
+  let destruido = false;
 
   /**
    * Os dois gestos da §2, com nome: **mover** a janela inteira e **redimensionar** uma ponta.
@@ -49,12 +57,16 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
   const PEGA = 6; // px de tolerância em cada borda, para pegar a ponta
 
   /**
-   * 🔴 O espaço do PONTEIRO (o container) não é o espaço do GRÁFICO. A lib reserva faixas para
-   * as escalas de preço, então o *pane* é mais estreito que o container — no minimapa, 1010px
-   * contra 1120px. Comparar a borda da janela (espaço do gráfico) com `ev.clientX - r.left`
-   * (espaço do container) erra por esse tanto: 54px, muito além dos 6px de tolerância, e
-   * `ladoPegavel` NUNCA casava — o redimensionar simplesmente não existia.
-   * Medido no DOM a cada gesto (o layout muda): procura-se o canvas cuja largura é a do pane.
+   * 🔴 O espaço do PONTEIRO (o container) não é, em geral, o espaço do GRÁFICO: a lib reserva
+   * faixas para as escalas de preço, então o *pane* é mais estreito que o container. Comparar a
+   * borda da janela (espaço do gráfico) com `ev.clientX - r.left` (espaço do container) erra por
+   * esse tanto — foi o que fez `ladoPegavel` NUNCA casar e o redimensionar não existir (medido
+   * em 2026-10-15).
+   *
+   * ⚠ Desde o alinhamento de 2026-10-19 (`alinharCom`), o container do minimapa **é** a área de
+   * plotagem — ele não tem escala nenhuma e o pane ocupa tudo. Então esta função devolve 0 e é
+   * uma rede de segurança: `panes()[0].getWidth()` **não existe** nesta versão da lib (por isso
+   * o `?.`), e o fallback é a largura do container — que é o pane de fato aqui.
    */
   function deslocamentoDoPane() {
     try {
@@ -180,6 +192,18 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
   container.addEventListener('pointerup', aoSoltar);
   container.addEventListener('pointercancel', aoSoltar);
 
+  // A LARGURA do minimapa muda quando ele é alinhado (ou quando a janela do navegador muda).
+  // O `janela.from/to` está em PIXEL: se a escala mudou e os pixels não, a cortina desenha
+  // deslocada e o arrasto parte de um valor falso — então ela é recalculada aqui.
+  //
+  // ⚠ RESÍDUO MEDIDO e aceito (2026-10-19): as duas áreas de plotagem são idênticas (erro 0,0px
+  // nas pontas), mas o `fitContent` do minimapa deixa um range lógico FRACIONÁRIO (`0,709…358`)
+  // contra `0…358` do gráfico grande, e a mesma data cai até **1,5px** à esquerda aqui (0,15% de
+  // 1010px — antes do alinhamento eram 28px). Tentado e NÃO pegou: `setVisibleLogicalRange(0…n−1)`
+  // e `setVisibleRange` com as pontas do dado — a lib renormaliza o range do minimapa depois do
+  // resize, e o valor volta a 0,709. Não vale mais código para 1,5px.
+  chart.timeScale().subscribeSizeChange(() => { if (!destruido) ressincronizarPixels(); });
+
   return {
     /** As faixas do navegador são as MESMAS do gráfico grande — um só dado, dois desenhos. */
     definirFaixas(mandatos, dadosParaAncora = []) {
@@ -221,7 +245,43 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
       janela = { ...janela, de: from, ate: to };
       ressincronizarPixels();
     },
+    /**
+     * Alinha o minimapa à ÁREA DE PLOTAGEM do gráfico grande.
+     *
+     * 🔴 MEDIDO (2026-10-19, app real a 1280px): o pane do gráfico grande é `[54, 1064)` — as
+     * duas escalas de preço (§5) reservam 54px à esquerda e 56px à direita — enquanto o
+     * minimapa, sem escala nenhuma, ocupa `[0, 1120)`. **Não é deslocamento, é ESCALA
+     * diferente**: a mesma data cai em −28px (2003), +1,6px (2011) e +31px (2019), e o erro
+     * chega a ~55px nas pontas. A cortina e as faixas do minimapa não ficavam sob as do
+     * gráfico acima — e é justamente sob elas que o usuário lê "onde eu estou".
+     *
+     * `minimumWidth` NÃO resolve: com a escala invisível a lib reserva **0** (medido:
+     * `priceScale().width()` = 0 e o canvas ocupa os 600px inteiros do teste). Por isso a
+     * margem: o container do minimapa passa a ter a largura do pane, e o pane dele — que não
+     * tem escala — é a própria área de plotagem.
+     *
+     * ⚠ As larguras vêm de fora (`medirEscalas`), porque quem as conhece é o adapter do
+     * gráfico grande.
+     */
+    alinharCom(medirEscalas) {
+      if (destruido) return;
+      let medidas = null;
+      try { medidas = medirEscalas?.() ?? null; } catch { medidas = null; }
+      if (!medidas) return;
+      const esquerda = Math.round(medidas.esquerda ?? 0);
+      const direita = Math.round(medidas.direita ?? 0);
+      if (esquerda === alinhado.esquerda && direita === alinhado.direita) return;
+      alinhado = { esquerda, direita };
+      // Margem, não padding: com padding a lib posiciona o canvas a partir da borda do padding
+      // box e o pane continuaria largo. Com margem a caixa do container é a própria plotagem.
+      container.style.marginLeft = `${esquerda}px`;
+      container.style.marginRight = `${direita}px`;
+      // A largura mudou: `subscribeSizeChange` recalculou os pixels da janela; este pedido é a
+      // rede de segurança do caso em que o tamanho não muda (mesma soma, lados diferentes).
+      requestAnimationFrame(() => { if (!destruido) ressincronizarPixels(); });
+    },
     destruir() {
+      destruido = true;
       container.removeEventListener('pointerdown', aoPressionar);
       container.removeEventListener('pointermove', aoMover);
       container.removeEventListener('pointerup', aoSoltar);

@@ -71,6 +71,13 @@
     // avisam por aqui (o eco do próprio adapter não). É o que separa "re-enquadre" de "não mexa".
     const pararEscolha = aoEscolherJanela((doUsuario) => adapter.aJanelaEDoUsuario(doUsuario));
 
+    // O minimapa cobre a MESMA área de plotagem do gráfico grande (§2): as escalas de preço
+    // reservam faixas nas pontas, e sem isto a cortina e as faixas do minimapa não caem sob as
+    // do gráfico acima. O sinal é a geometria do adapter — não um número fixo, que mentiria
+    // assim que um rótulo mudasse de largura. Detalhe e números em `navigator.alinharCom`.
+    adapter.aoMudarPlotagem(() => navigator.alinharCom(adapter.largurasDasEscalas));
+    navigator.alinharCom(adapter.largurasDasEscalas);
+
     // O mandato é contexto: se os governos não vierem, o gráfico segue (§9.3).
     carregarMandatos();
 
@@ -83,4 +90,4 @@
 </script>
 
 <div bind:this={container} class="h-[480px] w-full" data-testid="grafico"></div>
-<div bind:this={containerMini} class="mt-2 h-[48px] w-full" data-testid="minimapa"></div>
+<div bind:this={containerMini} class="mt-2 h-[48px]" data-testid="minimapa"></div>

@@ -12,7 +12,7 @@ Acreditamos que dados governamentais, muitas vezes complexos e dispersos, devem 
 
 Toda a nossa metodologia, da coleta dos dados brutos à geração dos gráficos, é transparente e está disponível em nosso repositório público. Convidamos você a explorar, auditar nosso trabalho e utilizar os dados para fortalecer suas próprias análises e fomentar um debate público mais qualificado.
 
-<a href="https://github.com/brasilemnumeros" target="\_blank">Acesse nossa página no GitHub</a>
+<a href="https://github.com/brasilemnumeros" target="_blank" rel="noopener noreferrer">Acesse nossa página no GitHub</a>
 
 ---
 

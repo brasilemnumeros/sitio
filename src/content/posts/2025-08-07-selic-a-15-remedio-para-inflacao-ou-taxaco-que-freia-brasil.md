@@ -63,16 +63,16 @@ A análise dos dados é o primeiro passo para essa reflexão. Explore nossos gr�
 
 Este artigo foi elaborado com base em análises de diversas fontes especializadas:
 
-1. **COFECI** - <a href="https://www.cofeci.gov.br/post/como-a-taxa-selic-afeta-a-economia-e-o-mercado-imobili%C3%A1rio" target="\_blank" rel="noopener">Como a taxa Selic afeta a economia e o mercado imobiliário</a>
+1. **COFECI** - <a href="https://www.cofeci.gov.br/post/como-a-taxa-selic-afeta-a-economia-e-o-mercado-imobili%C3%A1rio" target="_blank" rel="noopener noreferrer">Como a taxa Selic afeta a economia e o mercado imobiliário</a>
 
-2. **Instituto Humanitas Unisinos** - <a href="https://www.ihu.unisinos.br/655259-do-tarifaco-ao-taxaco-a-taxa-selic-em-15-impoe-um-alto-custo-ao-povo-brasileiro-artigo-de-sergio-botton-barcellos" target="\_blank" rel="noopener">Do tarifaço ao taxaço: a taxa Selic em 15% impõe um alto custo ao povo brasileiro</a>
+2. **Instituto Humanitas Unisinos** - <a href="https://www.ihu.unisinos.br/655259-do-tarifaco-ao-taxaco-a-taxa-selic-em-15-impoe-um-alto-custo-ao-povo-brasileiro-artigo-de-sergio-botton-barcellos" target="_blank" rel="noopener noreferrer">Do tarifaço ao taxaço: a taxa Selic em 15% impõe um alto custo ao povo brasileiro</a>
 
-3. **CNN Brasil** - <a href="https://www.cnnbrasil.com.br/economia/macroeconomia/focus-mercado-mantem-selic-ate-o-fim-de-2025-e-reduz-projecoes-de-inflacao/" target="\_blank" rel="noopener">Focus: mercado mantém Selic até o fim de 2025 e reduz projeções de inflação</a>
+3. **CNN Brasil** - <a href="https://www.cnnbrasil.com.br/economia/macroeconomia/focus-mercado-mantem-selic-ate-o-fim-de-2025-e-reduz-projecoes-de-inflacao/" target="_blank" rel="noopener noreferrer">Focus: mercado mantém Selic até o fim de 2025 e reduz projeções de inflação</a>
 
-4. **Serasa** - <a href="https://www.serasa.com.br/blog/entenda-o-que-e-taxa-selic-e-como-ela-afeta-sua-vida/" target="\_blank" rel="noopener">Entenda o que é taxa Selic e como ela afeta sua vida</a>
+4. **Serasa** - <a href="https://www.serasa.com.br/blog/entenda-o-que-e-taxa-selic-e-como-ela-afeta-sua-vida/" target="_blank" rel="noopener noreferrer">Entenda o que é taxa Selic e como ela afeta sua vida</a>
 
-5. **T2 Educação** - <a href="https://t2.com.br/blog/selic-meta-x-selic-over/" target="\_blank" rel="noopener">Selic Meta x Selic Over</a>
+5. **T2 Educação** - <a href="https://t2.com.br/blog/selic-meta-x-selic-over/" target="_blank" rel="noopener noreferrer">Selic Meta x Selic Over</a>
 
-6. **Portal Contábeis** - <a href="https://www.contabeis.com.br/tabelas/selic/" target="\_blank" rel="noopener">Taxa Selic</a> e <a href="https://www.contabeis.com.br/noticias/69087/taxa-selic-o-que-e-e-como-ela-afeta-as-pequenas-empresas/" target="\_blank" rel="noopener">Taxa Selic: o que é e como ela afeta as pequenas empresas</a>
+6. **Portal Contábeis** - <a href="https://www.contabeis.com.br/tabelas/selic/" target="_blank" rel="noopener noreferrer">Taxa Selic</a> e <a href="https://www.contabeis.com.br/noticias/69087/taxa-selic-o-que-e-e-como-ela-afeta-as-pequenas-empresas/" target="_blank" rel="noopener noreferrer">Taxa Selic: o que é e como ela afeta as pequenas empresas</a>
 
-7. **InfoMoney** - <a href="https://www.infomoney.com.br/guias/taxa-selic/" target="\_blank" rel="noopener">Taxa Selic: Guia Completo</a>
+7. **InfoMoney** - <a href="https://www.infomoney.com.br/guias/taxa-selic/" target="_blank" rel="noopener noreferrer">Taxa Selic: Guia Completo</a>

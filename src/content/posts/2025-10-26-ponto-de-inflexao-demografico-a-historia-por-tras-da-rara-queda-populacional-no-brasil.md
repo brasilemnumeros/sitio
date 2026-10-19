@@ -17,10 +17,10 @@ Os dados da **População Total Anual** entre 1995 e 2019 mostram, à primeira v
 
 Em 1998, a população crescia a um ritmo acelerado de 2,06% ao ano. Nas duas décadas seguintes, essa taxa despencou, chegando a apenas 0,22% em 2019 e a um virtual empate técnico em 2020 (+0,04%).
 
-<a href="/assets/img/populacao-total-x-variacao.webp" target="\_blank" rel="noopener"><img src="/assets/img/populacao-total-x-variacao.webp" alt="GRÁFICO: POPULAÇÃO - TOTAL ANUAL X POPULAÇÃO - VARIAÇÃO ANUAL (1995-2025)" /></a>
+<a href="/assets/img/populacao-total-x-variacao.webp" target="_blank" rel="noopener noreferrer"><img src="/assets/img/populacao-total-x-variacao.webp" alt="GRÁFICO: POPULAÇÃO - TOTAL ANUAL X POPULAÇÃO - VARIAÇÃO ANUAL (1995-2025)" /></a>
 
 <p class="text-center">
-<a href="https://www.brasilemnumeros.ong.br/?indicators=populacao-total-anual,populacao-variacao-anual" class="text-blue-600 hover:text-blue-400 underline" target="_blank" rel="noopener">Acesse o gráfico comparativo aqui!</a>
+<a href="https://www.brasilemnumeros.ong.br/?indicators=populacao-total-anual,populacao-variacao-anual" class="text-blue-600 hover:text-blue-400 underline" target="_blank" rel="noopener noreferrer">Acesse o gráfico comparativo aqui!</a>
 </p>
 
 Essa desaceleração não é uma anomalia, mas sim a marca clássica da **transição demográfica**, um fenômeno global observado à medida que países se desenvolvem. A urbanização, o aumento da educação (especialmente a feminina) e o maior acesso ao planejamento familiar levam a uma queda natural e esperada nas taxas de natalidade. O Brasil seguiu o padrão de muitas outras nações de renda média, vendo seu ritmo de crescimento diminuir gradualmente ao longo de 25 anos.

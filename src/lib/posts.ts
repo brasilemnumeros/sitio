@@ -32,10 +32,13 @@ export function isoDoJekyll(d: Date): string {
   return d.toISOString().replace(/\.\d{3}Z$/, '+00:00');
 }
 
-const MES = new Intl.DateTimeFormat('en-US', { month: 'long', timeZone: 'UTC' });
+const MES = new Intl.DateTimeFormat('pt-BR', { month: 'long', timeZone: 'UTC' });
 
-// medido no site publicado: "27 de July de 2025" e "07 de August de 2025".
-// O mês sai em INGLÊS porque o Jekyll não declara locale — ver o item aberto.
+// O publicado saía com o mês em INGLÊS ("27 de July de 2025"): o Jekyll não
+// declara locale e o Liquid formata em en por padrão. Reproduzir era fiel, mas o
+// inglês no meio de uma data em português é defeito visível — decisão do usuário em
+// 2026-10-18: traduzir. Sai "27 de julho de 2025" e "07 de agosto de 2025"
+// (dia sempre com dois dígitos, como o `%d` do Liquid).
 export function dataPorExtenso(d: Date): string {
   const dia = String(d.getUTCDate()).padStart(2, '0');
   return `${dia} de ${MES.format(d)} de ${d.getUTCFullYear()}`;

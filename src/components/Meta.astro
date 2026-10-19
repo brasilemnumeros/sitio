@@ -48,7 +48,10 @@ const dadosEstruturados = jsonLd ?? {
 <meta property="og:site_name" content="Brasil em Números" />
 <meta property="og:type" content={tipo} />
 {publicadoEm && <meta property="article:published_time" content={publicadoEm} />}
-<meta name="twitter:card" content="summary" />
+<!-- O `jekyll-seo-tag` sobe o card para `summary_large_image` quando o post tem
+     imagem de capa — medido no post do PIB: capa → `summary_large_image`; sem
+     capa (`selic`, `/blog`, `/sobre`) → `summary`. -->
+<meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />
 {image && <meta property="twitter:image" content={image} />}
 <meta property="twitter:title" content={tituloSmart} />
 {image && <meta property="og:image" content={image} />}

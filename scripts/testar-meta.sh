@@ -60,7 +60,12 @@ else
   PIB="dist/analises/2025/09/04/o-crescimento-real-do-brasil-pib-anual.html"
   if [ -f "$PIB" ]; then
     conferir 'property="twitter:image" content="https://www.brasilemnumeros.ong.br/assets/img/pib-image-cover.webp"' "$PIB"
+    # O `jekyll-seo-tag` sobe o card para `summary_large_image` quando há capa
+    # (medido: PIB → `summary_large_image`; `selic`/`blog`/`sobre` → `summary`).
+    conferir 'name="twitter:card" content="summary_large_image"' "$PIB"
   fi
+  # E o post SEM capa continua `summary` — a outra metade da regra.
+  conferir 'name="twitter:card" content="summary"' "$POST"
 fi
 
 [ "$falha" -eq 0 ] || exit 1

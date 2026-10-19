@@ -31,7 +31,7 @@ build` (raiz de `sitio/`, que já encadeia app → site → verificações) → 
    do app, o **Tailwind CLI**, o **canário**, o checkout do repo `dados`, o Playwright e o **E2E** —
    e só depois o `jekyll-build-pages`. O que muda é **menos** do que parece:
    (a) sai o `jekyll-build-pages`, entra `npm run build` (site) e o `upload-pages-artifact` com
-   `path: sitio/dist`;
+   `path: dist`;
    (b) **o passo do Tailwind CLI tem de FICAR** — o dev server do app linka `main.dist.css` e é ele
    que serve o **E2E** (decisão da fatia 05). Ele **não** é trabalho morto;
    (c) esse passo usa `-i ./assets/css/main.css`, **caminho morto** desde a fatia 00: a entrada é
@@ -63,6 +63,12 @@ build` (raiz de `sitio/`, que já encadeia app → site → verificações) → 
 10. **Não apagar nada do Jekyll antes de o build do Astro passar** com o contrato de URL fechado
     (fatias 02–04): a remoção é o **último** passo, e o `git rm` tem de vir depois de um
     `npm run build` verde.
+11. 🔴 **O `upload-pages-artifact` usa `path: dist`, e não `sitio/dist` — a redação original deste
+    plano estava ERRADA.** O workflow mora no repo `sitio`, então o `actions/checkout` põe a **raiz
+    do repo `sitio`** na raiz do workspace (é ali que vive o `package.json` que o passo chama, e é
+    dali que `--prefix app` e `../dados/` fazem sentido). O Astro emite `dist/` **nessa raiz**, logo
+    `sitio/dist` não existiria e o deploy publicaria vazio. Medido na fatia 07 e anotado em
+    comentário no próprio workflow.
 
 ---
 
@@ -99,7 +105,7 @@ O workflow **já** roda app-testes, app-build, Tailwind CLI, canário, `dados`, 
    `verificar` do `npm run build` (medição 2d).
 4. **Acrescentar**, depois do E2E: `npm run build` (o `build` da raiz de `sitio/`, que encadeia
    app → site → canário → `testar-*`).
-5. **`upload-pages-artifact` com `path: sitio/dist`** (hoje sem `path`, herdando o default do Jekyll).
+5. **`upload-pages-artifact` com `path: dist`** (hoje sem `path`, herdando o default do Jekyll).
 
 O `cache-dependency-path` **já** está certo (medição 3) — não invente `gemfile.lock`.
 
@@ -234,7 +240,7 @@ rodar `git add AGENTS.md` de dentro de `sitio/`, ele **não** existe nesse repo.
 
 ## Critérios de aceite (fatia 07)
 
-- [ ] O workflow **não** menciona jekyll/ruby/gemfile/bundler e constrói `sitio/dist`.
+- [ ] O workflow **não** menciona jekyll/ruby/gemfile/bundler e constrói `dist`.
 - [ ] O workflow **mantém** o passo do Tailwind CLI (com a entrada `src/styles/main.css`) **antes** do
       E2E, e o canário roda **depois** do build do site (dentro do `verificar`).
 - [ ] `Gemfile`, `Gemfile.lock`, `_config.yml`, `_layouts/`, `_includes/` **não existem**.

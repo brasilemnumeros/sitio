@@ -25,7 +25,22 @@ export default defineConfig({
     baseURL: BASE_URL,
     viewport: { width: 1280, height: 900 }, // desktop: a cascata de 3 colunas (§1.1)
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  /**
+   * Dois projetos, e o `viewport` de cada um é declarado AQUI — não herdado do descritor.
+   * 🔴 Medido em 2026-10-19: `devices['Desktop Chrome']` traz `viewport: {1280, 720}`, e o `use`
+   *    do projeto sobrepõe o do topo. Com o descritor sozinho o "desktop" era 1280×**720** enquanto
+   *    o comentário acima prometia 900 — a config mentia, em silêncio.
+   * 🔴 O celular é o `Pixel 7` (Android/Chromium) e NÃO um iPhone: o CI instala só o chromium
+   *    (`playwright install --with-deps chromium`), então um descritor WebKit não sobe lá.
+   *    A suíte inteira passa no celular — medido antes de fixar o projeto (ver e2e/mobile.spec.js).
+   */
+  projects: [
+    {
+      name: 'desktop',
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 900 } },
+    },
+    { name: 'mobile', use: { ...devices['Pixel 7'] } },
+  ],
   webServer: {
     command: `NODE_ENV=development npx vite --port ${PORTA} --strictPort`,
     url: BASE_URL,

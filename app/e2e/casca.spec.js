@@ -101,11 +101,20 @@ test('com série carregando o shell ainda não existe; ele aparece quando o dado
   await page.unroute('**/dados/**');
 });
 
-test('o dado local carrega: o catálogo traz os 7 grupos', async ({ page }) => {
+test('o dado local carrega: o catálogo traz os 7 grupos', async ({ page }, testInfo) => {
   await abrirApp(page);
   // O middleware serve `/indicators.json` do repo local com o `datafile` reescrito (vite.config.js).
   // Se o catálogo não carregasse, a cascata da busca viria sem grupos.
   await page.getByRole('button', { name: 'Buscar indicador…' }).first().click();
-  const grupos = page.getByRole('list', { name: 'Grupos' });
-  await expect(grupos.getByRole('listitem')).toHaveCount(7);
+  // O controle dos grupos tem DUAS realizações (§12.1): a coluna 1 da cascata (desktop, uma
+  // lista) e a fileira de chips (celular, um `role="group"` — a coluna está `md:block`, logo
+  // fora da árvore de acessibilidade no celular). A pergunta é a mesma — os 7 grupos do
+  // `indicators.json` chegaram —, só muda de onde se lê.
+  if (testInfo.project.name === 'mobile') {
+    // chips: "Todos" + um por grupo
+    await expect(page.getByRole('group', { name: 'Grupos' }).getByRole('button')).toHaveCount(8);
+  } else {
+    const grupos = page.getByRole('list', { name: 'Grupos' });
+    await expect(grupos.getByRole('listitem')).toHaveCount(7);
+  }
 });

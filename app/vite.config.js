@@ -31,8 +31,16 @@ export default defineConfig(({ command }) => ({
   // `dados/` local — servido pelo middleware acima; em **produção**, para o Pages do repo
   // `dados`. Isto é o que faz "local serve dado local" sem mexer no app.
   define: {
+    // ⚠ O `dev` do SITE (`astro dev`) roda `build:app` em modo BUILD — e por isso caía no ramo de
+    // PRODUÇÃO, buscando os governos na URL publicada. Medido em 2026-10-19: `federal.json`
+    // publicado responde **404** (item 1 do deploy pendente), o `catch` de `carregarMandatos`
+    // engole a falha (§9.3) e o resultado é o gráfico e o minimapa SEM FAIXA NENHUMA — parece
+    // minimapa vazio, é dado faltando. `DADOS_LOCAL=1` (posto pelo script `dev` do `sitio`) faz o
+    // mesmo que o `vite dev` do app: local serve dado local.
     __BASE_DADOS__: JSON.stringify(
-      command === 'serve' ? '/dados' : 'https://brasilemnumeros.github.io/dados'
+      command === 'serve' || process.env.DADOS_LOCAL === '1'
+        ? '/dados'
+        : 'https://brasilemnumeros.github.io/dados'
     ),
   },
   plugins: [

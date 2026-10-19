@@ -199,10 +199,28 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
     to: to ? Math.floor(Date.parse(`${to}T00:00:00Z`) / 1000) : null,
   });
 
+  /** Quem observa a geometria da plotagem (o minimapa se alinha por aqui). */
+  let aoMudarPlotagemCb = null;
+
   return {
     /** §8.1 — quem ESCOLHEU a janela (filtro de tempo, minimapa) avisa a autoria por aqui;
      *  o eco do próprio gráfico não declara nada. */
     aJanelaEDoUsuario,
+    /** As larguras das DUAS escalas de preço (§5) — é o que a área de plotagem reserva nas pontas.
+     *  O minimapa precisa delas para cobrir exatamente o mesmo intervalo de x.
+     *
+     *  ⚠ `width()` devolve 0 para escala invisível (medido), então `minimumWidth` não substitui
+     *  isto: com a escala invisível a lib não reserva nada. */
+    largurasDasEscalas() {
+      return { esquerda: chart.priceScale('left').width(), direita: chart.priceScale('right').width() };
+    },
+    /** Avisa quando a LARGURA DA PLOTAGEM muda — o sinal certo para re-alinhar o minimapa.
+     *  Não é um poll: a mudança de rótulo (uma série com números maiores) alarga a escala e
+     *  estreita o pane, e é a lib quem avisa aqui. */
+    aoMudarPlotagem(cb) {
+      aoMudarPlotagemCb = cb;
+      chart.timeScale().subscribeSizeChange(cb);
+    },
     definirSeries,
     definirFaixas,
     destacarMandato,
@@ -230,6 +248,9 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
       // ⚠ E o rAF também: com ele pendente, o `fitContent` rodaria num gráfico já removido.
       if (fitNoFrame != null) cancelAnimationFrame(fitNoFrame);
       fitNoFrame = null;
+      // A assinatura de geometria morre com o gráfico — quem observava não pode ser chamado depois.
+      if (aoMudarPlotagemCb) chart.timeScale().unsubscribeSizeChange(aoMudarPlotagemCb);
+      aoMudarPlotagemCb = null;
       container.removeEventListener('pointerdown', assumir);
       container.removeEventListener('wheel', assumir);
       if (primitivaDeFaixas) chart.panes()[0].detachPrimitive(primitivaDeFaixas);

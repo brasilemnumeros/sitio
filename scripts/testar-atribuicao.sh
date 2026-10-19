@@ -11,18 +11,47 @@ falha=0
 # A linha do rodapé tem de estar na PÁGINA publicada — não basta o componente existir.
 # Confere o shell do app (`/`) E uma página de texto: o rodapé é GLOBAL, vale para todas
 # as páginas e não some se a página do gráfico mudar (spec §10.5).
-LINK='https://www.tradingview.com/'
-NOME='TradingView Lightweight Charts'
+#
+# 🔴 A asserção é sobre o <a> INTEIRO, não sobre pedaços soltos (revisão do T5): o href e
+# o nome soltos no HTML passariam com o nome FORA do link ou com um `target="_blank"` SEM
+# `rel="noopener noreferrer"` — e a convenção do repo ficaria sem guarda. Por isso
+# extraímos a tag que aponta para o tradingview e provamos tudo DENTRO dela.
+LINK='href="https://www.tradingview.com/"'
+NOME='>TradingView Lightweight Charts</a>'
 for pagina in dist/index.html dist/blog.html; do
   if [ ! -f "$pagina" ]; then
     echo "atribuicao: falta $pagina — rode o build do site antes." >&2
     falha=1
     continue
   fi
-  grep -qF "$LINK" "$pagina" \
-    || { echo "atribuicao: $pagina sem o link do TradingView" >&2; falha=1; }
-  grep -qF "$NOME" "$pagina" \
-    || { echo "atribuicao: $pagina sem o nome visível do TradingView" >&2; falha=1; }
+
+  # Uma tag <a> é `[^>]*` (atributos) + `>` + `[^<]*` (texto) + `</a>`. Extraímos só as
+  # que contêm `tradingview.com`.
+  ancoras="$(grep -oE '<a [^>]*tradingview\.com[^>]*>[^<]*</a>' "$pagina" || true)"
+  if [ -z "$ancoras" ]; then
+    echo "atribuicao: $pagina sem o <a> do TradingView" >&2
+    falha=1
+    continue
+  fi
+
+  while IFS= read -r ancora; do
+    case "$ancora" in
+      *"$LINK"*) ;;
+      *) echo "atribuicao: $pagina — <a> do TradingView sem href para https://www.tradingview.com/" >&2; falha=1 ;;
+    esac
+    case "$ancora" in
+      *"$NOME"*) ;;
+      *) echo "atribuicao: $pagina — o nome 'TradingView Lightweight Charts' não é o texto do link" >&2; falha=1 ;;
+    esac
+    # Se o link abre em nova aba, o rel PRECISA trazer noopener e noreferrer (convenção
+    # do repo). O par href+nome sem o rel tem de FALHAR.
+    case "$ancora" in
+      *'target="_blank"'*)
+        case "$ancora" in *noopener*) ;; *) echo "atribuicao: $pagina — <a target=\"_blank\"> sem noopener" >&2; falha=1 ;; esac
+        case "$ancora" in *noreferrer*) ;; *) echo "atribuicao: $pagina — <a target=\"_blank\"> sem noreferrer" >&2; falha=1 ;; esac
+        ;;
+    esac
+  done <<< "$ancoras"
 done
 
 # O NOTICE versiona a licença: a Apache-2.0 exige entregar uma CÓPIA a quem recebe o

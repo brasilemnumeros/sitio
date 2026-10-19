@@ -373,6 +373,45 @@ sobrevive a adicionar série") foi sabotado **nos dois mecanismos, na causa exat
 nos dois**. Referência: `app/e2e/minimapa.spec.js` tem o registro completo, inclusive as cinco
 abordagens descartadas.
 
+### O celular ganha guarda — e a auditoria de largura achou dois defeitos (2026-10-19)
+
+A pergunta "o site está renderizando bacana em mobile?" virou medição. O contexto que a motivou: o
+E2E tinha **um** projeto, desktop, e **nenhuma** asserção olhava a largura da tela.
+
+**O que a medição achou.** Site e app **funcionais** de 320px para cima: nenhum transbordo no
+documento em página nenhuma, o app empilha, e a tabela de comparação e a fileira de chips rolam. No
+**app**, porém, dois defeitos de largura — os dois invisíveis para os 144 unitários e para os 20 E2E
+de comportamento, porque nenhum deles olha a largura (números em §12.1.1 da spec).
+
+**Três decisões:**
+
+- **Dois projetos de Playwright** (`desktop` e `mobile`), com a suíte inteira rodando nos dois.
+  **Alternativa rejeitada:** um segundo arquivo de config — o projeto do Playwright já é isso, e dois
+  configs seriam dois lugares para a suíte divergir.
+- **O descritor mobile é `Pixel 7` (Android/Chromium), não iPhone.** O CI instala **só o chromium**
+  (`playwright install --with-deps chromium`); um descritor WebKit não sobe lá. **Custo medido:** a
+  suíte vai de ~50s para ~1,7min.
+- **O guarda das páginas do SITE não pode morar no E2E.** O E2E roda contra o dev server do Vite e,
+  em CI, vem **antes** do `astro build` — quando `dist/` ainda não existe. Ele virou
+  `sitio/scripts/testar-mobile.mjs`: mede as **20 páginas** de `dist/` a 375px e entra na cadeia do
+  `verificar`. **Alternativa rejeitada:** pô-lo no E2E, onde em CI ele varreria uma pasta que ainda
+  não existe — guarda que não guarda nada.
+
+**Achado de tabela, no mesmo dia:** `devices['Desktop Chrome']` traz `viewport: {1280, **720**}`, e o
+`use` do projeto **sobrepõe** o do topo. O "desktop 1280×900" documentado rodava a **720**, em
+silêncio, desde que o config nasceu. Cada projeto agora declara o `viewport` que quer.
+
+**O Giscus 404 NÃO é defeito**, e fica registrado para não se reinvestigar. O widget sonda a
+Discussion pelo título e recebe 404 enquanto ela não existe; o giscus **cria** a Discussion no
+**primeiro comentário** — a única que o repo tem foi criada exatamente assim (por `giscus[bot]`, com
+o texto do comentário). Provado: com o título de uma Discussion existente a mesma API responde
+**200**; `repo-id`/`category-id` do site batem com a API; e o visitante vê a caixa funcional
+("Escreva · Prévia · Entre com GitHub"). Um 404 de sondagem não vira correção.
+
+**Verificação:** **44 E2E passam, 2 puladas** (as de celular, no desktop) + **144 unitários**; o
+canário e o ramo de transbordo do `testar-mobile.mjs` **sabotados na causa exata** — servindo o
+`.css` como `text/plain` e medindo a 150px — e o script **sai 1** nos dois.
+
 ## Consequências
 
 **Positivas**

@@ -640,8 +640,48 @@ Evidência: **60 execuções** do gesto (`--repeat-each=10` × duas baterias) co
 final (antes: 3/30 e 1/30), e o teste de regressão do `exemplo.spec.js` **sabotado nos dois
 mecanismos e vermelho nos dois**.
 
+**Emenda de 2026-10-19 (à tarde) — o E2E passou a ter DOIS projetos: `desktop` e `mobile`.** Havia
+um só (desktop) e **nenhuma** asserção olhava a largura da tela. A auditoria mediu o celular
+(320/375/390/412) e achou site e app **funcionais** — e, no app, **dois defeitos de largura** que os
+144 unitários e os 20 E2E de comportamento não pegavam (§12.1.1: a linha que empurrava o "i" para
+fora da caixa, e 1300px de chips sem pista numa caixa de 372px). Três decisões:
+
+1. **O celular é um PROJETO, não um segundo arquivo de config.** `playwright.config.js` tem
+   `desktop` e `mobile`; a **suíte inteira** roda nos dois (**44 passam, 2 puladas** — as asserções
+   de celular se pulam no desktop). Custo: ~1 min de CI. O que ele compra é o app medido na largura
+   em que ele é usado — foi a sonda que achou o vermelho abaixo.
+2. **O descritor mobile é Android (`Pixel 7`), não iPhone.** O CI instala **só o chromium**
+   (`playwright install --with-deps chromium`); um descritor WebKit não sobe lá. Sondado **antes**
+   de fixar: com o `Pixel 7` a suíte passa — e a sonda **pegou um vermelho** que a sonda anterior,
+   com UA de desktop, escondia: `casca.spec.js` lia a coluna 1 da cascata, que no celular é
+   `display:none` (o controle dos grupos lá é a fileira de chips; a asserção passou a ler a
+   realização de cada layout).
+3. **`devices[...]` sobrepõe o `viewport` do topo — e a config estava mentindo.** Medido:
+   `devices['Desktop Chrome']` traz `viewport: {1280, **720**}`, e o `use` do projeto ganha do `use`
+   do topo. O comentário prometia **900** e o teste rodava **720**, em silêncio, desde que nasceu.
+   Cada projeto agora declara o `viewport` que quer.
+
+**Emenda de 2026-10-19 — as páginas do SITE ganharam guarda de largura, e ela é um `testar-*`.** O
+E2E do app roda contra o dev server do Vite e só alcança o app: as páginas de `dist/` nascem
+**depois**, no `astro build` — e em CI o passo do E2E vem **antes** do build. O guarda do site não
+podia, então, morar no E2E. `scripts/testar-mobile.mjs` mede **todas as 20 páginas** de `dist/` a
+375px e entra na cadeia do `verificar` (logo, no `npm run build`). Duas coisas que a execução provou:
+
+- **O canário vem primeiro.** Se o CSS não carregar (MIME errado, 404), a página renderiza **crua** e
+  a medição de transbordo vira **mentira** — foi assim que a fatia 07 ficou sem estilo em silêncio.
+  Cada página só é medida **depois** de o preflight do Tailwind ter aplicado (margem do `<body>` em
+  `0px`; sem CSS o navegador dá `8px`). **Sabotado:** servindo o `.css` como `text/plain`, as 20
+  páginas reprovam pelo canário e o script **sai 1**.
+- **O ramo do transbordo também foi sabotado** (janela de 150px): ele aponta a página **e os
+  elementos** culpados, com o `right` medido, e sai 1.
+
+⚠️ **Consequência de acoplamento:** o `npm run build` do site passou a precisar do chromium do
+Playwright (que vive em `app/node_modules`). O script diz o que fazer quando falta, em vez de
+estourar um *stack*.
+
 
 **Dois testes travam decisões medidas neste documento:**
+
 
 1. **O envelope da paleta.** Afirma que as 10 cores, sob as quatro visões, mantêm mínima acima do limite (hoje 0,095). Se alguém ajustar a paleta à mão e quebrar a separação no daltonismo, **o teste falha** — em vez de o erro chegar a um usuário. É a medição da seção 1 virando critério de aceite executável.
 2. **A regra de escala e a de cobertura parcial, com os números reais como fixture.** As fixtures são as do anexo — medidas e com data, não inventadas: "`igpm` × `selic-meta` (1,056) convive sem aviso", "`populacao-total` × `selic-meta` (1.192.196) avisa", "o MVG-R no Lula I é marcado como `parcial 03/2004–12/2006`".
@@ -717,8 +757,34 @@ Ordem sugerida de ataque:
    é a **paleta** ("a paleta tem 10 cores"), não o layout (§1, §9.5). A linha já-adicionada aparece
    marcada e inerte. **Nada é removido para abrir espaço.**
 
-   **Aberto, para decidir na fatia 08 com a tela na frente:** o tamanho do distintivo em tela de
-   320px, e se a fileira de chips deve mostrar a contagem de indicadores por grupo.
+   **FECHADO em 2026-10-19** — era "aberto, para decidir na fatia 08 com a tela na frente": o
+   **distintivo cabe a 320px** (medido) e a fileira de chips **mostra a contagem** por grupo. As
+   duas já estavam no código e, desde a medição abaixo, passaram a ter guarda.
+
+   ### §12.1.1 — Medição de 2026-10-19: dois defeitos de largura, e a pista dos chips
+
+   Medido no app real (Pixel 7 412×839; e 320/375/390) com a modal aberta. **Dois defeitos**, ambos
+   invisíveis para os 144 unitários e para o E2E de *comportamento* — o que os revela é a **largura
+   da tela**, não o estado do app. Corrigidos, e cada um com guarda em `app/e2e/mobile.spec.js`:
+
+   | defeito | medido | causa | correção |
+   |---|---|---|---|
+   | a linha da lista empurrava o "i" para fora | `scrollW 417` num `clientW 372` | `classeLinha` era `flex w-full` **sem `min-w-0`**: o botão (filho flex) não encolhia abaixo do próprio conteúdo | `min-w-0` na linha |
+   | os grupos somem sem avisar | **1300px** de chips numa caixa de **372px** (mais de 3/4 fora da tela) | `overflow-x-auto` sem pista nenhuma | degradê na borda direita, que **sai** quando a rolagem chega ao fim |
+
+   O `truncate` no nome **não bastava** para o primeiro: quem precisava poder encolher era o botão,
+   não o texto dentro dele.
+
+   **A fileira continua rolável, e agora se anuncia.** Alternativas medidas e rejeitadas em
+   2026-10-19: **quebrar os chips em linhas** custa **+204px (320) · +136px (375) · +102px (412)**
+   de cabeçalho — a lista encurta na mesma medida (605px → 401/469/503px), e a 320px o cabeçalho
+   sozinho comeria 246px; **voltar à coluna de grupos** já foi rejeitado acima (come a altura da
+   tela). A pista é o que sobra: um `<span>` de 40px na borda direita
+   (`bg-gradient-to-l from-white dark:from-slate-900`), presente **só quando**
+   `scrollLeft + clientWidth < scrollWidth - 1`. **Uma pista que mentisse ensinaria a não confiar
+   nela** — por isso ela sai no fim da rolagem, e o teste prova as duas pontas. O estado sai do
+   **DOM** (o próprio elemento + um `ResizeObserver`, porque o catálogo chega depois, o celular
+   gira e o teclado virtual abre), nunca de `window` (§8).
 
    **Sobre o mockup:** descartável, como manda a convenção — *mockup não é documentação*. O que
    sobreviveu é este texto; as três posturas estão descritas na tabela acima com o motivo da

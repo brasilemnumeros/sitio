@@ -23,6 +23,21 @@ Viram **um** componente + uma rota dinâmica `src/pages/categorias/[categoria].a
   — `build.format:'file'` (fatia 00) é o que garante isso.
 - **A rota dinâmica depende da coleção de posts** (fatia 03). **A fatia 03/T1 roda ANTES desta** —
   sem `getCollection('posts')` não há listagem nem contagem para portar. Não inventar contagem.
+- **Ruling (2026-10-18): esta fatia roda em 02/T1 → 02/T2 → 03/T2 → 02/T3.** A tarefa 3 cria o
+  `scripts/testar-urls.sh`, que exige a URL do **post**; escrevê-lo antes da rota do post (03/T2)
+  deixaria um teste deliberadamente vermelho no repo. Escrito depois, ele nasce verde. Custo se
+  errado: um RED conhecido e documentado por algumas horas.
+
+## Dois fatos medidos que mudam o trabalho desta fatia (2026-10-18)
+
+1. **`links.html` NÃO é só HTML + `relative_url`: ele tem um loop sobre `site.posts`** (`links.html:39-47`),
+   com `post.url`, `post.title | escape` e `aria-label`. Ou seja, `links.astro` **consome
+   `getCollection('posts')`** — a primeira redação deste plano dizia “portar o HTML como está,
+   trocando os relative_url”, e teria produzido uma página sem a lista de posts.
+2. **`sobre.md:14` usa uma IAL do kramdown** — `[texto](url){:target="\_blank"}` — que o Astro
+   (remark) **não** entende: ele renderizaria `{:target="\_blank"}` como **texto literal** na página.
+   E o que o Jekyll publica é `<a href="…" target="\_blank">` — com a **barra invertida dentro do
+   valor**, isto é, um `target` quebrado (o Kramdown não desescapou o `\_`).
 
 ---
 
@@ -30,28 +45,43 @@ Viram **um** componente + uma rota dinâmica `src/pages/categorias/[categoria].a
 
 **Arquivos:**
 
-- Criar: `src/pages/links.astro` (de `links.html`)
-- Criar: `src/pages/sobre.astro`, `src/pages/termos-de-uso.astro`,
-  `src/pages/politica-de-privacidade.astro` (ou `.md` com o layout — decidir: manter como `.md` é
-  menos trabalho e preserva o markdown como fonte)
-- Test: `scripts/testar-urls.sh` (cria na tarefa 3 e usa aqui)
+- Criar: `src/pages/links.astro` (de `links.html` — **consome `getCollection('posts')`**)
+- Mover: `sobre.md`, `termos-de-uso.md`, `politica-de-privacidade.md` → `src/pages/` (ficam `.md`)
+- Criar: `src/components/` não é preciso: as três usam o `Base.astro` como layout
+- Test: `scripts/testar-urls.sh` (criado na tarefa 3)
 
 **Interfaces:**
 
-- Consome: `Base.astro` (fatia 01).
+- Consome: `Base.astro` (fatia 01) e `getCollection('posts')` (fatia 03/T1, para o `links`).
 - Produz: quatro rotas na raiz: `/links.html`, `/sobre.html`, `/termos-de-uso.html`,
   `/politica-de-privacidade.html`.
 
-- [ ] **Passo 1: portar `links.astro`**
-
-`links.html` tem front matter + um container; portar o HTML como está, trocando os
-`{{ ... | relative_url }}` por caminhos diretos (`/categorias/analises.html`).
-
-- [ ] **Passo 2: portar as três páginas `.md`**
-
-Mover `sobre.md`, `termos-de-uso.md`, `politica-de-privacidade.md` para `src/pages/` mantendo o
-**conteúdo**; o front matter `layout: default` vira o layout de página do Astro. Conferir que o
-corpo (que tem `<small>`, `_itálico_`, links) sai igual.
+> **Ruling (2026-10-18): as três páginas ficam `.md`.** O plano deixava em aberto (“ou `.md` com o
+> layout — decidir”). Ficam `.md`: o markdown é a fonte, o corpo não muda, e o Astro serve página
+> markdown nativamente. O front matter `layout: default` do Jekyll vira
+> `layout: ../layouts/Base.astro` (caminho **relativo ao arquivo**, e `src/pages/` está um nível
+> abaixo de `src/`), e o `title`/`description` do front matter chegam ao layout como props.
+>
+> ⚠️ **O IAL do `sobre.md:14` precisa ser resolvido à mão.** Troque a linha por HTML cru no próprio
+> markdown, **reproduzindo o valor quebrado** que o Jekyll publica:
+>
+> ```html
+> <a href="https://github.com/brasilemnumeros" target="\_blank">Acesse nossa página no GitHub</a>
+> ```
+>
+> (medido no site publicado: `target="\_blank"` — com a barra, sim). **Não “conserte” para
+> `_blank`**: é um erro do site de hoje, e a migração não muda comportamento. Vai para a lista de
+> itens abertos (junto com `og:locale` e o mês em inglês), e a correção é remover a barra **e**
+> acrescentar `rel="noopener"`, que hoje não existe.
+>
+> **Todo Liquid vira caminho direto**, e são só estes (medido):
+> `{{ "/termos-de-uso" | relative_url }}` → `/termos-de-uso`; idem `/politica-de-privacidade`;
+> e no `links.html` o loop `{% for post in site.posts %}` vira iteração sobre a coleção.
+>
+> **O critério de aceite destas páginas é “conteúdo equivalente”, não `diff` byte a byte**: o
+> renderizador de markdown do Astro (remark) não é o kramdown do Jekyll. Medido: não há smart quotes
+> envolvidas na fonte, então o corpo deve sair com as mesmas tags — mas compare **texto e links**,
+> e documente qualquer diferença de whitespace em vez de persegui-la.
 
 - [ ] **Passo 3: buildar e conferir os quatro arquivos**
 
@@ -71,6 +101,7 @@ git commit -m "feat(astro): páginas de texto com as URLs publicadas preservadas
 
 **Arquivos:**
 
+- Criar: `src/lib/categorias.ts` (o mapa que hoje vive no `_config.yml`)
 - Criar: `src/components/ListaDePosts.astro`
 - Criar: `src/components/NavegacaoDeCategorias.astro`
 - Criar: `src/pages/blog.astro`
@@ -82,6 +113,20 @@ git commit -m "feat(astro): páginas de texto com as URLs publicadas preservadas
 - Consome: `getCollection('posts')` (fatia 03) e `Base.astro` (fatia 01).
 - Produz: `ListaDePosts.astro` com prop `{ posts: CollectionEntry<'posts'>[] }`;
   `NavegacaoDeCategorias.astro` com prop `{ atual: 'analises'|'indicadores'|'noticias'|null }`.
+- Produz: `src/lib/categorias.ts` — nome, descrição, ícone e cor de cada categoria.
+
+> 🔴 **Gap do plano, medido em 2026-10-18:** o nome, a descrição, o ícone e a cor de cada categoria
+> **não estão no HTML** — vêm do mapa `blog_categories` do `_config.yml:9-23`, que a fatia 07 apaga.
+> Se ninguém os portar, a listagem perde os títulos e as cores **em silêncio**. Eles viram
+> `src/lib/categorias.ts`, com **os valores medidos** (copie-os; não invente):
+>
+> | chave | name | description | icon | color |
+> |---|---|---|---|---|
+> | `analises` | `Análises` | `Análises aprofundadas dos indicadores econômicos brasileiros` | `📊` | `blue` |
+> | `indicadores` | `Indicadores` | `Novidades sobre indicadores econômicos disponíveis no site` | `📈` | `green` |
+> | `noticias` | `Notícias` | `Novidades e atualizações do projeto Brasil em Números` | `📢` | `purple` |
+>
+> A ordem das três na navegação é a do mapa: `analises`, `indicadores`, `noticias`.
 
 - [ ] **Passo 1: escrever o teste que falha**
 

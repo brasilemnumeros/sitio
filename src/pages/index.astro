@@ -1,13 +1,27 @@
 ---
-// Placeholder do shell da home. A página real é a fatia 05 da migração
-// (`docs/plans/migracao-astro/05-app-no-site.md`). Renderiza através do
-// `Base.astro`, preservando o `<div id="app">` onde o app monta.
+// A `/` é o shell do app (fatia 05). O app é construído à parte, pelo Vite em
+// `sitio/app/` (o `build` do site encadeia app → site), e sai como artefato fixo
+// em `public/assets/js/app/{app.js,app.css}`. O site apenas o INCLUI aqui:
+// `<div id="app">` + o `<script>` (idêntico ao `<div id="app">` do `index.html`
+// do Jekyll, §10.1).
 //
-// A `/` ainda NÃO é o shell do app (isso é a fatia 02): usa o shell `pagina`,
-// o default do `Base.astro`. É a `title="Início"` que o Jekyll servia.
+// Tema: `shell: 'app'` põe `class="dark"` no `<html>` (decisão de 2026-10-18:
+// escura fixa, sem alternador). O app já pressupõe isso.
+//
+// O `app.css` é o CSS ESCOPADO dos componentes Svelte (`.amostra`, `.hachurada`).
+// O site publicado NUNCA o carregou — esses estilos estão quebrados em produção
+// hoje; o `<link>` abaixo é a correção deliberada da medição 3 do brief.
+//
+// `?v=${VERSAO}` é o selo de cache-bust do build (uma avaliação por build), o
+// `?v={{ site.time | date: '%s' }}` do Jekyll. O CSS vem ANTES do JS.
 import Base from '../layouts/Base.astro';
+import { VERSAO } from '../versao.js';
 ---
 
-<Base title="Início" description="Uma plataforma dedicada a fornecer dados e informações sobre o Brasil.">
+<Base title="Início" description="Uma plataforma dedicada a fornecer dados e informações sobre o Brasil." shell="app">
+  <!-- CSS escopado dos componentes do app. Sem ele o seletor de cor e as células
+       listradas perdem o estilo em SILÊNCIO (medição 3). -->
+  <link rel="stylesheet" href={`/assets/js/app/app.css?v=${VERSAO}`} />
   <div id="app"></div>
+  <script type="module" src={`/assets/js/app/app.js?v=${VERSAO}`}></script>
 </Base>

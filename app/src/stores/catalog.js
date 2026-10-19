@@ -30,3 +30,8 @@ export function buscarIndicadores(termo) {
 export function indicadoresDoGrupo(groupId) {
   return get(catalogStore).indicators.filter((i) => i.group === groupId);
 }
+
+/** Resolve um id do permalink para a entrada do catálogo; `null` se não existir (pode ser ignorado). */
+export function indicadorPorId(id) {
+  return get(catalogStore).indicators.find((i) => i.id === id) ?? null;
+}

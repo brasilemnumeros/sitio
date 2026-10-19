@@ -47,9 +47,11 @@ export function pontosEsperados(granularity, mandato) {
  * mandato em curso (§7.3.5).
  *
  * A régua é `pontos < esperados` para a granularidade da série. Medido sobre os
- * dados reais: são **15 células** nos mandatos fechados — o mesmo número que a §7.3
+ * dados reais: são **18 células** nos mandatos fechados — o mesmo número que a §7.3
  * publica. Comparar datas cruas marcaria 49 (todo ponto mensal cai no dia 1º, e o
  * mandato começa no meio do mês) — por isso a régua é por contagem, não por data.
+ * (Eram 15 até 2026-10-19: com a data canônica no dia 01, as três séries que
+ * carimbavam no FIM do mês passaram a ter 31 pontos no Temer, e não 32.)
  * @returns {{estado:string, delta:number|null, pontos:number,
  *            periodo:{inicio:string,fim:string}|null, motivo:string|null}}
  */

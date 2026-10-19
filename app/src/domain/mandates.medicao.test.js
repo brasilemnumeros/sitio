@@ -44,21 +44,29 @@ function serieReal(id) {
 
 const mandato = (rotulo) => MANDATOS.find((m) => m.rotulo === rotulo);
 
-/** A matriz do anexo da spec, transcrita (medida em 2026-10-15, sobre os 13 JSONs já deduplicados). 0 = sem cobertura. */
+/**
+ * A matriz do anexo da spec, transcrita (remedida em 2026-10-19, sobre os 13 JSONs já
+ * deduplicados e com a data canônica). 0 = sem cobertura.
+ *
+ * A data passou a ser o dia 01 do mês de referência (`dados/canonicalizar-dados.py`). Efeito
+ * medido: os pontos de maio/2016 das três séries que carimbavam no FIM do mês deixaram de cair
+ * no mandato Temer (que começa em 2016-05-12) e passaram a cair na Dilma II — 32 → 31. É o mesmo
+ * 31 que o `ipca-acum-12m` já tinha, porque ele já usava o dia 01.
+ */
 const ESPERADO = {
   'caged-total-mensal': [48, 48, 48, 48, 20, 31, 48, 32],
   'homicidios-anual': [4, 4, 4, 4, 2, 2, 4, 1],
   'homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 0],
   'proporcao-homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 0],
-  'igpm-acum-12m': [48, 48, 48, 48, 20, 32, 48, 31],
+  'igpm-acum-12m': [48, 48, 48, 48, 20, 31, 48, 31],
   'ipca-acum-12m': [48, 48, 48, 48, 20, 31, 48, 30],
   'mvgr-nominal': [0, 34, 48, 48, 20, 31, 48, 31],
   'mvgr-real': [0, 34, 48, 48, 20, 31, 48, 31],
   'pib-real-anual': [4, 4, 4, 4, 2, 2, 4, 2],
   'populacao-total-anual': [4, 4, 4, 4, 2, 2, 4, 2],
   'populacao-variacao-anual': [4, 4, 4, 4, 2, 2, 4, 2],
-  'selic-meta-acum-12m': [46, 48, 48, 48, 20, 32, 48, 34],
-  'selic-over-acum-12m': [48, 48, 48, 48, 20, 32, 48, 34],
+  'selic-meta-acum-12m': [46, 48, 48, 48, 20, 31, 48, 34],
+  'selic-over-acum-12m': [48, 48, 48, 48, 20, 31, 48, 34],
 };
 
 describe('medição da §7.3 sobre os dados reais', () => {
@@ -83,7 +91,7 @@ describe('medição da §7.3 sobre os dados reais', () => {
     expect(estados.filter((e) => e !== COBERTURA.SEM && e !== COBERTURA.PONTO_UNICO)).toHaveLength(99);
   });
 
-  it('reproduz as 15 células "abaixo do esperado" da §7.3, com o mandato fechado', () => {
+  it('reproduz as 18 células "abaixo do esperado" da §7.3, com o mandato fechado', () => {
     // A régua é `pontos < esperados` para a granularidade da série — a mesma que a §7.3
     // publica. Comparar datas cruas marcaria 49 células (todo ponto mensal cai no dia 1º).
     const abaixo = [];
@@ -94,8 +102,8 @@ describe('medição da §7.3 sobre os dados reais', () => {
         if (pontos < pontosEsperados(s.granularity, m)) abaixo.push(`${id}|${m.rotulo}`);
       }
     }
-    expect(abaixo).toHaveLength(15);
-    expect(abaixo.filter((c) => c.endsWith('|Temer'))).toHaveLength(10);
+    expect(abaixo).toHaveLength(18);
+    expect(abaixo.filter((c) => c.endsWith('|Temer'))).toHaveLength(13);
     expect(abaixo).toContain('mvgr-nominal|Lula I');
     expect(abaixo).toContain('selic-meta-acum-12m|FHC II');
   });

@@ -12,7 +12,7 @@
 // A página decide o corte da lista (o `limit: 10` do blog); este componente só
 // desenha os cartões que recebe.
 import type { CollectionEntry } from 'astro:content';
-import { dataDoId, isoDoJekyll, dataPorExtenso } from '../lib/posts';
+import { dataDoId, isoDoJekyll, dataPorExtenso, urlDoPost } from '../lib/posts';
 import { trecho } from '../lib/trecho';
 
 interface Props {
@@ -36,13 +36,6 @@ const ROTULO: Record<string, { icone: string; nome: string }> = {
 // Liquid `capitalize`: primeira letra maiúscula e o RESTO minúsculo.
 function capitalizar(texto: string): string {
   return texto.charAt(0).toUpperCase() + texto.slice(1).toLowerCase();
-}
-
-// Mesma derivação de `links.astro`: a URL do Jekyll com `.html`.
-function urlDoPost(id: string, categoria: string): string {
-  const [ano, mes, dia] = id.slice(0, 10).split('-');
-  const slug = id.replace(/^\d{4}-\d{2}-\d{2}-/, '');
-  return `/${categoria}/${ano}/${mes}/${dia}/${slug}.html`;
 }
 ---
 

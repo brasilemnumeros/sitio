@@ -212,3 +212,86 @@ test('com série, o gráfico ocupa a maior parte da altura', async ({ page }) =>
   }));
   expect(grafico / janela).toBeGreaterThan(0.6);
 });
+
+/**
+ * §Gaveta direita (T7) — séries, cores e eixos num lugar fixo. A gaveta é um SEGUNDO `<aside>`,
+ * separado do trilho de 34px: o trilho não some (é o gatilho) e o painel entra em fluxo ao lado
+ * do gráfico. `hidden` — e não `translate` — é o que a mantém fora da árvore de acessibilidade
+ * quando fechada; um painel só deslocado continuaria focável por TAB.
+ */
+test('a gaveta direita abre, mostra as três seções e fecha com Esc', async ({ page }) => {
+  await page.goto('/');
+  const gatilho = page.getByRole('button', { name: 'Séries e eixos' });
+  await expect(gatilho).toHaveAttribute('aria-expanded', 'false');
+  await gatilho.click();
+  const gaveta = page.getByTestId('gaveta-direita');
+  await expect(gaveta).toBeVisible();
+  const secoes = await gaveta.locator('[data-secao]').evaluateAll((els) => els.map((e) => e.dataset.secao));
+  expect(secoes).toEqual(['series', 'cores', 'eixos']);
+  await expect(gaveta.locator('[data-bloco="chips"]')).toHaveCount(1);
+  await expect(gaveta.getByTestId('legenda-series')).toHaveCount(1);
+  await expect(gaveta.getByRole('button', { name: /esq\.|dir\./ }).first()).toBeVisible();
+
+  await page.keyboard.press('Escape');
+  await expect(gaveta).toBeHidden();
+  await expect(gatilho).toHaveAttribute('aria-expanded', 'false');
+  await expect(gatilho).toBeFocused();
+});
+
+/**
+ * §Gaveta direita (T7) — os três atalhos do trilho. Com a gaveta fechada só o gatilho principal
+ * aparece; aberta, os três ficam visíveis e cada um rola até a sua seção (não troca de painel).
+ */
+test('fechada, o trilho mostra só o gatilho; aberta, mostra os três atalhos', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Cores', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Eixos', exact: true })).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Séries e eixos' }).click();
+  await expect(page.getByTestId('gaveta-direita')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Cores', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Eixos', exact: true })).toBeVisible();
+  // Os atalhos rolam DENTRO da gaveta e não mudam de seção: o painel continua único.
+  await page.getByRole('button', { name: 'Eixos', exact: true }).click();
+  await expect(page.getByTestId('gaveta-direita')).toBeVisible();
+  await expect(page.getByTestId('gaveta-direita').locator('[data-secao="eixos"]')).toBeInViewport();
+});
+
+/**
+ * §Estados (T7) — com erro PARCIAL e a gaveta fechada, quem avisa é o gatilho (o chip de erro
+ * está dentro da gaveta). Sem o ponto de atenção, uma série quebrada ficaria invisível.
+ */
+test('com série em erro, o gatilho da gaveta avisa com ponto de atenção', async ({ page }) => {
+  // 200 com JSON sem forma — a falha fica no `item.error` e o console segue limpo (`apoio.js`).
+  await page.route('**/dados/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: '{"data":"não é uma lista"}' }),
+  );
+  await page.goto('/?series=selic-meta-acum-12m,ipca-acum-12m');
+  const gatilho = page.getByRole('button', { name: 'Séries e eixos' });
+  await expect(gatilho).toHaveAttribute('aria-label', /há séries com erro/);
+  const ponto = gatilho.locator('span[aria-hidden="true"]').last();
+  await expect(ponto).toBeVisible();
+  // O ponto é VERMELHO de verdade — a classe é `bg-red-500` e ela precisa estar COMPUTADA (o
+  // CSS do Tailwind é um arquivo à parte; uma classe no DOM sem regra deixaria o ponto invisível).
+  await expect(ponto).toHaveClass(/bg-red-500/);
+  await expect(ponto).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await expect(page.getByTestId('gaveta-direita')).toBeHidden();
+  await page.unroute('**/dados/**');
+});
+
+/**
+ * §Moldura (T7) — abrir a gaveta ENCOLHE o gráfico, não o empurra para fora. A prova é dupla:
+ * a largura do gráfico cai, e o documento não ganha rolagem horizontal (a moldura é `h-dvh`).
+ */
+test('abrir a gaveta direita encolhe o gráfico sem estourar a moldura', async ({ page }) => {
+  await page.goto('/');
+  // O `preset-chip` do topo é `max-md:hidden` — no celular ele nunca fica visível. Quem prova que
+  // o dado chegou (e o gráfico montou) é o próprio gráfico, nos dois projetos.
+  await expect(page.getByTestId('grafico')).toBeVisible();
+  const largura = () => page.getByTestId('grafico').evaluate((el) => el.getBoundingClientRect().width);
+  const semGaveta = await largura();
+  await page.getByRole('button', { name: 'Séries e eixos' }).click();
+  await expect(page.getByTestId('gaveta-direita')).toBeVisible();
+  await expect.poll(largura).toBeLessThan(semGaveta);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+});

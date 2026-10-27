@@ -9,13 +9,18 @@
   import ErroTotal from './components/ErroTotal.svelte';
   import SearchModal from './components/SearchModal.svelte';
   import HomeToolbar from './components/HomeToolbar.svelte';
+  import SeriesDrawer from './components/SeriesDrawer.svelte';
   // 🔴 Só se importa o que JÁ EXISTE. Um import de arquivo inexistente QUEBRA O BUILD.
-  // Os controles das gavetas (chips, legenda, trilho, comparação) saem da moldura nesta fatia e
-  // voltam pelas Tasks 7/8 — cada um no seu lugar fixo (gaveta direita, gaveta inferior), não
-  // mais numa pilha de blocos. Os FILTROS DE TEMPO já voltaram, pela Task 6, dentro da barra
-  // superior (`HomeToolbar`).
+  // Os controles das gavetas voltam pelas Tasks 7/8 — cada um no seu lugar fixo (gaveta
+  // direita, gaveta inferior), não mais numa pilha de blocos. A T7 já trouxe a gaveta direita
+  // (chips, legenda e eixos); a inferior chega na T8. Os FILTROS DE TEMPO voltaram pela T6,
+  // dentro da barra superior (`HomeToolbar`).
 
   let buscaAberta = $state(false);
+  /** A gaveta direita é dona da própria abertura? NÃO: o estado vive aqui, porque a prioridade
+   *  do `Esc` entre camadas (busca → gavetas) é da `App` (T9). O componente recebe `bind:aberta`
+   *  para o gatilho do trilho poder alternar sem duplicar a fonte da verdade. */
+  let direitaAberta = $state(false);
   let itens = $derived($seriesStore.itens);
 
   // §9.3 — erro TOTAL é quando NADA carregou; com uma série de pé, é degradação PARCIAL e o
@@ -107,13 +112,15 @@
       </div>
     </div>
 
-    <!-- 2 · trilho direito (34px, sempre visível). MARCADOR DA T5: a T7 põe aqui os três
-         gatilhos da gaveta de séries/eixos. Vazio, é decorativo — daí o `aria-hidden`. -->
-    <aside
-      data-testid="trilho-direito"
-      class="w-[34px] shrink-0 border-l border-slate-800"
-      aria-hidden="true"
-    ></aside>
+    <!-- 2 · gaveta direita (T7): trilho de 34px, sempre visível, MAIS o painel de 320px que
+         entra em fluxo ao lado do gráfico (`hidden` quando fechado). Em fluxo, e não por cima:
+         abrir encolhe o gráfico em vez de tapá-lo, e nada rola junto com a área do gráfico.
+         O componente é um só porque as duas peças compartilham o estado e a rolagem das seções. -->
+    <SeriesDrawer
+      bind:aberta={direitaAberta}
+      aoFechar={() => (direitaAberta = false)}
+      aoAbrirBusca={() => (buscaAberta = true)}
+    />
   </div>
 
   <!-- 3 · barra inferior (26px). MARCADOR DA T5: a T8 transforma isto na alça da gaveta de

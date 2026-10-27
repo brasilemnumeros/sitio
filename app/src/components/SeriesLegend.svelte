@@ -5,26 +5,23 @@
   // gráfico. Sem esta legenda, identificar uma série dependeria só da COR — que é justamente o
   // canal que falha no daltonismo (§1: `#309aff`/`#9581ff` a ΔE 0,006 sob deuteranopia).
   //
-  // Ela produz DUAS classes de aviso, e NÃO são a mesma coisa:
-  //   1) colisão de COR   → `avisoDeColisao` (fatia 04), via `avisosDeColisao` — UMA mensagem
-  //      por PAR (só a série de MAIOR índice fala), para não duplicar simetricamente (T2).
-  //   2) aviso de ESCALA  → `axesStore.avisos` (fatia 05), que era CALCULADO e NUNCA exibido —
-  //      é o irmão que faltava (§5 o promete em dois graus: `avisa` > 50× e `ilegivel` > 1e6×).
-  // Nenhum dos dois tira a série do gráfico: informa, não bloqueia (§1, §5).
+  // Ela produz UMA classe de aviso: colisão de COR (`avisoDeColisao`, fatia 04, via
+  // `avisosDeColisao`) — UMA mensagem por PAR, só a série de MAIOR índice fala, para não duplicar
+  // simetricamente (T2). O aviso de ESCALA NÃO mora mais aqui: desde a T7 ele é do `AxesPanel`,
+  // junto do botão `esq.`/`dir.` — os dois controles de eixo ficam na mesma seção da gaveta
+  // direita, e uma superfície só não pode ficar uma atualização atrás da outra.
+  //
+  // A cor continua aqui (é identificação e edição do mesmo objeto) e a colisão também: informa,
+  // não bloqueia (§1, §5). O que saiu foi só o que virou seção própria.
   //
   // Runes do Svelte 5; os stores continuam funcionando por auto-subscrição (`$store`).
   import { seriesStore, definirCor, restaurarCor, removerSerie } from '../stores/series.js';
-  import { axesStore, moverParaEixo } from '../stores/axes.js';
   import { avisosDeColisao, LIMIAR_COLISAO } from '../domain/color.js';
 
   const itens = $derived($seriesStore.itens);
   // R25 — a distância é o PIOR CASO entre as quatro visões, não a visão normal. E é uma por
   // par: `avisosDeColisao` atribui o aviso à série de maior índice (o `i` do `{#each}`).
   const avisos = $derived(avisosDeColisao(itens));
-
-  // O aviso de ESCALA vem do `axesStore`, indexado por ID — NÃO por posição: a lista é plana e
-  // só traz as séries que não conviveram com as que já estavam à esquerda (fatia 05).
-  const avisoEscala = (id) => $axesStore.avisos.find((a) => a.id === id);
 
   /** Vírgula é a convenção dos números em português (igual aos chips). */
   const formatarDistancia = (d) => d.toFixed(3).replace('.', ',');
@@ -66,34 +63,6 @@
           ⚠ parecida
         </span>
       {/if}
-
-      {#if avisoEscala(item.id)}
-        {@const escala = avisoEscala(item.id)}
-        <!-- 🔴 §5 — o aviso de ESCALA, calculado no `axesStore` desde a fatia 05 e até agora
-             nunca exibido. Dois graus: `avisa` (> 50×) e `ilegivel` (> 1.000.000×). -->
-        <span
-          class="text-xs {escala.veredito === 'ilegivel'
-            ? 'font-semibold text-red-600 dark:text-red-400'
-            : 'text-amber-600 dark:text-amber-400'}"
-          title="Razão de amplitude {escala.ratio.toFixed(0)}× — {escala.veredito === 'ilegivel'
-            ? 'nem dois eixos tornam esta combinação legível'
-            : 'acima do limite de 50×'}"
-        >
-          ⚠ escala {escala.ratio.toFixed(0)}×
-        </span>
-      {/if}
-
-      <!-- A atribuição de eixo é VISÍVEL na legenda e trocável por clique (§5). A store diz o
-           lado; o clique alterna via `moverParaEixo` (só existem dois eixos, §9.5). -->
-      <button
-        type="button"
-        class="rounded border border-slate-300 px-1.5 text-xs text-slate-500 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-800"
-        title="Trocar de eixo"
-        onclick={() =>
-          moverParaEixo(item.id, $axesStore.atribuicao[item.id] === 'left' ? 'right' : 'left')}
-      >
-        {$axesStore.atribuicao[item.id] === 'left' ? 'esq.' : 'dir.'}
-      </button>
 
       <button
         type="button"

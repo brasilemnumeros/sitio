@@ -5,9 +5,6 @@
 // `<div id="app">` + o `<script>` (idêntico ao `<div id="app">` do `index.html`
 // do site antigo, §10.1).
 //
-// Tema: `shell: 'app'` põe `class="dark"` no `<html>` (decisão de 2026-10-18:
-// escura fixa, sem alternador). O app já pressupõe isso.
-//
 // O `app.css` é o CSS ESCOPADO dos componentes Svelte (`.amostra`, `.hachurada`).
 // O site publicado NUNCA o carregou — esses estilos estão quebrados em produção
 // hoje; o `<link>` abaixo é a correção deliberada da medição 3 do brief.
@@ -16,9 +13,9 @@
 // `?v={{ site.time | date: '%s' }}` do site antigo. O CSS vem ANTES do JS.
 //
 // Layout: `Home` (fatia 12) — a `/` não leva a casca do site (sem `Nav`, `Footer`,
-// feedback, toast). O `dark` fixo do `<html>`, que antes vinha do `shell: 'app'`,
-// é atributo PRAZO do próprio `Home.astro` (decisão de 2026-10-18: escura fixa,
-// sem alternador). Os props continuam os mesmos.
+// feedback, toast). O `dark` fixo do `<html>` é atributo FIXO do próprio
+// `Home.astro` (decisão de 2026-10-18: escura fixa, sem alternador). Os props
+// continuam os mesmos.
 import Home from '../layouts/Home.astro';
 import { VERSAO } from '../versao.js';
 ---

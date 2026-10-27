@@ -120,14 +120,18 @@ test('o dado local carrega: o catálogo traz os 7 grupos', async ({ page }, test
 });
 
 /**
- * A home não pode carregar a CASCA DO SITE (`Base.astro`): nem `nav` do topo, nem
- * rodapé (a barra inferior do app é um `<footer data-testid="barra-inferior">`; o
- * que não pode existir é o footer do site), nem o botão flutuante de feedback, nem
- * o toast de convite para artigos. Tudo isso existe em `Base.astro`; o layout da
- * home (`Home.astro`) não os traz. Se um deles reaparecer, este teste pega a
- * reintrodução silenciosa do shell do site na `/`.
+ * ⚠ ALCANCE: o harness deste E2E serve o APP em dev (`app/index.html` do `vite dev`) —
+ * a `/` do ASTRO NUNCA passa por aqui. O que o teste prova é o lado do APP: nenhum
+ * componente do app (nem um erro de mount/hidratação) pode renderizar a casca do site
+ * — nem o `nav` do topo, nem o rodapé (a barra inferior do app é um
+ * `<footer data-testid="barra-inferior">` e fica EXCLUÍDA da proibição), nem o botão
+ * de feedback (`#feedback-btn`), nem o toast de convite para artigos (`#toast-artigos`).
+ *
+ * A outra metade — a casca no HTML da `/` publicada (`Home.astro` vs `Base.astro`) —
+ * o navegador deste harness não vê; quem guarda é o BUILD, por
+ * `scripts/testar-home.sh` (na cadeia do `verificar`), que grepa o `dist/index.html`.
  */
-test('a home não carrega a casca do site: sem nav, footer, feedback nem toast', async ({ page }) => {
+test('no app não há casca do site: sem nav, footer, feedback nem toast', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('nav')).toHaveCount(0);
   // A barra inferior do app é um `<footer>`; o que não pode existir é o rodapé do site.

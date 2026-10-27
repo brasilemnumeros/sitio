@@ -156,6 +156,47 @@ test('a home ocupa o viewport e não rola', async ({ page }) => {
   await expect(page.getByTestId('barra-superior')).toBeVisible();
   await expect(page.getByTestId('barra-inferior')).toBeVisible();
   await expect(page.getByTestId('trilho-direito')).toBeVisible();
+
+  // §Conteúdo longo — a medidas do estado são FECHADAS: nada do miolo atravessa o topo do
+  // footer. `ErroTotal` não tem marcador próprio (R29); o `<button>` "Tentar de novo" é o
+  // ÚLTIMO bloco de texto dele, então é ele que mede o fim do conteúdo.
+  const fim = (alvo) =>
+    alvo.evaluate((el) => {
+      const footer = document.querySelector('[data-testid="barra-inferior"]').getBoundingClientRect();
+      const caixa = el.getBoundingClientRect();
+      return { bottom: caixa.bottom, footerY: footer.top, altura: caixa.height };
+    });
+
+  // 1 · estado vazio: a caixa inteira do EstadoInicial termina antes do footer.
+  const inicial = page.locator('[data-bloco="inicial"]');
+  await expect(inicial).toBeVisible();
+  const fimVazio = await fim(inicial);
+  expect(fimVazio.bottom).toBeLessThanOrEqual(fimVazio.footerY + 1);
+
+  // 2 · erro total com IDs REAIS e dado corrompido — 200 com JSON sem forma (`data` fora de
+  //     lista), NÃO 500: a falha fica no `item.error` e o console do navegador fica limpo
+  //     (a fixture de `apoio.js` falha o teste com qualquer error.logado).
+  await page.route('**/dados/**', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: '{"data":"não é uma lista"}' }),
+  );
+  // janela CURTA de propósito: com 900px o erro cabe solto e o estouro não aparece — o
+  // guardião precisa exercitar o caso em que o conteúdo é maior que a área do gráfico.
+  await page.setViewportSize({ width: 480, height: 160 });
+  await page.goto('/?series=selic-meta-acum-12m,ipca-acum-12m');
+  await expect(page.getByRole('alert')).toBeVisible();
+  const botaoTentar = page.getByRole('button', { name: 'Tentar de novo' });
+  await expect(botaoTentar).toBeVisible();
+  // o conteúdo rola DENTRO da área: o fim dele (o botão) chega e fica ACIMA do footer —
+  // o defeito que este teste prende pintava o motivo por cima da barra inferior.
+  await botaoTentar.evaluate((el) => el.scrollIntoView({ block: 'end' }));
+  const fimErro = await fim(botaoTentar);
+  expect(fimErro.bottom).toBeLessThanOrEqual(fimErro.footerY + 1);
+  const medidaErro = await page.evaluate(() => ({
+    scroll: document.documentElement.scrollHeight,
+    altura: window.innerHeight,
+  }));
+  expect(medidaErro.scroll).toBeLessThanOrEqual(medidaErro.altura + 1);
+  await page.unroute('**/dados/**');
 });
 
 /**

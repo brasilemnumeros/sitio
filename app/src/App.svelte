@@ -93,8 +93,12 @@
     <div class="flex min-w-0 flex-1 flex-col">
       <!-- A ÁREA DO GRÁFICO é o único filho flexível da coluna: os quatro estados se revezam
            DENTRO dela e a moldura não muda de tamanho (§9.2 — carregar não pode dar salto).
-           `relative` fica para a marca d'água e os overlays das próximas tarefas. -->
-      <div class="relative flex min-h-0 flex-1 flex-col">
+           `relative` fica para a marca d'água e os overlays das próximas tarefas.
+           `overflow-y-auto`: o conteúdo dos ESTADOS pode ser mais alto que a área (o erro
+           total lista um motivo por série). Quem rola é a ÁREA, nunca o documento — a moldura
+           não muda e nada pinta por cima do footer. O gráfico em si nunca estoura: ele é
+           `flex-1` da própria área, então quando ele está montado não há o que rolar. -->
+      <div class="relative flex min-h-0 flex-1 flex-col overflow-y-auto">
         {#if itens.length === 0}
           <EstadoInicial aoPedirExemplo={pedirExemplo} />
         {:else if todosEmErro}

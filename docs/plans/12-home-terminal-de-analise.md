@@ -4,7 +4,7 @@
 
 **Goal:** Transformar a home num terminal de análise de altura fixa (`100dvh`): gráfico preenchendo o viewport, gavetas de séries/legenda/eixos (direita) e mandatos/comparação (inferior) fechadas por padrão, abrindo com um preset do dia determinístico.
 
-**Architecture:** O site Astro passa a usar um layout próprio da home, sem nav/footer/feedback/toast. O app Svelte deixa de ser uma pilha `max-w-6xl` e vira uma moldura `h-dvh` em três faixas (topo 34px, miolo `flex-1`, barra inferior 26px), com um trilho direito de 34px que abre para 320px. O gráfico passa a herdar a altura do container (`autoSize` da lib) e o preset entra por `permalink-init.js`, antes de qualquer escrita de URL, respeitando `?indicators=`.
+**Architecture:** O site Astro passa a usar um layout próprio da home, sem nav/footer/feedback/toast. O app Svelte deixa de ser uma pilha `max-w-6xl` e vira uma moldura `h-dvh` em três faixas (topo 34px, miolo `flex-1`, barra inferior 26px), com um trilho direito de 34px que abre para 320px. O gráfico passa a herdar a altura do container (`autoSize` da lib) e o preset entra por `permalink-init.js`, antes de qualquer escrita de URL, respeitando `?series=`.
 
 **Tech Stack:** Astro 7, Svelte 5 (runes), Tailwind 4, Lightweight Charts 5, Vitest, Playwright. Sem dependências novas.
 
@@ -20,7 +20,7 @@
 - Nenhuma dependência nova. Node >= 26; comandos do app com `NODE_ENV=development`.
 - E2E falha com qualquer `console.error` ou exceção não capturada.
 - Atributos `data-bloco` preservados: `chips`, `filtros`, `trilho`, `comparacao`, `inicial`, `esqueleto`, `ficha` (e `lista-mobile`, do modal).
-- Precedência de entrada (spec, "Precedência de estado na entrada"): chave `indicators` com id válido vence tudo; chave presente sem id válido → `EstadoInicial`; sem a chave → preset do dia.
+- Precedência de entrada (spec, "Precedência de estado na entrada"): chave `series` com id válido vence tudo; chave presente sem id válido → `EstadoInicial`; sem a chave → preset do dia.
 - Presets **substituem** as séries em cena; fora de preset o chip mostra "Personalizado".
 - Gavetas não persistem estado: toda visita abre com as duas fechadas.
 
@@ -29,7 +29,7 @@
 1. **Fuso do preset.** Um acesso às 23h59 em São Paulo e outro às 00h01 do dia seguinte têm de trocar de preset exatamente na virada local, não na virada UTC — o preset é calculado com `America/Sao_Paulo`, nunca com a data do navegador em UTC.
 2. **Preset com id ausente do catálogo.** Se um indicador do preset sair do catálogo, o restante carrega normalmente; se todos saírem, a home cai no `EstadoInicial` sem erro de console.
 3. **Redimensionamento com o gráfico montado.** Abrir/fechar a gaveta direita ou a inferior muda a largura/altura do pane; o canvas tem de acompanhar (`autoSize`) sem estourar a moldura nem borrar o traço.
-4. **Query com outras chaves.** `/?utm_source=x` (sem `indicators`) recebe o preset **e** preserva `utm_source` na URL reescrita; `/?indicators=nao-existe&utm_source=x` não recebe preset e também preserva `utm_source`.
+4. **Query com outras chaves.** `/?utm_source=x` (sem `series`) recebe o preset **e** preserva `utm_source` na URL reescrita; `/?series=nao-existe&utm_source=x` não recebe preset e também preserva `utm_source`.
 5. **Troca rápida de preset.** Escolher dois presets em sequência não duplica séries: ao final, o conjunto e a URL correspondem ao último preset escolhido.
 6. **Remover a última série com gaveta inferior aberta.** A moldura permanece, as alças ficam desabilitadas e nada lança (`setVisibleRange` em gráfico vazio é o defeito histórico).
 
@@ -187,25 +187,85 @@ git commit -m "feat(series): substituir o conjunto numa escrita atômica"
 
 ---
 
-### Task 3: Preset na entrada, com `?indicators=` mandando
+### Task 3: Contrato `?series=` e preset na entrada
 
 **Files:**
-- Modify: `app/src/permalink-init.js`
-- Test: `app/src/permalink-init.test.js`
+- Modify: `app/src/permalink.js`, `app/src/permalink-init.js`, `app/src/main.js`
+- Modify: `app/e2e/permalink.spec.js`, `app/scripts/medir-eixo.mjs`
+- Modify: os **12 links** de 8 posts em `src/content/posts/` (ver lista no Step 3)
+- Test: `app/src/permalink.test.js`, `app/src/permalink-init.test.js`
 
 **Interfaces:**
-- Consumes: `lerIds`, `escreverSearch`, `carregarCatalogo`, `indicadorPorId`, `adicionarSerie`, `presetDoDia`, `dataEmSaoPaulo`.
-- Produces: `iniciarPermalink({ window, fetchImpl, agora = new Date() })` — mesma assinatura atual mais o relógio injetável. Sem a chave `indicators`, aplica `presetDoDia(dataEmSaoPaulo(agora))`; com a chave, nunca aplica preset (mesmo que não sobre nenhum id válido).
+- Consumes: `carregarCatalogo`, `indicadorPorId`, `adicionarSerie`, `presetDoDia`, `dataEmSaoPaulo`.
+- Produces:
+  - O parser `lerIds`/`escreverSearch` passa a usar a chave **`series`** (antes `indicators`); a chave antiga é **ignorada**, sem alias.
+  - `iniciarPermalink({ window, fetchImpl, agora = new Date() })` — mesma assinatura atual mais o relógio injetável. Sem a chave `series`, aplica `presetDoDia(dataEmSaoPaulo(agora))`; com a chave, nunca aplica preset (mesmo que não sobre nenhum id válido).
 
-- [ ] **Step 1: Write the failing tests**
+#### Parte A — renomear o contrato
 
-Substitua o teste "sem query: store vazia e NENHUM replaceState espúrio" por testes de precedência:
+- [ ] **Step 1: Write the failing parser tests**
+
+Em `app/src/permalink.test.js`, troque `indicators=` por `series=` em todas as chamadas e acrescente:
+
+```js
+it('ignora a chave antiga `indicators` (renomeação sem alias)', () => {
+  expect(lerIds('indicators=selic,ipca')).toEqual([]);
+});
+
+it('escreverSearch remove a chave antiga e usa `series`', () => {
+  expect(escreverSearch(['selic'], 'indicators=ipca&utm=x')).toBe('utm=x&series=selic');
+});
+```
+
+- [ ] **Step 2: Run to verify it fails**
+
+Run: `cd app && NODE_ENV=development npx vitest run src/permalink.test.js`
+Expected: FAIL — `lerIds('series=…')` devolve `[]` e `escreverSearch` ainda escreve `indicators`.
+
+- [ ] **Step 3: Rename the key in the parser, the dev script, the E2E and the posts**
+
+Em `app/src/permalink.js`, extraia `const CHAVE = 'series'` e use em `get`/`set`/`delete`; ao escrever, remova também a chave antiga (`params.delete('indicators')`) para não deixar lixo em links migrados. O `URLSearchParams` já preserva as demais chaves. Atualize os comentários de `permalink.js`, `permalink-init.js` e `main.js`. Em `app/e2e/permalink.spec.js`, troque todas as URLs e o título. Em `app/scripts/medir-eixo.mjs:113`, troque para `?series=`.
+
+Nos posts, troque `?indicators=` por `?series=` nos 12 links destes arquivos (inclusive o `%2C` já codificado em `2025-08-07-selic…`):
+
+```
+src/content/posts/2025-08-07-selic-a-15-remedio-para-inflacao-ou-taxaco-que-freia-brasil.md
+src/content/posts/2025-08-12-novo-indicador-no-ar-chegou-o-igpm-a-inflacao-do-aluguel.md
+src/content/posts/2025-08-30-ipca-vs-igpm-duas-faces-da-inflacao-no-brasil.md
+src/content/posts/2025-09-04-o-crescimento-real-do-brasil-pib-anual.md
+src/content/posts/2025-10-19-precos-imoveis-brasil-ilusao-nominal-realidade-ciclos.md
+src/content/posts/2025-10-20-estoque-de-empregos-formais-o-pulso-do-mercado-de-trabalho-brasileiro.md
+src/content/posts/2025-10-26-ponto-de-inflexao-demografico-a-historia-por-tras-da-rara-queda-populacional-no-brasil.md
+src/content/posts/2025-11-14-luzes-sombras-queda-homicidios-brasil.md
+```
+
+- [ ] **Step 4: Verify parser and permalink E2E**
+
+Run:
+```bash
+cd app && NODE_ENV=development npx vitest run src/permalink.test.js src/permalink-init.test.js
+NODE_ENV=development npx playwright test e2e/permalink.spec.js
+```
+Expected: unitários PASS; E2E do permalink PASS com `?series=`.
+
+- [ ] **Step 5: Commit the rename**
+
+```bash
+git add app/src/permalink.js app/src/permalink-init.js app/src/main.js app/src/permalink.test.js app/e2e/permalink.spec.js app/scripts/medir-eixo.mjs src/content/posts
+git commit -m "refactor(permalink): ?series= substitui ?indicators="
+```
+
+#### Parte B — preset na entrada
+
+- [ ] **Step 6: Write the failing precedence tests**
+
+Substitua o teste "sem query: store vazia e NENHUM replaceState espúrio" por:
 
 ```js
 // app/src/permalink-init.test.js
 import { PRESETS, presetDoDia, dataEmSaoPaulo } from './data/presets.js';
 
-it('sem a chave indicators: aplica o preset do dia e o escreve na URL', async () => {
+it('sem a chave series: aplica o preset do dia e o escreve na URL', async () => {
   const win = janelaFalsa('');
   const agora = new Date('2026-10-27T12:00:00Z');
   const esperado = presetDoDia(dataEmSaoPaulo(agora));
@@ -216,18 +276,18 @@ it('sem a chave indicators: aplica o preset do dia e o escreve na URL', async ()
   });
   expect(get(seriesStore).itens.map((i) => i.id)).toEqual(esperado.indicadores);
   expect(win.history.replaceState.mock.calls.at(-1)[2]).toBe(
-    `/?indicators=${esperado.indicadores.join(',')}`,
+    `/?series=${esperado.indicadores.join(',')}`,
   );
 });
 
-it('chave indicators presente mas sem id válido: NÃO aplica preset', async () => {
-  const win = janelaFalsa('?indicators=nao-existe');
+it('chave series presente mas sem id válido: NÃO aplica preset', async () => {
+  const win = janelaFalsa('?series=nao-existe');
   parar = await iniciarPermalink({ window: win, fetchImpl: fixture(['selic']) });
   expect(get(seriesStore).itens).toEqual([]);
 });
 
-it('chave indicators válida vence o preset', async () => {
-  const win = janelaFalsa('?indicators=selic');
+it('chave series válida vence o preset', async () => {
+  const win = janelaFalsa('?series=selic');
   parar = await iniciarPermalink({ window: win, fetchImpl: fixture(['selic', 'ipca']) });
   expect(get(seriesStore).itens.map((i) => i.id)).toEqual(['selic']);
 });
@@ -243,32 +303,34 @@ it('preset cujos ids não existem no catálogo não quebra: store vazia', async 
 });
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+Os testes existentes de permalink neste arquivo também trocam `?indicators=` por `?series=`, inclusive as expectativas de `replaceState`.
+
+- [ ] **Step 7: Run to verify they fail**
 
 Run: `cd app && NODE_ENV=development npx vitest run src/permalink-init.test.js`
-Expected: FAIL — o teste "sem a chave indicators" recebe store vazia.
+Expected: FAIL — o teste "sem a chave series" recebe store vazia.
 
-- [ ] **Step 3: Implement the precedence in `app/src/permalink-init.js`**
+- [ ] **Step 8: Implement the precedence in `app/src/permalink-init.js`**
 
 Depois de `esperarCatalogo` e da guarda de catálogo, decida uma vez:
 
 ```js
 const params = new URLSearchParams(searchAtual());
-const ids = params.has('indicators') ? lerIds(searchAtual()) : presetIds(agora);
+const ids = params.has('series') ? lerIds(searchAtual()) : presetIds(agora);
 ```
 
 `presetIds(agora)` devolve `presetDoDia(dataEmSaoPaulo(agora))?.indicadores ?? []`. O laço de `adicionarSerie` continua igual; a assinatura `seriesStore.subscribe(escreverUrl)` continua sendo registrada **depois** de aplicar o preset. Não reescreva a URL durante a aplicação.
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [ ] **Step 9: Run to verify it passes**
 
-Run: `cd app && NODE_ENV=development npx vitest run src/permalink-init.test.js`
-Expected: PASS (todos os testes, incluindo os de permalink existentes).
+Run: `cd app && NODE_ENV=development npx vitest run src/permalink-init.test.js src/permalink.test.js`
+Expected: PASS (todos).
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 10: Commit**
 
 ```bash
 git add app/src/permalink-init.js app/src/permalink-init.test.js
-git commit -m "feat(permalink): preset do dia quando não há indicators"
+git commit -m "feat(permalink): preset do dia quando não há ?series="
 ```
 
 ---
@@ -340,7 +402,7 @@ git commit -m "feat(home): layout próprio, sem nav, footer, feedback e toast"
 ```js
 // app/e2e/casca.spec.js
 test('a home ocupa o viewport e não rola', async ({ page }) => {
-  await page.goto('/?indicators=nao-existe');
+  await page.goto('/?series=nao-existe');
   const medida = await page.evaluate(() => ({
     scroll: document.documentElement.scrollHeight,
     altura: window.innerHeight,
@@ -668,7 +730,7 @@ git commit -m "feat(home): teclado, foco e gavetas no celular"
 
 **Interfaces:**
 - Consumes: todas as tasks anteriores.
-- Produces: helpers `abrirVazio(page)` (`goto('/?indicators=nao-existe')`), `abrirGavetaDireita(page)`, `abrirGavetaInferior(page)`; testes de preset (dia, precedência, troca, não duplicação, UTM).
+- Produces: helpers `abrirVazio(page)` (`goto('/?series=nao-existe')`), `abrirGavetaDireita(page)`, `abrirGavetaInferior(page)`; testes de preset (dia, precedência, troca, não duplicação, UTM).
 
 - [ ] **Step 1: Write the failing preset tests**
 
@@ -683,8 +745,8 @@ test('/ abre com o preset do dia (não vazia)', async ({ page }) => {
   await expect(page.getByTestId('preset-chip')).not.toHaveText('Personalizado');
 });
 
-test('?indicators= vence o preset e não duplica', async ({ page }) => {
-  await page.goto('/?indicators=selic-meta-acum-12m');
+test('?series= vence o preset e não duplica', async ({ page }) => {
+  await page.goto('/?series=selic-meta-acum-12m');
   await abrirGavetaDireita(page);
   await expect(page.locator('[data-bloco="chips"] li')).toHaveCount(1);
   await expect(page.getByTestId('preset-chip')).toHaveText('Personalizado');
@@ -707,7 +769,7 @@ test('escolher outro preset SUBSTITUI o conjunto e reescreve a URL', async ({ pa
   await opcoes.nth(indice).click();
   await expect(page.locator('[data-bloco="chips"] li').first()).toBeVisible();
   await expect(chip).not.toHaveText('Personalizado');
-  await expect.poll(() => new URL(page.url()).searchParams.get('indicators')).not.toBeNull();
+  await expect.poll(() => new URL(page.url()).searchParams.get('series')).not.toBeNull();
 });
 
 test('trocar de preset duas vezes em sequência não duplica séries', async ({ page }) => {
@@ -724,12 +786,12 @@ test('trocar de preset duas vezes em sequência não duplica séries', async ({ 
   await expect.poll(ids).toBeGreaterThan(0);
   const segunda = await ids();
   expect(segunda).toBeLessThanOrEqual(10);
-  const naUrl = new URL(page.url()).searchParams.get('indicators').split(',').filter(Boolean);
+  const naUrl = new URL(page.url()).searchParams.get('series').split(',').filter(Boolean);
   expect(naUrl).toHaveLength(segunda);
   expect(primeira).toBeGreaterThan(0);
 });
 
-test('?utm_source sem indicators recebe preset e preserva a chave', async ({ page }) => {
+test('?utm_source sem series recebe preset e preserva a chave', async ({ page }) => {
   await page.goto('/?utm_source=teste');
   await expect.poll(() => new URL(page.url()).searchParams.get('utm_source')).toBe('teste');
   await abrirGavetaDireita(page);
@@ -737,7 +799,7 @@ test('?utm_source sem indicators recebe preset e preserva a chave', async ({ pag
 });
 
 test('remover a última série com a gaveta inferior aberta não lança', async ({ page }) => {
-  await page.goto('/?indicators=selic-meta-acum-12m');
+  await page.goto('/?series=selic-meta-acum-12m');
   await page.getByRole('button', { name: /Comparação por mandato/ }).click();
   await abrirGavetaDireita(page);
   await page.locator('[data-bloco="chips"]').getByRole('button', { name: /^Remover / }).click();
@@ -754,7 +816,7 @@ Expected: FAIL nos helpers/expectativas ainda não adaptados.
 - [ ] **Step 3: Adapt `apoio.js` and the existing specs**
 
 - `abrirApp` continua esperando o botão "Buscar indicador…" (agora na barra superior).
-- `abrirVazio`: `goto('/?indicators=nao-existe')` e espera `[data-bloco="inicial"]`.
+- `abrirVazio`: `goto('/?series=nao-existe')` e espera `[data-bloco="inicial"]`.
 - `abrirGavetaDireita`/`abrirGavetaInferior`: clicam no gatilho, esperam a gaveta visível e, se já estiver aberta, não repetem o clique.
 - `casca.spec.js`: o cenário vazio usa `abrirVazio`; a ordem de `data-bloco` deixa de ser a da página — troque por asserções de presença dentro das gavetas. A antiga expectativa `[data-bloco="filtros"]` com contagem 0 vira **presente e desabilitado** (o topo é permanente; sem série, só as alças ficam inertes); `trilho` e `comparacao` continuam com contagem 0 sem série, porque o conteúdo da gaveta inferior não é montado. Mantenha canário, `dark` e luminância.
 - `exemplo.spec.js`: `carregarExemplo` só no estado vazio; filtros agora estão no topo (sem abrir gaveta); os `chips` exigem a gaveta direita aberta; o botão `esq.`/`dir.` agora está em `[data-secao="eixos"]` (AxesPanel), não na legenda; a remoção da última série continua terminando em `[data-bloco="inicial"]` e `getByTestId('grafico')` com contagem 0.
@@ -785,6 +847,6 @@ git commit -m "test(home): suíte adaptada ao terminal e ao preset do dia"
 
 - Em 1440×900 e 1280×800: a página não rola, o gráfico ocupa a altura livre, as gavetas abrem e fecham sem alterar `viewport` nem `mandate`.
 - Em 390×844: gráfico ≥ 50% da altura, gaveta direita em folha de 88%, gaveta inferior como bottom sheet, nenhum transbordo horizontal.
-- `/` abre com o preset do dia; `?indicators=` válido vence; `?indicators=` só inválido cai no `EstadoInicial`; UTM preservado.
+- `/` abre com o preset do dia; `?series=` válido vence; `?series=` só inválido cai no `EstadoInicial`; UTM preservado.
 - Escolher preset substitui o conjunto (sem duplicar) e o chip diz "Personalizado" fora de preset.
 - Nenhum erro de console nos percursos E2E; `npm run build` e `npm run test:analytics` verdes.

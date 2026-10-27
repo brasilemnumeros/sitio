@@ -31,7 +31,7 @@ recolhidos).
 | Comparação | `ComparisonPanel.svelte` | Matriz larga: linha por série, coluna por governo |
 | Legenda | `SeriesLegend.svelte` | Identificação textual + troca de cor + eixo |
 | Busca | `SearchModal.svelte` + `Ficha.svelte` | Modal com cascata, ficha e fontes |
-| Permalink | `permalink-init.js` | Lê `?indicators=` uma vez na entrada; escreve com `replaceState` |
+| Permalink | `permalink-init.js` | Lê `?series=` uma vez na entrada; escreve com `replaceState` |
 
 Consequências que o desenho precisa assumir: `Base.astro` acrescenta feedback e toast mesmo
 com `shell="app"`; a legenda existe porque com 10 séries os rótulos no canvas ocupam ~80%
@@ -45,7 +45,7 @@ larga por natureza e não cabe numa coluna de 300px.
 3. Nenhuma função atual some: busca, legenda, eixos, filtros de tempo, mandatos, comparação,
    permalink, estados de carregamento/erro.
 4. A home abre com conteúdo: um **preset do dia** determinístico (sem aleatoriedade).
-5. Link com `?indicators=` continua mandando em tudo; preset só entra quando não há ids.
+5. Link com `?series=` continua mandando em tudo; preset só entra quando não há ids.
 6. Mobile utilizável: gráfico em tela cheia, gavetas como folhas deslizantes.
 
 ## Não-objetivos
@@ -130,7 +130,7 @@ Breakpoint: `md` (768px). Abaixo disso, ver Mobile.
 - Chip do preset atual, que abre um menu com os presets nomeados + "do dia". Escolher um
   preset **substitui** as séries em cena, numa única escrita atômica (sem estados
   intermediários na URL). Se a seleção atual não corresponde a nenhum preset — série
-  adicionada/removida à mão ou `?indicators=` arbitrário — o chip mostra "Personalizado".
+  adicionada/removida à mão ou `?series=` arbitrário — o chip mostra "Personalizado".
 - Ações: permalink (copia a URL) e tela cheia (`requestFullscreen`, opcional; se falhar,
   não mostra). Não há menu do site.
 - Navegação para o conteúdo: link discreto **"Artigos"** → `/blog` (decisão minha; sem ele a
@@ -198,7 +198,7 @@ gavetas ficam desabilitadas, não escondidas — a moldura não pula.
   `America/Sao_Paulo`, formato `AAAA-MM-DD`), sem `Math.random`. Mesmo dia → mesmo preset
   para todo mundo; dia seguinte → próximo da lista (rotação, não sorteio).
 - Aplicação: depois do catálogo ficar `ready` e **somente** se a query não trouxer a chave
-  `indicators`. Ids desconhecidos no preset são ignorados em silêncio, como no permalink.
+  `series`. Ids desconhecidos no preset são ignorados em silêncio, como no permalink.
 - Escolher um preset nomeado no menu **substitui** o conjunto em cena numa escrita atômica
   (uma atualização de store, uma reescrita de URL), reusando a reindexação de cores do
   `seriesStore`. Se a seleção não corresponder a nenhum preset, o chip mostra "Personalizado".
@@ -208,10 +208,10 @@ gavetas ficam desabilitadas, não escondidas — a moldura não pula.
 
 ### Precedência de estado na entrada
 
-1. Query com a chave `indicators` e ao menos um id válido → permalink (comportamento atual).
-2. Query com a chave `indicators` e nenhum id válido → nada é adicionado; `EstadoInicial`.
+1. Query com a chave `series` e ao menos um id válido → permalink (comportamento atual).
+2. Query com a chave `series` e nenhum id válido → nada é adicionado; `EstadoInicial`.
    Um link explícito nunca é sobrescrito por preset.
-3. Query sem a chave `indicators` → preset do dia.
+3. Query sem a chave `series` → preset do dia.
 4. Falha de catálogo → estado de erro total (sem preset).
 
 O preset escreve a URL com `replaceState`, como qualquer série; um link salvo no dia 26
@@ -252,7 +252,8 @@ continua abrindo o conjunto do dia 26, e isso é intencional.
 ### O que não muda
 
 Stores, domínio (escalas, mandatos, cor, formato), adapter do canvas, contrato de dados,
-minimapa, modal de busca, ficha, permalink e o gate de analytics.
+minimapa, modal de busca, ficha e o gate de analytics. A única exceção é o **nome da chave**
+do permalink, que passa de `?indicators=` para `?series=` (ver decisões).
 
 ## Testes e critérios de aceite
 
@@ -261,7 +262,7 @@ minimapa, modal de busca, ficha, permalink e o gate de analytics.
 - E2E (`app/e2e`):
   - `casca.spec.js`: adaptar às novas gavetas; continua exigindo fundo `#0e1117`, `dark` e
     zero erro de console.
-  - novo `presets.spec.js`: `/` sem query carrega o preset do dia; `/?indicators=` ganha;
+  - novo `presets.spec.js`: `/` sem query carrega o preset do dia; `/?series=` ganha;
     preset não duplica séries.
   - `mobile.spec.js`: gavetas abrem/fecham por toque; gráfico ≥ 50% da altura do viewport.
   - `permalink.spec.js` e `exemplo.spec.js` continuam passando.
@@ -289,7 +290,9 @@ minimapa, modal de busca, ficha, permalink e o gate de analytics.
 - `SeriesChips` vai para a gaveta direita (status, erro e "tentar de novo" não existem na legenda).
 - Remover a última série volta ao `EstadoInicial` dentro do gráfico, com o atalho "Selic × IPCA".
 - As cinco janelas de tempo atuais são mantidas, com os mesmos rótulos.
-- `?indicators=` com ids inválidos não recebe preset: cai no `EstadoInicial`.
+- `?series=` com ids inválidos não recebe preset: cai no `EstadoInicial`.
+- O permalink passa a ser `?series=`; `?indicators=` deixa de ser lido, **sem alias**, e os 12
+  links dos posts são atualizados na mesma fatia.
 - Gaveta inferior contém mandatos **e** comparação; filtros de tempo sobem para o topo.
 - Feedback e toast de artigos saem da home junto com nav e footer.
 - Sem persistência de gavetas: toda visita abre limpa, com o preset do dia.

@@ -65,9 +65,9 @@ afterEach(() => {
 });
 
 describe('iniciarPermalink', () => {
-  it('restaura as séries na ORDEM da query (?)indicators=selic,ipca', async () => {
+  it('restaura as séries na ORDEM da query (?series=selic,ipca)', async () => {
     parar = await iniciarPermalink({
-      window: janelaFalsa('?indicators=selic,ipca'),
+      window: janelaFalsa('?series=selic,ipca'),
       fetchImpl: fixture(['selic', 'ipca']),
     });
     expect(get(seriesStore).itens.map((i) => i.id)).toEqual(['selic', 'ipca']);
@@ -77,7 +77,7 @@ describe('iniciarPermalink', () => {
   // Review Focus 1 — id desconhecido
   it('ignora id desconhecido em silêncio, sem lançar', async () => {
     parar = await iniciarPermalink({
-      window: janelaFalsa('?indicators=nao-existe,selic'),
+      window: janelaFalsa('?series=nao-existe,selic'),
       fetchImpl: fixture(['selic']),
     });
     expect(get(seriesStore).itens.map((i) => i.id)).toEqual(['selic']);
@@ -87,7 +87,7 @@ describe('iniciarPermalink', () => {
   it('15 ids → exatamente 10 séries (o teto da paleta)', async () => {
     const ids = Array.from({ length: 15 }, (_, i) => `s${i}`);
     parar = await iniciarPermalink({
-      window: janelaFalsa(`?indicators=${ids.join(',')}`),
+      window: janelaFalsa(`?series=${ids.join(',')}`),
       fetchImpl: fixture(ids),
     });
     expect(get(seriesStore).itens).toHaveLength(10);
@@ -116,11 +116,11 @@ describe('iniciarPermalink', () => {
 
     expect(win.history.replaceState).toHaveBeenCalled();
     const [, , url] = win.history.replaceState.mock.calls.at(-1);
-    expect(url).toBe('/?indicators=selic');
+    expect(url).toBe('/?series=selic');
   });
 
   it('a query NÃO é relida depois de escrita (sem laço de eco)', async () => {
-    const win = janelaFalsa('?indicators=selic');
+    const win = janelaFalsa('?series=selic');
     const fetchImpl = fixture(['selic', 'ipca']);
     parar = await iniciarPermalink({ window: win, fetchImpl });
     expect(get(seriesStore).itens.map((i) => i.id)).toEqual(['selic']);
@@ -128,7 +128,7 @@ describe('iniciarPermalink', () => {
     // A URL passa a pedir um id **válido e ausente** (`ipca`). Se a integração relesse a URL
     // dentro do caminho de escrita — o defeito do `adapter.js:79`, em que a escrita
     // programática volta como estado — `ipca` entraria na store AQUI.
-    win.location.search = '?indicators=ipca';
+    win.location.search = '?series=ipca';
     definirCor('selic', '#123456'); // força uma emissão da store (o subscribe reescreve a URL)
     await new Promise((r) => setTimeout(r, 0)); // deixa qualquer caminho assíncrono se revelar
 
@@ -138,11 +138,11 @@ describe('iniciarPermalink', () => {
     const escritas = win.history.replaceState.mock.calls.map((c) => c[2]).join(' ');
     expect(escritas).not.toContain('ipca');
     // A escrita é unidirecional e corrige a URL de volta para a store.
-    expect(win.history.replaceState.mock.calls.at(-1)[2]).toBe('/?indicators=selic');
+    expect(win.history.replaceState.mock.calls.at(-1)[2]).toBe('/?series=selic');
   });
 
   it('não reescreve a URL quando ela já reflete a store (guarda do ruído)', async () => {
-    const win = janelaFalsa('?indicators=selic');
+    const win = janelaFalsa('?series=selic');
     parar = await iniciarPermalink({ window: win, fetchImpl: fixture(['selic']) });
     const antes = win.history.replaceState.mock.calls.length;
 

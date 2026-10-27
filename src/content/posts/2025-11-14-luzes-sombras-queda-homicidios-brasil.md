@@ -24,7 +24,7 @@ Em paralelo, a **Taxa de Homicídios por Armas de Fogo a cada 100 mil habitantes
 <a href="/assets/img/homicidios.webp" target="_blank" rel="noopener noreferrer"><img src="/assets/img/homicidios.webp" alt="GRÁFICO: Homicídios (100k hab.) / Homicídios por Armas de Fogo (100k hab.) / Proporção de Homicídios por Armas de Fogo (100k hab) (1995-2025)" /></a>
 
 <p class="text-center">
-<a href="https://www.brasilemnumeros.ong.br/?indicators=homicidios-anual,homicidios-armas-fogo-anual,proporcao-homicidios-armas-fogo-anual" class="text-blue-600 hover:text-blue-400 underline" target="_blank" rel="noopener noreferrer">Acesse o gráfico comparativo aqui!</a>
+<a href="https://www.brasilemnumeros.ong.br/?series=homicidios-anual,homicidios-armas-fogo-anual,proporcao-homicidios-armas-fogo-anual" class="text-blue-600 hover:text-blue-400 underline" target="_blank" rel="noopener noreferrer">Acesse o gráfico comparativo aqui!</a>
 </p>
 
 Este pico não foi um evento isolado. Especialistas em segurança pública frequentemente o atribuem a um intenso conflito entre facções criminosas que se espalhou pelo país, notadamente nas regiões Norte e Nordeste, após o rompimento de uma trégua nacional.

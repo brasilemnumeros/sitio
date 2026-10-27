@@ -4,8 +4,8 @@ import { catalogStore, carregarCatalogo, indicadorPorId } from './stores/catalog
 import { lerIds, escreverSearch } from './permalink.js';
 
 /**
- * Liga o permalink (`?indicators=`) aos stores — o que impede a migração de entrar com
- * regressão: hoje os posts linkam `/?indicators=<ids>` e o app novo precisa restaurá-los.
+ * Liga o permalink (`?series=`) aos stores — o que impede a migração de entrar com
+ * regressão: os posts linkam `/?series=<ids>` e o app novo precisa restaurá-los.
  *
  * A LEITURA da query acontece UMA vez, na entrada. A ESCRITA é unidirecional (store → URL).
  * Ler de volta o que se escreveu é o defeito conhecido do `adapter.js:79` — não se repete aqui.
@@ -28,7 +28,7 @@ function esperarCatalogo() {
 }
 
 /**
- * Lê `?indicators=` na entrada, resolve cada id contra o catálogo (id desconhecido é
+ * Lê `?series=` na entrada, resolve cada id contra o catálogo (id desconhecido é
  * ignorado em silêncio) e adiciona as séries UMA A UMA — o caminho do produto. Depois
  * assina `seriesStore` para escrever a URL com `replaceState` (nunca `pushState`).
  *

@@ -52,15 +52,19 @@ const canonicalFinal = new URL(caminho, Astro.site).href;
 
     <!-- Atribuição do TradingView Lightweight Charts (obrigação da Apache-2.0, fatia 10/T5).
          O link vive aqui porque o `Footer.astro` NÃO entra na `/`; o `testar-atribuicao.sh`
-         (do `verificar`) exige a âncora INTEIRA no `dist/index.html` enquanto a gaveta
-         inferior do app (Task 8) não a abrigar, meta só. E sem a TAG de rodapé do site no
-         HTML: um footer é exatamente a casca que ESTE layout existe para não carregar — a
-         barra inferior do app é o ÚNICO footer permitido na `/` (pega-se por `data-testid`,
-         e é do app, não daqui). §10.5: link visível — canto inferior direito, discreto,
-         mas presente. -->
+         (do `verificar`) exige a âncora INTEIRA no `dist/index.html`. E sem a TAG de rodapé do
+         site no HTML: um footer é exatamente a casca que ESTE layout existe para não carregar —
+         a barra inferior do app é o ÚNICO footer permitido na `/` (pega-se por `data-testid`,
+         e é do app, não daqui). §10.5: link visível.
+         🔴 POSIÇÃO (Task 8): a barra inferior do app tem 26px FECHADA (a alça da gaveta de
+         mandatos/comparação). Com `bottom-1` o link ficava POR BAIXO dela — obrigação legal
+         escondida. `bottom-7` (28px) o põe logo acima da barra, e `z-30` o mantém acima da
+         moldura do app, que é renderizada antes (o `#app` está no slot). Aberta a gaveta, ela
+         cobre a faixa do canto — aceitável: o link continua no DOM e visível com a gaveta
+         recolhida, que é o estado padrão da `/`. -->
     <a
       href="https://www.tradingview.com/"
-      class="fixed right-2 bottom-1 z-10 text-xs text-gray-300/90 no-underline hover:text-gray-200"
+      class="fixed right-2 bottom-7 z-30 text-xs text-gray-300/90 no-underline hover:text-gray-200"
       target="_blank"
       rel="noopener noreferrer">TradingView Lightweight Charts</a
     >

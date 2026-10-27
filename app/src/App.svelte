@@ -10,17 +10,21 @@
   import SearchModal from './components/SearchModal.svelte';
   import HomeToolbar from './components/HomeToolbar.svelte';
   import SeriesDrawer from './components/SeriesDrawer.svelte';
+  import BottomDrawer from './components/BottomDrawer.svelte';
   // 🔴 Só se importa o que JÁ EXISTE. Um import de arquivo inexistente QUEBRA O BUILD.
-  // Os controles das gavetas voltam pelas Tasks 7/8 — cada um no seu lugar fixo (gaveta
-  // direita, gaveta inferior), não mais numa pilha de blocos. A T7 já trouxe a gaveta direita
-  // (chips, legenda e eixos); a inferior chega na T8. Os FILTROS DE TEMPO voltaram pela T6,
-  // dentro da barra superior (`HomeToolbar`).
+  // Os controles das gavetas vivem no seu lugar fixo, não numa pilha de blocos: a direita
+  // (chips, legenda e eixos) veio na T7; a inferior (mandatos e comparação) chega aqui na T8.
+  // Os FILTROS DE TEMPO voltaram pela T6, dentro da barra superior (`HomeToolbar`).
 
   let buscaAberta = $state(false);
   /** A gaveta direita é dona da própria abertura? NÃO: o estado vive aqui, porque a prioridade
    *  do `Esc` entre camadas (busca → gavetas) é da `App` (T9). O componente recebe `bind:aberta`
    *  para o gatilho do trilho poder alternar sem duplicar a fonte da verdade. */
   let direitaAberta = $state(false);
+  /** A gaveta inferior (mandatos + comparação) também é da `App`, pelo mesmo motivo: a
+   *  prioridade do `Esc` entre camadas é daqui (T9). `mostrarCasca` é a regra §9.1 — sem série
+   *  a alça existe DESABILITADA (a moldura não pula), e o conteúdo nem é montado. */
+  let fundoAberto = $state(false);
   let itens = $derived($seriesStore.itens);
 
   // §9.3 — erro TOTAL é quando NADA carregou; com uma série de pé, é degradação PARCIAL e o
@@ -29,6 +33,12 @@
   let todosCarregando = $derived(
     itens.length > 0 && itens.every((i) => i.status === 'carregando'),
   );
+
+  /** §9.1 — a MESMA regra de divulgação progressiva dos blocos: sem série NÃO há o que
+   *  comparar, e enquanto TUDO carrega a barra inferior é INERTE (§Estados). A gaveta inferior
+   *  recebe isto como `mostrarCasca`: com `false` a alça continua no lugar (a moldura não
+   *  pula), desabilitada, e o conteúdo nem é montado. */
+  let mostrarCasca = $derived(itens.length > 0 && !todosCarregando);
 
   // O motivo vem das PRÓPRIAS séries: a mensagem do validador já diz o que houve — um `schema`
   // não suportado, por exemplo, chega com a palavra "schema" (§6). NUNCA "erro desconhecido":
@@ -123,13 +133,15 @@
     />
   </div>
 
-  <!-- 3 · barra inferior (26px). MARCADOR DA T5: a T8 transforma isto na alça da gaveta de
-       mandatos/comparação. É `<footer>` de propósito — o rodapé do SITE não existe no app, e
-       o teste de casca exclui este `data-testid` da proibição. -->
-  <footer
-    data-testid="barra-inferior"
-    class="h-[26px] shrink-0 border-t border-slate-800"
-  ></footer>
+  <!-- 3 · gaveta inferior (26px fechada). O QUE ERA UM PLACEHOLDER NA T5 é agora a alça de
+       mandatos/comparação (`BottomDrawer`): fechada mostra o resumo (`N séries · M eixos`),
+       aberta cresce para cima e o gráfico cede — em fluxo, nunca por cima. Abrir/fechar não
+       escreve em `viewport` nem em `mandate` (§Moldura). -->
+  <BottomDrawer
+    aberta={fundoAberto}
+    aoAlternar={() => (fundoAberto = !fundoAberto)}
+    mostrarCasca={mostrarCasca}
+  />
 
   {#if buscaAberta}
     <!-- A modal traz o próprio overlay (é um <button>, não um <div> — R31) e fecha por ESC
@@ -143,11 +155,10 @@
      cobre o caso normal; esta regra fecha a raiz do documento porque o harness de dev
      (`app/index.html`) não carrega o `<body class="h-dvh overflow-hidden">` do `Home.astro`,
      e o teste de viewport mede o `documentElement`, não o <main>.
-     ⚠ O bloco também mantém o `app.css` presente no build: entre a T5 e a T8 os componentes
-     com CSS escopado (chips, legenda, trilho, matriz) estão temporariamente fora da árvore,
-     e o `preparar-publico` exige `app.css` ao lado do `app.js` — um bundle vazio aborta a
-     cadeia do `npm run build` antes do Astro. Quando as gavetas voltarem, o arquivo volta a
-     carregar também os estilos escopados. */
+     ⚠ O bloco também mantém o `app.css` presente no build: o `preparar-publico` exige
+     `app.css` ao lado do `app.js`, e um bundle vazio aborta a cadeia do `npm run build`
+     antes do Astro. (Desde a T8 os componentes com CSS escopado — chips, legenda, trilho e
+     matriz — voltaram à árvore pelas duas gavetas; esta regra segue valendo para a raiz.) */
   :global(html),
   :global(body) {
     overflow: hidden;

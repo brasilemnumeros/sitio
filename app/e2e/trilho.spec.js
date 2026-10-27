@@ -238,3 +238,30 @@ test('a matriz aparece com série e traz os estados de célula por texto', async
 
   await page.screenshot({ path: 'e2e/.artefatos/comparacao-matriz.png', fullPage: true });
 });
+
+/**
+ * A GAVETA INFERIOR (T8) — o trilho de mandatos e a matriz vivem numa gaveta, e a barra de 26px
+ * é a ALÇA dela. O resumo (`N séries · M eixos`) é o único conteúdo da barra fechada: ele diz o
+ * que está em cena sem precisar abrir. `Esc` fecha — a prioridade ENTRE camadas é da T9, aqui a
+ * gaveta só respeita quem já tratou a tecla.
+ *
+ * ⚠ Sem `carregarExemplo`: a `/` já entra com o preset do dia (os ids curados do dia), então a
+ * casca existe e a alça nasce habilitada. A asserção do resumo é por FORMA (`\d+`), não por
+ * número: o preset muda de conteúdo a cada dia e o teste não pode apodrecer por isso.
+ */
+test('a gaveta inferior abre com mandatos e matriz, e o resumo conta', async ({ page }) => {
+  await page.goto('/');
+  const alca = page.getByRole('button', { name: /Comparação por mandato/ });
+  await expect(alca).toHaveAttribute('aria-expanded', 'false');
+  await expect(alca).toContainText(/\d+ séries · \d+ eixos/);
+
+  await alca.click();
+  const gaveta = page.getByTestId('gaveta-inferior');
+  await expect(gaveta).toBeVisible();
+  await expect(gaveta.locator('[data-bloco="trilho"]')).toBeVisible();
+  await expect(gaveta.locator('[data-bloco="comparacao"]')).toBeVisible();
+  await expect(alca).toHaveAttribute('aria-expanded', 'true');
+
+  await page.keyboard.press('Escape');
+  await expect(gaveta).toBeHidden();
+});

@@ -31,17 +31,66 @@ function reindexarCores(itens) {
   return itens.map((item, i) => ({ ...item, cor: overrides.get(item.id) ?? PALETA_PADRAO[i] }));
 }
 
+/** Item novo, ainda sem dado: a cor é reindexada por quem emite (§1). Reutilizado por
+ *  `adicionarSerie` e `substituirSeries` para que os dois caminhos criem itens idênticos. */
+const paraItem = (entry) => ({
+  id: entry.id,
+  name: entry.name,
+  url: entry.datafile,
+  unit: entry.unit ?? null,
+  cor: null,
+  corPessoal: false,
+  status: 'carregando',
+  series: null,
+  error: null,
+});
+
+/** A unidade vem da SÉRIE, não do catálogo (§6) — o catálogo só a tem durante a transição.
+ *  `expectedId` é opcional: o caminho do add/retentativa passa o id (defesa contra arquivo
+ *  trocado na URL), o atalho de preset não — o `datafile` do preset é o arquivo CURADO pelo
+ *  catálogo, e o id interno do JSON pode divergir do id do preset sem que a troca falhe. */
+const carregarItem = async (entry, { fetchImpl, expectedId } = {}) => {
+  const series = await loadSeries(entry.datafile, { expectedId, fetchImpl });
+  escrever((itens) => itens.map((i) => (i.id === entry.id ? { ...i, status: 'ok', series, unit: series.unit, error: null } : i)));
+};
+
+const registrarFalha = (id, error) => {
+  escrever((itens) => itens.map((i) => (i.id === id ? { ...i, status: 'erro', series: null, error: error.message } : i)));
+};
+
 export async function adicionarSerie(entry, { fetchImpl } = {}) {
   if (get(seriesStore).itens.some((i) => i.id === entry.id)) return;
   if (atingiuLimite()) return; // visível e desabilitado na UI; nada é removido (§9.5)
-  escrever((itens) => reindexarCores([...itens, { id: entry.id, name: entry.name, url: entry.datafile, unit: entry.unit ?? null, cor: null, corPessoal: false, status: 'carregando', series: null, error: null }]));
+  escrever((itens) => reindexarCores([...itens, paraItem(entry)]));
   try {
-    const series = await loadSeries(entry.datafile, { expectedId: entry.id, fetchImpl });
-    // A unidade vem da SÉRIE, não do catálogo (§6) — o catálogo só a tem durante a transição.
-    escrever((itens) => itens.map((i) => (i.id === entry.id ? { ...i, status: 'ok', series, unit: series.unit, error: null } : i)));
+    await carregarItem(entry, { fetchImpl, expectedId: entry.id });
   } catch (error) {
-    escrever((itens) => itens.map((i) => (i.id === entry.id ? { ...i, status: 'erro', series: null, error: error.message } : i)));
+    registrarFalha(entry.id, error);
   }
+}
+
+/** Troca o CONJUNTO inteiro (atalho de preset) numa ÚNICA emissão da store: todas as séries
+ *  entram juntas como `carregando`, já com cor por posição, e só então carregam em paralelo.
+ *  Um `set` — não um `update` por série — para que a UI nunca mostre a mistura de dois
+ *  conjuntos durante a transição. */
+export async function substituirSeries(entries, { fetchImpl } = {}) {
+  const vistos = new Set();
+  const unicos = [];
+  for (const entry of entries) {
+    if (vistos.has(entry.id)) continue; // id repetido: o primeiro vence
+    vistos.add(entry.id);
+    if (unicos.length >= LIMITE_SERIES) break; // o teto é a paleta (§1)
+    unicos.push(entry);
+  }
+  seriesStore.set({ itens: reindexarCores(unicos.map(paraItem)) });
+  // Cada carga atualiza só o próprio item; falha é parcial (§9.3) — não derruba as demais.
+  await Promise.all(unicos.map(async (entry) => {
+    try {
+      await carregarItem(entry, { fetchImpl });
+    } catch (error) {
+      registrarFalha(entry.id, error);
+    }
+  }));
 }
 
 export function removerSerie(id) {

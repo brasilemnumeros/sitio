@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { get } from 'svelte/store';
 import {
   LIMITE_SERIES, seriesStore, dataMaximaStore, adicionarSerie, removerSerie, tentarNovamente,
-  atingiuLimite, motivoDoLimite, corDe, definirCor, restaurarCor, limparSeries,
+  atingiuLimite, motivoDoLimite, corDe, definirCor, restaurarCor, limparSeries, substituirSeries,
 } from './series.js';
 import { clearSeriesCache } from '../data/series.js';
 import { PALETA_PADRAO } from '../domain/color.js';
@@ -125,5 +125,34 @@ describe('seriesStore', () => {
     await adicionarSerie(entrada('a'), { fetchImpl: okSerie('a') });
     await adicionarSerie(entrada('a'), { fetchImpl: okSerie('a') });
     expect(get(seriesStore).itens).toHaveLength(1);
+  });
+});
+
+describe('substituirSeries — preset troca o conjunto numa escrita atômica', () => {
+  it('emite UMA vez com todas as séries carregando, na ordem recebida', async () => {
+    const emissoes = [];
+    const parar = seriesStore.subscribe((s) => emissoes.push(s.itens.map((i) => i.status)));
+    await substituirSeries([entrada('a'), entrada('b')], { fetchImpl: okSerie('a') });
+    parar();
+    expect(emissoes[1]).toEqual(['carregando', 'carregando']);
+    expect(get(seriesStore).itens.map((i) => i.id)).toEqual(['a', 'b']);
+    expect(get(seriesStore).itens.every((i) => i.status === 'ok')).toBe(true);
+  });
+
+  it('descarta id repetido e corta no teto da paleta', async () => {
+    const dez = Array.from({ length: 12 }, (_, i) => entrada(`s${i}`));
+    await substituirSeries([entrada('a'), entrada('a'), ...dez], { fetchImpl: okSerie('s0') });
+    const itens = get(seriesStore).itens;
+    expect(itens[0].id).toBe('a');
+    expect(itens).toHaveLength(LIMITE_SERIES);
+  });
+
+  it('falha de uma série é parcial: as outras seguem `ok`', async () => {
+    await substituirSeries([entrada('a'), entrada('b')], {
+      fetchImpl: async (url) => (String(url).endsWith('b.json')
+        ? { ok: false, status: 500, json: async () => ({}) }
+        : okSerie('a')()),
+    });
+    expect(get(seriesStore).itens.map((i) => i.status)).toEqual(['ok', 'erro']);
   });
 });

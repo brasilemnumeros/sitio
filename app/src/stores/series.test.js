@@ -144,6 +144,11 @@ describe('substituirSeries — preset troca o conjunto numa escrita atômica', (
     await substituirSeries([entrada('a'), entrada('a'), ...dez], { fetchImpl: okSerie('s0') });
     const itens = get(seriesStore).itens;
     expect(itens[0].id).toBe('a');
+    // Sem o dedupe, o corte em 10 deixaria o SEGUNDO `a` no lugar do `s0` — esta linha
+    // distingue descartar a repetição de apenas cortar depois.
+    expect(itens[1].id).toBe('s0');
+    // A cor padrão é por POSIÇÃO (§1): a primeira emissão única já indexa a paleta toda.
+    expect(itens.map((i) => i.cor)).toEqual(PALETA_PADRAO.slice(0, itens.length));
     expect(itens).toHaveLength(LIMITE_SERIES);
   });
 
@@ -154,5 +159,12 @@ describe('substituirSeries — preset troca o conjunto numa escrita atômica', (
         : okSerie('a')()),
     });
     expect(get(seriesStore).itens.map((i) => i.status)).toEqual(['ok', 'erro']);
+  });
+
+  it('substitui, não mescla: a série que já estava sai do conjunto', async () => {
+    await adicionarSerie(entrada('z'), { fetchImpl: okSerie('z') });
+    await substituirSeries([entrada('a')], { fetchImpl: okSerie('a') });
+    const itens = get(seriesStore).itens;
+    expect(itens.map((i) => i.id)).toEqual(['a']); // 'z' foi embora junto
   });
 });

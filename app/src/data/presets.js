@@ -1,47 +1,28 @@
 /**
  * Presets nomeados da home (§"Preset do dia" da spec 2026-10-26).
- * Módulo puro: nada de rede, cache, relógio (`new Date()` sem argumento) ou
- * sorteio (`Math.random`) — a decisão de "hoje" cabe sempre ao chamador.
+ * Módulo puro: nada de rede, cache ou sorteio (`Math.random`). Único uso de
+ * relógio é o default `agora = new Date()` de `dataEmSaoPaulo` — sempre como
+ * argumento explícito do formatador, nunca solto/grande no módulo.
  */
 
 /** @typedef {{ id: string, nome: string, indicadores: string[] }} Preset */
 
 const MS_POR_DIA = 86_400_000;
 
+/** Constrói o registro congelado (nada pode mutar preset em runtime). */
+const preset = (id, nome, indicadores) =>
+  Object.freeze({ id, nome, indicadores: Object.freeze([...indicadores]) });
+
 // Ordem importa: é a rotação do "preset do dia" (juros → inflação → … → trabalho → juros).
 // Os ids de indicador são os do catálogo (`indicators.json`), sem inventar apelidos.
 /** @type {ReadonlyArray<Preset>} */
 export const PRESETS = Object.freeze([
-  {
-    id: 'juros',
-    nome: 'Juros',
-    indicadores: Object.freeze(['selic-meta-acum-12m', 'selic-over-acum-12m']),
-  },
-  {
-    id: 'inflacao',
-    nome: 'Inflação',
-    indicadores: Object.freeze(['ipca-acum-12m', 'igpm-acum-12m']),
-  },
-  {
-    id: 'habitacao',
-    nome: 'Habitação',
-    indicadores: Object.freeze(['mvgr-nominal', 'mvgr-real']),
-  },
-  {
-    id: 'violencia',
-    nome: 'Violência',
-    indicadores: Object.freeze(['homicidios-anual', 'homicidios-armas-fogo-anual']),
-  },
-  {
-    id: 'atividade',
-    nome: 'Atividade',
-    indicadores: Object.freeze(['pib-real-anual', 'populacao-variacao-anual']),
-  },
-  {
-    id: 'trabalho',
-    nome: 'Trabalho',
-    indicadores: Object.freeze(['caged-total-mensal']),
-  },
+  preset('juros', 'Juros', ['selic-meta-acum-12m', 'selic-over-acum-12m']),
+  preset('inflacao', 'Inflação', ['ipca-acum-12m', 'igpm-acum-12m']),
+  preset('habitacao', 'Habitação', ['mvgr-nominal', 'mvgr-real']),
+  preset('violencia', 'Violência', ['homicidios-anual', 'homicidios-armas-fogo-anual']),
+  preset('atividade', 'Atividade', ['pib-real-anual', 'populacao-variacao-anual']),
+  preset('trabalho', 'Trabalho', ['caged-total-mensal']),
 ]);
 
 // Um único formatador por módulo: `en-CA` nasce no formato AAAA-MM-DD que o
@@ -55,13 +36,13 @@ const FORMATO_DIA_SP = new Intl.DateTimeFormat('en-CA', {
 
 /**
  * Converte um instante no dia LOCAL de São Paulo, em `AAAA-MM-DD`.
- * Sem argumento devolve `null`: o módulo é puro e não consulta `new Date()` —
- * o chamador decide o "agora" (injeção, como nos testes e na iniciação).
+ * Sem argumento devolve o dia de `new Date()` — o dia de São Paulo, nunca o
+ * dia UTC do navegador. Argumento explícito inválido → `null`.
  *
  * @param {Date} [agora]
- * @returns {string|null}
+ * @returns {string|null} `AAAA-MM-DD`, ou `null` se o argumento explícito não for `Date` válida.
  */
-export function dataEmSaoPaulo(agora) {
+export function dataEmSaoPaulo(agora = new Date()) {
   if (!(agora instanceof Date) || Number.isNaN(agora.getTime())) return null;
   return FORMATO_DIA_SP.format(agora);
 }

@@ -6,9 +6,30 @@ describe('dataEmSaoPaulo', () => {
     expect(dataEmSaoPaulo(new Date('2026-10-27T02:00:00Z'))).toBe('2026-10-26');
     expect(dataEmSaoPaulo(new Date('2026-10-27T03:00:00Z'))).toBe('2026-10-27');
   });
+
+  it('sem argumento devolve o dia de hoje, em AAAA-MM-DD', () => {
+    // Só o regex: comparar com `new Date()` explícito pode dar falso negativo
+    // se o relógio virar o dia em São Paulo entre as duas chamadas do teste.
+    // O default é exercitado de verdade; a igualdade dia-a-dia ficou para os
+    // testes do `iniciarPermalink` (fixtures com `agora` relógio preso).
+    const hoje = dataEmSaoPaulo();
+    expect(hoje).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(dataEmSaoPaulo(new Date('não é data'))).toBeNull();
+  });
 });
 
 describe('presetDoDia', () => {
+  it('trava o contrato da lista: ids e ordem exatos da spec', () => {
+    expect(PRESETS.map((p) => p.id)).toEqual([
+      'juros',
+      'inflacao',
+      'habitacao',
+      'violencia',
+      'atividade',
+      'trabalho',
+    ]);
+  });
+
   it('é determinístico: a mesma data devolve o mesmo preset', () => {
     expect(presetDoDia('2026-10-27')).toBe(presetDoDia('2026-10-27'));
   });

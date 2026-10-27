@@ -843,6 +843,152 @@ git commit -m "test(home): suíte adaptada ao terminal e ao preset do dia"
 
 ---
 
+### Task 11: Testes visuais da moldura
+
+**Files:**
+- Create: `app/e2e/visual.spec.js`
+- Modify: `app/e2e/apoio.js` (helpers `semTransbordo`, `medirCaixas`)
+
+**Interfaces:**
+- Consumes: `abrirVazio`, `abrirGavetaDireita`, `abrirGavetaInferior`, `[data-testid="barra-superior"]`, `[data-testid="grafico"]`, `[data-testid="gaveta-direita"]`, `[data-testid="barra-inferior"]`.
+- Produces: um spec que roda **só no projeto `desktop`** e varre três viewports explícitos (`1440×900`, `1280×800`, `390×844`), com asserções de geometria e capturas em `e2e/.artefatos/`. O projeto `mobile` continua cobrindo o Pixel 7 em `mobile.spec.js`; este spec não roda duas vezes.
+
+> **Por que não `toHaveScreenshot`:** o miolo é canvas. Antialiasing, fontes e GPU variam entre máquinas e tornariam a baseline instável. A comparação automática fica na **geometria** (números com tolerância); as capturas são artefatos para o revisor olhar, como já acontece em `trilho.spec.js`. O MCP do Playwright (`playwright_*`) serve para depurar a tela durante a implementação — **não** é portão de CI.
+
+- [ ] **Step 1: Add the helpers to `app/e2e/apoio.js`**
+
+```js
+/** Falha se a página rolar em qualquer eixo (a home é uma moldura de viewport). */
+export async function semTransbordo(page) {
+  const m = await page.evaluate(() => ({
+    w: document.documentElement.scrollWidth,
+    h: document.documentElement.scrollHeight,
+    vw: window.innerWidth,
+    vh: window.innerHeight,
+  }));
+  expect(m.w, `transbordo horizontal (${m.w} > ${m.vw})`).toBeLessThanOrEqual(m.vw + 1);
+  expect(m.h, `transbordo vertical (${m.h} > ${m.vh})`).toBeLessThanOrEqual(m.vh + 1);
+}
+
+/** Caixas da moldura, em px, para asserções de geometria. */
+export async function medirCaixas(page) {
+  return page.evaluate(() => {
+    const r = (sel) => {
+      const el = document.querySelector(sel);
+      if (!el) return null;
+      const b = el.getBoundingClientRect();
+      return { x: b.x, y: b.y, w: b.width, h: b.height, bottom: b.bottom };
+    };
+    return {
+      topo: r('[data-testid="barra-superior"]'),
+      grafico: r('[data-testid="grafico"]'),
+      minimapa: r('[data-testid="minimapa"]'),
+      direita: r('[data-testid="gaveta-direita"]'),
+      inferior: r('[data-testid="barra-inferior"]'),
+      vw: window.innerWidth,
+      vh: window.innerHeight,
+    };
+  });
+}
+```
+
+O `Chart.svelte` já tem `data-testid="minimapa"`? Se não tiver, acrescente ao container do minimapa na Task 5 (é o único marcador novo que este spec exige).
+
+- [ ] **Step 2: Write the failing visual tests**
+
+```js
+// app/e2e/visual.spec.js
+import { test, expect, abrirVazio, abrirGavetaDireita, abrirGavetaInferior, semTransbordo, medirCaixas } from './apoio.js';
+
+// Só no desktop: o projeto mobile tem o próprio percurso (mobile.spec.js).
+test.skip(({}, testInfo) => testInfo.project.name !== 'desktop', 'geometria explícita no projeto desktop');
+
+const TOL = 1; // px
+
+for (const [nome, width, height] of [
+  ['1440x900', 1440, 900],
+  ['1280x800', 1280, 800],
+  ['390x844', 390, 844],
+]) {
+  test(`moldura fechada em ${nome}: sem rolagem e gráfico preenche o miolo`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await abrirVazio(page);
+    await semTransbordo(page);
+
+    const c = await medirCaixas(page);
+    const topoEsperado = width < 640 ? 30 : 34;
+    expect(Math.abs(c.topo.h - topoEsperado)).toBeLessThanOrEqual(TOL);
+    expect(Math.abs(c.inferior.h - 26)).toBeLessThanOrEqual(TOL);
+    expect(Math.abs(c.direita.w - 34)).toBeLessThanOrEqual(TOL);
+    expect(Math.abs(c.minimapa.h - 48)).toBeLessThanOrEqual(TOL);
+
+    // o gráfico ocupa o que sobra, descontando topo, barra inferior e minimapa
+    const livre = height - c.topo.h - c.inferior.h;
+    expect(c.grafico.h).toBeGreaterThanOrEqual(livre * 0.6);
+    expect(c.grafico.bottom).toBeLessThanOrEqual(c.inferior.y + TOL);
+
+    await page.screenshot({ path: `e2e/.artefatos/visual-${nome}-fechado.png` });
+  });
+
+  test(`gavetas em ${nome}: abrir não transborda e não cobre a barra`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await page.goto('/');
+    await abrirGavetaDireita(page);
+    await expect(page.getByTestId('gaveta-direita')).toBeVisible();
+    await semTransbordo(page);
+
+    const c = await medirCaixas(page);
+    if (width >= 1024) {
+      expect(Math.abs(c.direita.w - 320)).toBeLessThanOrEqual(2);
+      expect(c.grafico.w + c.direita.w).toBeLessThanOrEqual(c.vw + TOL);
+    } else {
+      // folha de 88% no celular
+      expect(c.direita.w / c.vw).toBeGreaterThan(0.85);
+    }
+
+    await page.screenshot({ path: `e2e/.artefatos/visual-${nome}-gaveta-direita.png` });
+    await abrirGavetaInferior(page);
+    await expect(page.getByTestId('barra-inferior')).toBeVisible();
+    await semTransbordo(page);
+    await page.screenshot({ path: `e2e/.artefatos/visual-${nome}-gaveta-inferior.png` });
+  });
+}
+```
+
+- [ ] **Step 3: Run to verify they fail (before the markers/layout exist)**
+
+Run: `cd app && NODE_ENV=development npx playwright test e2e/visual.spec.js --project=desktop`
+Expected: FAIL — `medirCaixas` devolve `null` para `[data-testid="minimapa"]` (ou alturas ainda fixas de 480px).
+
+- [ ] **Step 4: Adjust the markers**
+
+Confirme que `Chart.svelte` expõe `data-testid="minimapa"` no container do minimapa e que as gavetas usam `id="gaveta-direita"`/`gaveta-inferior` com os `data-testid` já previstos nas Tasks 7 e 8. Nenhuma lógica nova: se um teste falhar por medida, o defeito está no componente, não no teste.
+
+- [ ] **Step 5: Run to verify they pass**
+
+Run: `cd app && NODE_ENV=development npx playwright test e2e/visual.spec.js --project=desktop`
+Expected: PASS nos três viewports, seis capturas em `e2e/.artefatos/`.
+
+- [ ] **Step 6: Look at the screenshots (revisão visual, não automática)**
+
+Abra as capturas (`read` aceita PNG) e confira o que a geometria não prova: sobreposição de rótulos no topo de 390px, minimapa legível, gaveta direita sem corte no fim da rolagem, barra inferior mostrando o resumo. Se algo estiver errado, o conserto volta para a task do componente; registre o achado no relatório da task.
+
+Durante a execução, o MCP do Playwright (`playwright_browser_navigate`, `playwright_browser_resize`, `playwright_browser_take_screenshot`) pode ser usado para inspecionar a home no dev server da sessão. Ele **não** substitui este spec nem entra no CI.
+
+- [ ] **Step 7: Run the full gate and commit**
+
+```bash
+npm run build
+npm run test:analytics
+cd app && NODE_ENV=development npm test && NODE_ENV=development npm run test:e2e
+git add app/e2e docs/plans/12-home-terminal-de-analise.md
+git commit -m "test(home): geometria e capturas da moldura em três viewports"
+```
+
+Expected: tudo PASS; `visual.spec.js` roda só no projeto `desktop` e o `mobile` segue com a suíte própria.
+
+---
+
 ## Critérios de aceite (o que fecha a fatia)
 
 - Em 1440×900 e 1280×800: a página não rola, o gráfico ocupa a altura livre, as gavetas abrem e fecham sem alterar `viewport` nem `mandate`.

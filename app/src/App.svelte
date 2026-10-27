@@ -8,10 +8,12 @@
   import Esqueleto from './components/Esqueleto.svelte';
   import ErroTotal from './components/ErroTotal.svelte';
   import SearchModal from './components/SearchModal.svelte';
+  import HomeToolbar from './components/HomeToolbar.svelte';
   // 🔴 Só se importa o que JÁ EXISTE. Um import de arquivo inexistente QUEBRA O BUILD.
-  // Os controles das gavetas (chips, legenda, filtros, trilho, comparação) saem da moldura
-  // nesta tarefa e voltam pelas Tasks 6/7/8 — cada um no seu lugar fixo (topo, gaveta direita,
-  // gaveta inferior), não mais numa pilha de blocos.
+  // Os controles das gavetas (chips, legenda, trilho, comparação) saem da moldura nesta fatia e
+  // voltam pelas Tasks 7/8 — cada um no seu lugar fixo (gaveta direita, gaveta inferior), não
+  // mais numa pilha de blocos. Os FILTROS DE TEMPO já voltaram, pela Task 6, dentro da barra
+  // superior (`HomeToolbar`).
 
   let buscaAberta = $state(false);
   let itens = $derived($seriesStore.itens);
@@ -69,22 +71,11 @@
      falha o build. O sufixo de opacidade cheia existe para não colidir com a forma nua
      que também aparece em `docs/plans/`, que o Tailwind varre — ela daria falso OK. -->
 <main class="flex h-dvh flex-col overflow-hidden bg-[#0e1117]/100">
-  <!-- 1 · barra superior (34px). MARCADOR DA T5: a T6 troca este conteúdo pela marca, pelas
-       cinco janelas, pelo chip do preset e pelo permalink. A BUSCA JÁ MORA AQUI — e a mudança
-       de lugar desfaz o affordance duplicado do estado vazio, que mostrava um segundo
-       "Buscar indicador…" na mesma tela. -->
-  <header
-    data-testid="barra-superior"
-    class="flex h-[34px] shrink-0 items-center gap-2 border-b border-slate-800 px-2"
-  >
-    <button
-      type="button"
-      class="rounded border px-3 py-1 text-xs text-slate-200 hover:bg-slate-800"
-      onclick={() => (buscaAberta = true)}
-    >
-      Buscar indicador…
-    </button>
-  </header>
+  <!-- 1 · barra superior (34px; 30px no celular). A T6 pôs aqui a marca, a busca, as cinco
+       janelas, o chip do preset e as ações — tudo dentro de `HomeToolbar`. A BUSCA deixou de
+       ser um botão solto e passou a morar na barra: o affordance duplicado do estado vazio
+       (um segundo "Buscar indicador…" na mesma tela) continua desfeito. -->
+  <HomeToolbar aoAbrirBusca={() => (buscaAberta = true)} />
 
   <!-- MIOLO: a coluna do gráfico (`flex-1`) e o trilho direito (34px, marcador da T7). O
        `min-h-0` é o que permite o gráfico ENCOLHER quando a gaveta inferior abrir (T8);

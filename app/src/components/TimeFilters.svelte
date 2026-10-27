@@ -13,6 +13,11 @@
   import { viewportStore, definirJanela, resetarJanela } from '../stores/viewport.js';
   import { mandateStore, limparSelecao } from '../stores/mandate.js';
 
+  /** `compacto` é a forma da barra SUPERIOR (T6): sem o rótulo "Janela de tempo" nem a
+   *  mensagem de motivo, botões pequenos. A lógica de `viewport` NÃO muda — este componente
+   *  continua sendo o único dono das escritas de janela, e os cinco botões são os mesmos. */
+  let { compacto = false } = $props();
+
   let itens = $derived($seriesStore.itens);
   let janela = $derived($viewportStore);
   // ⚠ Um DONO por vez (§3, emenda de 2026-10-19): com um mandato escolhido a janela é DELE, e a
@@ -114,8 +119,9 @@
       (janela.to === null || janela.to >= dataMaxima),
   );
 
-  const CLASSE_BASE =
-    'rounded border px-2.5 py-1 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent';
+  const CLASSE_BASE = compacto
+    ? 'rounded border px-1.5 py-0.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent'
+    : 'rounded border px-2.5 py-1 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent';
   const CLASSE_ACESO =
     'border-sky-500 bg-sky-50 text-sky-800 dark:border-sky-400 dark:bg-sky-950 dark:text-sky-200';
   const CLASSE_APAGADO =
@@ -123,13 +129,18 @@
   const classeBotao = (aceso) => `${CLASSE_BASE} ${aceso ? CLASSE_ACESO : CLASSE_APAGADO}`;
 </script>
 
-<div class="flex flex-wrap items-center gap-x-3 gap-y-2" data-bloco="filtros">
-  <span class="text-xs font-medium tracking-wide text-slate-500 uppercase dark:text-slate-400">
-    Janela de tempo
-  </span>
+<div
+  class={compacto ? 'flex shrink-0 items-center gap-1' : 'flex flex-wrap items-center gap-x-3 gap-y-2'}
+  data-bloco="filtros"
+>
+  {#if !compacto}
+    <span class="text-xs font-medium tracking-wide text-slate-500 uppercase dark:text-slate-400">
+      Janela de tempo
+    </span>
+  {/if}
 
   <div
-    class="flex flex-wrap items-center gap-1"
+    class={compacto ? 'flex items-center gap-1' : 'flex flex-wrap items-center gap-1'}
     role="group"
     aria-label="Janela de tempo do gráfico"
   >
@@ -162,7 +173,7 @@
     </button>
   </div>
 
-  {#if !temDados}
+  {#if !temDados && !compacto}
     <!-- §9 — o motivo fica visível, não só no `title`: barra cinza sem explicação é lida
          como defeito, e o usuário não tem como distinguir de um estado sem dado. -->
     <p class="text-xs text-slate-500 dark:text-slate-400" role="status">{motivo}</p>

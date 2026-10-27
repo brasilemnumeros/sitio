@@ -89,6 +89,11 @@ da raiz, e o `README.md` da migração (`docs/plans/migracao-astro/`).
 | 09 | `09-trilho-e-painel-de-comparacao.md` | Mandatos na UI (§3, §4) | `components`: MandateRail · ComparisonPanel | 06,07 | ✅ fechada (T4/logos e T5/barrinha não feitas — decisão do usuário) |
 | 10 | `10-build-ci-e-a-virada.md` | Integração e virada (§10) | CI com canário, `/` vira o shell, remoção do legado, NOTICE + atribuição | 09 | ✅ **fechada** (T1–T4 entregues pela migração Astro; **T5** feita em 2026-10-19) |
 | 11 | `11-migracao-do-repo-dados.md` | Contrato no repo `dados` (§6) | séries publicam `value`; convivência de chaves; retirada de `rate` | — (coordena com 10) | ✅ **fechada** — **T4** feita em 2026-10-19 (falta só o push); **T3 superseded** (a `unit` fica — §12.1) |
+| 12 | `12-home-terminal-de-analise.md` | Home como terminal de análise | layout `100dvh` sem nav/footer, gavetas de séries/eixos e mandatos/comparação, preset do dia | 00–11 | 📝 **plano escrito** (spec de 2026-10-26 aprovada) |
+
+> A fatia **12** não pertence à camada de gráficos: ela reorganiza a página que já
+> existe. A spec que a manda é `docs/specs/2026-10-26-home-estilo-tradingview-design.md`;
+> os stores, o adapter, o contrato de dados e o gate de analytics não mudam.
 
 ### Ordem e paralelismo
 

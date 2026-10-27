@@ -1,7 +1,7 @@
 # Home como terminal de análise — design
 
 - Data: 2026-10-26
-- Estado: aguardando aprovação
+- Estado: aprovado (2026-10-27)
 - Escopo: apenas a home (`/`). Blog, posts, categorias, links, políticas e 404 não mudam.
 - Mockups: `.superpowers/brainstorm/` (local, fora do repo)
 
@@ -290,6 +290,6 @@ minimapa, modal de busca, ficha, permalink e o gate de analytics.
 - Remover a última série volta ao `EstadoInicial` dentro do gráfico, com o atalho "Selic × IPCA".
 - As cinco janelas de tempo atuais são mantidas, com os mesmos rótulos.
 - `?indicators=` com ids inválidos não recebe preset: cai no `EstadoInicial`.
-- Gaveta direita contém mandatos **e** comparação; filtros de tempo sobem para o topo.
+- Gaveta inferior contém mandatos **e** comparação; filtros de tempo sobem para o topo.
 - Feedback e toast de artigos saem da home junto com nav e footer.
 - Sem persistência de gavetas: toda visita abre limpa, com o preset do dia.

@@ -118,3 +118,20 @@ test('o dado local carrega: o catálogo traz os 7 grupos', async ({ page }, test
     await expect(grupos.getByRole('listitem')).toHaveCount(7);
   }
 });
+
+/**
+ * A home não pode carregar a CASCA DO SITE (`Base.astro`): nem `nav` do topo, nem
+ * rodapé (a barra inferior do app é um `<footer data-testid="barra-inferior">`; o
+ * que não pode existir é o footer do site), nem o botão flutuante de feedback, nem
+ * o toast de convite para artigos. Tudo isso existe em `Base.astro`; o layout da
+ * home (`Home.astro`) não os traz. Se um deles reaparecer, este teste pega a
+ * reintrodução silenciosa do shell do site na `/`.
+ */
+test('a home não carrega a casca do site: sem nav, footer, feedback nem toast', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('nav')).toHaveCount(0);
+  // A barra inferior do app é um `<footer>`; o que não pode existir é o rodapé do site.
+  await expect(page.locator('footer:not([data-testid="barra-inferior"])')).toHaveCount(0);
+  await expect(page.locator('#feedback-btn')).toHaveCount(0);
+  await expect(page.locator('#toast-artigos')).toHaveCount(0);
+});

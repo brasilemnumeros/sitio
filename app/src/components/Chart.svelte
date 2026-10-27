@@ -89,5 +89,7 @@
   });
 </script>
 
-<div bind:this={container} class="h-[480px] w-full" data-testid="grafico"></div>
-<div bind:this={containerMini} class="mt-2 h-[48px]" data-testid="minimapa"></div>
+<div class="flex min-h-0 flex-1 flex-col gap-2">
+  <div bind:this={container} class="min-h-0 flex-1" data-testid="grafico"></div>
+  <div bind:this={containerMini} class="h-10 md:h-12 shrink-0" data-testid="minimapa"></div>
+</div>

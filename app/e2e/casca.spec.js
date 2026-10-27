@@ -139,3 +139,35 @@ test('no app não há casca do site: sem nav, footer, feedback nem toast', async
   await expect(page.locator('#feedback-btn')).toHaveCount(0);
   await expect(page.locator('#toast-artigos')).toHaveCount(0);
 });
+
+/**
+ * §Moldura (T5) — a home é um TERMINAL de altura fixa. A página não rola: quem rola são as
+ * gavetas (T7/T8). `?series=nao-existe` cai no estado vazio de propósito (sem série, sem
+ * preset), que é onde a moldura costuma estourar: o `EstadoInicial` tem padding e o
+ * `<main>` antigo crescia com o conteúdo.
+ */
+test('a home ocupa o viewport e não rola', async ({ page }) => {
+  await page.goto('/?series=nao-existe');
+  const medida = await page.evaluate(() => ({
+    scroll: document.documentElement.scrollHeight,
+    altura: window.innerHeight,
+  }));
+  expect(medida.scroll).toBeLessThanOrEqual(medida.altura + 1);
+  await expect(page.getByTestId('barra-superior')).toBeVisible();
+  await expect(page.getByTestId('barra-inferior')).toBeVisible();
+  await expect(page.getByTestId('trilho-direito')).toBeVisible();
+});
+
+/**
+ * §Moldura (T5) — o gráfico é o dono da tela. A prova é GEOMÉTRICA e proporcional: 60% do
+ * viewport é o piso que separa "terminal" de "pilha de blocos com um canvas de 480px".
+ */
+test('com série, o gráfico ocupa a maior parte da altura', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByTestId('grafico').locator('canvas').first()).toBeVisible();
+  const { grafico, janela } = await page.evaluate(() => ({
+    grafico: document.querySelector('[data-testid="grafico"]').getBoundingClientRect().height,
+    janela: window.innerHeight,
+  }));
+  expect(grafico / janela).toBeGreaterThan(0.6);
+});

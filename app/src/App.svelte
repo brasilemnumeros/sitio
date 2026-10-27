@@ -4,18 +4,14 @@
   import { seriesStore, adicionarSerie, tentarNovamente } from './stores/series.js';
   import { carregarMandatos } from './stores/mandate.js';
   import Chart from './components/Chart.svelte';
-  import SeriesChips from './components/SeriesChips.svelte';
-  import SeriesLegend from './components/SeriesLegend.svelte';
-  import TimeFilters from './components/TimeFilters.svelte';
-  import MandateRail from './components/MandateRail.svelte';
-  import ComparisonPanel from './components/ComparisonPanel.svelte';
   import EstadoInicial from './components/EstadoInicial.svelte';
   import Esqueleto from './components/Esqueleto.svelte';
   import ErroTotal from './components/ErroTotal.svelte';
   import SearchModal from './components/SearchModal.svelte';
-  // 🔴 Só se importa o que JÁ EXISTE. Um import de arquivo inexistente QUEBRA O BUILD —
-  // e é o defeito que o pré-voo desta fatia achou. Os demais componentes entram pelos
-  // marcadores de posição abaixo, e cada tarefa troca o seu.
+  // 🔴 Só se importa o que JÁ EXISTE. Um import de arquivo inexistente QUEBRA O BUILD.
+  // Os controles das gavetas (chips, legenda, filtros, trilho, comparação) saem da moldura
+  // nesta tarefa e voltam pelas Tasks 6/7/8 — cada um no seu lugar fixo (topo, gaveta direita,
+  // gaveta inferior), não mais numa pilha de blocos.
 
   let buscaAberta = $state(false);
   let itens = $derived($seriesStore.itens);
@@ -26,13 +22,6 @@
   let todosCarregando = $derived(
     itens.length > 0 && itens.every((i) => i.status === 'carregando'),
   );
-
-  // §9.1 / ADR 0001 (2026-10-17) — DIVULGAÇÃO PROGRESSIVA. Sem série não há nada para controlar,
-  // então os blocos 4/5/6 (filtros, trilho, comparação) só existem quando há série E ela já saiu
-  // do carregamento. Enquanto carrega, o `Esqueleto` do bloco 3 já desenha a forma do conteúdo
-  // (§9.2) — e é justamente ele que evita o salto. A ordem da §1 não muda: os blocos continuam
-  // nesta ordem, apenas deixam de existir no vazio (era um controle morto com explicação).
-  let mostrarCasca = $derived(itens.length > 0 && !todosCarregando);
 
   // O motivo vem das PRÓPRIAS séries: a mensagem do validador já diz o que houve — um `schema`
   // não suportado, por exemplo, chega com a palavra "schema" (§6). NUNCA "erro desconhecido":
@@ -67,9 +56,11 @@
   });
 </script>
 
-<!-- A ORDEM DESTES SEIS BLOCOS É A DA §1, LITERAL. Não reordenar. -->
-<!-- §9.1 (2026-10-17) — a PRESENÇA dos blocos 4/5/6 é condicional (`mostrarCasca`): sem série
-     eles não existem. A ordem entre eles não mudou; ver ADR 0001. -->
+<!-- MOLDURA DO TERMINAL (fatia 12). A §1 do desenho antigo descrevia uma PILHA de seis blocos
+     numerados; ela morre aqui. Fica o arranjo A: barra superior, miolo (gráfico + trilho) e
+     barra inferior, tudo dentro de um <main> de ALTURA FIXA (`h-dvh`). A página NÃO rola —
+     quem rola são as gavetas (Tasks 7/8). Sem isto o gráfico continuaria com 480px e o
+     terminal seria uma pilha de blocos com um canvas no meio. -->
 <!-- O `bg` arbitrário no <main> é a CLASSE-CANÁRIO (§10.3): o fundo do app, com a mesma
      cor (#0e1117) do adapter/navigator. ATENÇÃO: escrever a classe aqui, num comentário,
      NÃO é permitido — o Tailwind também varre comentário e criaria um SEGUNDO produtor,
@@ -77,44 +68,66 @@
      parar de varrer `app/src`, ela some do `main.dist.css` e `scripts/checar-canario.sh`
      falha o build. O sufixo de opacidade cheia existe para não colidir com a forma nua
      que também aparece em `docs/plans/`, que o Tailwind varre — ela daria falso OK. -->
-<main class="mx-auto flex max-w-6xl flex-col gap-4 bg-[#0e1117]/100 p-4">
-  <!-- 1 · busca -->
-  <button class="rounded border px-3 py-2 text-left" onclick={() => (buscaAberta = true)}>
-    Buscar indicador…
-  </button>
+<main class="flex h-dvh flex-col overflow-hidden bg-[#0e1117]/100">
+  <!-- 1 · barra superior (34px). MARCADOR DA T5: a T6 troca este conteúdo pela marca, pelas
+       cinco janelas, pelo chip do preset e pelo permalink. A BUSCA JÁ MORA AQUI — e a mudança
+       de lugar desfaz o affordance duplicado do estado vazio, que mostrava um segundo
+       "Buscar indicador…" na mesma tela. -->
+  <header
+    data-testid="barra-superior"
+    class="flex h-[34px] shrink-0 items-center gap-2 border-b border-slate-800 px-2"
+  >
+    <button
+      type="button"
+      class="rounded border px-3 py-1 text-xs text-slate-200 hover:bg-slate-800"
+      onclick={() => (buscaAberta = true)}
+    >
+      Buscar indicador…
+    </button>
+  </header>
 
-  <!-- 2 · chips -->
-  <SeriesChips />
+  <!-- MIOLO: a coluna do gráfico (`flex-1`) e o trilho direito (34px, marcador da T7). O
+       `min-h-0` é o que permite o gráfico ENCOLHER quando a gaveta inferior abrir (T8);
+       sem ele um filho flex recusa ficar menor que o próprio conteúdo e a moldura estoura. -->
+  <div class="flex min-h-0 flex-1">
+    <div class="flex min-w-0 flex-1 flex-col">
+      <!-- A ÁREA DO GRÁFICO é o único filho flexível da coluna: os quatro estados se revezam
+           DENTRO dela e a moldura não muda de tamanho (§9.2 — carregar não pode dar salto).
+           `relative` fica para a marca d'água e os overlays das próximas tarefas. -->
+      <div class="relative flex min-h-0 flex-1 flex-col">
+        {#if itens.length === 0}
+          <EstadoInicial aoPedirExemplo={pedirExemplo} />
+        {:else if todosEmErro}
+          <!-- §9.3 — erro TOTAL: nada carregou. Sem marcador próprio (R29) — é um ramo a mais. -->
+          <ErroTotal
+            titulo="Não foi possível carregar os dados"
+            motivo={motivoErro}
+            aoTentarNovamente={tentarTodas}
+          />
+        {:else if todosCarregando}
+          <Esqueleto />
+        {:else}
+          <Chart />
+        {/if}
+      </div>
+    </div>
 
-  <!-- 3 · gráfico (ou o estado que o substitui) + a LEGENDA, que é o canal redundante
-       de identificação (§12.2) e fica FORA do gráfico de propósito: com 10 séries os
-       rótulos da lib ocupam 80% da altura da área de plot. -->
-  {#if itens.length === 0}
-    <EstadoInicial aoPedirExemplo={pedirExemplo} />
-  {:else if todosEmErro}
-    <!-- §9.3 — erro TOTAL: nada carregou. Sem marcador próprio (R29) — é um ramo a mais. -->
-    <ErroTotal
-      titulo="Não foi possível carregar os dados"
-      motivo={motivoErro}
-      aoTentarNovamente={tentarTodas}
-    />
-  {:else if todosCarregando}
-    <Esqueleto />
-  {:else}
-    <Chart />
-    <SeriesLegend />
-  {/if}
+    <!-- 2 · trilho direito (34px, sempre visível). MARCADOR DA T5: a T7 põe aqui os três
+         gatilhos da gaveta de séries/eixos. Vazio, é decorativo — daí o `aria-hidden`. -->
+    <aside
+      data-testid="trilho-direito"
+      class="w-[34px] shrink-0 border-l border-slate-800"
+      aria-hidden="true"
+    ></aside>
+  </div>
 
-  <!-- 4 · filtros de tempo — controle do gráfico, escreve no store `viewport` (§8.1). -->
-  <!-- 5 · trilho de mandatos — seletor de largura igual, desacoplado do eixo do tempo (§3). -->
-  <!-- 6 · painel de comparação, largura total (§1) — não é aba. -->
-  <!-- §9.1 — os TRÊS só existem quando há série a controlar (`mostrarCasca`); a ordem entre eles
-       segue a §1, e a presença é condicional. Ver ADR 0001 (2026-10-17). -->
-  {#if mostrarCasca}
-    <TimeFilters />
-    <MandateRail />
-    <ComparisonPanel />
-  {/if}
+  <!-- 3 · barra inferior (26px). MARCADOR DA T5: a T8 transforma isto na alça da gaveta de
+       mandatos/comparação. É `<footer>` de propósito — o rodapé do SITE não existe no app, e
+       o teste de casca exclui este `data-testid` da proibição. -->
+  <footer
+    data-testid="barra-inferior"
+    class="h-[26px] shrink-0 border-t border-slate-800"
+  ></footer>
 
   {#if buscaAberta}
     <!-- A modal traz o próprio overlay (é um <button>, não um <div> — R31) e fecha por ESC
@@ -122,3 +135,19 @@
     <SearchModal aoFechar={() => (buscaAberta = false)} />
   {/if}
 </main>
+
+<style>
+  /* A MOLDURA NÃO ROLA — quem rola são as gavetas (T7/T8). O `overflow-hidden` do <main>
+     cobre o caso normal; esta regra fecha a raiz do documento porque o harness de dev
+     (`app/index.html`) não carrega o `<body class="h-dvh overflow-hidden">` do `Home.astro`,
+     e o teste de viewport mede o `documentElement`, não o <main>.
+     ⚠ O bloco também mantém o `app.css` presente no build: entre a T5 e a T8 os componentes
+     com CSS escopado (chips, legenda, trilho, matriz) estão temporariamente fora da árvore,
+     e o `preparar-publico` exige `app.css` ao lado do `app.js` — um bundle vazio aborta a
+     cadeia do `npm run build` antes do Astro. Quando as gavetas voltarem, o arquivo volta a
+     carregar também os estilos escopados. */
+  :global(html),
+  :global(body) {
+    overflow: hidden;
+  }
+</style>

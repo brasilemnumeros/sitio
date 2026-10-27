@@ -11,6 +11,8 @@ const FUNDO = '#0e1117';
  */
 export function criarAdapter(container, { aoMudarJanela } = {}) {
   const chart = createChart(container, {
+    // A ALTURA vem do container (`flex-1` da moldura); `autoSize` faz a lib seguir o container.
+    autoSize: true,
     layout: { background: { color: FUNDO }, textColor: '#c9d1d9' },
     grid: { vertLines: { color: 'rgba(255,255,255,0.04)' }, horzLines: { color: 'rgba(255,255,255,0.04)' } },
     // §5: existem DOIS eixos, e os dois ficam visíveis — senão o eixo que a atribuição manda

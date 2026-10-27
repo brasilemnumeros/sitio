@@ -17,6 +17,22 @@ const IPCA = 'ipca-acum-12m';
 
 const chips = (page) => page.locator('[data-bloco="chips"] li');
 
+test('sem query: entra com o PRESET do dia e o escreve em ?series=', async ({ page }) => {
+  await page.goto('/');
+
+  // A home sem chave não abre vazia: o preset do dia entra pelo caminho do produto e o
+  // gráfico é desenhado (canvas do lightweight-charts dentro do container).
+  await expect(chips(page).first()).toBeVisible();
+  const grafico = page.getByTestId('grafico');
+  await expect(grafico).toBeVisible();
+  expect(await grafico.locator('canvas').count()).toBeGreaterThan(0);
+
+  // E o preset vira link copiável: a URL passa a ter `series` com pelo menos um id.
+  await expect
+    .poll(() => new URL(page.url()).searchParams.get('series'))
+    .toMatch(/^[^,]+(,[^,]+)*$/);
+});
+
 test('?series=<id> restaura UMA série', async ({ page }) => {
   await page.goto(`/?series=${SELIC}`);
   await expect(chips(page)).toHaveCount(1);

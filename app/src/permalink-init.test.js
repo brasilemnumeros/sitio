@@ -4,13 +4,28 @@ import { seriesStore, adicionarSerie, limparSeries, definirCor, motivoDoLimite }
 import { catalogStore } from './stores/catalog.js';
 import { clearSeriesCache } from './data/series.js';
 import { iniciarPermalink } from './permalink-init.js';
+import { escreverSearch } from './permalink.js';
 import { PRESETS, presetDoDia, dataEmSaoPaulo } from './data/presets.js';
 
-/** O `window`/`history` falso: só o que a integração toca (`location` e `replaceState`). */
+/**
+ * O `window`/`history` falso: só o que a integração toca (`location` e `replaceState`).
+ * `replaceState` APLICA a URL na `location` — como o navegador faz —, senão a guarda
+ * `proximo === atual` seria medida contra uma URL congelada e o número de escritas
+ * (o que os testes de preset contam) não teria significado.
+ */
 function janelaFalsa(search = '') {
+  const location = { search, pathname: '/', hash: '' };
   return {
-    location: { search, pathname: '/', hash: '' },
-    history: { replaceState: vi.fn() },
+    location,
+    history: {
+      replaceState: vi.fn((_estado, _titulo, url) => {
+        const [caminho, resto = ''] = String(url).split('?');
+        const [query, hash = ''] = resto.split('#');
+        location.pathname = caminho || '/';
+        location.search = query ? `?${query}` : '';
+        location.hash = hash ? `#${hash}` : '';
+      }),
+    },
   };
 }
 
@@ -107,9 +122,36 @@ describe('iniciarPermalink', () => {
       agora,
     });
     expect(get(seriesStore).itens.map((i) => i.id)).toEqual(esperado.indicadores);
+    // A expectativa passa pelo SERIALIZADOR real (`escreverSearch`): o `URLSearchParams`
+    // percent-encoda a vírgula, e montar a URL com `join(',')` passaria só nos dias em que
+    // a rotação cai num preset de 1 id — uma bomba-relógio de calendário.
     expect(win.history.replaceState.mock.calls.at(-1)[2]).toBe(
-      `/?series=${esperado.indicadores.join(',')}`,
+      `/?${escreverSearch(esperado.indicadores)}`,
     );
+    // UMA escrita só: o laço de `adicionarSerie` não escreve (a assinatura vem depois) e a
+    // escrita explícita do preset passa pela guarda `proximo === atual` na assinatura.
+    expect(win.history.replaceState).toHaveBeenCalledTimes(1);
+  });
+
+  it('preset de 2 ids também escreve a URL uma única vez (com vírgula codificada)', async () => {
+    // Data congelada num preset de DOIS ids (`atividade`): o caso que a rotação de hoje não
+    // exercita. Se a URL fosse montada com `join(',')`, este teste acusaria a diferença.
+    const win = janelaFalsa('');
+    const agora = new Date('2026-10-26T12:00:00Z');
+    const esperado = presetDoDia(dataEmSaoPaulo(agora));
+    expect(esperado.indicadores).toHaveLength(2);
+    parar = await iniciarPermalink({
+      window: win,
+      fetchImpl: fixture(PRESETS.flatMap((p) => p.indicadores)),
+      agora,
+    });
+    expect(get(seriesStore).itens.map((i) => i.id)).toEqual(esperado.indicadores);
+    expect(win.history.replaceState).toHaveBeenCalledTimes(1);
+    const url = win.history.replaceState.mock.calls[0][2];
+    expect(url).toBe(`/?${escreverSearch(esperado.indicadores)}`);
+    // Prova direta do formato: exatamente uma vírgula codificada entre os dois ids.
+    expect(url).toBe(`/?series=${esperado.indicadores[0]}%2C${esperado.indicadores[1]}`);
+    expect(win.location.search).toBe(`?series=${esperado.indicadores[0]}%2C${esperado.indicadores[1]}`);
   });
 
   it('chave series presente mas sem id válido: NÃO aplica preset', async () => {
@@ -122,6 +164,8 @@ describe('iniciarPermalink', () => {
     const win = janelaFalsa('?series=selic');
     parar = await iniciarPermalink({ window: win, fetchImpl: fixture(['selic', 'ipca']) });
     expect(get(seriesStore).itens.map((i) => i.id)).toEqual(['selic']);
+    // A URL já estava na forma canônica: nenhuma normalização, NENHUM `replaceState`.
+    expect(win.history.replaceState).not.toHaveBeenCalled();
   });
 
   it('preset cujos ids não existem no catálogo não quebra: store vazia', async () => {

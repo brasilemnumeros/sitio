@@ -239,22 +239,130 @@ test('a gaveta direita abre, mostra as três seções e fecha com Esc', async ({
 });
 
 /**
- * §Gaveta direita (T7) — os três atalhos do trilho. Com a gaveta fechada só o gatilho principal
- * aparece; aberta, os três ficam visíveis e cada um rola até a sua seção (não troca de painel).
+ * §Gaveta direita (T7) — os atalhos do trilho. Com a gaveta fechada só o gatilho principal
+ * aparece; aberta, os TRÊS botões rolam até a sua seção — inclusive o principal, que não pode
+ * fechar a gaveta (fechar é o "×" do cabeçalho ou `Esc`). A prova é `scrollTop > 0`: sem o
+ * `bind:this` do painel os atalhos eram botões mortos e o teste passava sem rolar nada.
  */
-test('fechada, o trilho mostra só o gatilho; aberta, mostra os três atalhos', async ({ page }) => {
-  await page.goto('/');
+test('fechada, o trilho mostra só o gatilho; aberta, os três atalhos rolam até a seção', async ({
+  page,
+}) => {
+  // SEIS séries de propósito: com uma só o conteúdo da gaveta cabe na caixa e não há o que
+  // rolar — `scrollTop` ficaria 0 por não existir rolagem, e o teste passaria sem provar nada.
+  await page.goto(
+    '/?series=selic-meta-acum-12m,ipca-acum-12m,igpm-acum-12m,mvgr-nominal,mvgr-real,homicidios-anual',
+  );
+  await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(6);
   await expect(page.getByRole('button', { name: 'Cores', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Eixos', exact: true })).toHaveCount(0);
 
-  await page.getByRole('button', { name: 'Séries e eixos' }).click();
-  await expect(page.getByTestId('gaveta-direita')).toBeVisible();
+  const gatilho = page.getByRole('button', { name: 'Séries e eixos' });
+  const gaveta = page.getByTestId('gaveta-direita');
+  await gatilho.click();
+  await expect(gaveta).toBeVisible();
   await expect(page.getByRole('button', { name: 'Cores', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Eixos', exact: true })).toBeVisible();
-  // Os atalhos rolam DENTRO da gaveta e não mudam de seção: o painel continua único.
+
+  // Janela curta: o topo (34px) e a barra inferior (26px) são fixos, então a gaveta fica com o
+  // resto e passa a rolar. A largura do projeto é preservada (desktop e celular).
+  const { width } = page.viewportSize();
+  await page.setViewportSize({ width, height: 320 });
+  await expect
+    .poll(() => gaveta.evaluate((el) => el.scrollHeight - el.clientHeight))
+    .toBeGreaterThan(20);
+
   await page.getByRole('button', { name: 'Eixos', exact: true }).click();
+  await expect.poll(() => gaveta.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  await expect(gaveta.locator('[data-secao="eixos"]')).toBeInViewport();
+  const noFim = await gaveta.evaluate((el) => el.scrollTop);
+
+  // O botão principal NÃO fecha com a gaveta aberta: ele leva à seção das séries, como os vizinhos.
+  await gatilho.click();
+  await expect(gaveta).toBeVisible();
+  await expect(gatilho).toHaveAttribute('aria-expanded', 'true');
+  await expect.poll(() => gaveta.evaluate((el) => el.scrollTop)).toBeLessThan(noFim);
+  await expect(gaveta.locator('[data-secao="series"]')).toBeInViewport();
+
+  // O caminho de fechar com o MOUSE é o "×" do cabeçalho (o `Esc` continua valendo).
+  await page.getByRole('button', { name: 'Fechar séries' }).click();
+  await expect(gaveta).toBeHidden();
+  await expect(gatilho).toHaveAttribute('aria-expanded', 'false');
+  await expect(gatilho).toBeFocused();
+});
+
+/**
+ * §Moldura (T7) — abrir e fechar a gaveta é só GEOMETRIA. Se algum caminho da gaveta chamasse
+ * `resetarJanela`/`limparSelecao`, o usuário perderia a janela e o mandato por um clique de UI.
+ * A leitura é pelas STORES (mesmo caminho de `trilho.spec.js`/`minimapa.spec.js`), não pelo pixel.
+ */
+test('abrir e fechar a gaveta não mexe na janela de tempo nem no mandato', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByTestId('grafico')).toBeVisible();
+
+  const filtros = page.locator('[data-bloco="filtros"]');
+  const preset = filtros.getByRole('button', { name: 'Janela de 10 anos' });
+  await preset.click();
+  await expect(preset).toHaveAttribute('aria-pressed', 'true');
+
+  const estado = () =>
+    page.evaluate(async () => {
+      const { viewportStore } = await import('/src/stores/viewport.js');
+      const { mandateStore } = await import('/src/stores/mandate.js');
+      let viewport = null;
+      viewportStore.subscribe((x) => (viewport = x))();
+      let mandato = null;
+      mandateStore.subscribe((x) => (mandato = x.selecionado))();
+      return { viewport, mandato };
+    });
+
+  const antes = await estado();
+  expect(antes.viewport.from, 'a janela precisa ter sido escolhida de fato').not.toBeNull();
+
+  /** Duração da janela em anos — o que o preset "10a" realmente promete. */
+  const anos = (v) => (Date.parse(v.to) - Date.parse(v.from)) / (365.25 * 24 * 60 * 60 * 1000);
+  const anosAntes = anos(antes.viewport);
+
+  const gatilho = page.getByRole('button', { name: 'Séries e eixos' });
+  const fechar = page.getByRole('button', { name: 'Fechar séries' });
+
+  // 1 · ida e volta com a JANELA escolhida.
+  await gatilho.click();
   await expect(page.getByTestId('gaveta-direita')).toBeVisible();
-  await expect(page.getByTestId('gaveta-direita').locator('[data-secao="eixos"]')).toBeInViewport();
+  await fechar.click();
+  await expect(page.getByTestId('gaveta-direita')).toBeHidden();
+
+  // ⚠ Igualdade EXATA não serve aqui, e o motivo é medido: ao mudar a largura do pane, o adapter
+  // ecoa para a store a faixa LÓGICA que a lib mantém — a borda esquerda anda ~1 mês. Isso
+  // acontece em QUALQUER resize (medido: 2015-08-01 → 2017-03-01 ao estreitar o viewport em
+  // 180px, SEM tocar na gaveta), não é a gaveta zerando nada. O invariante do usuário é outro:
+  // a janela continua sendo a de 10 anos, com a MESMA ponta direita, e o preset segue aceso.
+  const depois = await estado();
+  expect(depois.viewport.to, 'a ponta direita da janela não pode andar').toBe(antes.viewport.to);
+  expect(Math.abs(anos(depois.viewport) - anosAntes)).toBeLessThan(0.5);
+  expect(depois.mandato).toBe(antes.mandato);
+  await expect(preset).toHaveAttribute('aria-pressed', 'true');
+
+  // 2 · com um MANDATO escolhido. O trilho de mandatos chega na T8; até lá quem escolhe é a
+  // store, pelo mesmo import sem `?query` que as outras specs usam.
+  await page.evaluate(async () => {
+    const { mandateStore, selecionarMandato } = await import('/src/stores/mandate.js');
+    let m = null;
+    mandateStore.subscribe((x) => (m = x))();
+    if (m.mandatos.length > 0) selecionarMandato(m.mandatos[0].id);
+  });
+  const comMandato = await estado();
+  expect(comMandato.mandato, 'o mandato precisa ter sido escolhido de fato').not.toBeNull();
+
+  await gatilho.click();
+  await expect(page.getByTestId('gaveta-direita')).toBeVisible();
+  await page.keyboard.press('Escape'); // o outro caminho de fechar também não pode zerar nada
+  await expect(page.getByTestId('gaveta-direita')).toBeHidden();
+  const depoisComMandato = await estado();
+  expect(depoisComMandato.mandato, 'o mandato escolhido continua escolhido').toBe(
+    comMandato.mandato,
+  );
+  expect(depoisComMandato.viewport.to).toBe(comMandato.viewport.to);
+  expect(Math.abs(anos(depoisComMandato.viewport) - anos(comMandato.viewport))).toBeLessThan(0.5);
 });
 
 /**

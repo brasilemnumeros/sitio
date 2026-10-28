@@ -168,7 +168,7 @@
   inert={inativa}
   aria-label="Séries, cores e eixos"
   class={aberta
-    ? 'flex w-[320px] shrink-0 flex-col overflow-y-auto border-l border-slate-800 max-md:fixed max-md:inset-y-0 max-md:right-0 max-md:z-40 max-md:w-[88%] max-md:shadow-2xl'
+    ? 'flex w-[320px] shrink-0 flex-col overflow-y-auto border-l border-slate-800 bg-[#0e1117] max-md:fixed max-md:inset-y-0 max-md:right-0 max-md:z-40 max-md:w-[88%] max-md:shadow-2xl'
     : ''}
 >
   <!-- Cabeçalho grudado: com a gaveta rolada até o fim, o botão de fechar continua alcançável.

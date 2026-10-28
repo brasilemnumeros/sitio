@@ -1,9 +1,9 @@
-import { test, expect } from './apoio.js';
+import { test, expect, abrirGavetaDireita } from './apoio.js';
 
 /**
- * O PERMALINK do app (`?indicators=`) pelo CAMINHO DO PRODUTO — não pelo harness.
+ * O PERMALINK do app (`?series=`) pelo CAMINHO DO PRODUTO — não pelo harness.
  *
- * Hoje ~11 links dos posts usam `?indicators=<ids>`; sem esta fatia a migração entraria
+ * Hoje 12 links dos posts usam `?series=<ids>`; sem esta fatia a migração entraria
  * com REGRESSÃO (o app novo ignoraria a query). Aqui o dado vem do catálogo REAL servido
  * em dev (o middleware reescreve o `datafile` para `/dados/...`), e as séries são
  * restauradas UMA A UMA, como o produto faz — semear a store pelo console criaria outro
@@ -17,32 +17,57 @@ const IPCA = 'ipca-acum-12m';
 
 const chips = (page) => page.locator('[data-bloco="chips"] li');
 
-test('?indicators=<id> restaura UMA série', async ({ page }) => {
-  await page.goto(`/?indicators=${SELIC}`);
+test('sem query: entra com o PRESET do dia e o escreve em ?series=', async ({ page }) => {
+  await page.goto('/');
+
+  // A home sem chave não abre vazia: o preset do dia entra pelo caminho do produto e o
+  // gráfico é desenhado (canvas do lightweight-charts dentro do container). Os chips moram
+  // na gaveta direita, então ela abre primeiro.
+  await abrirGavetaDireita(page);
+  await expect(chips(page).first()).toBeVisible();
+  const grafico = page.getByTestId('grafico');
+  await expect(grafico).toBeVisible();
+  expect(await grafico.locator('canvas').count()).toBeGreaterThan(0);
+
+  // E o preset vira link copiável: a URL passa a ter `series` com pelo menos um id.
+  await expect
+    .poll(() => new URL(page.url()).searchParams.get('series'))
+    .toMatch(/^[^,]+(,[^,]+)*$/);
+});
+
+test('?series=<id> restaura UMA série', async ({ page }) => {
+  await page.goto(`/?series=${SELIC}`);
+  await abrirGavetaDireita(page);
   await expect(chips(page)).toHaveCount(1);
   await expect(chips(page).first()).toContainText(/selic/i);
 });
 
-test('?indicators=<id1>,<id2> restaura DUAS séries, na ordem da query', async ({ page }) => {
-  await page.goto(`/?indicators=${SELIC},${IPCA}`);
+test('?series=<id1>,<id2> restaura DUAS séries, na ordem da query', async ({ page }) => {
+  await page.goto(`/?series=${SELIC},${IPCA}`);
+  await abrirGavetaDireita(page);
   await expect(chips(page)).toHaveCount(2);
   await expect(chips(page).nth(0)).toContainText(/selic/i);
   await expect(chips(page).nth(1)).toContainText(/ipca/i);
 });
 
 test('id desconhecido é ignorado sem erro; a URL fica com o que restaurou', async ({ page }) => {
-  await page.goto(`/?indicators=nao-existe,${SELIC}`);
+  await page.goto(`/?series=nao-existe,${SELIC}`);
+  await abrirGavetaDireita(page);
   await expect(chips(page)).toHaveCount(1);
   await expect(chips(page).first()).toContainText(/selic/i);
   // a URL é normalizada (store → URL): o id desconhecido sai do link copiável
-  await expect.poll(() => new URL(page.url()).searchParams.get('indicators')).toBe(SELIC);
+  await expect.poll(() => new URL(page.url()).searchParams.get('series')).toBe(SELIC);
 });
 
 test('adicionar série pela UI atualiza a URL — o link é copiável (replaceState)', async ({
   page,
 }) => {
-  await page.goto(`/?indicators=${SELIC}`);
+  await page.goto(`/?series=${SELIC}`);
+  await abrirGavetaDireita(page);
   await expect(chips(page)).toHaveCount(1);
+  // fecha a gaveta: no celular ela cobre a barra superior, onde fica a busca
+  await page.getByRole('button', { name: 'Fechar séries' }).click();
+  await expect(page.getByTestId('gaveta-direita')).toBeHidden();
 
   // adiciona a segunda pela BUSCA (§1.1), não pelo console
   await page.getByRole('button', { name: 'Buscar indicador…' }).first().click();
@@ -54,6 +79,6 @@ test('adicionar série pela UI atualiza a URL — o link é copiável (replaceSt
 
   // a URL passa a listar as DUAS séries, sem poluir o histórico (replaceState)
   await expect
-    .poll(() => new URL(page.url()).searchParams.get('indicators'))
+    .poll(() => new URL(page.url()).searchParams.get('series'))
     .toBe(`${SELIC},${IPCA}`);
 });

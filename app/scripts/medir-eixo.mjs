@@ -110,7 +110,7 @@ const p = await b.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleF
 const res = [];
 
 for (const cen of CENARIOS) {
-  await p.goto(cen.ids ? `${URL}?indicators=${cen.ids.join(',')}` : URL, { waitUntil: 'networkidle' });
+  await p.goto(cen.ids ? `${URL}?series=${cen.ids.join(',')}` : URL, { waitUntil: 'networkidle' });
   if (cen.seed) {
     await p.evaluate(async (n) => {
       const { seriesStore } = await import('/src/stores/series.js');

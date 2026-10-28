@@ -15,7 +15,7 @@ Antes de tudo, é crucial diferenciar os dois "sabores" da Selic:
 [![Selic Meta vs Selic Over](/assets/img/selic-meta-vs-selic-over.webp)](/assets/img/selic-meta-vs-selic-over.webp)
 
 <p style="text-align: center; font-size: 0.85em; font-style: italic; margin-top: 0.5em;">
-  <a href="https://www.brasilemnumeros.ong.br/?indicators=selic-meta-acum-12m%2Cselic-over-acum-12m" class="text-blue-600 hover:text-blue-800 underline">Ver gráfico Selic Meta vs Selic Over</a>
+  <a href="https://www.brasilemnumeros.ong.br/?series=selic-meta-acum-12m%2Cselic-over-acum-12m" class="text-blue-600 hover:text-blue-800 underline">Ver gráfico Selic Meta vs Selic Over</a>
 </p>
 
 - **Selic Meta:** É o alvo, a taxa oficial que o Comitê de Política Monetária (Copom) do Banco Central define a cada 45 dias. Atualmente, a meta é 15%.

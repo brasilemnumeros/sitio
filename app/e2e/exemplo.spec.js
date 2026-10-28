@@ -1,4 +1,11 @@
-import { test, expect, abrirApp, carregarExemplo, adicionarPorBusca } from './apoio.js';
+import {
+  test,
+  expect,
+  abrirVazio,
+  carregarExemplo,
+  adicionarPorBusca,
+  abrirGavetaDireita,
+} from './apoio.js';
 
 /** Espera a rajada de carga assentar: `definirSeries` faz debounce de 150ms + um rAF até o `fitContent`. */
 const assentar = (page) => page.waitForTimeout(700);
@@ -9,10 +16,12 @@ const assentar = (page) => page.waitForTimeout(700);
  * gráfico e da legenda a partir da store (§8), e as duas `LineSeries` no adapter.
  */
 test('exemplo pronto: dois chips, duas linhas na legenda e o gráfico monta', async ({ page }) => {
-  await abrirApp(page);
+  await abrirVazio(page);
   await carregarExemplo(page);
 
-  // duas séries → dois chips (§1, posição 2) e dois itens na legenda (§12.2)
+  // duas séries → dois chips (§1, posição 2) e dois itens na legenda (§12.2). Os dois moram na
+  // gaveta direita desde o terminal — abrir é o caminho do produto.
+  await abrirGavetaDireita(page);
   await expect(page.locator('[data-bloco="chips"] li')).toHaveCount(2);
   await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(2);
 
@@ -31,8 +40,10 @@ test('exemplo pronto: dois chips, duas linhas na legenda e o gráfico monta', as
   const altura = await grafico.evaluate((el) => el.getBoundingClientRect().height);
   expect(altura).toBeGreaterThan(100);
 
-  // a legenda traz o seletor de eixo por texto (esq./dir.) — §5
-  await expect(legenda.getByRole('button', { name: /esq\.|dir\./ }).first()).toBeVisible();
+  // o seletor de eixo por texto (esq./dir.) mora na seção de eixos, não na legenda — §5
+  await expect(
+    page.locator('[data-secao="eixos"]').getByRole('button', { name: /esq\.|dir\./ }).first(),
+  ).toBeVisible();
 
   await page.screenshot({ path: 'e2e/.artefatos/exemplo-selic-ipca.png', fullPage: true });
 });
@@ -46,10 +57,11 @@ test('exemplo pronto: dois chips, duas linhas na legenda e o gráfico monta', as
 test('remover o ✕ do chip tira a série; remover a última com janela ativa não lança', async ({
   page,
 }) => {
-  await abrirApp(page);
+  await abrirVazio(page);
   await carregarExemplo(page);
 
-  // 1 · ativa uma janela (preset "5a") — o adapter passa a reagir à store `viewport`
+  // 1 · ativa uma janela (preset "5a") — o adapter passa a reagir à store `viewport`.
+  //     ⚠ Antes de abrir a gaveta: no celular ela é uma folha que cobre a barra superior.
   const filtros = page.locator('[data-bloco="filtros"]');
   await assentar(page);
   await filtros.getByRole('button', { name: 'Janela de 5 anos' }).click();
@@ -58,7 +70,8 @@ test('remover o ✕ do chip tira a série; remover a última com janela ativa n�
     'true',
   );
 
-  // 2 · remove a PRIMEIRA pelo ✕ do chip
+  // 2 · remove a PRIMEIRA pelo ✕ do chip (os chips moram na gaveta direita)
+  await abrirGavetaDireita(page);
   const chips = page.locator('[data-bloco="chips"]');
   await chips.getByRole('button', { name: /^Remover / }).first().click();
   await expect(chips.locator('li')).toHaveCount(1);
@@ -80,13 +93,15 @@ test('remover o ✕ do chip tira a série; remover a última com janela ativa n�
  * com série ele aparece habilitado, e o clique muda o estado ativo (`aria-pressed`) por DURAÇÃO,
  * derivado da store (§8.1), nunca de estado local.
  */
-test('filtros de tempo: não existem sem série, aparecem com série, e clicar muda o ativo', async ({
+test('filtros de tempo: desabilitados sem série, habilitados com série, e clicar muda o ativo', async ({
   page,
 }) => {
-  await abrirApp(page);
+  await abrirVazio(page);
 
-  // sem série: o bloco nem existe — não há barra morta para explicar (§9.1)
-  await expect(page.locator('[data-bloco="filtros"]')).toHaveCount(0);
+  // sem série: o topo é permanente (§1), mas os filtros ficam DESABILITADOS — nunca mentem
+  const semSerie = page.locator('[data-bloco="filtros"]');
+  await expect(semSerie).toHaveCount(1);
+  await expect(semSerie.getByRole('button', { name: 'Janela de 5 anos' })).toBeDisabled();
 
   // com série: aparece habilitado
   await carregarExemplo(page);
@@ -129,7 +144,7 @@ test('filtros de tempo: não existem sem série, aparecem com série, e clicar m
  * mecanismos (provado por sabotagem): o preset "10 anos" apaga.
  */
 test('a janela escolhida sobrevive a adicionar série (o fit não a desfaz)', async ({ page }) => {
-  await abrirApp(page);
+  await abrirVazio(page);
   await adicionarPorBusca(page, 'IPCA');
 
   const filtros = page.locator('[data-bloco="filtros"]');

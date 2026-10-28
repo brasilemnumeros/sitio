@@ -79,3 +79,85 @@ test.describe('a modal no celular (§12.1)', () => {
     await expect(pista).toBeVisible();
   });
 });
+
+/**
+ * §Mobile (T9) — o gráfico DOMINA a tela e as gavetas são folhas de toque. A medida é
+ * proporcional (≥50% da altura; folha ≥85% da largura), não um pixel fixo: o Pixel 7 mede
+ * 412×839 e o próximo aparelho mede outra coisa.
+ */
+test('no celular o gráfico domina a tela e as gavetas abrem por toque', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'geometria de celular');
+  await page.goto('/');
+  expect(await transbordo(page), 'com o preset do dia').toBeLessThanOrEqual(1);
+  const altura = await page.evaluate(() => ({
+    grafico: document.querySelector('[data-testid="grafico"]').getBoundingClientRect().height,
+    janela: window.innerHeight,
+  }));
+  expect(altura.grafico / altura.janela).toBeGreaterThanOrEqual(0.5);
+
+  await page.getByRole('button', { name: 'Séries e eixos' }).click();
+  const gaveta = page.getByTestId('gaveta-direita');
+  await expect(gaveta).toBeVisible();
+  const largura = await gaveta.evaluate((el) => el.getBoundingClientRect().width);
+  expect(largura / (await page.evaluate(() => window.innerWidth))).toBeGreaterThanOrEqual(0.85);
+
+  await page.getByRole('button', { name: 'Fechar séries' }).click();
+  await expect(gaveta).toBeHidden();
+
+  await page.getByRole('button', { name: /Comparação por mandato/ }).click();
+  await expect(page.getByTestId('gaveta-inferior')).toBeVisible();
+  await page.getByRole('button', { name: 'Fechar comparação' }).click();
+  await expect(page.getByTestId('gaveta-inferior')).toBeHidden();
+  expect(await transbordo(page), 'com as gavetas fechadas').toBeLessThanOrEqual(1);
+});
+
+/**
+ * §Teclado (T9) — `Esc` fecha SÓ a camada do topo: busca → gaveta direita → gaveta inferior.
+ * Uma tecla que fechasse duas camadas de uma vez faria o usuário perder a gaveta que ainda
+ * queria. A busca é a única que trata a própria tecla; a `App` decide entre as gavetas.
+ */
+test('Esc fecha só a camada do topo: a busca, depois a gaveta', async ({ page }) => {
+  await page.goto('/');
+  const gatilho = page.getByRole('button', { name: 'Séries e eixos' });
+  const gaveta = page.getByTestId('gaveta-direita');
+  const modal = page.getByRole('dialog', { name: 'Buscar indicadores' });
+
+  await gatilho.click();
+  await expect(gaveta).toBeVisible();
+
+  // A busca abre POR CIMA da gaveta. No celular a gaveta é uma folha de 88%: quem abre a
+  // busca é o "+ Série" DENTRO dela (a barra superior ficaria coberta pelo véu).
+  await gaveta.getByRole('button', { name: '+ Série' }).click();
+  await expect(modal).toBeVisible();
+
+  await page.keyboard.press('Escape');
+  await expect(modal).toBeHidden();
+  await expect(gaveta, 'a gaveta não pode fechar junto com a busca').toBeVisible();
+
+  await page.keyboard.press('Escape');
+  await expect(gaveta).toBeHidden();
+  await expect(gatilho).toBeFocused();
+  await expect(gatilho).toHaveAttribute('aria-expanded', 'false');
+});
+
+/**
+ * §Teclado (T9) — com uma gaveta aberta, o RESTO fica `inert`: o TAB não escapa para o gráfico
+ * nem para a outra gaveta. E o foco ENTRA na gaveta ao abrir — quem abriu pelo teclado não pode
+ * ter de caçar o painel com o TAB.
+ */
+test('a gaveta aberta prende o foco, e o resto fica inerte', async ({ page }) => {
+  await page.goto('/');
+  const regiaoGrafico = page.locator('[data-regiao="grafico"]');
+  const barraInferior = page.getByTestId('barra-inferior');
+  await expect(regiaoGrafico).not.toHaveAttribute('inert', '');
+
+  await page.getByRole('button', { name: 'Séries e eixos' }).click();
+  await expect(page.getByTestId('gaveta-direita')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Fechar séries' })).toBeFocused();
+  await expect(regiaoGrafico).toHaveAttribute('inert', '');
+  await expect(barraInferior).toHaveAttribute('inert', '');
+
+  await page.keyboard.press('Escape');
+  await expect(regiaoGrafico).not.toHaveAttribute('inert', '');
+  await expect(barraInferior).not.toHaveAttribute('inert', '');
+});

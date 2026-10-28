@@ -4,12 +4,28 @@ import { seriesStore, adicionarSerie, limparSeries, definirCor, motivoDoLimite }
 import { catalogStore } from './stores/catalog.js';
 import { clearSeriesCache } from './data/series.js';
 import { iniciarPermalink } from './permalink-init.js';
+import { escreverSearch } from './permalink.js';
+import { PRESETS, presetDoDia, dataEmSaoPaulo } from './data/presets.js';
 
-/** O `window`/`history` falso: só o que a integração toca (`location` e `replaceState`). */
+/**
+ * O `window`/`history` falso: só o que a integração toca (`location` e `replaceState`).
+ * `replaceState` APLICA a URL na `location` — como o navegador faz —, senão a guarda
+ * `proximo === atual` seria medida contra uma URL congelada e o número de escritas
+ * (o que os testes de preset contam) não teria significado.
+ */
 function janelaFalsa(search = '') {
+  const location = { search, pathname: '/', hash: '' };
   return {
-    location: { search, pathname: '/', hash: '' },
-    history: { replaceState: vi.fn() },
+    location,
+    history: {
+      replaceState: vi.fn((_estado, _titulo, url) => {
+        const [caminho, resto = ''] = String(url).split('?');
+        const [query, hash = ''] = resto.split('#');
+        location.pathname = caminho || '/';
+        location.search = query ? `?${query}` : '';
+        location.hash = hash ? `#${hash}` : '';
+      }),
+    },
   };
 }
 
@@ -65,9 +81,9 @@ afterEach(() => {
 });
 
 describe('iniciarPermalink', () => {
-  it('restaura as séries na ORDEM da query (?)indicators=selic,ipca', async () => {
+  it('restaura as séries na ORDEM da query (?series=selic,ipca)', async () => {
     parar = await iniciarPermalink({
-      window: janelaFalsa('?indicators=selic,ipca'),
+      window: janelaFalsa('?series=selic,ipca'),
       fetchImpl: fixture(['selic', 'ipca']),
     });
     expect(get(seriesStore).itens.map((i) => i.id)).toEqual(['selic', 'ipca']);
@@ -77,7 +93,7 @@ describe('iniciarPermalink', () => {
   // Review Focus 1 — id desconhecido
   it('ignora id desconhecido em silêncio, sem lançar', async () => {
     parar = await iniciarPermalink({
-      window: janelaFalsa('?indicators=nao-existe,selic'),
+      window: janelaFalsa('?series=nao-existe,selic'),
       fetchImpl: fixture(['selic']),
     });
     expect(get(seriesStore).itens.map((i) => i.id)).toEqual(['selic']);
@@ -87,7 +103,7 @@ describe('iniciarPermalink', () => {
   it('15 ids → exatamente 10 séries (o teto da paleta)', async () => {
     const ids = Array.from({ length: 15 }, (_, i) => `s${i}`);
     parar = await iniciarPermalink({
-      window: janelaFalsa(`?indicators=${ids.join(',')}`),
+      window: janelaFalsa(`?series=${ids.join(',')}`),
       fetchImpl: fixture(ids),
     });
     expect(get(seriesStore).itens).toHaveLength(10);
@@ -96,15 +112,76 @@ describe('iniciarPermalink', () => {
     expect(motivoDoLimite()).toMatch(/Limite de 10 séries/);
   });
 
-  it('sem query: store vazia e NENHUM replaceState espúrio', async () => {
+  it('sem a chave series: aplica o preset do dia e o escreve na URL', async () => {
     const win = janelaFalsa('');
+    const agora = new Date('2026-10-27T12:00:00Z');
+    const esperado = presetDoDia(dataEmSaoPaulo(agora));
+    parar = await iniciarPermalink({
+      window: win,
+      fetchImpl: fixture(PRESETS.flatMap((p) => p.indicadores)),
+      agora,
+    });
+    expect(get(seriesStore).itens.map((i) => i.id)).toEqual(esperado.indicadores);
+    // A expectativa passa pelo SERIALIZADOR real (`escreverSearch`): o `URLSearchParams`
+    // percent-encoda a vírgula, e montar a URL com `join(',')` passaria só nos dias em que
+    // a rotação cai num preset de 1 id — uma bomba-relógio de calendário.
+    expect(win.history.replaceState.mock.calls.at(-1)[2]).toBe(
+      `/?${escreverSearch(esperado.indicadores)}`,
+    );
+    // UMA escrita só: o laço de `adicionarSerie` não escreve (a assinatura vem depois) e a
+    // escrita explícita do preset passa pela guarda `proximo === atual` na assinatura.
+    expect(win.history.replaceState).toHaveBeenCalledTimes(1);
+  });
+
+  it('preset de 2 ids também escreve a URL uma única vez (com vírgula codificada)', async () => {
+    // Data congelada num preset de DOIS ids (`atividade`): o caso que a rotação de hoje não
+    // exercita. Se a URL fosse montada com `join(',')`, este teste acusaria a diferença.
+    const win = janelaFalsa('');
+    const agora = new Date('2026-10-26T12:00:00Z');
+    const esperado = presetDoDia(dataEmSaoPaulo(agora));
+    expect(esperado.indicadores).toHaveLength(2);
+    parar = await iniciarPermalink({
+      window: win,
+      fetchImpl: fixture(PRESETS.flatMap((p) => p.indicadores)),
+      agora,
+    });
+    expect(get(seriesStore).itens.map((i) => i.id)).toEqual(esperado.indicadores);
+    expect(win.history.replaceState).toHaveBeenCalledTimes(1);
+    const url = win.history.replaceState.mock.calls[0][2];
+    expect(url).toBe(`/?${escreverSearch(esperado.indicadores)}`);
+    // Prova direta do formato: exatamente uma vírgula codificada entre os dois ids.
+    expect(url).toBe(`/?series=${esperado.indicadores[0]}%2C${esperado.indicadores[1]}`);
+    expect(win.location.search).toBe(`?series=${esperado.indicadores[0]}%2C${esperado.indicadores[1]}`);
+  });
+
+  it('chave series presente mas sem id válido: NÃO aplica preset', async () => {
+    const win = janelaFalsa('?series=nao-existe');
     parar = await iniciarPermalink({ window: win, fetchImpl: fixture(['selic']) });
     expect(get(seriesStore).itens).toEqual([]);
+  });
+
+  it('chave series válida vence o preset', async () => {
+    const win = janelaFalsa('?series=selic');
+    parar = await iniciarPermalink({ window: win, fetchImpl: fixture(['selic', 'ipca']) });
+    expect(get(seriesStore).itens.map((i) => i.id)).toEqual(['selic']);
+    // A URL já estava na forma canônica: nenhuma normalização, NENHUM `replaceState`.
     expect(win.history.replaceState).not.toHaveBeenCalled();
   });
 
-  it('adicionar série atualiza a URL com replaceState (store → URL)', async () => {
+  it('preset cujos ids não existem no catálogo não quebra: store vazia', async () => {
     const win = janelaFalsa('');
+    parar = await iniciarPermalink({
+      window: win,
+      fetchImpl: fixture(['outro']),
+      agora: new Date('2026-10-27T12:00:00Z'),
+    });
+    expect(get(seriesStore).itens).toEqual([]);
+  });
+
+  it('adicionar série atualiza a URL com replaceState (store → URL)', async () => {
+    // A URL JÁ tem uma série: sem a chave `series` o preset do dia entraria, e este teste
+    // mede o caminho store → URL, não a entrada pelo preset.
+    const win = janelaFalsa('?series=ipca');
     const fetchImpl = fixture(['selic', 'ipca']);
     parar = await iniciarPermalink({ window: win, fetchImpl });
     expect(win.history.replaceState).not.toHaveBeenCalled(); // nada mudou ainda
@@ -116,11 +193,13 @@ describe('iniciarPermalink', () => {
 
     expect(win.history.replaceState).toHaveBeenCalled();
     const [, , url] = win.history.replaceState.mock.calls.at(-1);
-    expect(url).toBe('/?indicators=selic');
+    // A vírgula sai percent-encoded: quem serializa é o `URLSearchParams` (o link segue
+    // válido — a leitura decodifica). O que importa aqui é a ORDEM e a chave.
+    expect(url).toBe('/?series=ipca%2Cselic');
   });
 
   it('a query NÃO é relida depois de escrita (sem laço de eco)', async () => {
-    const win = janelaFalsa('?indicators=selic');
+    const win = janelaFalsa('?series=selic');
     const fetchImpl = fixture(['selic', 'ipca']);
     parar = await iniciarPermalink({ window: win, fetchImpl });
     expect(get(seriesStore).itens.map((i) => i.id)).toEqual(['selic']);
@@ -128,7 +207,7 @@ describe('iniciarPermalink', () => {
     // A URL passa a pedir um id **válido e ausente** (`ipca`). Se a integração relesse a URL
     // dentro do caminho de escrita — o defeito do `adapter.js:79`, em que a escrita
     // programática volta como estado — `ipca` entraria na store AQUI.
-    win.location.search = '?indicators=ipca';
+    win.location.search = '?series=ipca';
     definirCor('selic', '#123456'); // força uma emissão da store (o subscribe reescreve a URL)
     await new Promise((r) => setTimeout(r, 0)); // deixa qualquer caminho assíncrono se revelar
 
@@ -138,11 +217,11 @@ describe('iniciarPermalink', () => {
     const escritas = win.history.replaceState.mock.calls.map((c) => c[2]).join(' ');
     expect(escritas).not.toContain('ipca');
     // A escrita é unidirecional e corrige a URL de volta para a store.
-    expect(win.history.replaceState.mock.calls.at(-1)[2]).toBe('/?indicators=selic');
+    expect(win.history.replaceState.mock.calls.at(-1)[2]).toBe('/?series=selic');
   });
 
   it('não reescreve a URL quando ela já reflete a store (guarda do ruído)', async () => {
-    const win = janelaFalsa('?indicators=selic');
+    const win = janelaFalsa('?series=selic');
     parar = await iniciarPermalink({ window: win, fetchImpl: fixture(['selic']) });
     const antes = win.history.replaceState.mock.calls.length;
 

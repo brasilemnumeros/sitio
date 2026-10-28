@@ -107,7 +107,7 @@ Expected: FAIL — `Failed to load url ./presets.js`.
 - [ ] **Step 4: Run the test to verify it passes**
 
 Run: `cd app && NODE_ENV=development npx vitest run src/data/presets.test.js`
-Expected: PASS (7 testes).
+Expected: PASS (6 testes).
 
 - [ ] **Step 5: Commit**
 
@@ -319,7 +319,14 @@ const params = new URLSearchParams(searchAtual());
 const ids = params.has('series') ? lerIds(searchAtual()) : presetIds(agora);
 ```
 
-`presetIds(agora)` devolve `presetDoDia(dataEmSaoPaulo(agora))?.indicadores ?? []`. O laço de `adicionarSerie` continua igual; a assinatura `seriesStore.subscribe(escreverUrl)` continua sendo registrada **depois** de aplicar o preset. Não reescreva a URL durante a aplicação.
+`presetIds(agora)` devolve `presetDoDia(dataEmSaoPaulo(agora))?.indicadores ?? []`. O laço de `adicionarSerie` continua igual; a assinatura `seriesStore.subscribe(escreverUrl)` continua sendo registrada **depois** de aplicar o preset. Como as emissões do laço não podem escrever a URL, faça **uma** escrita explícita depois do laço e antes de assinar:
+
+```js
+if (!params.has('series')) escreverUrl(get(seriesStore).itens);
+return seriesStore.subscribe((s) => escreverUrl(s.itens));
+```
+
+Assim o preset entra na URL (spec: "o preset escreve a URL com `replaceState`") com um único `replaceState`, e não um por série.
 
 - [ ] **Step 9: Run to verify it passes**
 
@@ -353,7 +360,8 @@ Acrescente em `app/e2e/casca.spec.js`:
 test('a home não carrega a casca do site: sem nav, footer, feedback nem toast', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('nav')).toHaveCount(0);
-  await expect(page.locator('footer')).toHaveCount(0);
+  // A barra inferior do app é um `<footer>`; o que não pode existir é o rodapé do site.
+  await expect(page.locator('footer:not([data-testid="barra-inferior"])')).toHaveCount(0);
   await expect(page.locator('#feedback-btn')).toHaveCount(0);
   await expect(page.locator('#toast-artigos')).toHaveCount(0);
 });
@@ -395,7 +403,7 @@ git commit -m "feat(home): layout próprio, sem nav, footer, feedback e toast"
 
 **Interfaces:**
 - Consumes: os stores e componentes atuais.
-- Produces: `App.svelte` com `<main class="flex h-dvh flex-col overflow-hidden …">` e a estrutura `header[data-testid="barra-superior"]` / `div` do miolo (`gráfico` + `aside[data-testid="trilho-direito"]`) / `footer[data-testid="barra-inferior"]`. `Chart.svelte` raiz `flex min-h-0 flex-1 flex-col gap-2`, gráfico `min-h-0 flex-1`, minimapa `h-12 shrink-0`. `criarAdapter` passa `autoSize: true` ao `createChart`.
+- Produces: `App.svelte` com `<main class="flex h-dvh flex-col overflow-hidden …">` e a estrutura `header[data-testid="barra-superior"]` / `div` do miolo (`gráfico` + `aside[data-testid="trilho-direito"]`) / `footer[data-testid="barra-inferior"]`. `Chart.svelte` raiz `flex min-h-0 flex-1 flex-col gap-2`, gráfico `min-h-0 flex-1`, minimapa `h-10 md:h-12 shrink-0` (40px no mobile, 48px a partir de `md`, conforme a spec). `criarAdapter` passa `autoSize: true` ao `createChart`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -431,7 +439,7 @@ Expected: FAIL — `[data-testid="barra-superior"]` não existe e o gráfico ain
 
 - [ ] **Step 3: Implement the frame**
 
-Em `App.svelte`, mantenha o comentário e a classe-canário no `<main>` — o `h-dvh` entra na mesma classe. O miolo é `<div class="flex min-h-0 flex-1">`, com a coluna do gráfico `flex min-w-0 flex-1 flex-col` e a área do gráfico `relative min-h-0 flex-1`; a `aside`/`footer` ficam como marcadores de posição com as medidas fechadas (34px e 26px) até as Tasks 7 e 8. Preserve os ramos `EstadoInicial`, `ErroTotal`, `Esqueleto`, `Chart` e a busca. O `EstadoInicial` continua com **só** o atalho "Selic × IPCA" (a busca é única, na barra superior — o comentário do próprio componente explica por que não se duplica um campo). Em `Chart.svelte`, envolva os dois containers no flex acima e remova as alturas fixas. Em `Esqueleto.svelte`, troque `h-[480px]` do primeiro bloco por `min-h-0 flex-1` (o componente passa a preencher a área), mantenha o minimapa em `h-12` e **remova o bloco 3** (as linhas da matriz): a matriz agora vive na gaveta inferior e um esqueleto dela dentro do gráfico estouraria a moldura. Em `chart/adapter.js`, acrescente `autoSize: true` às opções de `createChart`, com um comentário de uma linha explicando que a altura vem do container.
+Em `App.svelte`, mantenha o comentário e a classe-canário no `<main>` — o `h-dvh` entra na mesma classe. O miolo é `<div class="flex min-h-0 flex-1">`, com a coluna do gráfico `flex min-w-0 flex-1 flex-col` e a área do gráfico `relative min-h-0 flex-1`; a `aside`/`footer` ficam como marcadores de posição com as medidas fechadas (34px e 26px) até as Tasks 7 e 8. Preserve os ramos `EstadoInicial`, `ErroTotal`, `Esqueleto`, `Chart` e a busca. O `EstadoInicial` continua com **só** o atalho "Selic × IPCA" (a busca é única, na barra superior — o comentário do próprio componente explica por que não se duplica um campo). Em `Chart.svelte`, envolva os dois containers no flex acima e remova as alturas fixas. Em `Esqueleto.svelte`, troque `h-[480px]` do primeiro bloco por `min-h-0 flex-1` (o componente passa a preencher a área), mantenha o minimapa em `h-10 md:h-12` e **remova o bloco 3** (as linhas da matriz): a matriz agora vive na gaveta inferior e um esqueleto dela dentro do gráfico estouraria a moldura. Em `chart/adapter.js`, acrescente `autoSize: true` às opções de `createChart`, com um comentário de uma linha explicando que a altura vem do container.
 
 - [ ] **Step 4: Verify**
 
@@ -471,7 +479,7 @@ git commit -m "feat(home): moldura de altura fixa e gráfico flexível"
 // app/e2e/presets.spec.js
 import { test, expect } from './apoio.js';
 
-test('a barra superior traz marca, busca, cinco janelas e o chip do preset', async ({ page }) => {
+test('a barra superior traz marca, busca, cinco janelas e o chip do preset', async ({ page }, testInfo) => {
   await page.goto('/');
   const topo = page.getByTestId('barra-superior');
   await expect(topo).toContainText('Brasil em Números');
@@ -482,8 +490,10 @@ test('a barra superior traz marca, busca, cinco janelas e o chip do preset', asy
   await expect(page.getByTestId('preset-chip')).not.toHaveText('Personalizado');
   // a marca é identidade, não link para si mesma
   await expect(topo.getByRole('link', { name: /Brasil em Números/ })).toHaveCount(0);
-  // e há uma saída para o conteúdo
-  await expect(topo.getByRole('link', { name: 'Artigos' })).toHaveAttribute('href', '/blog');
+  // e há uma saída para o conteúdo (escondida no mobile, onde o topo é só marca+busca+janela)
+  if (testInfo.project.name === 'desktop') {
+    await expect(topo.getByRole('link', { name: 'Artigos' })).toHaveAttribute('href', '/blog');
+  }
 });
 ```
 
@@ -494,7 +504,9 @@ Expected: FAIL — `[data-testid="barra-superior"]` não tem o chip.
 
 - [ ] **Step 3: Implement**
 
-`HomeToolbar` é `header[data-testid="barra-superior"]` com `flex h-[34px] items-center gap-2 px-2 text-xs` (mobile: `h-[30px]`). Composição da esquerda para a direita: marca compacta (quadrado azul + "Brasil em Números", sem `<a>`), botão de busca com o rótulo acessível **"Buscar indicador…"** (o mesmo de hoje, que os E2E usam), `<TimeFilters compacto />`, chip + menu de presets, link "Artigos" (`/blog`), botão de permalink e botão de tela cheia (renderizado só se `document.fullscreenEnabled`). `⌘K`/`Ctrl+K` chama `aoAbrirBusca`.
+`HomeToolbar` é `header[data-testid="barra-superior"]` com `flex h-[34px] min-w-0 items-center gap-2 overflow-x-auto px-2 text-xs` (mobile: `h-[30px]`). Composição da esquerda para a direita: marca compacta (quadrado azul + "Brasil em Números", sem `<a>`, texto com `truncate` — continua no DOM), botão de busca com o rótulo acessível **"Buscar indicador…"** (no mobile vira ícone com o texto em `sr-only`, preservando o nome acessível), `<TimeFilters compacto />`, chip + menu de presets, link "Artigos" (`/blog`), botão de permalink e botão de tela cheia (renderizado só se `document.fullscreenEnabled`). `⌘K`/`Ctrl+K` chama `aoAbrirBusca`.
+
+No mobile (`max-md`), "Artigos", o chip do preset, o permalink e a tela cheia ficam **escondidos** — é a lista que a spec dá para o topo de 30px (marca, busca, janela). As cinco janelas continuam visíveis e a barra rola dentro de si (`overflow-x-auto`), nunca no documento: o `testar-mobile` do build mede 375px e não pode achar transbordo.
 
 O menu do preset é um `div[role="menu"]` com um botão por preset (`role="menuitem"`) e um item "Do dia · <nome>". Ao escolher, resolva os ids com `indicadorPorId`, descarte os ausentes e chame `await substituirSeries(entries)` (uma escrita); feche o menu. O chip usa `aria-expanded` e `aria-controls="menu-presets"`. "Permalink" faz `navigator.clipboard.writeText(location.href)` e troca o rótulo para "Copiado" por 1,5 s. Tela cheia chama `document.documentElement.requestFullscreen()` e engole a rejeição (sem `console.error`).
 
@@ -528,7 +540,7 @@ git commit -m "feat(home): barra superior com busca, janelas e preset"
 
 **Interfaces:**
 - Consumes: `SeriesChips`, `SeriesLegend`, `axesStore`, `moverParaEixo`, `seriesStore`.
-- Produces: `SeriesDrawer` com props `{ aberta: boolean, aoFechar: () => void, aoAbrirBusca: () => void }`; `aside[data-testid="gaveta-direita"]` com `id="gaveta-direita"`, três seções (`data-secao="series"`, `"cores"`, `"eixos"`) e gatilhos no trilho com `aria-expanded`/`aria-controls`. `AxesPanel` renderiza uma linha por série com o botão `esq.`/`dir.` (mesmo nome acessível de hoje) e o aviso de escala (`axesStore.avisos`).
+- Produces: `SeriesDrawer` com props `{ aberta: boolean, aoFechar: () => void, aoAbrirBusca: () => void }`; o trilho `aside[data-testid="trilho-direito"]` (34px, sempre visível) com os três gatilhos (`aria-expanded`/`aria-controls`), e o painel `aside[data-testid="gaveta-direita"]` com `id="gaveta-direita"`, `hidden` quando fechado, três seções (`data-secao="series"`, `"cores"`, `"eixos"`). `AxesPanel` renderiza uma linha por série com o botão `esq.`/`dir.` (mesmo nome acessível de hoje) e o aviso de escala (`axesStore.avisos`).
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -582,7 +594,7 @@ test('abrir a gaveta direita encolhe o gráfico sem estourar a moldura', async (
 
 Quando a gaveta está fechada e alguma série tem `status === 'erro'`, o gatilho principal mostra um ponto de atenção (`aria-label` que inclui "há séries com erro" e um `<span>` vermelho `aria-hidden`), conforme a tabela de estados da spec.
 
-`App.svelte` guarda `let direitaAberta = $state(false)` e renderiza `<SeriesDrawer aberta={direitaAberta} aoFechar={() => (direitaAberta = false)} aoAbrirBusca={() => (buscaAberta = true)} />`; o `Esc` fecha a camada do topo (busca → gaveta → nada).
+`App.svelte` guarda `let direitaAberta = $state(false)` e renderiza `<SeriesDrawer aberta={direitaAberta} aoFechar={() => (direitaAberta = false)} aoAbrirBusca={() => (buscaAberta = true)} />`; o `Esc` fecha a camada do topo (busca → gaveta → nada). Nesta task a gaveta direita já fecha com `Esc` e devolve o foco ao gatilho; a **prioridade entre camadas** é centralizada na Task 9.
 
 - [ ] **Step 4: Verify**
 
@@ -671,6 +683,7 @@ git commit -m "feat(home): gaveta inferior com mandatos e comparação"
 test('no celular o gráfico domina a tela e as gavetas abrem por toque', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'mobile', 'geometria de celular');
   await page.goto('/');
+  expect(await transbordo(page), 'com o preset do dia').toBeLessThanOrEqual(1);
   const altura = await page.evaluate(() => ({
     grafico: document.querySelector('[data-testid="grafico"]').getBoundingClientRect().height,
     janela: window.innerHeight,
@@ -883,6 +896,7 @@ export async function medirCaixas(page) {
       topo: r('[data-testid="barra-superior"]'),
       grafico: r('[data-testid="grafico"]'),
       minimapa: r('[data-testid="minimapa"]'),
+      trilho: r('[data-testid="trilho-direito"]'),
       direita: r('[data-testid="gaveta-direita"]'),
       inferior: r('[data-testid="barra-inferior"]'),
       vw: window.innerWidth,
@@ -892,16 +906,16 @@ export async function medirCaixas(page) {
 }
 ```
 
-O `Chart.svelte` já tem `data-testid="minimapa"`? Se não tiver, acrescente ao container do minimapa na Task 5 (é o único marcador novo que este spec exige).
+O `Chart.svelte` já expõe `data-testid="minimapa"` no container do minimapa — este spec não exige marcador novo no gráfico.
 
 - [ ] **Step 2: Write the failing visual tests**
 
 ```js
 // app/e2e/visual.spec.js
-import { test, expect, abrirVazio, abrirGavetaDireita, abrirGavetaInferior, semTransbordo, medirCaixas } from './apoio.js';
+import { test, expect, abrirGavetaDireita, abrirGavetaInferior, semTransbordo, medirCaixas } from './apoio.js';
 
 // Só no desktop: o projeto mobile tem o próprio percurso (mobile.spec.js).
-test.skip(({}, testInfo) => testInfo.project.name !== 'desktop', 'geometria explícita no projeto desktop');
+test.skip(({ isMobile }) => isMobile, 'geometria explícita no projeto desktop');
 
 const TOL = 1; // px
 
@@ -912,18 +926,19 @@ for (const [nome, width, height] of [
 ]) {
   test(`moldura fechada em ${nome}: sem rolagem e gráfico preenche o miolo`, async ({ page }) => {
     await page.setViewportSize({ width, height });
-    await abrirVazio(page);
+    await page.goto('/');
+    await expect(page.getByTestId('grafico').locator('canvas').first()).toBeVisible();
     await semTransbordo(page);
 
     const c = await medirCaixas(page);
     const topoEsperado = width < 640 ? 30 : 34;
     expect(Math.abs(c.topo.h - topoEsperado)).toBeLessThanOrEqual(TOL);
     expect(Math.abs(c.inferior.h - 26)).toBeLessThanOrEqual(TOL);
-    expect(Math.abs(c.direita.w - 34)).toBeLessThanOrEqual(TOL);
-    expect(Math.abs(c.minimapa.h - 48)).toBeLessThanOrEqual(TOL);
+    expect(Math.abs(c.trilho.w - 34)).toBeLessThanOrEqual(TOL);
+    expect(Math.abs(c.minimapa.h - (width < 768 ? 40 : 48))).toBeLessThanOrEqual(TOL);
 
     // o gráfico ocupa o que sobra, descontando topo, barra inferior e minimapa
-    const livre = height - c.topo.h - c.inferior.h;
+    const livre = height - c.topo.h - c.inferior.h - c.minimapa.h;
     expect(c.grafico.h).toBeGreaterThanOrEqual(livre * 0.6);
     expect(c.grafico.bottom).toBeLessThanOrEqual(c.inferior.y + TOL);
 
@@ -947,6 +962,8 @@ for (const [nome, width, height] of [
     }
 
     await page.screenshot({ path: `e2e/.artefatos/visual-${nome}-gaveta-direita.png` });
+    await page.getByRole('button', { name: 'Fechar séries' }).click();
+    await expect(page.getByTestId('gaveta-direita')).toBeHidden();
     await abrirGavetaInferior(page);
     await expect(page.getByTestId('barra-inferior')).toBeVisible();
     await semTransbordo(page);
@@ -962,7 +979,7 @@ Expected: FAIL — `medirCaixas` devolve `null` para `[data-testid="minimapa"]` 
 
 - [ ] **Step 4: Adjust the markers**
 
-Confirme que `Chart.svelte` expõe `data-testid="minimapa"` no container do minimapa e que as gavetas usam `id="gaveta-direita"`/`gaveta-inferior` com os `data-testid` já previstos nas Tasks 7 e 8. Nenhuma lógica nova: se um teste falhar por medida, o defeito está no componente, não no teste.
+Confirme que as gavetas usam os `data-testid="gaveta-direita"`/`"gaveta-inferior"` e que o trilho usa `data-testid="trilho-direito"`, como previsto nas Tasks 5, 7 e 8. Nenhuma lógica nova: se um teste falhar por medida, o defeito está no componente, não no teste.
 
 - [ ] **Step 5: Run to verify they pass**
 

@@ -52,6 +52,6 @@ Analisar o IGP-M em conjunto com o IPCA e a Selic oferece um panorama muito mais
 
 **Quer ver como este indicador se comportou ao longo do tempo?**
 
-[**Acesse o gráfico completo aqui!**](https://www.brasilemnumeros.ong.br/?indicators=igpm-acum-12m)
+[**Acesse o gráfico completo aqui!**](https://www.brasilemnumeros.ong.br/?series=igpm-acum-12m)
 
 Se gostou, não se esqueça de curtir e deixar seu comentário. Sua participação enriquece o debate!

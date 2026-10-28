@@ -5,23 +5,25 @@
 // `<div id="app">` + o `<script>` (idêntico ao `<div id="app">` do `index.html`
 // do site antigo, §10.1).
 //
-// Tema: `shell: 'app'` põe `class="dark"` no `<html>` (decisão de 2026-10-18:
-// escura fixa, sem alternador). O app já pressupõe isso.
-//
 // O `app.css` é o CSS ESCOPADO dos componentes Svelte (`.amostra`, `.hachurada`).
 // O site publicado NUNCA o carregou — esses estilos estão quebrados em produção
 // hoje; o `<link>` abaixo é a correção deliberada da medição 3 do brief.
 //
 // `?v=${VERSAO}` é o selo de cache-bust do build (uma avaliação por build), o
 // `?v={{ site.time | date: '%s' }}` do site antigo. O CSS vem ANTES do JS.
-import Base from '../layouts/Base.astro';
+//
+// Layout: `Home` (fatia 12) — a `/` não leva a casca do site (sem `Nav`, `Footer`,
+// feedback, toast). O `dark` fixo do `<html>` é atributo FIXO do próprio
+// `Home.astro` (decisão de 2026-10-18: escura fixa, sem alternador). Os props
+// continuam os mesmos.
+import Home from '../layouts/Home.astro';
 import { VERSAO } from '../versao.js';
 ---
 
-<Base title="Início" description="Uma plataforma dedicada a fornecer dados e informações sobre o Brasil." shell="app">
+<Home title="Início" description="Uma plataforma dedicada a fornecer dados e informações sobre o Brasil.">
   <!-- CSS escopado dos componentes do app. Sem ele o seletor de cor e as células
        listradas perdem o estilo em SILÊNCIO (medição 3). -->
   <link rel="stylesheet" href={`/assets/js/app/app.css?v=${VERSAO}`} />
   <div id="app"></div>
   <script type="module" src={`/assets/js/app/app.js?v=${VERSAO}`}></script>
-</Base>
+</Home>

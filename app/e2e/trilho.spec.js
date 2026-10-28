@@ -1,4 +1,11 @@
-import { test, expect, abrirApp, carregarExemplo } from './apoio.js';
+import {
+  test,
+  expect,
+  abrirVazio,
+  carregarExemplo,
+  abrirGavetaInferior,
+} from './apoio.js';
+import { presetDoDia, dataEmSaoPaulo } from '../src/data/presets.js';
 
 /** A janela visível, lida da STORE — o mesmo caminho de `minimapa.spec.js`. ⚠ `import` sem
  *  `?query`: com query o Vite cria outro nó no grafo e o estado lido não é o do app. */
@@ -35,8 +42,9 @@ const ROTULOS = [
 ];
 
 test('o trilho tem 9 botões, um por governo, com o rótulo por texto', async ({ page }) => {
-  await abrirApp(page);
+  await abrirVazio(page);
   await carregarExemplo(page); // §9.1 — o trilho só existe com série (divulgação progressiva)
+  await abrirGavetaInferior(page);
 
   const trilho = page.locator('[data-bloco="trilho"]');
   const caixas = trilho.getByRole('button');
@@ -53,8 +61,9 @@ test('o trilho tem 9 botões, um por governo, com o rótulo por texto', async ({
 });
 
 test('clicar num mandato destaca (aria-pressed) e clicar de novo limpa', async ({ page }) => {
-  await abrirApp(page);
+  await abrirVazio(page);
   await carregarExemplo(page); // com série, o destaque também desenha a faixa no canvas
+  await abrirGavetaInferior(page);
 
   const trilho = page.locator('[data-bloco="trilho"]');
   const lulaTerceiro = trilho.getByRole('button', { name: 'Lula III · PT' });
@@ -85,8 +94,20 @@ test('clicar num mandato destaca (aria-pressed) e clicar de novo limpa', async (
 test('clicar num mandato FILTRA o período dele e clicar de novo volta ao intervalo completo', async ({
   page,
 }) => {
-  await abrirApp(page);
+  await abrirVazio(page);
   await carregarExemplo(page); // §9.1 — os blocos 4/5/6 só existem com série
+  await abrirGavetaInferior(page);
+
+  // A janela de REPOUSO (o fit do exemplo) depende da largura do gráfico: no celular o fit é
+  // mais estreito que no desktop, então o teste guarda a referência em vez de fixar um ano.
+  // Espera o fit assentar (o debounce do adapter) antes de fotografar o repouso.
+  await expect
+    .poll(async () => {
+      const j = await janela(page);
+      return j.from ? (Date.parse(j.to) - Date.parse(j.from)) / 86400000 : 0;
+    }, { timeout: 20000 })
+    .toBeGreaterThan(365 * 20);
+  const repouso = await janela(page);
 
   const trilho = page.locator('[data-bloco="trilho"]');
   const filtros = page.locator('[data-bloco="filtros"]');
@@ -122,7 +143,9 @@ test('clicar num mandato FILTRA o período dele e clicar de novo volta ao interv
   // clicar de novo LIMPA e volta ao intervalo completo
   await lulaI.click();
   await expect(lulaI).toHaveAttribute('aria-pressed', 'false');
-  await expect.poll(async () => anoDe((await janela(page)).from), { timeout: 20000 }).toBeLessThan(2000);
+  await expect
+    .poll(async () => anoDe((await janela(page)).from), { timeout: 20000 })
+    .toBe(anoDe(repouso.from));
   const recuado = await janela(page);
   expect((Date.parse(recuado.to) - Date.parse(recuado.from)) / 86400000).toBeGreaterThan(365 * 20);
 });
@@ -130,8 +153,9 @@ test('clicar num mandato FILTRA o período dele e clicar de novo volta ao interv
 test('o mandato EM CURSO filtra até a última data disponível (a janela tem ponta direita)', async ({
   page,
 }) => {
-  await abrirApp(page);
+  await abrirVazio(page);
   await carregarExemplo(page);
+  await abrirGavetaInferior(page);
 
   const trilho = page.locator('[data-bloco="trilho"]');
   await trilho.getByRole('button', { name: 'Lula III · PT' }).click();
@@ -145,14 +169,19 @@ test('o mandato EM CURSO filtra até a última data disponível (a janela tem po
 });
 
 test('escolher um preset DESMARCA o mandato (um dono da janela por vez)', async ({ page }) => {
-  await abrirApp(page);
+  await abrirVazio(page);
   await carregarExemplo(page);
+  await abrirGavetaInferior(page);
 
   const trilho = page.locator('[data-bloco="trilho"]');
-  const lulaII = trilho.getByRole('button', { name: 'Lula II · PT' });
+  // `includeHidden`: com a gaveta inferior FECHADA o trilho sai da árvore de acessibilidade
+  // (`hidden`), e a asserção seguinte precisa alcançá-lo mesmo assim.
+  const lulaII = trilho.getByRole('button', { name: 'Lula II · PT', includeHidden: true });
   await lulaII.click();
   await expect(lulaII).toHaveAttribute('aria-pressed', 'true');
 
+  // No celular o véu da gaveta inferior cobre a tela inteira: fecha antes de usar o topo.
+  await page.getByRole('button', { name: 'Fechar comparação' }).click();
   const dezAnos = page.locator('[data-bloco="filtros"]').getByRole('button', { name: 'Janela de 10 anos' });
   await dezAnos.click();
 
@@ -175,8 +204,9 @@ test('escolher um preset DESMARCA o mandato (um dono da janela por vez)', async 
 test('a janela invertida não chega à lib (onde a produção não tem asserção para avisar)', async ({
   page,
 }) => {
-  await abrirApp(page);
+  await abrirVazio(page);
   await carregarExemplo(page);
+  await abrirGavetaInferior(page);
 
   // leva a janela para o PASSADO pelo caminho do produto (é o estado em que a inversão nasce)
   const lulaI = page.locator('[data-bloco="trilho"]').getByRole('button', { name: 'Lula I · PT' });
@@ -194,9 +224,18 @@ test('a janela invertida não chega à lib (onde a produção não tem asserçã
   // ⚠ A asserção que importa é a do fixture de `page`: sem a guarda sai
   // "pageerror (exceção não capturada): Assertion failed: right should be >= left".
   // O que sobra para afirmar aqui é que o app NÃO quebrou: "Tudo" ainda devolve o intervalo.
+  // No celular o véu da gaveta cobre a tela inteira: fecha antes de usar o topo.
+  await page.getByRole('button', { name: 'Fechar comparação' }).click();
   const tudo = page.locator('[data-bloco="filtros"]').getByRole('button', { name: 'Janela completa' });
   await tudo.click();
-  await expect.poll(async () => anoDe((await janela(page)).from), { timeout: 20000 }).toBeLessThan(2000);
+  // A largura do gráfico limita o enquadramento da lib: no celular "Tudo" não chega a 1996.
+  // O invariante é a janela VOLTAR a ser longa (a máxima que aquele gráfico consegue).
+  await expect
+    .poll(async () => {
+      const j = await janela(page);
+      return j.from ? (Date.parse(j.to) - Date.parse(j.from)) / 86400000 : 0;
+    }, { timeout: 20000 })
+    .toBeGreaterThan(365 * 20);
 });
 
 /**
@@ -205,12 +244,13 @@ test('a janela invertida não chega à lib (onde a produção não tem asserçã
  * falta dado que existe.
  */
 test('a matriz aparece com série e traz os estados de célula por texto', async ({ page }) => {
-  await abrirApp(page);
+  await abrirVazio(page);
 
   // §9.1 — sem série o painel não existe (divulgação progressiva): não fica mudo porque não está lá.
   await expect(page.locator('[data-bloco="comparacao"]')).toHaveCount(0);
 
   await carregarExemplo(page);
+  await abrirGavetaInferior(page);
 
   const painel = page.locator('[data-bloco="comparacao"]');
 
@@ -237,4 +277,71 @@ test('a matriz aparece com série e traz os estados de célula por texto', async
   await expect(parciais.first()).toContainText(/parcial \d{2}\/\d{4}–\d{2}\/\d{4}/);
 
   await page.screenshot({ path: 'e2e/.artefatos/comparacao-matriz.png', fullPage: true });
+});
+
+/**
+ * A GAVETA INFERIOR (T8) — o trilho de mandatos e a matriz vivem numa gaveta, e a barra de 26px
+ * é a ALÇA dela. O resumo (`N séries · M eixos`) é o único conteúdo da barra fechada: ele diz o
+ * que está em cena sem precisar abrir. `Esc` fecha — a prioridade ENTRE camadas é da T9, aqui a
+ * gaveta só respeita quem já tratou a tecla.
+ *
+ * ⚠ Sem `carregarExemplo`: a `/` já entra com o preset do dia (os ids curados do dia), então a
+ * casca existe e a alça nasce habilitada. A asserção do resumo é por FORMA (`\d+`), não por
+ * número: o preset muda de conteúdo a cada dia e o teste não pode apodrecer por isso.
+ */
+test('a gaveta inferior abre com mandatos e matriz, e o resumo conta', async ({ page }) => {
+  await page.goto('/');
+  const alca = page.getByRole('button', { name: /Comparação por mandato/ });
+  await expect(alca).toHaveAttribute('aria-expanded', 'false');
+  await expect(alca).toContainText(/\d+ s[ée]ries? · \d+ eixos?/);
+
+  // O resumo CONCORDA com o número (`1 série · 1 eixo`, `2 séries · 2 eixos`): a barra dizia
+  // `1 séries` no preset de uma série só, que é o de hoje (27/10/2026, "Trabalho").
+  const texto = await alca.innerText();
+  const partes = texto.match(/(\d+) (s[ée]ries?) · (\d+) (eixos?)/);
+  expect(partes, `resumo fora da forma esperada: ${texto}`).not.toBeNull();
+  const [, nSeries, rotuloSeries, nEixos, rotuloEixos] = partes;
+  expect(rotuloSeries).toBe(Number(nSeries) === 1 ? 'série' : 'séries');
+  expect(rotuloEixos).toBe(Number(nEixos) === 1 ? 'eixo' : 'eixos');
+
+  // Hoje o preset do dia tem UMA série: a barra fecha em "1 série ·", nunca "1 séries".
+  if (presetDoDia(dataEmSaoPaulo()).indicadores.length === 1) {
+    expect(texto).toContain('1 série ·');
+    expect(texto).not.toContain('1 séries');
+  }
+
+  await alca.click();
+  const gaveta = page.getByTestId('gaveta-inferior');
+  await expect(gaveta).toBeVisible();
+  await expect(gaveta.locator('[data-bloco="trilho"]')).toBeVisible();
+  await expect(gaveta.locator('[data-bloco="comparacao"]')).toBeVisible();
+  await expect(alca).toHaveAttribute('aria-expanded', 'true');
+
+  await page.keyboard.press('Escape');
+  await expect(gaveta).toBeHidden();
+});
+
+/**
+ * O ARRASTO da alça (mobile, §T8) fecha a gaveta e devolve o foco — e o `click` que o navegador
+ * dispararia na soltura NÃO pode reabrir. O caso ruim é o dedo que sai de baixo da alça: o
+ * `pointerup` chega, o `click` não. Antes, `arrasteFechou` ficava preso em `true` e engolia o
+ * PRÓXIMO toque (a gaveta nunca mais abria). `dispatchEvent` entrega só os dois eventos de
+ * ponteiro e reproduz exatamente esse buraco.
+ */
+test('arrastar a alça para baixo fecha a gaveta, devolve o foco e não engole o toque seguinte', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const alca = page.getByRole('button', { name: /Comparação por mandato/ });
+  await alca.click();
+  await expect(alca).toHaveAttribute('aria-expanded', 'true');
+
+  await alca.dispatchEvent('pointerdown', { clientY: 100, pointerId: 1 });
+  await alca.dispatchEvent('pointerup', { clientY: 260, pointerId: 1 });
+  await expect(alca).toHaveAttribute('aria-expanded', 'false');
+  // O foco volta para a alça, que é o gatilho — mesmo caminho de `Esc`/`×`.
+  await expect(alca).toBeFocused();
+
+  await alca.click();
+  await expect(alca).toHaveAttribute('aria-expanded', 'true');
 });

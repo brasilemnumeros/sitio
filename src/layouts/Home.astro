@@ -1,0 +1,84 @@
+---
+// Casca EXCLUSIVA da home. A `/` é o terminal de gráficos (fatia 12): ela NÃO leva
+// a casca do site — nem `Nav`, nem `Footer`, nem o botão de feedback (`#feedback-btn`),
+// nem o toast de artigos (`#toast-artigos` + `toast-artigos.js`), nem o
+// `theme-switcher.js`: a `/` é escura fixa por decreto (2026-10-15), então o
+// `<html class="dark">` é atributo FIXO aqui, sem alternador nem leitura de
+// `localStorage`. Sem `<main>` também: o próprio app o renderiza dentro do `#app`,
+// e um segundo `<main>` deixaria o `locator('main')` do E2E da casca ambíguo.
+// O resto do site (blog, posts, categorias, links, 404) segue no `Base.astro`.
+//
+// O import do CSS vive aqui, como no `Base.astro` (fonte em `src/styles/main.css`),
+// para que o Tailwind entre no grafo do build: um arquivo não renderizado não emite CSS.
+import Meta from '../components/Meta.astro';
+import CookieConsent from '../components/CookieConsent.astro';
+import Analytics from '../components/Analytics.astro';
+import { GA4_ID } from '../config.js';
+import '../styles/main.css';
+
+interface Props {
+  // A home é UMA página com props explícitas (não há `.md` atrás dela, como no
+  // `Base.astro`), mas os campos OPTIONAIS + `throw` são os "mesmos": D6 —
+  // `title`/`description` ausentes sairiam como `<title> | Brasil em Números</title>`
+  // e `<meta name="description" content="">` SEM erro no build. Falha em voz alta.
+  title?: string;
+  description?: string;
+}
+
+const { title, description } = Astro.props;
+// Sem fallback para string vazia — MESMOS `throw` do `Base.astro`.
+if (!title) throw new Error(`${Astro.url.pathname}: página sem 'title'`);
+if (!description) throw new Error(`${Astro.url.pathname}: página sem 'description'`);
+
+// `canonical` calculado, MESMA normalização do `Base.astro`: sob
+// `build.format: 'file'` + `trailingSlash: 'never'`, `Astro.url.pathname` é
+// `/index.html` na raiz — mas o site publica a raiz como `/`.
+const caminho = Astro.url.pathname.replace(/\/index\.html$/, '/');
+const canonicalFinal = new URL(caminho, Astro.site).href;
+//
+// O CORPO é o terminal inteiro, sem rolagem da página: o slot carrega a div do app
+// (e é o app quem controla o layout da tela). O `h-dvh` trava o corpo na altura da
+// viewport e o `overflow-hidden` mata a rolagem do documento — a única rolagem é a
+// interna do app (gavetas, trilho). O fundo do corpo é o MESMO do app.
+---
+
+<!doctype html>
+<html lang="pt-BR" class="dark">
+  <head>
+    <Meta title={title} description={description} canonical={canonicalFinal} />
+  </head>
+  <body class="h-dvh overflow-hidden bg-[#0e1117]">
+    <slot />
+
+    <!-- Atribuição do TradingView Lightweight Charts (obrigação da Apache-2.0, fatia 10/T5).
+         O link vive aqui porque o `Footer.astro` NÃO entra na `/`; o `testar-atribuicao.sh`
+         (do `verificar`) exige a âncora INTEIRA no `dist/index.html`. E sem a TAG de rodapé do
+         site no HTML: um footer é exatamente a casca que ESTE layout existe para não carregar —
+         a barra inferior do app é o ÚNICO footer permitido na `/` (pega-se por `data-testid`,
+         e é do app, não daqui). §10.5: link visível.
+         🔴 POSIÇÃO (Task 8): a barra inferior do app tem 26px FECHADA (a alça da gaveta de
+         mandatos/comparação). Com `bottom-1` o link ficava POR BAIXO dela — obrigação legal
+         escondida. `bottom-7` (28px) o põe logo acima da barra, e `z-30` o mantém acima da
+         moldura do app, que é renderizada antes (o `#app` está no slot). Aberta a gaveta, ela
+         cobre a faixa do canto — aceitável: o link continua no DOM e visível com a gaveta
+         recolhida, que é o estado padrão da `/`. -->
+    <a
+      href="https://www.tradingview.com/"
+      class="fixed right-2 bottom-7 z-30 text-xs text-gray-300/90 no-underline hover:text-gray-200"
+      target="_blank"
+      rel="noopener noreferrer">TradingView Lightweight Charts</a
+    >
+
+    <!-- Analytics -->
+    {/* Gate de produção, IDÊNTICO ao do `Base.astro` (LGPD; AGENTS.md). Em
+        `astro dev` (`import.meta.env.PROD === false`) nem o banner de
+        consentimento nem o script do Google aparecem — a falha seria silenciosa
+        e de privacidade. Qualquer mudança aqui tem de ser espelhada no gate de lá. */}
+    {import.meta.env.PROD && GA4_ID && (
+      <>
+        <CookieConsent />
+        <Analytics />
+      </>
+    )}
+  </body>
+</html>

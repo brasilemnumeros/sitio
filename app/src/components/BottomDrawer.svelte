@@ -22,7 +22,8 @@
   import { seriesStore } from '../stores/series.js';
   import { axesStore } from '../stores/axes.js';
 
-  let { aberta = false, aoAlternar = () => {}, mostrarCasca = false } = $props();
+  let { aberta = false, aoAlternar = () => {}, mostrarCasca = false, inativa = false } = $props();
+
 
   /** O gatilho — para onde o foco volta quando a gaveta fecha (`Esc` ou "×"). */
   let alca = $state(null);
@@ -109,15 +110,21 @@
   }
 
   /**
-   * `Esc` fecha a gaveta (e devolve o foco à alça). `defaultPrevented` respeita quem tratou a
-   * tecla antes — a MODAL de busca está montada depois na árvore e trata o `Esc` primeiro. A
-   * prioridade ENTRE as gavetas é centralizada na `App` (T9); aqui só se evita fechar duas.
+   * §Teclado (T9) — o `Esc` da gaveta não mora mais aqui: a prioridade entre camadas (busca →
+   * direita → inferior) é da `App`, num listener só, para uma tecla não fechar duas.
+   *
+   * O FOCO continua sendo desta gaveta: ao abrir, o primeiro controle (o "×" do cabeçalho)
+   * recebe o foco; ao fechar — por `Esc`, "×", véu ou arrasto —, ele volta para a alça.
+   * `expandida` (e não `aberta`) é o que conta: sem casca o painel nem é montado.
    */
-  function aoTeclar(evento) {
-    if (evento.key !== 'Escape' || !expandida || evento.defaultPrevented) return;
-    evento.preventDefault();
-    fechar();
-  }
+  let jaExpandida = false;
+  let caixa = $state(null);
+  $effect(() => {
+    if (expandida === jaExpandida) return;
+    jaExpandida = expandida;
+    if (expandida) caixa?.querySelector('button')?.focus();
+    else alca?.focus();
+  });
 
   // 🔴 `$derived` — não `const`. Uma `const` que lê `expandida` congela no primeiro render
   // (medido: a barra ficava em 26px para sempre e o painel crescia PARA FORA da moldura).
@@ -137,8 +144,6 @@
     'max-md:shadow-2xl';
 </script>
 
-<svelte:window onkeydown={aoTeclar} />
-
 <!-- VÉU do bottom sheet (celular). Fica FORA do `<footer>` de propósito: um `position: fixed`
      dentro de um ancestral com `overflow: hidden` é frágil de raciocinar, e o véu precisa cobrir
      a tela inteira. Fecha ao toque — e o `aria-label` é diferente de "Fechar comparação" porque
@@ -146,6 +151,7 @@
 {#if expandida}
   <button
     type="button"
+    inert={inativa}
     class="fixed inset-0 z-30 cursor-default border-0 bg-black/40 p-0 md:hidden"
     aria-label="Fechar gaveta inferior ao tocar fora"
     onclick={() => aoAlternar()}
@@ -157,7 +163,8 @@
      do véu (z-30) no celular; na mesma camada da modal de busca, que vem depois na árvore. -->
 <footer
   data-testid="barra-inferior"
-  class="relative z-40 flex shrink-0 flex-col overflow-hidden {CLASSE_CASCA}"
+  inert={inativa}
+  class="relative z-40 flex shrink-0 flex-col overflow-hidden max-md:z-30 {CLASSE_CASCA}"
 >
   <!-- A ALÇA · 26px. É um `<button>` de verdade (não um `<div>` com `onclick`) porque ela
        carrega ESTADO (`aria-expanded`) e a gaveta que ela controla (`aria-controls`).
@@ -179,7 +186,7 @@
     onpointerup={aoSoltar}
     onpointercancel={aoCancelar}
   >
-    <span class="text-slate-500" aria-hidden="true">▬</span>
+    <span class="text-slate-400" aria-hidden="true">▬</span>
     <span class="min-w-0 flex-1 truncate">Comparação por mandato</span>
     <span class="shrink-0 tabular-nums">{resumo}</span>
   </button>
@@ -193,6 +200,7 @@
     <div
       id="gaveta-inferior"
       data-testid="gaveta-inferior"
+      bind:this={caixa}
       hidden={!expandida}
       class={expandida ? CLASSE_PAINEL : ''}
     >
@@ -206,7 +214,7 @@
         </h2>
         <button
           type="button"
-          class="shrink-0 rounded px-2 text-base leading-none text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+          class="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded px-2 text-base leading-none text-slate-400 hover:bg-slate-800 hover:text-slate-100 md:min-h-0 md:min-w-0"
           aria-label="Fechar comparação"
           title="Fechar comparação"
           onclick={fechar}

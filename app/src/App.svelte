@@ -71,7 +71,31 @@
     carregarCatalogo();
     carregarMandatos();
   });
+
+  /**
+   * §Teclado — a prioridade do `Esc` entre as camadas mora AQUI, num lugar só: busca (que trata
+   * a própria tecla) → gaveta direita → gaveta inferior. Cada gaveta não escuta mais o teclado:
+   * duas donas da mesma tecla fechariam duas camadas de uma vez. O foco de volta ao gatilho é
+   * do componente (o `$effect` dele observa `aberta`), não desta função.
+   */
+  function aoTeclar(evento) {
+    if (evento.key !== 'Escape' || evento.defaultPrevented) return;
+    // A modal de busca é a camada do topo e cuida do próprio `Esc`; aqui só se evita fechar
+    // a gaveta que está ATRÁS dela.
+    if (buscaAberta) return;
+    if (direitaAberta) {
+      evento.preventDefault();
+      direitaAberta = false;
+      return;
+    }
+    if (fundoAberto) {
+      evento.preventDefault();
+      fundoAberto = false;
+    }
+  }
 </script>
+
+<svelte:window onkeydown={aoTeclar} />
 
 <!-- MOLDURA DO TERMINAL (fatia 12). A §1 do desenho antigo descrevia uma PILHA de seis blocos
      numerados; ela morre aqui. Fica o arranjo A: barra superior, miolo (gráfico + trilho) e
@@ -104,7 +128,11 @@
            total lista um motivo por série). Quem rola é a ÁREA, nunca o documento — a moldura
            não muda e nada pinta por cima do footer. O gráfico em si nunca estoura: ele é
            `flex-1` da própria área, então quando ele está montado não há o que rolar. -->
-      <div class="relative flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div
+        data-regiao="grafico"
+        inert={direitaAberta || fundoAberto}
+        class="relative flex min-h-0 flex-1 flex-col overflow-y-auto"
+      >
         {#if itens.length === 0}
           <EstadoInicial aoPedirExemplo={pedirExemplo} />
         {:else if todosEmErro}
@@ -130,6 +158,7 @@
       bind:aberta={direitaAberta}
       aoFechar={() => (direitaAberta = false)}
       aoAbrirBusca={() => (buscaAberta = true)}
+      inativa={fundoAberto && !direitaAberta}
     />
   </div>
 
@@ -141,6 +170,7 @@
     aberta={fundoAberto}
     aoAlternar={() => (fundoAberto = !fundoAberto)}
     mostrarCasca={mostrarCasca}
+    inativa={direitaAberta}
   />
 
   {#if buscaAberta}

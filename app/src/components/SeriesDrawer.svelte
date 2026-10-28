@@ -28,6 +28,7 @@
     aberta = $bindable(false),
     aoFechar = () => {},
     aoAbrirBusca = () => {},
+    inativa = false,
   } = $props();
 
   /** O gatilho principal — para onde o foco volta quando a gaveta fecha (Esc ou "×"). */
@@ -81,27 +82,26 @@
   }
 
   /**
-   * `Esc` fecha a gaveta e devolve o foco ao gatilho — sem isto o foco ficaria num elemento que
-   * acabou de sair da árvore (`hidden`) e o próximo TAB recomeçaria do topo da página.
-   *
-   * `defaultPrevented` é o que impede o `Esc` da BUSCA de fechar as duas camadas de uma vez: a
-   * modal trata a tecla primeiro (o evento sobe do campo até aqui) e marca a tecla como tratada.
-   * A prioridade ENTRE camadas é centralizada na T9; aqui só se respeita quem já tratou.
+   * §Teclado (T9) — a gaveta não escuta mais `Esc`: a PRIORIDADE entre camadas (busca → direita
+   * → inferior) é da `App`, num listener só. Aqui ficam os dois lados do FOCO, observando o
+   * estado: ao abrir, o primeiro controle da gaveta recebe o foco (o "×" do cabeçalho); ao
+   * fechar — por `Esc`, "×" ou troca de camada —, ele volta ao gatilho.
    */
-  function aoTeclar(evento) {
-    if (evento.key !== 'Escape' || !aberta || evento.defaultPrevented) return;
-    evento.preventDefault();
-    fechar();
-  }
+  let jaAberta = false;
+  $effect(() => {
+    if (aberta === jaAberta) return;
+    jaAberta = aberta;
+    if (aberta) painel?.querySelector('button')?.focus();
+    else gatilho?.focus();
+  });
 </script>
-
-<svelte:window onkeydown={aoTeclar} />
 
 <!-- TRILHO · 34px, sempre visível. `aria-expanded`/`aria-controls` descrevem a gaveta que ele
      abre; o `aria-label` inclui o estado de erro porque o ponto é só uma bolinha — quem não vê
      a cor precisa ouvir o motivo. -->
 <aside
   data-testid="trilho-direito"
+  inert={inativa}
   class="flex w-[34px] shrink-0 flex-col items-center gap-1 border-l border-slate-800 py-1"
   aria-label="Gaveta de séries"
 >
@@ -111,7 +111,7 @@
     aria-label={temErro && !aberta ? 'Séries e eixos — há séries com erro' : 'Séries e eixos'}
     aria-expanded={aberta}
     aria-controls="gaveta-direita"
-    class="relative flex w-full items-center justify-center rounded px-1 py-2 text-[11px] text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+    class="relative flex min-h-11 w-full items-center justify-center rounded px-1 py-2 text-[11px] md:min-h-0 text-slate-300 hover:bg-slate-800 hover:text-slate-100"
     title={aberta ? 'Ir para as séries' : 'Abrir séries e eixos'}
     onclick={aoGatilho}
   >
@@ -128,14 +128,14 @@
   {#if aberta}
     <button
       type="button"
-      class="w-full rounded px-1 py-2 text-[11px] text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+      class="w-full min-h-11 rounded px-1 py-2 text-[11px] md:min-h-0 text-slate-300 hover:bg-slate-800 hover:text-slate-100"
       onclick={() => irPara('cores')}
     >
       <span class="[writing-mode:vertical-rl]">Cores</span>
     </button>
     <button
       type="button"
-      class="w-full rounded px-1 py-2 text-[11px] text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+      class="w-full min-h-11 rounded px-1 py-2 text-[11px] md:min-h-0 text-slate-300 hover:bg-slate-800 hover:text-slate-100"
       onclick={() => irPara('eixos')}
     >
       <span class="[writing-mode:vertical-rl]">Eixos</span>
@@ -143,18 +143,32 @@
   {/if}
 </aside>
 
+<!-- VÉU da folha lateral no celular (T9). Fica FORA do `<aside>`: um `fixed` dentro de um
+     ancestral com `overflow-y-auto` é frágil de raciocinar. `md:hidden` porque no desktop a
+     gaveta é uma coluna em fluxo, não uma folha. Só existe com a gaveta aberta. -->
+{#if aberta}
+  <button
+    type="button"
+    class="fixed inset-0 z-30 cursor-default border-0 bg-black/40 p-0 md:hidden"
+    aria-label="Tocar fora para fechar a gaveta"
+    onclick={fechar}
+  ></button>
+{/if}
+
 <!-- PAINEL · 320px, em fluxo. `hidden` (e não só `translate`) quando fechado: sem a classe
      `flex` nesse estado, para o `display:flex` do autor não atropelar o `display:none` do
      atributo — é o detalhe que faria a gaveta "fechada" continuar pintando.
-     `bind:this={painel}`: é ELE que os atalhos do trilho rolam (sem isto, botão morto). -->
+     `bind:this={painel}`: é ELE que os atalhos do trilho rolam (sem isto, botão morto).
+     No celular (T9) vira folha lateral de 88% da largura, por cima do gráfico. -->
 <aside
   id="gaveta-direita"
   data-testid="gaveta-direita"
   bind:this={painel}
   hidden={!aberta}
+  inert={inativa}
   aria-label="Séries, cores e eixos"
   class={aberta
-    ? 'flex w-[320px] shrink-0 flex-col overflow-y-auto border-l border-slate-800'
+    ? 'flex w-[320px] shrink-0 flex-col overflow-y-auto border-l border-slate-800 max-md:fixed max-md:inset-y-0 max-md:right-0 max-md:z-40 max-md:w-[88%] max-md:shadow-2xl'
     : ''}
 >
   <!-- Cabeçalho grudado: com a gaveta rolada até o fim, o botão de fechar continua alcançável.
@@ -168,7 +182,7 @@
     <h2 class="text-xs font-semibold tracking-wide text-slate-400 uppercase">Séries e eixos</h2>
     <button
       type="button"
-      class="shrink-0 rounded px-2 text-lg leading-none text-slate-400 hover:bg-slate-800 hover:text-slate-100"
+      class="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded px-2 text-lg leading-none text-slate-400 hover:bg-slate-800 hover:text-slate-100 md:min-h-0 md:min-w-0"
       aria-label="Fechar séries"
       title="Fechar séries"
       onclick={fechar}
@@ -183,7 +197,7 @@
         <h3 class="text-xs font-semibold tracking-wide text-slate-400 uppercase">Séries</h3>
         <button
           type="button"
-          class="shrink-0 rounded border border-slate-700 px-2 py-0.5 text-xs text-slate-200 hover:bg-slate-800 hover:text-slate-100"
+          class="min-h-11 shrink-0 rounded border border-slate-700 px-2 py-0.5 text-xs text-slate-200 hover:bg-slate-800 hover:text-slate-100 md:min-h-0"
           onclick={aoAbrirBusca}
         >
           + Série

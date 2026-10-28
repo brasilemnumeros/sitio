@@ -1,4 +1,5 @@
 import { test, expect, abrirApp, carregarExemplo } from './apoio.js';
+import { presetDoDia, dataEmSaoPaulo } from '../src/data/presets.js';
 
 /** A janela visível, lida da STORE — o mesmo caminho de `minimapa.spec.js`. ⚠ `import` sem
  *  `?query`: com query o Vite cria outro nó no grafo e o estado lido não é o do app. */
@@ -253,7 +254,22 @@ test('a gaveta inferior abre com mandatos e matriz, e o resumo conta', async ({ 
   await page.goto('/');
   const alca = page.getByRole('button', { name: /Comparação por mandato/ });
   await expect(alca).toHaveAttribute('aria-expanded', 'false');
-  await expect(alca).toContainText(/\d+ séries · \d+ eixos/);
+  await expect(alca).toContainText(/\d+ s[ée]ries? · \d+ eixos?/);
+
+  // O resumo CONCORDA com o número (`1 série · 1 eixo`, `2 séries · 2 eixos`): a barra dizia
+  // `1 séries` no preset de uma série só, que é o de hoje (27/10/2026, "Trabalho").
+  const texto = await alca.innerText();
+  const partes = texto.match(/(\d+) (s[ée]ries?) · (\d+) (eixos?)/);
+  expect(partes, `resumo fora da forma esperada: ${texto}`).not.toBeNull();
+  const [, nSeries, rotuloSeries, nEixos, rotuloEixos] = partes;
+  expect(rotuloSeries).toBe(Number(nSeries) === 1 ? 'série' : 'séries');
+  expect(rotuloEixos).toBe(Number(nEixos) === 1 ? 'eixo' : 'eixos');
+
+  // Hoje o preset do dia tem UMA série: a barra fecha em "1 série ·", nunca "1 séries".
+  if (presetDoDia(dataEmSaoPaulo()).indicadores.length === 1) {
+    expect(texto).toContain('1 série ·');
+    expect(texto).not.toContain('1 séries');
+  }
 
   await alca.click();
   const gaveta = page.getByTestId('gaveta-inferior');
@@ -264,4 +280,29 @@ test('a gaveta inferior abre com mandatos e matriz, e o resumo conta', async ({ 
 
   await page.keyboard.press('Escape');
   await expect(gaveta).toBeHidden();
+});
+
+/**
+ * O ARRASTO da alça (mobile, §T8) fecha a gaveta e devolve o foco — e o `click` que o navegador
+ * dispararia na soltura NÃO pode reabrir. O caso ruim é o dedo que sai de baixo da alça: o
+ * `pointerup` chega, o `click` não. Antes, `arrasteFechou` ficava preso em `true` e engolia o
+ * PRÓXIMO toque (a gaveta nunca mais abria). `dispatchEvent` entrega só os dois eventos de
+ * ponteiro e reproduz exatamente esse buraco.
+ */
+test('arrastar a alça para baixo fecha a gaveta, devolve o foco e não engole o toque seguinte', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const alca = page.getByRole('button', { name: /Comparação por mandato/ });
+  await alca.click();
+  await expect(alca).toHaveAttribute('aria-expanded', 'true');
+
+  await alca.dispatchEvent('pointerdown', { clientY: 100, pointerId: 1 });
+  await alca.dispatchEvent('pointerup', { clientY: 260, pointerId: 1 });
+  await expect(alca).toHaveAttribute('aria-expanded', 'false');
+  // O foco volta para a alça, que é o gatilho — mesmo caminho de `Esc`/`×`.
+  await expect(alca).toBeFocused();
+
+  await alca.click();
+  await expect(alca).toHaveAttribute('aria-expanded', 'true');
 });

@@ -33,9 +33,13 @@
   // atribuição — o mesmo dado que a gaveta direita edita). Sem série não há atribuição: 1 eixo.
   const eixos = $derived(Object.values($axesStore.atribuicao).includes('right') ? 2 : 1);
 
-  // ⚠ Plural SEMPRE (`séries`, `eixos`): a barra é uma etiqueta de estado, não uma frase — e o
-  // E2E da T8 afirma a FORMA (`\d+ séries · \d+ eixos`). Flexionar por 1 exigiria duas regex.
-  const resumo = $derived(`${itens.length} séries · ${eixos} eixos`);
+  // Concordância com o NÚMERO (`1 série · 1 eixo`, `2 séries · 2 eixos`). O preset do dia pode
+  // ter UMA série só, e `1 séries` é o tipo de erro que faz a barra parecer quebrada. A regra
+  // de plural fica em UMA função, usada pelos dois substantivos — não há caso especial.
+  const plural = (n, singular, plural) => `${n} ${n === 1 ? singular : plural}`;
+  const resumo = $derived(
+    `${plural(itens.length, 'série', 'séries')} · ${plural(eixos, 'eixo', 'eixos')}`,
+  );
 
   /**
    * O que a gaveta mostra é `aberta` E `mostrarCasca`. As duas condições são diferentes de
@@ -67,6 +71,10 @@
   }
 
   function aoPressionar(evento) {
+    // Qualquer toque novo cancela a absorção pendente: se o `click` pós-arrasto não vier (a
+    // alça pode sair de baixo do dedo), `arrasteFechou` ficaria `true` para sempre e engoliria
+    // o PRÓXIMO toque — o usuário tocaria e nada abriria.
+    arrasteFechou = false;
     if (!expandida) return;
     inicioY = evento.clientY;
     try {
@@ -89,7 +97,10 @@
     // 80px é o limiar da spec mobile: menos que isso é toque/hesitação, não intenção de fechar.
     if (deslocamento > 80) {
       arrasteFechou = true;
-      aoAlternar();
+      // Mesmo caminho de fechar do `×`/`Esc`: o foco volta para a alça. Sem isto, quem fechou
+      // arrastando fica com o foco no vazio (no celular o foco sai do painel que acabou de
+      // sumir) e o próximo TAB recomeça do topo do documento.
+      fechar();
     }
   }
 

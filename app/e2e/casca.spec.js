@@ -1,4 +1,12 @@
-import { test, expect, abrirApp, carregarExemplo } from './apoio.js';
+import {
+  test,
+  expect,
+  abrirApp,
+  abrirVazio,
+  carregarExemplo,
+  abrirGavetaDireita,
+  abrirGavetaInferior,
+} from './apoio.js';
 
 /**
  * A CASCA (§1, §10.3). Não basta afirmar que o app montou — há dois defeitos silenciosos que só
@@ -38,29 +46,37 @@ test('a casca carrega, o Tailwind aplicou (classe-canário) e o tema é escuro',
     `fundo do <body> deveria ser escuro (luminância baixa), veio ${corCorpo}`,
   ).toBeLessThan(80);
 
-  // 5 · §9.1 / ADR 0001 (2026-10-17) — DIVULGAÇÃO PROGRESSIVA: sem série não há o que controlar,
-  //     então os blocos 4/5/6 NÃO existem. Era o defeito que a decisão corrige: três controles
-  //     mortos (filtros desabilitados, trilho inerte, painel-promessa) já na abertura.
+  // 5 · §9.1 / ADR 0001 (2026-10-17) — DIVULGAÇÃO PROGRESSIVA. A home abre com o PRESET do dia;
+  //     o estado vazio é explícito (`?series=` inválido). Sem série, o topo continua no lugar
+  //     (§1 — é permanente), mas os filtros ficam DESABILITADOS, e o conteúdo das gavetas não é
+  //     montado (a alça da inferior fica inerte).
+  await abrirVazio(page);
   await expect(page.locator('[data-bloco="inicial"]')).toBeVisible();
-  await expect(page.locator('[data-bloco="filtros"]')).toHaveCount(0);
+  const filtros = page.locator('[data-bloco="filtros"]');
+  await expect(filtros).toHaveCount(1);
+  await expect(filtros.getByRole('button', { name: 'Janela de 5 anos' })).toBeDisabled();
   await expect(page.locator('[data-bloco="trilho"]')).toHaveCount(0);
   await expect(page.locator('[data-bloco="comparacao"]')).toHaveCount(0);
 
   // a captura registra o ABRIR MINIMALISTA (só busca + exemplo), já em tema escuro.
   await page.screenshot({ path: 'e2e/.artefatos/casca-tema-escuro.png', fullPage: true });
 
-  // 6 · ordem da §1: com série, os blocos aparecem e o do gráfico vem antes dos filtros/trilho/matriz.
+  // 6 · com série, os blocos aparecem DENTRO das gavetas (a página não é mais uma pilha).
   await carregarExemplo(page);
+  await expect(filtros.getByRole('button', { name: 'Janela de 5 anos' })).toBeEnabled();
+  await abrirGavetaDireita(page);
   await expect(page.locator('[data-bloco="chips"]')).toHaveCount(1);
-  await expect(page.locator('[data-bloco="filtros"]')).toHaveCount(1);
+  await expect(page.getByTestId('legenda-series')).toHaveCount(1);
+  // o "×" fecha; a gaveta inferior só abre com a direita fechada (o resto fica inerte — §Teclado)
+  await page.getByRole('button', { name: 'Fechar séries' }).click();
+  await abrirGavetaInferior(page);
   await expect(page.locator('[data-bloco="trilho"]')).toHaveCount(1);
   await expect(page.locator('[data-bloco="comparacao"]')).toHaveCount(1);
-  const ordem = await page.evaluate(() =>
-    [...document.querySelectorAll('[data-bloco]')].map((el) => el.dataset.bloco),
-  );
-  expect(ordem.indexOf('chips')).toBeLessThan(ordem.indexOf('filtros'));
-  expect(ordem.indexOf('filtros')).toBeLessThan(ordem.indexOf('trilho'));
-  expect(ordem.indexOf('trilho')).toBeLessThan(ordem.indexOf('comparacao'));
+  // a estrutura é a das gavetas, não a ordem antiga de blocos na página
+  await expect(page.getByTestId('gaveta-inferior').locator('[data-bloco="trilho"]')).toHaveCount(1);
+  await expect(
+    page.getByTestId('gaveta-inferior').locator('[data-bloco="comparacao"]'),
+  ).toHaveCount(1);
 });
 
 /**
@@ -72,7 +88,7 @@ test('a casca carrega, o Tailwind aplicou (classe-canário) e o tema é escuro',
 test('com série carregando o shell ainda não existe; ele aparece quando o dado resolve', async ({
   page,
 }) => {
-  await abrirApp(page);
+  await abrirVazio(page);
 
   // segura TODO /dados/** por 2,5s — janela de sobra para afirmar o estado de carregamento.
   await page.route('**/dados/**', async (route) => {
@@ -83,9 +99,12 @@ test('com série carregando o shell ainda não existe; ele aparece quando o dado
   // dispara o exemplo: as duas séries entram com status `carregando`
   await page.getByRole('button', { name: 'Selic × IPCA' }).click();
 
-  // AINDA CARREGANDO: o ESQUELETO ocupa o lugar do gráfico (§9.2) e o shell 4/5/6 NÃO existe.
+  // AINDA CARREGANDO: o ESQUELETO ocupa o lugar do gráfico (§9.2), os filtros existem mas estão
+  // desabilitados, e o conteúdo das gavetas NÃO é montado.
   await expect(page.locator('[data-bloco="esqueleto"]')).toBeVisible();
-  await expect(page.locator('[data-bloco="filtros"]')).toHaveCount(0);
+  const filtros = page.locator('[data-bloco="filtros"]');
+  await expect(filtros).toHaveCount(1);
+  await expect(filtros.getByRole('button', { name: 'Janela de 5 anos' })).toBeDisabled();
   await expect(page.locator('[data-bloco="trilho"]')).toHaveCount(0);
   await expect(page.locator('[data-bloco="comparacao"]')).toHaveCount(0);
 
@@ -94,7 +113,7 @@ test('com série carregando o shell ainda não existe; ele aparece quando o dado
     timeout: 15000,
   });
   await expect(page.locator('[data-bloco="esqueleto"]')).toHaveCount(0);
-  await expect(page.locator('[data-bloco="filtros"]')).toHaveCount(1);
+  await expect(filtros.getByRole('button', { name: 'Janela de 5 anos' })).toBeEnabled();
   await expect(page.locator('[data-bloco="trilho"]')).toHaveCount(1);
   await expect(page.locator('[data-bloco="comparacao"]')).toHaveCount(1);
 
@@ -246,7 +265,7 @@ test('a gaveta direita abre, mostra as três seções e fecha com Esc', async ({
  */
 test('fechada, o trilho mostra só o gatilho; aberta, os três atalhos rolam até a seção', async ({
   page,
-}) => {
+}, testInfo) => {
   // SEIS séries de propósito: com uma só o conteúdo da gaveta cabe na caixa e não há o que
   // rolar — `scrollTop` ficaria 0 por não existir rolagem, e o teste passaria sem provar nada.
   await page.goto(
@@ -260,28 +279,35 @@ test('fechada, o trilho mostra só o gatilho; aberta, os três atalhos rolam at�
   const gaveta = page.getByTestId('gaveta-direita');
   await gatilho.click();
   await expect(gaveta).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Cores', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Eixos', exact: true })).toBeVisible();
+  await expect(gaveta.locator('[data-secao="series"]')).toBeVisible();
 
-  // Janela curta: o topo (34px) e a barra inferior (26px) são fixos, então a gaveta fica com o
-  // resto e passa a rolar. A largura do projeto é preservada (desktop e celular).
-  const { width } = page.viewportSize();
-  await page.setViewportSize({ width, height: 320 });
-  await expect
-    .poll(() => gaveta.evaluate((el) => el.scrollHeight - el.clientHeight))
-    .toBeGreaterThan(20);
+  // No celular a folha de 88% cobre o PRÓPRIO trilho: os atalhos (Cores/Eixos) não são
+  // alcançáveis com ela aberta — a folha tem cabeçalho e seções próprios. No desktop o trilho
+  // fica do lado de fora, e é ele que rola a vista.
+  if (testInfo.project.name === 'desktop') {
+    await expect(page.getByRole('button', { name: 'Cores', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Eixos', exact: true })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Eixos', exact: true }).click();
-  await expect.poll(() => gaveta.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
-  await expect(gaveta.locator('[data-secao="eixos"]')).toBeInViewport();
-  const noFim = await gaveta.evaluate((el) => el.scrollTop);
+    // Janela curta: o topo (34px) e a barra inferior (26px) são fixos, então a gaveta fica com o
+    // resto e passa a rolar.
+    const { width } = page.viewportSize();
+    await page.setViewportSize({ width, height: 320 });
+    await expect
+      .poll(() => gaveta.evaluate((el) => el.scrollHeight - el.clientHeight))
+      .toBeGreaterThan(20);
 
-  // O botão principal NÃO fecha com a gaveta aberta: ele leva à seção das séries, como os vizinhos.
-  await gatilho.click();
-  await expect(gaveta).toBeVisible();
-  await expect(gatilho).toHaveAttribute('aria-expanded', 'true');
-  await expect.poll(() => gaveta.evaluate((el) => el.scrollTop)).toBeLessThan(noFim);
-  await expect(gaveta.locator('[data-secao="series"]')).toBeInViewport();
+    await page.getByRole('button', { name: 'Eixos', exact: true }).click();
+    await expect.poll(() => gaveta.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    await expect(gaveta.locator('[data-secao="eixos"]')).toBeInViewport();
+    const noFim = await gaveta.evaluate((el) => el.scrollTop);
+
+    // O botão principal NÃO fecha com a gaveta aberta: ele leva à seção das séries, como os vizinhos.
+    await gatilho.click();
+    await expect(gaveta).toBeVisible();
+    await expect(gatilho).toHaveAttribute('aria-expanded', 'true');
+    await expect.poll(() => gaveta.evaluate((el) => el.scrollTop)).toBeLessThan(noFim);
+    await expect(gaveta.locator('[data-secao="series"]')).toBeInViewport();
+  }
 
   // O caminho de fechar com o MOUSE é o "×" do cabeçalho (o `Esc` continua valendo).
   await page.getByRole('button', { name: 'Fechar séries' }).click();
@@ -391,7 +417,10 @@ test('com série em erro, o gatilho da gaveta avisa com ponto de atenção', asy
  * §Moldura (T7) — abrir a gaveta ENCOLHE o gráfico, não o empurra para fora. A prova é dupla:
  * a largura do gráfico cai, e o documento não ganha rolagem horizontal (a moldura é `h-dvh`).
  */
-test('abrir a gaveta direita encolhe o gráfico sem estourar a moldura', async ({ page }) => {
+test('abrir a gaveta direita encolhe o gráfico sem estourar a moldura', async ({ page }, testInfo) => {
+  // No celular a gaveta é uma FOLHA sobre o gráfico (§Mobile), não uma coluna em fluxo: ela não
+  // encolhe nada. A geometria de lá é afirmada em `mobile.spec.js` (folha de 88%).
+  test.skip(testInfo.project.name !== 'desktop', 'no celular a gaveta é folha lateral');
   await page.goto('/');
   // O `preset-chip` do topo é `max-md:hidden` — no celular ele nunca fica visível. Quem prova que
   // o dado chegou (e o gráfico montou) é o próprio gráfico, nos dois projetos.

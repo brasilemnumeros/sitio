@@ -73,11 +73,17 @@ async function preparar(page) {
   // 📌 E o preset ANCORA a janela na última data ("voltar de qualquer zoom"): `from` fica em
   // `dataMaxima - 10 anos` e `to` no fim do dado. Consequência para quem escrever teste aqui: a
   // janela está COLADA na borda direita, então arrastar para a DIREITA é clampado e não tem efeito.
-  await expect.poll(async () => {
-    const j = await janela(page);
-    return j.from ? (Date.parse(j.to) - Date.parse(j.from)) / 86400000 : Infinity;
-  }, { message: 'o filtro de 10 anos tem de estreitar a janela', timeout: 20000 })
-    .toBeLessThan(365 * 12);
+  // ⚠ A janela do PRESET DO DIA já pode ser menor que 12 anos (a de hoje é de 5), então
+  // "menos de 12 anos" passa ANTES do clique surtir efeito — e o scan do minimapa pega a
+  // janela errada. A espera é pela janela do preset "10 anos" de fato (9–11 anos), não por
+  // "algo menor que 12".
+  const anosDaJanela = (j) =>
+    j.from ? (Date.parse(j.to) - Date.parse(j.from)) / 86400000 / 365.25 : Infinity;
+  await expect.poll(async () => anosDaJanela(await janela(page)), {
+    message: 'o filtro de 10 anos tem de assentar a janela em ~10 anos',
+    timeout: 20000,
+  }).toBeGreaterThan(8.5);
+  expect(anosDaJanela(await janela(page))).toBeLessThan(11.5);
 }
 
 /** Centro do minimapa em coordenadas de VIEWPORT (o que o mouse usa).
@@ -112,7 +118,9 @@ async function bordas(page) {
     }, [x, c.y]);
   };
   const alcas = [];
-  for (let x = c.x + 2; x < c.x + c.w - 2; x += 6) {
+  // passo 3 (não 6): a alça tem ~4px e um passo 6 pode PASSAR POR CIMA das duas — o scan
+  // então acha só uma e o teste falha por amostragem, não por comportamento.
+  for (let x = c.x + 2; x < c.x + c.w - 2; x += 3) {
     if ((await cursorEm(x)) === 'ew-resize') alcas.push(x);
   }
   return {

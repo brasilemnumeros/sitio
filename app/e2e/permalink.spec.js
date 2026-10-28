@@ -1,4 +1,4 @@
-import { test, expect } from './apoio.js';
+import { test, expect, abrirGavetaDireita } from './apoio.js';
 
 /**
  * O PERMALINK do app (`?series=`) pelo CAMINHO DO PRODUTO — não pelo harness.
@@ -21,7 +21,9 @@ test('sem query: entra com o PRESET do dia e o escreve em ?series=', async ({ pa
   await page.goto('/');
 
   // A home sem chave não abre vazia: o preset do dia entra pelo caminho do produto e o
-  // gráfico é desenhado (canvas do lightweight-charts dentro do container).
+  // gráfico é desenhado (canvas do lightweight-charts dentro do container). Os chips moram
+  // na gaveta direita, então ela abre primeiro.
+  await abrirGavetaDireita(page);
   await expect(chips(page).first()).toBeVisible();
   const grafico = page.getByTestId('grafico');
   await expect(grafico).toBeVisible();
@@ -35,12 +37,14 @@ test('sem query: entra com o PRESET do dia e o escreve em ?series=', async ({ pa
 
 test('?series=<id> restaura UMA série', async ({ page }) => {
   await page.goto(`/?series=${SELIC}`);
+  await abrirGavetaDireita(page);
   await expect(chips(page)).toHaveCount(1);
   await expect(chips(page).first()).toContainText(/selic/i);
 });
 
 test('?series=<id1>,<id2> restaura DUAS séries, na ordem da query', async ({ page }) => {
   await page.goto(`/?series=${SELIC},${IPCA}`);
+  await abrirGavetaDireita(page);
   await expect(chips(page)).toHaveCount(2);
   await expect(chips(page).nth(0)).toContainText(/selic/i);
   await expect(chips(page).nth(1)).toContainText(/ipca/i);
@@ -48,6 +52,7 @@ test('?series=<id1>,<id2> restaura DUAS séries, na ordem da query', async ({ pa
 
 test('id desconhecido é ignorado sem erro; a URL fica com o que restaurou', async ({ page }) => {
   await page.goto(`/?series=nao-existe,${SELIC}`);
+  await abrirGavetaDireita(page);
   await expect(chips(page)).toHaveCount(1);
   await expect(chips(page).first()).toContainText(/selic/i);
   // a URL é normalizada (store → URL): o id desconhecido sai do link copiável
@@ -58,7 +63,11 @@ test('adicionar série pela UI atualiza a URL — o link é copiável (replaceSt
   page,
 }) => {
   await page.goto(`/?series=${SELIC}`);
+  await abrirGavetaDireita(page);
   await expect(chips(page)).toHaveCount(1);
+  // fecha a gaveta: no celular ela cobre a barra superior, onde fica a busca
+  await page.getByRole('button', { name: 'Fechar séries' }).click();
+  await expect(page.getByTestId('gaveta-direita')).toBeHidden();
 
   // adiciona a segunda pela BUSCA (§1.1), não pelo console
   await page.getByRole('button', { name: 'Buscar indicador…' }).first().click();

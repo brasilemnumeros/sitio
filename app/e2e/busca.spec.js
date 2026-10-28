@@ -1,4 +1,4 @@
-import { test, expect, abrirApp, abrirBusca } from './apoio.js';
+import { test, expect, abrirApp, abrirVazio, abrirBusca } from './apoio.js';
 
 /**
  * A BUSCA (§1.1) — o caminho: abrir a modal, filtrar, escolher um indicador, o chip aparecer,
@@ -7,7 +7,8 @@ import { test, expect, abrirApp, abrirBusca } from './apoio.js';
  * store (§8).
  */
 test('abrir · filtrar · escolher · chip aparece · ESC fecha', async ({ page }) => {
-  await abrirApp(page);
+  // do estado VAZIO: a home abre com o preset do dia, e somar a ele daria 3 chips em vez de 1
+  await abrirVazio(page);
 
   // abre — a modal é um role="dialog" com rótulo próprio (§1.1)
   await page.getByRole('button', { name: 'Buscar indicador…' }).first().click();

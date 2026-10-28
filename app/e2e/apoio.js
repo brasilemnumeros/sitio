@@ -38,6 +38,34 @@ export async function carregarExemplo(page) {
   await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(2);
 }
 
+/**
+ * A home VAZIA, de propósito: `?series=` só com id inválido cai no `EstadoInicial` — NÃO no
+ * preset do dia (a query sempre vence). É o ponto de partida dos cenários que precisam do
+ * atalho "Selic × IPCA" ou de afirmar a ausência de casca.
+ */
+export async function abrirVazio(page) {
+  await page.goto('/?series=nao-existe');
+  await expect(page.locator('[data-bloco="inicial"]')).toBeVisible();
+}
+
+/** Abre a gaveta direita SE ainda não estiver aberta (o trilho é o gatilho). */
+export async function abrirGavetaDireita(page) {
+  const gaveta = page.getByTestId('gaveta-direita');
+  if (!(await gaveta.isVisible())) {
+    await page.getByRole('button', { name: /^Séries e eixos/ }).click();
+  }
+  await expect(gaveta).toBeVisible();
+}
+
+/** Abre a gaveta inferior SE ainda não estiver aberta. Exige série (sem ela a alça é inerte). */
+export async function abrirGavetaInferior(page) {
+  const gaveta = page.getByTestId('gaveta-inferior');
+  if (!(await gaveta.isVisible())) {
+    await page.getByRole('button', { name: /Comparação por mandato/ }).click();
+  }
+  await expect(gaveta).toBeVisible();
+}
+
 /** Abre a modal de busca pelo botão do topo (posição 1 da §1). */
 export async function abrirBusca(page) {
   await page.getByRole('button', { name: 'Buscar indicador…' }).first().click();

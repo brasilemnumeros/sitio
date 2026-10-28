@@ -84,3 +84,37 @@ export async function adicionarPorBusca(page, termo) {
   await campo.press('Escape'); // fecha a modal
   await expect(page.getByRole('dialog', { name: 'Buscar indicadores' })).toBeHidden();
 }
+
+/** Falha se a página rolar em qualquer eixo (a home é uma moldura de viewport). */
+export async function semTransbordo(page) {
+  const m = await page.evaluate(() => ({
+    w: document.documentElement.scrollWidth,
+    h: document.documentElement.scrollHeight,
+    vw: window.innerWidth,
+    vh: window.innerHeight,
+  }));
+  expect(m.w, `transbordo horizontal (${m.w} > ${m.vw})`).toBeLessThanOrEqual(m.vw + 1);
+  expect(m.h, `transbordo vertical (${m.h} > ${m.vh})`).toBeLessThanOrEqual(m.vh + 1);
+}
+
+/** Caixas da moldura, em px, para asserções de geometria. */
+export async function medirCaixas(page) {
+  return page.evaluate(() => {
+    const r = (sel) => {
+      const el = document.querySelector(sel);
+      if (!el) return null;
+      const b = el.getBoundingClientRect();
+      return { x: b.x, y: b.y, w: b.width, h: b.height, bottom: b.bottom };
+    };
+    return {
+      topo: r('[data-testid="barra-superior"]'),
+      grafico: r('[data-testid="grafico"]'),
+      minimapa: r('[data-testid="minimapa"]'),
+      trilho: r('[data-testid="trilho-direito"]'),
+      direita: r('[data-testid="gaveta-direita"]'),
+      inferior: r('[data-testid="barra-inferior"]'),
+      vw: window.innerWidth,
+      vh: window.innerHeight,
+    };
+  });
+}

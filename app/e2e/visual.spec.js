@@ -35,10 +35,10 @@ for (const [nome, width, height] of [
     await semTransbordo(page);
 
     const c = await medirCaixas(page);
-    const topoEsperado = width < 640 ? 30 : 34;
+    const topoEsperado = width < 640 ? 36 : 44;
     expect(Math.abs(c.topo.h - topoEsperado)).toBeLessThanOrEqual(TOL);
-    expect(Math.abs(c.inferior.h - 26)).toBeLessThanOrEqual(TOL);
-    expect(Math.abs(c.trilho.w - 34)).toBeLessThanOrEqual(TOL);
+    expect(Math.abs(c.inferior.h - (width < 640 ? 32 : 36))).toBeLessThanOrEqual(TOL);
+    expect(Math.abs(c.trilho.w - (width < 640 ? 40 : 44))).toBeLessThanOrEqual(TOL);
     expect(Math.abs(c.minimapa.h - (width < 768 ? 40 : 48))).toBeLessThanOrEqual(TOL);
 
     // o gráfico ocupa o que sobra, descontando topo, barra inferior e minimapa

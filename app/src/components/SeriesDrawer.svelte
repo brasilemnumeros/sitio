@@ -96,13 +96,13 @@
   });
 </script>
 
-<!-- TRILHO · 34px, sempre visível. `aria-expanded`/`aria-controls` descrevem a gaveta que ele
+<!-- TRILHO · 44px, sempre visível. `aria-expanded`/`aria-controls` descrevem a gaveta que ele
      abre; o `aria-label` inclui o estado de erro porque o ponto é só uma bolinha — quem não vê
      a cor precisa ouvir o motivo. -->
 <aside
   data-testid="trilho-direito"
   inert={inativa}
-  class="flex w-[34px] shrink-0 flex-col items-center gap-1 border-l border-slate-800 py-1"
+  class="flex w-10 shrink-0 flex-col items-center gap-1.5 border-l border-slate-800 py-1.5 md:w-11"
   aria-label="Gaveta de séries"
 >
   <button
@@ -111,7 +111,7 @@
     aria-label={temErro && !aberta ? 'Séries e eixos — há séries com erro' : 'Séries e eixos'}
     aria-expanded={aberta}
     aria-controls="gaveta-direita"
-    class="relative flex min-h-11 w-full items-center justify-center rounded px-1 py-2 text-[11px] md:min-h-0 text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+    class="relative flex min-h-11 w-full items-center justify-center rounded px-1 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:min-h-0 md:text-[13px]"
     title={aberta ? 'Ir para as séries' : 'Abrir séries e eixos'}
     onclick={aoGatilho}
   >
@@ -128,14 +128,14 @@
   {#if aberta}
     <button
       type="button"
-      class="w-full min-h-11 rounded px-1 py-2 text-[11px] md:min-h-0 text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+      class="w-full min-h-11 rounded px-1 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:min-h-0 md:text-[13px]"
       onclick={() => irPara('cores')}
     >
       <span class="[writing-mode:vertical-rl]">Cores</span>
     </button>
     <button
       type="button"
-      class="w-full min-h-11 rounded px-1 py-2 text-[11px] md:min-h-0 text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+      class="w-full min-h-11 rounded px-1 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:min-h-0 md:text-[13px]"
       onclick={() => irPara('eixos')}
     >
       <span class="[writing-mode:vertical-rl]">Eixos</span>

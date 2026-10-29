@@ -234,7 +234,7 @@ test('com série, o gráfico ocupa a maior parte da altura', async ({ page }) =>
 
 /**
  * §Gaveta direita (T7) — séries, cores e eixos num lugar fixo. A gaveta é um SEGUNDO `<aside>`,
- * separado do trilho de 34px: o trilho não some (é o gatilho) e o painel entra em fluxo ao lado
+ * separado do trilho de 44px: o trilho não some (é o gatilho) e o painel entra em fluxo ao lado
  * do gráfico. `hidden` — e não `translate` — é o que a mantém fora da árvore de acessibilidade
  * quando fechada; um painel só deslocado continuaria focável por TAB.
  */
@@ -288,7 +288,7 @@ test('fechada, o trilho mostra só o gatilho; aberta, os três atalhos rolam at�
     await expect(page.getByRole('button', { name: 'Cores', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Eixos', exact: true })).toBeVisible();
 
-    // Janela curta: o topo (34px) e a barra inferior (26px) são fixos, então a gaveta fica com o
+    // Janela curta: o topo (44px) e a barra inferior (36px) são fixos, então a gaveta fica com o
     // resto e passa a rolar.
     const { width } = page.viewportSize();
     await page.setViewportSize({ width, height: 320 });

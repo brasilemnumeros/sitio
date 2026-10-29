@@ -56,15 +56,15 @@ const canonicalFinal = new URL(caminho, Astro.site).href;
          site no HTML: um footer é exatamente a casca que ESTE layout existe para não carregar —
          a barra inferior do app é o ÚNICO footer permitido na `/` (pega-se por `data-testid`,
          e é do app, não daqui). §10.5: link visível.
-         🔴 POSIÇÃO (Task 8): a barra inferior do app tem 26px FECHADA (a alça da gaveta de
-         mandatos/comparação). Com `bottom-1` o link ficava POR BAIXO dela — obrigação legal
-         escondida. `bottom-7` (28px) o põe logo acima da barra, e `z-30` o mantém acima da
-         moldura do app, que é renderizada antes (o `#app` está no slot). Aberta a gaveta, ela
-         cobre a faixa do canto — aceitável: o link continua no DOM e visível com a gaveta
-         recolhida, que é o estado padrão da `/`. -->
+         🔴 POSIÇÃO (Task 8): a barra inferior do app tem 36px FECHADA no desktop (32px no
+         celular) — a alça da gaveta de mandatos/comparação. Com `bottom-1` o link ficava POR
+         BAIXO dela — obrigação legal escondida. `bottom-9`/`md:bottom-11` (36/44px) o põe logo
+         acima da barra, e `z-30` o mantém acima da moldura do app, que é renderizada antes (o
+         `#app` está no slot). Aberta a gaveta, ela cobre a faixa do canto — aceitável: o link
+         continua no DOM e visível com a gaveta recolhida, que é o estado padrão da `/`. -->
     <a
       href="https://www.tradingview.com/"
-      class="fixed right-2 bottom-7 z-30 text-xs text-gray-300/90 no-underline hover:text-gray-200"
+      class="fixed right-2 bottom-9 z-30 text-xs text-gray-300/90 no-underline hover:text-gray-200 md:bottom-11"
       target="_blank"
       rel="noopener noreferrer">TradingView Lightweight Charts</a
     >

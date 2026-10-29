@@ -1,4 +1,4 @@
-import { test, expect, abrirApp, adicionarPorBusca } from './apoio.js';
+import { test, expect, abrirApp, abrirVazio, adicionarPorBusca } from './apoio.js';
 
 /**
  * O MINIMAPA (§2) — o gesto que devolve "voltar de qualquer zoom".
@@ -55,7 +55,12 @@ async function janela(page) {
 }
 
 async function preparar(page) {
-  await abrirApp(page);
+  // ⚠ Abre VAZIO, não com o preset do dia: os testes do minimapa medem GEOMETRIA do gesto
+  // (deslocar sem redimensionar), e o preset do dia muda com a data — em 2026-10-28 ele trouxe
+  // séries de granularidade mensal FIM de mês, e o arrasto passou a assentar as bordas em
+  // início de mês: a largura variava 61 dias e este teste (limite de 60) ficava vermelho só
+  // porque o dia mudou. O contrato do gesto não depende do conjunto de séries do dia.
+  await abrirVazio(page);
   // uma série basta: o minimapa precisa de dado para ter alcance de tempo
   await adicionarPorBusca(page, 'IPCA');
   // ⚠ O filtro fica DESABILITADO enquanto não há série carregada (§9.5) — clicar antes disso não

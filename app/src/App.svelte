@@ -110,13 +110,13 @@
      falha o build. O sufixo de opacidade cheia existe para não colidir com a forma nua
      que também aparece em `docs/plans/`, que o Tailwind varre — ela daria falso OK. -->
 <main class="flex h-dvh flex-col overflow-hidden bg-[#0e1117]/100">
-  <!-- 1 · barra superior (34px; 30px no celular). A T6 pôs aqui a marca, a busca, as cinco
+  <!-- 1 · barra superior (44px; 36px no celular). A T6 pôs aqui a marca, a busca, as cinco
        janelas, o chip do preset e as ações — tudo dentro de `HomeToolbar`. A BUSCA deixou de
        ser um botão solto e passou a morar na barra: o affordance duplicado do estado vazio
        (um segundo "Buscar indicador…" na mesma tela) continua desfeito. -->
   <HomeToolbar aoAbrirBusca={() => (buscaAberta = true)} />
 
-  <!-- MIOLO: a coluna do gráfico (`flex-1`) e o trilho direito (34px, marcador da T7). O
+  <!-- MIOLO: a coluna do gráfico (`flex-1`) e o trilho direito (44px, marcador da T7). O
        `min-h-0` é o que permite o gráfico ENCOLHER quando a gaveta inferior abrir (T8);
        sem ele um filho flex recusa ficar menor que o próprio conteúdo e a moldura estoura. -->
   <div class="flex min-h-0 flex-1">
@@ -150,7 +150,7 @@
       </div>
     </div>
 
-    <!-- 2 · gaveta direita (T7): trilho de 34px, sempre visível, MAIS o painel de 320px que
+    <!-- 2 · gaveta direita (T7): trilho de 44px, sempre visível, MAIS o painel de 320px que
          entra em fluxo ao lado do gráfico (`hidden` quando fechado). Em fluxo, e não por cima:
          abrir encolhe o gráfico em vez de tapá-lo, e nada rola junto com a área do gráfico.
          O componente é um só porque as duas peças compartilham o estado e a rolagem das seções. -->
@@ -162,7 +162,7 @@
     />
   </div>
 
-  <!-- 3 · gaveta inferior (26px fechada). O QUE ERA UM PLACEHOLDER NA T5 é agora a alça de
+  <!-- 3 · gaveta inferior (36px fechada; 32px no celular). O QUE ERA UM PLACEHOLDER NA T5 é agora a alça de
        mandatos/comparação (`BottomDrawer`): fechada mostra o resumo (`N séries · M eixos`),
        aberta cresce para cima e o gráfico cede — em fluxo, nunca por cima. Abrir/fechar não
        escreve em `viewport` nem em `mandate` (§Moldura). -->

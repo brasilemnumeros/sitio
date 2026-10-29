@@ -7,7 +7,7 @@
   // store `viewport`) e o preset escreve o conjunto de séries numa única chamada a
   // `substituirSeries` — nenhum dos dois conhece a lib do gráfico (§8.1).
   //
-  // No celular (abaixo de `md`) ficam só marca, busca e janela — é o topo de 30px da spec.
+  // No celular (abaixo de `md`) ficam só marca, busca e janela — é o topo de 36px da spec.
   // As janelas continuam visíveis: quem rola é a PRÓPRIA barra (`overflow-x-auto`), nunca o
   // documento (o `testar-mobile` do build mede 375px e não pode achar transbordo).
   import { onMount, onDestroy } from 'svelte';
@@ -106,7 +106,7 @@
 
 <header
   data-testid="barra-superior"
-  class="relative z-20 flex h-[34px] min-w-0 shrink-0 items-center gap-2 overflow-x-auto border-b border-slate-800 px-2 text-xs max-md:h-[30px] md:overflow-visible"
+  class="relative z-20 flex h-11 min-w-0 shrink-0 items-center gap-2.5 overflow-x-auto border-b border-slate-800 px-3 text-[13px] max-md:h-9 md:overflow-visible md:text-sm"
 >
   <!-- Marca: identidade, NÃO link para a própria home (a spec veta a ilha de navegação).
        O texto fica no DOM mesmo quando encolhe (`truncate`). -->
@@ -119,12 +119,12 @@
        nome acessível continuar sendo "Buscar indicador…" nos dois tamanhos. -->
   <button
     type="button"
-    class="flex shrink-0 items-center gap-1.5 rounded border border-slate-700 px-2 py-0.5 text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+    class="flex shrink-0 items-center gap-1.5 rounded border border-slate-700 px-2.5 py-1 text-slate-300 hover:bg-slate-800 hover:text-slate-100"
     onclick={aoAbrirBusca}
     title="Buscar indicador (⌘K)"
   >
     <svg
-      class="h-3.5 w-3.5"
+      class="h-4 w-4"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -135,7 +135,7 @@
       <path d="m20 20-3.5-3.5"></path>
     </svg>
     <span class="max-md:sr-only">Buscar indicador…</span>
-    <kbd class="hidden rounded border border-slate-700 px-1 text-[10px] text-slate-400 md:inline" aria-hidden="true"
+    <kbd class="hidden rounded border border-slate-700 px-1.5 text-[11px] text-slate-400 md:inline" aria-hidden="true"
       >⌘K</kbd
     >
   </button>
@@ -143,13 +143,13 @@
   <!-- As cinco janelas: as mesmas de sempre, na forma compacta. -->
   <TimeFilters compacto />
 
-  <!-- Chip do preset + menu. Escondido no celular: o topo de 30px é marca+busca+janela. -->
+  <!-- Chip do preset + menu. Escondido no celular: o topo de 36px é marca+busca+janela. -->
   <div class="relative max-md:hidden" bind:this={raizChip}>
     <button
       type="button"
       data-testid="preset-chip"
       bind:this={chip}
-      class="flex items-center gap-1 rounded border border-slate-700 px-2 py-0.5 text-slate-200 hover:bg-slate-800"
+      class="flex items-center gap-1 rounded border border-slate-700 px-2.5 py-1 text-slate-200 hover:bg-slate-800"
       aria-haspopup="menu"
       aria-expanded={menuAberto}
       aria-controls="menu-presets"
@@ -157,7 +157,7 @@
     >
       <span class="max-w-[9rem] truncate">{nomePreset}</span>
       <svg
-        class="h-3 w-3 text-slate-400"
+        class="h-3.5 w-3.5 text-slate-400"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -203,20 +203,20 @@
   <!-- Saída para o conteúdo: sem ela a home vira uma ilha. Discreta e fora do celular. -->
   <a
     href="/blog"
-    class="hidden shrink-0 rounded px-1.5 py-0.5 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:inline"
+    class="hidden shrink-0 rounded px-2 py-1 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:inline"
     >Artigos</a
   >
 
   <button
     type="button"
     data-testid="botao-permalink"
-    class="hidden shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:flex"
+    class="hidden shrink-0 items-center gap-1 rounded px-2 py-1 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:flex"
     aria-label={copiado ? 'Link copiado' : 'Copiar link do estado atual'}
     title="Copiar link do estado atual"
     onclick={copiarPermalink}
   >
     <svg
-      class="h-3.5 w-3.5"
+      class="h-4 w-4"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
@@ -232,13 +232,13 @@
   {#if podeTelaCheia}
     <button
       type="button"
-      class="hidden shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:flex"
+      class="hidden shrink-0 items-center gap-1 rounded px-2 py-1 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:flex"
       aria-label="Tela cheia"
       title="Tela cheia"
       onclick={alternarTelaCheia}
     >
       <svg
-        class="h-3.5 w-3.5"
+        class="h-4 w-4"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"

@@ -54,7 +54,7 @@ test('?series= vence o preset e não duplica', async ({ page }) => {
 });
 
 test('escolher outro preset SUBSTITUI o conjunto e reescreve a URL', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop', 'o chip do preset é escondido no topo de 30px');
+  test.skip(testInfo.project.name !== 'desktop', 'o chip do preset é escondido no topo de 36px');
   await page.goto('/');
   await abrirGavetaDireita(page);
   const chip = page.getByTestId('preset-chip');
@@ -72,7 +72,7 @@ test('escolher outro preset SUBSTITUI o conjunto e reescreve a URL', async ({ pa
 });
 
 test('trocar de preset duas vezes em sequência não duplica séries', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop', 'o chip do preset é escondido no topo de 30px');
+  test.skip(testInfo.project.name !== 'desktop', 'o chip do preset é escondido no topo de 36px');
   await page.goto('/');
   await abrirGavetaDireita(page);
   const chip = page.getByTestId('preset-chip');

@@ -120,7 +120,7 @@
   );
 
   const CLASSE_BASE = compacto
-    ? 'rounded border px-1.5 py-0.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent'
+    ? 'rounded border px-2 py-1 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent'
     : 'rounded border px-2.5 py-1 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent';
   const CLASSE_ACESO =
     'border-sky-500 bg-sky-50 text-sky-800 dark:border-sky-400 dark:bg-sky-950 dark:text-sky-200';

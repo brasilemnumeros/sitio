@@ -1,9 +1,9 @@
 <script>
   // GAVETA INFERIOR (T8) — mandatos e comparação num lugar fixo (§1 do desenho do terminal).
   //
-  // A barra de 26px deixou de ser um placeholder: ela é a ALÇA da gaveta e, fechada, mostra o
+  // A barra de 36px deixou de ser um placeholder: ela é a ALÇA da gaveta e, fechada, mostra o
   // RESUMO do que está em cena (`N séries · M eixos`). O resumo mora aqui, e não no gráfico,
-  // porque é a única frase que cabe em 26px e responde "o que estou vendo?".
+  // porque é a única frase que cabe na barra e responde "o que estou vendo?".
   //
   // O estado `aberta` NÃO vive neste componente: a gaveta é irmã da gaveta direita, e a
   // PRIORIDADE do `Esc` entre camadas (busca → direita → inferior) é da `App` (T9). Aqui só
@@ -127,19 +127,20 @@
   });
 
   // 🔴 `$derived` — não `const`. Uma `const` que lê `expandida` congela no primeiro render
-  // (medido: a barra ficava em 26px para sempre e o painel crescia PARA FORA da moldura).
+  // (medido: a barra ficava com a altura antiga para sempre e o painel crescia PARA FORA da moldura).
   const CLASSE_CASCA = $derived(
     expandida
-      ? // Aberta: cresce para cima e o gráfico (`flex-1`) cede. No celular a barra FICA em 26px —
+      ? // Aberta: cresce para cima e o gráfico (`flex-1`) cede. No celular a barra FICA em 32px —
         // o painel é uma folha fixa acima dela, e a moldura não pode pular entre os dois layouts.
-        'h-[45dvh] max-h-[360px] max-md:h-[26px] max-md:max-h-none'
-      : // Fechada: a barra de sempre. `26px` é medida da SPEC (T5/T11), não um chute.
-        'h-[26px]',
+        'h-[45dvh] max-h-[360px] max-md:h-8 max-md:max-h-none'
+      : // Fechada: a barra de sempre. `36px` (32px no celular) é a medida da SPEC (T5/T11),
+        // revista em 2026-10-28 para dar respiro à fonte de 13px.
+        'h-9 max-md:h-8',
   );
 
   const CLASSE_PAINEL =
     'flex min-h-0 flex-1 flex-col border-t border-slate-800 bg-slate-900 ' +
-    'max-md:fixed max-md:inset-x-0 max-md:bottom-[26px] max-md:z-40 max-md:h-[45dvh] ' +
+    'max-md:fixed max-md:inset-x-0 max-md:bottom-8 max-md:z-40 max-md:h-[45dvh] ' +
     'max-md:max-h-[70dvh] max-md:rounded-t-xl max-md:border-t max-md:border-slate-700 ' +
     'max-md:shadow-2xl';
 </script>
@@ -166,7 +167,7 @@
   inert={inativa}
   class="relative z-40 flex shrink-0 flex-col overflow-hidden max-md:z-30 {CLASSE_CASCA}"
 >
-  <!-- A ALÇA · 26px. É um `<button>` de verdade (não um `<div>` com `onclick`) porque ela
+  <!-- A ALÇA · 36px (32px no celular). É um `<button>` de verdade (não um `<div>` com `onclick`) porque ela
        carrega ESTADO (`aria-expanded`) e a gaveta que ela controla (`aria-controls`).
        DESABILITADA — nunca escondida — quando não há série: a moldura não pula (§9.1). -->
   <button
@@ -180,7 +181,7 @@
       : expandida
         ? 'Recolher mandatos e comparação'
         : 'Abrir mandatos e comparação'}
-    class="flex h-[26px] w-full shrink-0 items-center gap-2 border-t border-slate-800 px-2 text-left text-[11px] text-slate-400 hover:bg-slate-800 hover:text-slate-200 disabled:cursor-not-allowed disabled:text-slate-600 disabled:hover:bg-transparent"
+    class="flex h-8 w-full shrink-0 items-center gap-2 border-t border-slate-800 px-3 text-left text-xs text-slate-400 hover:bg-slate-800 hover:text-slate-200 disabled:cursor-not-allowed disabled:text-slate-600 disabled:hover:bg-transparent md:h-9 md:text-[13px]"
     onclick={alternar}
     onpointerdown={aoPressionar}
     onpointerup={aoSoltar}
@@ -209,7 +210,7 @@
       <div
         class="flex shrink-0 items-center justify-between gap-2 border-b border-slate-800 px-2 py-1"
       >
-        <h2 class="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
+        <h2 class="text-xs font-semibold tracking-wide text-slate-400 uppercase">
           Mandatos e comparação
         </h2>
         <button

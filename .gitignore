@@ -32,3 +32,4 @@ app/e2e/.artefatos/
 
 # Mockups do brainstorming (superpowers)
 .superpowers/
+.playwright-mcp/

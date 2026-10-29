@@ -280,7 +280,7 @@ test('a matriz aparece com série e traz os estados de célula por texto', async
 });
 
 /**
- * A GAVETA INFERIOR (T8) — o trilho de mandatos e a matriz vivem numa gaveta, e a barra de 26px
+ * A GAVETA INFERIOR (T8) — o trilho de mandatos e a matriz vivem numa gaveta, e a barra de 36px
  * é a ALÇA dela. O resumo (`N séries · M eixos`) é o único conteúdo da barra fechada: ele diz o
  * que está em cena sem precisar abrir. `Esc` fecha — a prioridade ENTRE camadas é da T9, aqui a
  * gaveta só respeita quem já tratou a tecla.

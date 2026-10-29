@@ -134,7 +134,7 @@ test('clicar num mandato FILTRA o período dele e clicar de novo volta ao interv
 
   // ⚠ Um dono por vez: com o mandato na janela, NENHUM preset relativo acende (a duração de um
   // mandato de 4 anos fica a 1,0 do "5a", fora da tolerância de 0,5 — mas isto não depende disso).
-  for (const nome of ['Janela de 1 ano', 'Janela de 5 anos', 'Janela de 10 anos', 'Janela de 30 anos']) {
+  for (const nome of ['Janela de 1 ano', 'Janela de 5 anos', 'Janela de 10 anos']) {
     await expect(filtros.getByRole('button', { name: nome })).toHaveAttribute('aria-pressed', 'false');
   }
 

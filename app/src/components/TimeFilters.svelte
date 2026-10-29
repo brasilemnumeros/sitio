@@ -15,7 +15,7 @@
 
   /** `compacto` é a forma da barra SUPERIOR (T6): sem o rótulo "Janela de tempo" nem a
    *  mensagem de motivo, botões pequenos. A lógica de `viewport` NÃO muda — este componente
-   *  continua sendo o único dono das escritas de janela, e os cinco botões são os mesmos. */
+   *  continua sendo o único dono das escritas de janela, e os quatro botões são os mesmos. */
   let { compacto = false } = $props();
 
   let itens = $derived($seriesStore.itens);
@@ -63,12 +63,16 @@
     return `${String(alvo).padStart(4, '0')}-${String(mes).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   }
 
-  /** Os quatro presets de janela relativa; "Tudo" não é ano — é `resetarJanela()`. */
+  /** Os três presets de janela relativa; "Tudo" não é ano — é `resetarJanela()`.
+   *
+   * 🔴 Saiu o "30a" (2026-10-28, decisão do usuário): era **o mesmo que "Tudo"**. Com a série
+   * mais longa começando em 1995 e a última data em 2025, 30 anos pedem 1995 — a janela completa.
+   * O botão só repetia o vizinho e pedia um número que o dado não garante (a série mais longa
+   * cresce com o tempo; se o `to` avançar sem o `from` acompanhar, ele deixa de ser "Tudo"). */
   const PRESETS = [
     { id: '1a', anos: 1, nome: 'Janela de 1 ano' },
     { id: '5a', anos: 5, nome: 'Janela de 5 anos' },
     { id: '10a', anos: 10, nome: 'Janela de 10 anos' },
-    { id: '30a', anos: 30, nome: 'Janela de 30 anos' },
   ];
 
   const fromDe = (preset) => subtrairAnos(dataMaxima, preset.anos);
@@ -100,8 +104,8 @@
 
   // O preset "aceso" é DERIVADO da store — nunca de estado local. Compara por DURAÇÃO, não
   // por igualdade de `from`: a lib assenta a borda esquerda no primeiro dado (§8.1), então um
-  // `from` que pede antes do início da série volta um pouco à frente — igualdade exata apagaria
-  // o realce do "30a" justamente onde ele pediu mais do que existe. Se o usuário arrastar no
+  // `from` que pede antes do início da série volta um pouco à frente — igualdade exata não
+  // acenderia o preset justamente onde ele pediu mais do que existe. Se o usuário arrastar no
   // minimapa, a duração deixa de casa com qualquer preset e nenhum acende: correto.
   const ativo = (preset) => {
     if (selecionado) return false;    // a janela é do mandato — ver a nota do `selecionado`

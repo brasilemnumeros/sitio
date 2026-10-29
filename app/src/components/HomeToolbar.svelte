@@ -140,7 +140,8 @@
     >
   </button>
 
-  <!-- As cinco janelas: as mesmas de sempre, na forma compacta. -->
+  <!-- As quatro janelas: as mesmas de sempre, na forma compacta. O "30a" saiu em 2026-10-28
+       (era o mesmo que "Tudo") — ver a nota em TimeFilters. -->
   <TimeFilters compacto />
 
   <!-- Chip do preset + menu. Escondido no celular: o topo de 36px é marca+busca+janela. -->

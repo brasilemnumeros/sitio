@@ -382,7 +382,7 @@ Um arquivo único não serve: 5.570 entidades × ~8 mandatos dão dezenas de mil
       "partido": "PT",
       "tipo": "eleito",
       "inicio": "2015-01-01",
-      "fim": "2016-08-31",
+      "fim": "2016-05-11",
       "mandatoDe": { "inicio": "2015-01-01", "fim": "2018-12-31" }
     },
     {
@@ -414,6 +414,15 @@ Campos: `id` estável (`<esfera>-<ano-de-início>-<slug>`), `rotulo` curto para 
 ### 7.3 Decisões de modelagem
 
 **1. `inicio`/`fim` guardam o exercício efetivo, não o mandato formal.** É o que a faixa deve pintar e o que a matriz deve medir. Temer exercendo a partir de 12/05/2016 é um período real — e foi interino de maio a agosto, o que motiva o campo `tipo`. O mandato formal não se perde: fica em `mandatoDe`.
+
+> **Emenda (2026-10-28) — Dilma II terminava no fim FORMAL, não no do exercício.** O arquivo
+> publicava `fim: "2016-08-31"` (data da cassação) enquanto o Temer já exercia desde 12/05/2016:
+> **111 dias de sobreposição** entre as faixas, lidos como um terceiro período no gráfico. O fim
+> formal já vivia em `mandatoDe` — repeti-lo no `fim` era justamente violar a regra desta seção.
+> Passa a `2016-05-11` (último dia de exercício). As faixas ficam contíguas em 12/05/2016 e a
+> coluna "Dilma II" da matriz de cobertura passa de 20 para 17 pontos mensais. Os totais de
+> células "abaixo do esperado" não mudam (18, sendo 13 no Temer): 17 pontos é exatamente o
+> esperado para jan/2015–mai/2016.
 
 **2. Datas são explícitas e nunca derivadas de regra.** Tentador assumir "posse em 1º de janeiro, quatro anos" — e é falso na história brasileira: a posse presidencial era **15 de março** até 1994 (Collor 1990-03-15, Itamar 1992-10-02, FHC I só em 1995-01-01). O município começa em 1989. Afastamentos e intervenções existem. Data explícita é o que impede o modelo de carregar direito eleitoral dentro.
 
@@ -978,31 +987,35 @@ Pares mais compatíveis medidos: `igpm` × `selic-meta` (1,056) · `selic-meta` 
 
 Pares menos compatíveis medidos: `populacao-total` × `populacao-variacao` (20.921.102) · `caged` × `populacao-variacao` (11.540.627) · `homicidios-armas-fogo` × `populacao-total` (5.880.513).
 
-### Cobertura por mandato (remedida em 2026-10-19; antes em 2026-10-15 e 2026-10-14)
+### Cobertura por mandato (remedida em 2026-10-28; antes em 2026-10-19, 2026-10-15 e 2026-10-14)
 
 Pontos de cada série dentro de cada mandato federal, conforme o modelo da seção 7 (exercício efetivo). **Δ precisa de 2+ pontos; "—" é ausência de cobertura.**
 
 | série | FHC II | Lula I | Lula II | Dilma I | Dilma II | Temer | Bolsonaro | Lula III |
 |---|---|---|---|---|---|---|---|---|
-| `caged-total-mensal` | 48 | 48 | 48 | 48 | 20 | 31 | 48 | 32 |
+| `caged-total-mensal` | 48 | 48 | 48 | 48 | 17 | 31 | 48 | 32 |
 | `homicidios-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | **1** |
 | `homicidios-armas-fogo-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | **—** |
 | `proporcao-homicidios-armas-fogo-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | **—** |
-| `igpm-acum-12m` | 48 | 48 | 48 | 48 | 20 | 31 | 48 | 31 |
-| `ipca-acum-12m` | 48 | 48 | 48 | 48 | 20 | 31 | 48 | 30 |
-| `mvgr-nominal` | **—** | **34** | 48 | 48 | 20 | 31 | 48 | 31 |
-| `mvgr-real` | **—** | **34** | 48 | 48 | 20 | 31 | 48 | 31 |
+| `igpm-acum-12m` | 48 | 48 | 48 | 48 | 17 | 31 | 48 | 31 |
+| `ipca-acum-12m` | 48 | 48 | 48 | 48 | 17 | 31 | 48 | 30 |
+| `mvgr-nominal` | **—** | **34** | 48 | 48 | 17 | 31 | 48 | 31 |
+| `mvgr-real` | **—** | **34** | 48 | 48 | 17 | 31 | 48 | 31 |
 | `pib-real-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | 2 |
 | `populacao-total-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | 2 |
 | `populacao-variacao-anual` | 4 | 4 | 4 | 4 | 2 | 2 | 4 | 2 |
-| `selic-meta-acum-12m` | 46 | 48 | 48 | 48 | 20 | 31 | 48 | 34 |
-| `selic-over-acum-12m` | 48 | 48 | 48 | 48 | 20 | 31 | 48 | 34 |
+| `selic-meta-acum-12m` | 46 | 48 | 48 | 48 | 17 | 31 | 48 | 34 |
+| `selic-over-acum-12m` | 48 | 48 | 48 | 48 | 17 | 31 | 48 | 34 |
 
 Resumo: **104 células possíveis** (13 × 8) · **96 calculáveis (92%)** · **3 parciais** · **4 sem cobertura (3%)** — `mvgr-*` no FHC II (a série começa em 2004-03) e os dois `homicidios-*` no Lula III (as séries terminam em 2022) · **1 indefinida** — `homicidios-anual` no Lula III, com 1 ponto só.
 
 > **Nota (2026-10-15):** quadro remedido após a dedupe da fatia 11. As células que mudaram foram só das 4 séries deduplicadas: `caged-total-mensal` no Lula I (49→48) e Dilma II (21→20); `mvgr-nominal` e `mvgr-real` no Lula I (35→34) e Dilma II (21→20); `pib-real-anual` no Lula I (5→4) e Dilma II (3→2). O resumo **não muda** — 104 células, 99 calculáveis, 4 sem cobertura, 1 indefinida — e o total de células abaixo do esperado **continua 15**.
 
 > **Nota (2026-10-19) — a data passou a ser o dia 01 do mês de referência.** Motivo e medição em `dados/canonicalizar-dados.py`: com o carimbo no fim do mês, `selic-meta`, `selic-over` e `igpm` tinham **zero** datas em comum com o `ipca` (união de 675 = 320 + 355), e o crosshair da lib só desenha a bolinha da série que tem ponto exato no índice — 0 de 271 posições com as duas. Células que mudaram: `igpm-acum-12m`, `selic-meta-acum-12m` e `selic-over-acum-12m` no **Temer**, 32 → 31 — o ponto de maio/2016 era `2016-05-31` (dentro de um mandato que começa em 2016-05-12) e virou `2016-05-01`, que é mês de referência da Dilma II. O resumo passa a **96 calculáveis + 3 parciais**, e as células abaixo do esperado vão de **15 para 18** — as três novas são exatamente essas, e o `ipca-acum-12m` no Temer já era 31 pelo mesmo motivo (ele já usava o dia 01).
+>
+> ⚠️ **Correção (2026-10-28): a nota acima descrevia uma mudança que não tinha sido aplicada.** O script `dados/canonicalizar-dados.py` não existe no histórico do repo `dados` (o único conversor, `converter-schema-canonico.py`, só deduplica e adiciona `value`), e os três JSONs seguiam com carimbo no **fim** do mês — foi por isso que o teste de medição falhava em 2 células (Temer 32 em vez de 31). A canonicalização foi feita de fato em 2026-10-28 sobre `igpm-acum-12m` (349 datas), `selic-meta-acum-12m` (320) e `selic-over-acum-12m` (359).
+
+> **Nota (2026-10-28) — Dilma II passa a terminar no fim do EXERCÍCIO.** O `fim` publicava `2016-08-31` (data da cassação) enquanto o Temer já exercia desde `2016-05-12`: 111 dias de sobreposição entre as faixas no gráfico. Pelo §7.3.1 o `fim` é de exercício e a data formal já vive em `mandatoDe`; passa a `2016-05-11`. Efeito na tabela: a coluna **Dilma II** das 7 séries mensais cai de **20 para 17** (jan/2015–mai/2016) — exatamente o esperado pela régua de meses. As colunas anuais seguem **2**. O resumo não muda (104 células, 96 calculáveis, 3 parciais, 4 sem cobertura, 1 indefinida) e as **18** células abaixo do esperado também não (17 pontos não é déficit).
 
 > ⚠️ **A régua da §7.3 ficou desalinhada da convenção e isso é item aberto, não decisão.** `pontosEsperados()` conta `meses(fim) − meses(inicio) + 1`, o que supõe que o mês do início pertence ao mandato — verdade com carimbo no fim do mês, falso com carimbo no dia 01. Medido: a régua correta (meses cujo dia 01 cai dentro do mandato) tiraria o alerta de **13 células do Temer**, entre mensais e anuais, e o total abaixo do esperado cairia de 18 para 5. A correção mexe em código do app, então ficou fora desta fatia (decisão do usuário: só o dado).
 

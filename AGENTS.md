@@ -61,6 +61,22 @@ migração (ADR 0002).
 tem `NODE_ENV=production` e `npm omit=dev`); os scripts do Playwright já cuidam
 disso.
 
+### Servidores de desenvolvimento são do usuário (não desligar por conta própria)
+
+- **Antes de subir qualquer dev server** (`vite`, `astro dev`), confira se já existe
+  um escutando: `lsof -nP -iTCP:<porta> -sTCP:LISTEN` (app: 5173; site: 4321).
+  Se já houver, **use o que está no ar** — não abra um segundo nem em outra porta,
+  e nunca rode `--strictPort` "para garantir" sem essa checagem.
+- **Nunca encerre servidor** (`pkill`, `kill`, `Ctrl-C` em processo alheio) sem
+  perguntar ao usuário: ele pode estar usando aquele servidor na mesma hora. Isso
+  vale principalmente para `pkill -f vite`/`pkill -f astro`, que matam **todos** os
+  processos que casarem, inclusive os dele.
+- Se precisar de um servidor e nenhum estiver no ar, suba em **background**, avise
+  em qual porta, e encerre **apenas o PID que você mesmo criou** — de preferência
+  perguntando antes.
+- O mesmo vale para `npm run build` e para os E2E, que sobem servidor próprio:
+  confira a porta livre antes e não mate o que já estava rodando.
+
 ## Cadeia de build (não pular etapas)
 
 1. **`app/`** (Vite/Svelte) emite `public/assets/js/app/app.js` e `app.css` com
@@ -194,6 +210,15 @@ migração; não os use como validação principal.
   aviso. Não reintroduza a entrada no `.gitignore`.
 - **Caminho de dado errado não falha.** O middleware responde HTML e o app
   “carrega” vazio. Confira `Content-Type`/dado, não só status 200.
+- **`npm run build` estraga o `npm run dev` que já está no ar.** Os dois escrevem
+  o MESMO `public/assets/js/app/app.js`, com bases de dado diferentes: o `dev`
+  embute `/dados` (middleware local), o `build` embute a URL do Pages. Se você
+  buildar em produção enquanto o servidor de dev do usuário estiver aberto, a
+  página dele passa a ler o dado **publicado** — inclusive dado velho — e o
+  sintoma é um defeito que “não existe no código” (ex.: faixa com data antiga).
+  O `dist/` já está pronto, então restaure o artefato de dev depois:
+  `DADOS_LOCAL=1 npm run build:app && npm run preparar-publico`. Não precisa
+  reiniciar o servidor de ninguém; basta recarregar a página.
 - **Artefato de dev não pode ir para produção:** `publico` exige a URL do Pages
   no `app.js` (`DADOS_LOCAL=1` só em dev).
 - **Números de teste e status em `docs/plans/` envelhecem** (contagens, “nada

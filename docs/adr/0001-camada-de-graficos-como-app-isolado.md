@@ -432,12 +432,17 @@ bolinhas; com a mesma grade em ambas, **254 de 254**.
 
 **Decisão: a data é o primeiro dia do período de referência — dia 01 do mês (anual: 1º de janeiro).**
 É a convenção da própria fonte (o SGS carimba `01/04/2022` para abril) e a que 9 das 13 séries já
-usavam. Aplicada **só aos JSON publicados**, por `dados/canonicalizar-dados.py`; os notebooks **não**
-foram tocados (decisão do usuário). Alternativas rejeitadas: **(a) desenhar o marcador no ponto mais
-próximo de cada série** — o marcador sairia do x do crosshair e passaria a mentir sobre quando o
+usavam. Aplicada **só aos JSON publicados**; os notebooks **não** foram tocados (decisão do usuário).
+Alternativas rejeitadas: **(a) desenhar o marcador no ponto mais próximo de cada série** — o marcador sairia do x do crosshair e passaria a mentir sobre quando o
 valor existe; **(b) avisar que as grades divergem** — honesto, mas deixaria a comparação no mesmo x
 misturando **meses diferentes** (Selic de maio desenhada ao lado do IPCA de junho); **(c) não fazer
 nada** — a divergência de ~29 dias entre o mesmo mês de referência cresce com o zoom.
+
+> ⚠️ **Correção (2026-10-28): o aplicador citado não existia.** Esta decisão dizia que a mudança foi
+> aplicada por `dados/canonicalizar-dados.py`; esse arquivo não está no histórico do repo `dados` e
+> `igpm-acum-12m`, `selic-meta-acum-12m` e `selic-over-acum-12m` continuavam carimbando o **fim** do
+> mês. A canonicalização foi feita de fato em 2026-10-28, sobre os 3 JSONs, sem script versionado
+> (o único conversor do repo, `converter-schema-canonico.py`, só deduplica e adiciona `value`).
 
 **Achado colateral, corrigido junto: o acumulado de 12 meses era soma aritmética.** `ipca-acum-12m`
 e `igpm-acum-12m` faziam `.rolling(12).sum()` — soma de 12 taxas mensais, não capitalização

@@ -124,8 +124,8 @@ Breakpoint: `md` (768px). Abaixo disso, ver Mobile.
 
 - Marca compacta (quadrado azul + "Brasil em Números"), altura 34px, sem fundo próprio.
 - Busca: pílula que abre o `SearchModal` existente. Atalho `⌘K` / `Ctrl+K`.
-- Janela de tempo: os presets do `TimeFilters` (`1A`, `5A`, `10A`, `30A`, `Tudo`) como
-  segmento. São os cinco existentes; nenhum rótulo é renomeado nem removido.
+- Janela de tempo: os presets do `TimeFilters` (`1A`, `5A`, `10A`, `Tudo`) como
+  segmento. São os quatro existentes; nenhum rótulo é renomeado nem removido.
   O estado "sem preset aceso" já existe quando há mandato escolhido — preservar.
 - Chip do preset atual, que abre um menu com os presets nomeados + "do dia". Escolher um
   preset **substitui** as séries em cena, numa única escrita atômica (sem estados

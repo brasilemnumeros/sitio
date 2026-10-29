@@ -45,28 +45,30 @@ function serieReal(id) {
 const mandato = (rotulo) => MANDATOS.find((m) => m.rotulo === rotulo);
 
 /**
- * A matriz do anexo da spec, transcrita (remedida em 2026-10-19, sobre os 13 JSONs já
- * deduplicados e com a data canônica). 0 = sem cobertura.
+ * A matriz do anexo da spec, transcrita (remedida em 2026-10-28). 0 = sem cobertura.
  *
- * A data passou a ser o dia 01 do mês de referência (`dados/canonicalizar-dados.py`). Efeito
- * medido: os pontos de maio/2016 das três séries que carimbavam no FIM do mês deixaram de cair
- * no mandato Temer (que começa em 2016-05-12) e passaram a cair na Dilma II — 32 → 31. É o mesmo
- * 31 que o `ipca-acum-12m` já tinha, porque ele já usava o dia 01.
+ * Duas mudanças de dado entraram juntas nesta medição:
+ * - **Datas canônicas:** Igpm/Selic passaram a carimbar o dia 01 do mês de referência (a nota de
+ *   2026-10-19 da spec dizia que já tinham, mas a mudança nunca foi aplicada). Efeito: os pontos
+ *   de maio/2016 deixaram de cair no Temer (que começa em 2016-05-12) e passaram para a Dilma II —
+ *   Temer 32 → 31, o mesmo 31 do `ipca-acum-12m`, que já usava o dia 01.
+ * - **Fim do exercício da Dilma II:** 2016-08-31 (cassação) → 2016-05-11 (último dia de exercício),
+ *   como manda a §7.3.1. Efeito: a coluna Dilma II das séries mensais cai de 20 para 17.
  */
 const ESPERADO = {
-  'caged-total-mensal': [48, 48, 48, 48, 20, 31, 48, 32],
+  'caged-total-mensal': [48, 48, 48, 48, 17, 31, 48, 32],
   'homicidios-anual': [4, 4, 4, 4, 2, 2, 4, 1],
   'homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 0],
   'proporcao-homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 0],
-  'igpm-acum-12m': [48, 48, 48, 48, 20, 31, 48, 31],
-  'ipca-acum-12m': [48, 48, 48, 48, 20, 31, 48, 30],
-  'mvgr-nominal': [0, 34, 48, 48, 20, 31, 48, 31],
-  'mvgr-real': [0, 34, 48, 48, 20, 31, 48, 31],
+  'igpm-acum-12m': [48, 48, 48, 48, 17, 31, 48, 31],
+  'ipca-acum-12m': [48, 48, 48, 48, 17, 31, 48, 30],
+  'mvgr-nominal': [0, 34, 48, 48, 17, 31, 48, 31],
+  'mvgr-real': [0, 34, 48, 48, 17, 31, 48, 31],
   'pib-real-anual': [4, 4, 4, 4, 2, 2, 4, 2],
   'populacao-total-anual': [4, 4, 4, 4, 2, 2, 4, 2],
   'populacao-variacao-anual': [4, 4, 4, 4, 2, 2, 4, 2],
-  'selic-meta-acum-12m': [46, 48, 48, 48, 20, 31, 48, 34],
-  'selic-over-acum-12m': [48, 48, 48, 48, 20, 31, 48, 34],
+  'selic-meta-acum-12m': [46, 48, 48, 48, 17, 31, 48, 34],
+  'selic-over-acum-12m': [48, 48, 48, 48, 17, 31, 48, 34],
 };
 
 describe('medição da §7.3 sobre os dados reais', () => {

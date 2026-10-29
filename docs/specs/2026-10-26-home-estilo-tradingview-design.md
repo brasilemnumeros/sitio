@@ -127,14 +127,30 @@ Breakpoint: `md` (768px). Abaixo disso, ver Mobile.
 - Janela de tempo: os presets do `TimeFilters` (`1A`, `5A`, `10A`, `Tudo`) como
   segmento. São os quatro existentes; nenhum rótulo é renomeado nem removido.
   O estado "sem preset aceso" já existe quando há mandato escolhido — preservar.
+- Trilho direito: o gatilho da gaveta é um **ícone de engrenagem**, com o nome acessível
+  "Configurações do gráfico" — a gaveta reúne séries, cores e eixos, então não se chama
+  "Séries".
 - Chip do preset atual, que abre um menu com os presets nomeados + "do dia". Escolher um
   preset **substitui** as séries em cena, numa única escrita atômica (sem estados
   intermediários na URL). Se a seleção atual não corresponde a nenhum preset — série
   adicionada/removida à mão ou `?series=` arbitrário — o chip mostra "Personalizado".
+- **Chip de mandato** (2026-10-28): o mesmo seletor do trilho, na barra superior, para não
+  obrigar a abrir a gaveta inferior só para filtrar por governo. Escreve pelo
+  `aplicarMandato` (a regra única, também usada pelo trilho e pelo minimapa); os dois
+  menus (preset e mandato) nunca ficam abertos ao mesmo tempo, e `Esc` fecha o menu com foco
+  de volta ao chip. Escondido no celular: lá o caminho continua sendo o trilho da gaveta
+  inferior, e o topo de 36px é marca + busca + janela.
 - Ações: permalink (copia a URL) e tela cheia (`requestFullscreen`, opcional; se falhar,
   não mostra). Não há menu do site.
 - Navegação para o conteúdo: link discreto **"Artigos"** → `/blog` (decisão minha; sem ele a
   home vira uma ilha). A marca permanece identidade, não link para si mesma.
+- **Atribuição do TradingView** (obrigação Apache-2.0): link discreto no **canto superior direito
+  da barra superior**, que era o único canto vazio (o conteúdo da barra termina por volta de
+  1000px num app de 1280px). A posição é medida em runtime: se a barra não tiver folga à direita
+  — celular, ou janela em que o conteúdo rola na horizontal —, o link vai para **acima da moldura
+  do pé** (minimapa/barra inferior), onde não cobre controle nenhum. Ele é `position: fixed` no
+  `Home.astro`, fora do `#app` (o `testar-atribuicao.sh` exige a âncora no `dist/index.html`).
+  Antes disso morava no canto inferior direito e cobria a faixa do último mandato.
 
 ### Gaveta direita — séries, legenda e eixos
 
@@ -145,9 +161,11 @@ Uma **vista única rolável**, sem abas, com três seções nesta ordem:
 2. `SeriesLegend` — identificação textual, avisos de colisão de cor e de escala, cor e remoção.
 3. Eixos — atribuição `left`/`right` (`axesStore` + `moverParaEixo`) e o aviso de escala.
 
-Botão "+ Série" abre a busca. Fechada, mostra três ícones (séries, eixos, aparência) que
-rolam a gaveta até a seção correspondente, não trocam de painel. Botão de fechar no
-cabeçalho; `Esc` fecha a gaveta com foco de volta ao gatilho.
+Botão "+ Série" abre a busca. O gatilho do trilho é **um** botão (engrenagem,
+"Configurações do gráfico"): ele abre a gaveta inteira, não um painel — os antigos atalhos
+"Cores"/"Eixos" saíram em 2026-10-28 porque duplicavam os títulos das seções; com a gaveta
+aberta a engrenagem leva a vista ao topo, sem fechar. Fechar é o "×" do cabeçalho; `Esc`
+fecha a gaveta com foco de volta ao gatilho.
 
 ### Gaveta inferior — mandatos e comparação
 
@@ -160,6 +178,18 @@ Duas seções empilhadas, na ordem:
 
 A gaveta cresce para cima e reduz a área do gráfico; o minimapa permanece visível. Abrir e
 fechar não altera `viewport` nem `mandate`.
+
+O **minimapa também escolhe mandato** (2026-10-28): clicar numa faixa aplica o mesmo
+`aplicarMandato` do chip e do trilho. Clique e arrasto começam no mesmo `pointerdown`, então
+o gesto nasce como clique e só vira arrasto depois de andar `LIMIAR_CLIQUE` (4px); a escolha
+acontece na soltura e só se o ponteiro não andou. A faixa sob o cursor é perguntada à
+primitiva que **desenhou** o mapa (`faixasPx()`), nunca a um estado paralelo — clique e
+desenho não podem divergir.
+
+`?gaveta=fundo` abre a gaveta inferior já na entrada (2026-10-28), para que um link
+compartilhado mostre o mandato em cena em vez de esconder o filtro atrás da alça. É leitura
+de URL, como `?series=`: não escreve em `viewport`/`mandate`, e a chave é removida da URL
+com `replaceState` preservando o resto.
 
 ### Mobile (< 768px)
 

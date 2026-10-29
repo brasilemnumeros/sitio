@@ -56,18 +56,106 @@ const canonicalFinal = new URL(caminho, Astro.site).href;
          site no HTML: um footer é exatamente a casca que ESTE layout existe para não carregar —
          a barra inferior do app é o ÚNICO footer permitido na `/` (pega-se por `data-testid`,
          e é do app, não daqui). §10.5: link visível.
-         🔴 POSIÇÃO (Task 8): a barra inferior do app tem 36px FECHADA no desktop (32px no
-         celular) — a alça da gaveta de mandatos/comparação. Com `bottom-1` o link ficava POR
-         BAIXO dela — obrigação legal escondida. `bottom-9`/`md:bottom-11` (36/44px) o põe logo
-         acima da barra, e `z-30` o mantém acima da moldura do app, que é renderizada antes (o
-         `#app` está no slot). Aberta a gaveta, ela cobre a faixa do canto — aceitável: o link
-         continua no DOM e visível com a gaveta recolhida, que é o estado padrão da `/`. -->
+         🔴 POSIÇÃO (2026-10-29): o link é `position: fixed` no **canto superior direito da barra
+         superior** do app — o canto que estava vazio (o conteúdo da barra termina por volta de
+         1000px num app de 1280px) e que o usuário pediu. `top` é o CENTRO da barra e `right` são
+         8px; a altura vem da própria barra (`[data-testid="barra-superior"]`), nunca de um número
+         repetido aqui. Tentativas anteriores e por que caíram:
+         · `fixed bottom-9` no canto de baixo: o texto encostava/cobria a faixa do último mandato.
+         · ancorado num slot dentro da alça da gaveta inferior: a alça é `overflow-hidden` e o slot
+           media 0px — o link atravessava a barra inteira (medido: 856px de altura).
+         · `fixed` acima da barra inferior: certo, mas no CELULAR o rodapé do gráfico
+           ("TradingView Chart", do minimapa) cobria o link.
+         ⚠ Quando a barra superior não tem folga à direita — celular (36px, cheia) ou janela
+         estreita, em que o conteúdo rola na horizontal — o link volta para ACIMA da moldura do pé
+         (minimapa/barra inferior), que é onde ele cabe sem cobrir controle nenhum. A escolha é
+         medida em runtime (`folga`), não por breakpoint: em 768px a barra já transborda. -->
     <a
       href="https://www.tradingview.com/"
-      class="fixed right-2 bottom-9 z-30 text-xs text-gray-300/90 no-underline hover:text-gray-200 md:bottom-11"
+      class="atribuicao-tv text-xs text-gray-300/70 no-underline hover:text-gray-200"
       target="_blank"
       rel="noopener noreferrer">TradingView Lightweight Charts</a
     >
+
+    <!-- O CSS da atribuição é INLINE de propósito: `Home.astro` não carrega o CSS global no
+         dev (a `/` usa `app.css`), e uma classe no `main.css` do Tailwind dependeria de o
+         arquivo ser servido — no `astro dev` ele é um `<link>` para `/assets/css/...`, que o
+         Astro não serve. Inline, vale nos dois mundos e não entra no bundle do app.
+         A conta é refeita quando a barra superior ou o pé da moldura mudam de tamanho (gavetas
+         abrindo, breakpoint, app montando) — daí o `ResizeObserver` e a escuta de `resize`. -->
+    <script is:inline>
+      (() => {
+        const link = document.querySelector('a.atribuicao-tv');
+        if (!link) return;
+        link.style.position = 'fixed';
+        link.style.whiteSpace = 'nowrap';
+        link.style.pointerEvents = 'auto';
+        link.style.right = '0.5rem';
+
+        /** Folga à direita do conteúdo da barra superior, em px (0 quando não há barra).
+         *  Só contam os filhos RENDERIZADOS: metade da barra é `max-md:hidden`, e um filho
+         *  escondido mede 0×0 à esquerda — contá-lo daria folga falsa e o link cairia por cima
+         *  dos filtros no celular (visto em 390px, 2026-10-29). */
+        function folgaNaBarra(barra) {
+          let direita = barra.getBoundingClientRect().left;
+          for (const el of barra.querySelectorAll(':scope > *')) {
+            const r = el.getBoundingClientRect();
+            if (r.width === 0 && r.height === 0) continue;
+            if (r.right > direita) direita = r.right;
+          }
+          return Math.max(0, Math.round(barra.getBoundingClientRect().right - direita));
+        }
+
+        /** Pé da moldura do app: a barra inferior e, quando existe, o minimapa acima dela. */
+        function alturaDoPe() {
+          const barra = document.querySelector('[data-testid="barra-inferior"]');
+          const mini = document.querySelector('[data-testid="minimapa"]');
+          let altura = barra ? barra.getBoundingClientRect().height : 32;
+          if (mini && mini.getClientRects().length > 0) {
+            altura = Math.max(altura, window.innerHeight - mini.getBoundingClientRect().top);
+          }
+          return altura;
+        }
+
+        /** O canto da barra superior só é usado se o conteúdo de lá não chega perto do link. */
+        function posicionar() {
+          const barra = document.querySelector('[data-testid="barra-superior"]');
+          const cabeNoTopo = barra && folgaNaBarra(barra) >= link.getBoundingClientRect().width + 24;
+          if (cabeNoTopo) {
+            const r = barra.getBoundingClientRect();
+            link.style.top = `${Math.round(r.top + (r.height - link.getBoundingClientRect().height) / 2)}px`;
+            link.style.bottom = 'auto';
+            return;
+          }
+          // Sem folga no topo (celular/janela estreita): acima de tudo o que a moldura desenha no pé.
+          // Enquanto o `#app` não montou, o fallback é o mínimo — o link nunca nasce por cima.
+          link.style.top = 'auto';
+          link.style.bottom = `${Math.round(alturaDoPe() + 2)}px`;
+        }
+
+        posicionar();
+        window.addEventListener('resize', posicionar);
+        // A moldura inteira entra com o `#app` (Svelte) e muda de altura com as gavetas.
+        new MutationObserver(posicionar).observe(document.body, { childList: true, subtree: true });
+        if (typeof ResizeObserver !== 'undefined') {
+          const observador = new ResizeObserver(posicionar);
+          for (const el of document.querySelectorAll('[data-testid="barra-superior"], [data-testid="barra-inferior"], [data-testid="grafico"]')) {
+            observador.observe(el);
+          }
+        }
+        // O miolo pode montar DEPOIS deste script: quando ele aparece, passar a observar a área
+        // do gráfico (é ela que muda de altura com a gaveta inferior aberta).
+        const observadorMiolo = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(posicionar);
+        const vigia = new MutationObserver(() => {
+          const g = document.querySelector('[data-testid="grafico"]');
+          if (!g || !observadorMiolo || g.dataset.atribuicaoObservada) return;
+          g.dataset.atribuicaoObservada = '1';
+          observadorMiolo.observe(g);
+          posicionar();
+        });
+        vigia.observe(document.body, { childList: true, subtree: true });
+      })();
+    </script>
 
     <!-- Analytics -->
     {/* Gate de produção, IDÊNTICO ao do `Base.astro` (LGPD; AGENTS.md). Em

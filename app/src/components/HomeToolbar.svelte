@@ -1,7 +1,7 @@
 <script>
   // BARRA SUPERIOR do terminal (fatia 12, posição 1). Saiu daqui a busca solta da T5: o topo
   // agora tem lugar fixo para cada coisa — marca, busca, as CINCO janelas do gráfico, o chip do
-  // preset, a saída para o blog e as ações de permalink/tela cheia.
+  // preset, o chip de MANDATO (2026-10-28), a saída para o blog e as ações de permalink/tela cheia.
   //
   // A barra NÃO fala com o gráfico: as janelas são o `TimeFilters` de sempre (que só escreve na
   // store `viewport`) e o preset escreve o conjunto de séries numa única chamada a
@@ -12,8 +12,9 @@
   // documento (o `testar-mobile` do build mede 375px e não pode achar transbordo).
   import { onMount, onDestroy } from 'svelte';
   import TimeFilters from './TimeFilters.svelte';
-  import { seriesStore, substituirSeries } from '../stores/series.js';
+  import { seriesStore, substituirSeries, dataMaximaStore } from '../stores/series.js';
   import { indicadorPorId } from '../stores/catalog.js';
+  import { mandateStore, aplicarMandato } from '../stores/mandate.js';
   import { PRESETS, presetDoDia, presetDosIds, dataEmSaoPaulo } from '../data/presets.js';
 
   let { aoAbrirBusca } = $props();
@@ -26,6 +27,36 @@
   let chip = $state(null);
   let raizChip = $state(null);
   let timerCopiado = null;
+
+  // ─── CHIP DE MANDATO (2026-10-28, a pedido do usuário) ───
+  // O seletor de mandatos só existia DENTRO da gaveta inferior, e ela nasce recolhida — o
+  // usuário perdeu os filtros de vista. O chip devolve o controle à barra superior, sem gastar
+  // altura de gráfico. É o MESMO estado do trilho (`mandateStore` + `aplicarMandato`), não um
+  // segundo dono da janela: escolher por aqui desmarca lá e vice-versa.
+  let menuMandatoAberto = $state(false);
+  let chipMandato = $state(null);
+  let raizMandato = $state(null);
+  let mandatos = $derived($mandateStore.mandatos);
+  let mandatoAtual = $derived(mandatos.find((m) => m.id === $mandateStore.selecionado) ?? null);
+  /** A data de referência vem do ESTADO (§8) — a mesma do trilho e do filtro de tempo; o mandato
+   *  EM CURSO termina nela. */
+  let dataMaxima = $derived($dataMaximaStore);
+
+  /** Escolhe (ou limpa, com `null`) o mandato em cena — a regra inteira mora em `aplicarMandato`. */
+  function escolherMandato(id) {
+    menuMandatoAberto = false;
+    aplicarMandato(id, dataMaxima);
+  }
+
+  /** Teclado no menu: `Esc` fecha e devolve o foco ao chip. O FOCO em si anda por `menuitem`,
+   *  que é o papel de uma lista de escolha (o `Menu` do `SearchModal` é outro componente). */
+  function aoTeclarMandato(evento) {
+    if (evento.key !== 'Escape' || !menuMandatoAberto) return;
+    evento.preventDefault();
+    evento.stopPropagation(); // o `Esc` é DESTE menu, não das gavetas (prioridade da App)
+    menuMandatoAberto = false;
+    chipMandato?.focus();
+  }
 
   /** O preset DO DIA, resolvido uma vez na montagem: a rotação é por dia de São Paulo, não
    *  pelo fuso do navegador (o mesmo dia devolve o mesmo preset para todo mundo). */
@@ -93,6 +124,17 @@
     return () => document.removeEventListener('pointerdown', fechar);
   });
 
+  // Idem para o menu de mandatos — e ABRIR um fecha o outro: dois menus abertos ao mesmo tempo
+  // seriam dois painéis sobre o gráfico, e o usuário não saberia qual está na frente.
+  $effect(() => {
+    if (!menuMandatoAberto) return;
+    const fechar = (evento) => {
+      if (!raizMandato?.contains(evento.target)) menuMandatoAberto = false;
+    };
+    document.addEventListener('pointerdown', fechar);
+    return () => document.removeEventListener('pointerdown', fechar);
+  });
+
   onMount(() => {
     // `fullscreenEnabled` não existe no servidor e pode ser `false` por política: o botão só
     // aparece quando a ação é possível (um botão que não faz nada é pior que nenhum).
@@ -154,7 +196,10 @@
       aria-haspopup="menu"
       aria-expanded={menuAberto}
       aria-controls="menu-presets"
-      onclick={() => (menuAberto = !menuAberto)}
+      onclick={() => {
+        menuAberto = !menuAberto;
+        menuMandatoAberto = false; // um menu por vez (ver o `$effect` abaixo)
+      }}
     >
       <span class="max-w-[9rem] truncate">{nomePreset}</span>
       <svg
@@ -197,6 +242,91 @@
             Do dia · {doDia.nome}
           </button>
         {/if}
+      </div>
+    {/if}
+  </div>
+
+  <!-- CHIP DE MANDATO + menu. Mesmo padrão do chip de preset (abre, escolhe, fecha), e a MESMA
+       regra de estado (`aplicarMandato`). Sem governos carregados, o chip MANTÉM o lugar e fica
+       desabilitado (§9.1 — a barra não pula), e o `title` diz por quê.
+       Escondido no celular pelo mesmo motivo do preset: o topo de 36px é marca+busca+janela; lá
+       o caminho é o trilho da gaveta inferior, que continua ali. -->
+  <div class="relative max-md:hidden" bind:this={raizMandato} onkeydown={aoTeclarMandato}>
+    <button
+      type="button"
+      data-testid="mandate-chip"
+      bind:this={chipMandato}
+      class="flex items-center gap-1 rounded border px-2.5 py-1 {mandatoAtual
+        ? 'border-sky-500 text-sky-200 hover:bg-sky-950'
+        : 'border-slate-700 text-slate-200 hover:bg-slate-800'}"
+      aria-haspopup="menu"
+      aria-expanded={menuMandatoAberto}
+      aria-controls="menu-mandatos"
+      disabled={mandatos.length === 0}
+      title={mandatos.length === 0
+        ? 'Mandatos ainda não carregaram'
+        : mandatoAtual
+          ? `Mandato em cena: ${mandatoAtual.rotulo} · ${mandatoAtual.partido}`
+          : 'Filtrar o gráfico por mandato'}
+      onclick={() => {
+        menuMandatoAberto = !menuMandatoAberto;
+        menuAberto = false; // um menu por vez
+      }}
+    >
+      <svg
+        class="h-3.5 w-3.5 text-slate-400"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <path d="M4 5h16M4 12h16M4 19h10"></path>
+      </svg>
+      <span class="max-w-[9rem] truncate">{mandatoAtual ? `${mandatoAtual.rotulo} · ${mandatoAtual.partido}` : 'Mandato'}</span>
+      <svg
+        class="h-3.5 w-3.5 text-slate-400"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <path d="m6 9 6 6 6-6"></path>
+      </svg>
+    </button>
+
+    {#if menuMandatoAberto}
+      <div
+        id="menu-mandatos"
+        data-testid="menu-mandatos"
+        role="menu"
+        aria-label="Filtrar por mandato"
+        class="absolute top-full left-0 z-50 mt-1 max-h-[60dvh] w-56 overflow-y-auto rounded border border-slate-700 bg-[#161b22] p-1 shadow-lg"
+      >
+        <button
+          type="button"
+          role="menuitem"
+          aria-current={mandatoAtual ? undefined : 'true'}
+          class="block w-full rounded px-2 py-1 text-left text-slate-200 hover:bg-slate-800 focus:bg-slate-800 focus:outline-none"
+          onclick={() => escolherMandato(null)}
+        >
+          Todos
+        </button>
+        {#each mandatos as m (m.id)}
+          <button
+            type="button"
+            role="menuitem"
+            aria-current={m.id === mandatoAtual?.id ? 'true' : undefined}
+            class="block w-full rounded px-2 py-1 text-left hover:bg-slate-800 focus:bg-slate-800 focus:outline-none {m.id ===
+            mandatoAtual?.id
+              ? 'text-sky-200'
+              : 'text-slate-200'}"
+            onclick={() => escolherMandato(m.id)}
+          >
+            {m.rotulo} · {m.partido}
+          </button>
+        {/each}
       </div>
     {/if}
   </div>

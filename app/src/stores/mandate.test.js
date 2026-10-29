@@ -2,7 +2,9 @@ import { it, expect } from 'vitest';
 import { get } from 'svelte/store';
 import {
   mandateStore, carregarMandatos, selecionarMandato, limparSelecao, mandatoSelecionado,
+  aplicarMandato,
 } from './mandate.js';
+import { definirJanela } from './viewport.js';
 
 const GOVERNOS = {
   schema: 1,
@@ -56,4 +58,51 @@ it('R27 — não importa series.js, verificado NO FONTE e não por proxy', async
   // para evitar. Se isto falhar, o extrator quebrou, não o módulo.
   expect(especificadores.length).toBeGreaterThan(0);
   expect(especificadores.filter((e) => /series/i.test(e))).toEqual([]);
+});
+
+// ─── aplicarMandato: a regra ÚNICA de escolha (trilho, chip da barra superior e minimapa) ───
+// Antes ela vivia dentro do `MandateRail`; com três caminhos até o mesmo estado, uma cópia por
+// caminho garantiria divergência (um limpando o realce, outro não; um declarando a autoria da
+// janela, outro não). Aqui se prova o CONTRATO que os três herdam.
+it('aplicarMandato escolhe o governo E leva a janela para o período dele', async () => {
+  const { viewportStore } = await import('./viewport.js');
+  await carregarMandatos({ fetchImpl: okGovernos });
+  definirJanela({ from: '1990-01-01', to: '1990-12-31' });
+  expect(aplicarMandato('bolsonaro')).toBe(true);
+  expect(get(mandateStore).selecionado).toBe('bolsonaro');
+  expect(get(viewportStore)).toEqual({ from: '2019-01-01', to: '2022-12-31' });
+});
+
+it('aplicarMandato no MESMO governo desliga o filtro (o "clicar de novo" do trilho)', async () => {
+  const { viewportStore } = await import('./viewport.js');
+  await carregarMandatos({ fetchImpl: okGovernos });
+  aplicarMandato('lula-1');
+  expect(aplicarMandato('lula-1')).toBe(false);
+  expect(get(mandateStore).selecionado).toBeNull();
+  expect(get(viewportStore)).toEqual({ from: null, to: null });
+});
+
+it('aplicarMandato com o mandato EM CURSO termina na data máxima do dado', async () => {
+  const { viewportStore } = await import('./viewport.js');
+  await carregarMandatos({ fetchImpl: okGovernos });
+  aplicarMandato('lula-3', '2025-10-01');
+  expect(get(viewportStore)).toEqual({ from: '2023-01-01', to: '2025-10-01' });
+});
+
+it('aplicarMandato com id desconhecido limpa (nada de "selecionado" órfão)', async () => {
+  await carregarMandatos({ fetchImpl: okGovernos });
+  selecionarMandato('bolsonaro');
+  expect(aplicarMandato('nao-existe')).toBe(false);
+  expect(get(mandateStore).selecionado).toBeNull();
+});
+
+it('aplicarMandato declara a AUTORIA da janela (§8.1) — o fit automático para', async () => {
+  const { aoEscolherJanela } = await import('./viewport.js');
+  const avisos = [];
+  const cancelar = aoEscolherJanela((v) => avisos.push(v));
+  await carregarMandatos({ fetchImpl: okGovernos });
+  aplicarMandato('bolsonaro');
+  aplicarMandato('bolsonaro'); // o "Todos": NÃO é janela escolhida
+  cancelar();
+  expect(avisos).toEqual([true, false]);
 });

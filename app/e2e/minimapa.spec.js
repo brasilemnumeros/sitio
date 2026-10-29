@@ -204,7 +204,14 @@ test('um arrasto pequeno NÃO causa um salto grande (o relato: "fatia minúscula
   // ⚠ Para a ESQUERDA — o preset ancora a janela na última data, então para a direita é clampado
   // (0/4 medições de efeito). Arrastar para a direita aqui acusa "o gesto não funciona" quando o
   // gesto funciona, só não naquela direção: a outra metade do que mantinha este teste vermelho.
-  const passo = c.w * 0.01;
+  //
+  // 🔴 MOBILE (medido em 2026-10-29): 1% do minimapa são **2,4px** num app de 390px, e o clique
+  //    que escolhe mandato (2026-10-28) tem limiar de 4px — abaixo disso o gesto É um toque, e o
+  //    certo é ele filtrar pelo mandato. O teste então media outra coisa e via "salto" de 1310
+  //    dias (a janela do mandato inteiro). O passo tem de ser um arrasto de verdade nos dois
+  //    tamanhos de tela: acima do limiar do clique e ainda pequeno (6px de ~240px no celular =
+  //    ~9 meses, ~274 dias).
+  const passo = Math.max(c.w * 0.01, 6);
   const meio = (b.esquerda + b.direita) / 2;
   await page.mouse.move(meio, c.y);
   await page.mouse.down();

@@ -195,6 +195,9 @@ export function criarPrimitivaDeFaixas(mandatos, { aoClicar, ultimoDadoPorSerie,
       return { externalId: f.id, zOrder: 'bottom', cursorStyle: 'pointer', hitTestPriority: 0 };
     },
     selecionar(id) { selecionado = id; pedirAtualizacao?.(); },
+    /** A geometria das faixas na escala ATUAL (`x1`/`x2` em px de mídia). É o que o minimapa lê
+     *  para saber sobre qual mandato o ponteiro caiu — o clique tem de concordar com o desenho. */
+    faixasPx() { return faixasPx; },
     destruir() { /* nada a liberar: o detached da lib cuida das refs */ },
   };
 }

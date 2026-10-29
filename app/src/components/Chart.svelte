@@ -3,9 +3,9 @@
   import { get } from 'svelte/store';
   import { criarAdapter } from '../chart/adapter.js';
   import { criarNavigator } from '../chart/navigator.js';
-  import { seriesStore } from '../stores/series.js';
+  import { seriesStore, dataMaximaStore } from '../stores/series.js';
   import { axesStore, recalcularEixos } from '../stores/axes.js';
-  import { mandateStore, carregarMandatos } from '../stores/mandate.js';
+  import { mandateStore, carregarMandatos, aplicarMandato } from '../stores/mandate.js';
   import { viewportStore, definirJanela, aoEscolherJanela } from '../stores/viewport.js';
 
   let container;
@@ -20,6 +20,10 @@
       //   e uma série adicionada depois NÃO move a janela (§8.1). O eco do gráfico (`definirJanela`
       //   do adapter, acima) não declara nada — ele é reação, não escolha.
       aoMudarJanela: (j) => definirJanela(j, { escolhaDoUsuario: true }),
+      // Clique (sem arrasto) numa faixa escolhe o MANDATO — a mesma regra do chip e do trilho
+      // (`aplicarMandato`), aqui só a ponte do gráfico para a store. O minimapa NÃO escreve
+      // estado: ele avisa, e `aplicarMandato` é quem seleciona e move a janela (§8.1).
+      aoEscolherMandato: (id) => aplicarMandato(id, get(dataMaximaStore)),
     });
 
     // As séries `ok` na forma que o `axesStore` entende (`{id, unit, data}`), como na fatia 05.

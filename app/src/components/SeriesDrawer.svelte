@@ -10,9 +10,11 @@
   //     continuaria na árvore de acessibilidade e focável por TAB.
   //
   // A vista é ÚNICA e rolável, sem abas, com três seções nesta ordem: séries (chips), cores
-  // (legenda) e eixos (`AxesPanel`). Os três botões do trilho NÃO trocam de painel nem fecham a
-  // gaveta: rolam até a seção — é a mesma vista, só levada ao ponto certo. Fechar é o "×" do
-  // cabeçalho (sempre alcançável, porque o cabeçalho é grudado) ou `Esc`.
+  // (legenda) e eixos (`AxesPanel`). O gatilho do trilho é uma ENGRENAGEM (ícone de
+  // configurações): o trilho abre a gaveta inteira, não só a lista de séries. Os três botões
+  // do trilho NÃO trocam de painel nem fecham a gaveta: rolam até a seção — é a mesma vista, só
+  // levada ao ponto certo. Fechar é o "×" do cabeçalho (sempre alcançável, porque o cabeçalho é
+  // grudado) ou `Esc`.
   //
   // O estado `aberta` mora na `App` (é ela que decide a prioridade do `Esc` na T9), por isso a
   // prop é `$bindable`: o gatilho alterna, a App continua sendo a dona do estado.
@@ -50,10 +52,10 @@
   const temErro = $derived(itens.some((i) => i.status === 'erro'));
 
   /**
-   * O trilho é um ÍNDICE, não um interruptor. Aberta a gaveta, os TRÊS botões fazem a mesma
-   * coisa — levam a vista até a sua seção. O principal não pode se comportar diferente das
-   * vizinhas: um botão rotulado "Séries" que fecha a gaveta mente sobre o que faz. Fechar tem
-   * dois caminhos explícitos: o "×" do cabeçalho e `Esc`.
+   * O trilho tem UM botão (a engrenagem): fechado, ele abre a gaveta; aberto, leva a vista de
+   * volta ao topo (seção das séries), que é onde ela começa. Não fecha — fechar tem dois caminhos
+   * explícitos: o "×" do cabeçalho e `Esc`. (Os atalhos "Cores"/"Eixos" que apareciam embaixo do
+   * gatilho saíram em 2026-10-28, a pedido do usuário: duplicavam os títulos das seções.)
    */
   function aoGatilho() {
     if (!aberta) {
@@ -103,19 +105,38 @@
   data-testid="trilho-direito"
   inert={inativa}
   class="flex w-10 shrink-0 flex-col items-center gap-1.5 border-l border-slate-800 py-1.5 md:w-11"
-  aria-label="Gaveta de séries"
+  aria-label="Configurações do gráfico"
 >
   <button
     type="button"
     bind:this={gatilho}
-    aria-label={temErro && !aberta ? 'Séries e eixos — há séries com erro' : 'Séries e eixos'}
+    aria-label={temErro && !aberta ? 'Configurações do gráfico — há séries com erro' : 'Configurações do gráfico'}
     aria-expanded={aberta}
     aria-controls="gaveta-direita"
-    class="relative flex min-h-11 w-full items-center justify-center rounded px-1 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:min-h-0 md:text-[13px]"
+    class="relative flex min-h-11 w-full items-center justify-center rounded px-1 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:min-h-0"
     title={aberta ? 'Ir para as séries' : 'Abrir séries e eixos'}
     onclick={aoGatilho}
   >
-    <span class="[writing-mode:vertical-rl]">Séries</span>
+    <!-- Engrenagem: o trilho é a gaveta de CONFIGURAÇÕES (séries, cores e eixos), não um atalho
+         só para séries. O rótulo textual saiu em 2026-10-28 — o nome acessível vive no
+         `aria-label`. O trilho tem UM botão só, aberto ou fechado (decisão do usuário): os
+         atalhos "Cores"/"Eixos" que apareciam embaixo dele saíram, porque duplicavam os títulos
+         das seções dentro da própria gaveta. -->
+    <svg
+      class="h-4 w-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="3"></circle>
+      <path
+        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+      ></path>
+    </svg>
     {#if temErro && !aberta}
       <span
         class="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-red-500"
@@ -123,24 +144,6 @@
       ></span>
     {/if}
   </button>
-
-  <!-- Atalhos: existem só com a gaveta aberta (§1 — fechada, só o gatilho). -->
-  {#if aberta}
-    <button
-      type="button"
-      class="w-full min-h-11 rounded px-1 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:min-h-0 md:text-[13px]"
-      onclick={() => irPara('cores')}
-    >
-      <span class="[writing-mode:vertical-rl]">Cores</span>
-    </button>
-    <button
-      type="button"
-      class="w-full min-h-11 rounded px-1 py-2.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:min-h-0 md:text-[13px]"
-      onclick={() => irPara('eixos')}
-    >
-      <span class="[writing-mode:vertical-rl]">Eixos</span>
-    </button>
-  {/if}
 </aside>
 
 <!-- VÉU da folha lateral no celular (T9). Fica FORA do `<aside>`: um `fixed` dentro de um

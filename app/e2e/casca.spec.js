@@ -240,7 +240,7 @@ test('com série, o gráfico ocupa a maior parte da altura', async ({ page }) =>
  */
 test('a gaveta direita abre, mostra as três seções e fecha com Esc', async ({ page }) => {
   await page.goto('/');
-  const gatilho = page.getByRole('button', { name: 'Séries e eixos' });
+  const gatilho = page.getByRole('button', { name: 'Configurações do gráfico' });
   await expect(gatilho).toHaveAttribute('aria-expanded', 'false');
   await gatilho.click();
   const gaveta = page.getByTestId('gaveta-direita');
@@ -258,12 +258,13 @@ test('a gaveta direita abre, mostra as três seções e fecha com Esc', async ({
 });
 
 /**
- * §Gaveta direita (T7) — os atalhos do trilho. Com a gaveta fechada só o gatilho principal
- * aparece; aberta, os TRÊS botões rolam até a sua seção — inclusive o principal, que não pode
- * fechar a gaveta (fechar é o "×" do cabeçalho ou `Esc`). A prova é `scrollTop > 0`: sem o
- * `bind:this` do painel os atalhos eram botões mortos e o teste passava sem rolar nada.
+ * §Gaveta direita (T7) — o trilho tem UM botão, a engrenagem (decisão de 2026-10-28: os atalhos
+ * "Cores"/"Eixos" do trilho saíram, porque duplicavam os títulos das seções). Aberta a gaveta,
+ * a engrenagem leva a vista ao topo (seção das séries) e NÃO fecha — fechar é o "×" ou `Esc`.
+ * A prova é `scrollTop` voltar a 0: sem o `bind:this` do painel o botão era morto e o teste
+ * passava sem rolar nada.
  */
-test('fechada, o trilho mostra só o gatilho; aberta, os três atalhos rolam até a seção', async ({
+test('fechada e aberta, o trilho mostra só a engrenagem, que leva a vista ao topo', async ({
   page,
 }, testInfo) => {
   // SEIS séries de propósito: com uma só o conteúdo da gaveta cabe na caixa e não há o que
@@ -272,41 +273,45 @@ test('fechada, o trilho mostra só o gatilho; aberta, os três atalhos rolam at�
     '/?series=selic-meta-acum-12m,ipca-acum-12m,igpm-acum-12m,mvgr-nominal,mvgr-real,homicidios-anual',
   );
   await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(6);
+  // Dentro da gaveta as seções têm título (h3), não botão: o nome "Cores"/"Eixos" como BOTÃO
+  // significa atalho do trilho, e não existe mais.
   await expect(page.getByRole('button', { name: 'Cores', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Eixos', exact: true })).toHaveCount(0);
 
-  const gatilho = page.getByRole('button', { name: 'Séries e eixos' });
+  const gatilho = page.getByRole('button', { name: 'Configurações do gráfico' });
   const gaveta = page.getByTestId('gaveta-direita');
+  await expect(page.getByTestId('trilho-direito').getByRole('button')).toHaveCount(1);
   await gatilho.click();
   await expect(gaveta).toBeVisible();
   await expect(gaveta.locator('[data-secao="series"]')).toBeVisible();
+  await expect(page.getByTestId('trilho-direito').getByRole('button')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Cores', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Eixos', exact: true })).toHaveCount(0);
 
-  // No celular a folha de 88% cobre o PRÓPRIO trilho: os atalhos (Cores/Eixos) não são
-  // alcançáveis com ela aberta — a folha tem cabeçalho e seções próprios. No desktop o trilho
-  // fica do lado de fora, e é ele que rola a vista.
   if (testInfo.project.name === 'desktop') {
-    await expect(page.getByRole('button', { name: 'Cores', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Eixos', exact: true })).toBeVisible();
-
     // Janela curta: o topo (44px) e a barra inferior (36px) são fixos, então a gaveta fica com o
-    // resto e passa a rolar.
+    // resto e passa a rolar o suficiente para a prova não ser vazia.
     const { width } = page.viewportSize();
     await page.setViewportSize({ width, height: 320 });
     await expect
       .poll(() => gaveta.evaluate((el) => el.scrollHeight - el.clientHeight))
       .toBeGreaterThan(20);
 
-    await page.getByRole('button', { name: 'Eixos', exact: true }).click();
-    await expect.poll(() => gaveta.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
-    await expect(gaveta.locator('[data-secao="eixos"]')).toBeInViewport();
-    const noFim = await gaveta.evaluate((el) => el.scrollTop);
+    // Rola até o fim à mão — não há mais atalho que faça isso pelo trilho.
+    await gaveta.evaluate((el) => el.scrollTo(0, el.scrollHeight));
+    await expect.poll(() => gaveta.evaluate((el) => el.scrollTop)).toBeGreaterThan(20);
 
-    // O botão principal NÃO fecha com a gaveta aberta: ele leva à seção das séries, como os vizinhos.
+    // A engrenagem NÃO fecha com a gaveta aberta: leva a vista de volta ao topo. O que se afirma
+    // é o CONTRATO (a seção das séries aparece no alto e a vista voltou ao começo), não um
+    // `scrollTop === 0`: o cabeçalho é `sticky` e o alvo é a seção, logo abaixo dele. O defeito
+    // que este teste pega (botão morto) deixava a vista lá embaixo, no fim da rolagem.
     await gatilho.click();
     await expect(gaveta).toBeVisible();
     await expect(gatilho).toHaveAttribute('aria-expanded', 'true');
-    await expect.poll(() => gaveta.evaluate((el) => el.scrollTop)).toBeLessThan(noFim);
     await expect(gaveta.locator('[data-secao="series"]')).toBeInViewport();
+    await expect
+      .poll(() => gaveta.evaluate((el) => el.scrollTop))
+      .toBeLessThanOrEqual(48); // cabeçalho (40) + folga de arredondamento
   }
 
   // O caminho de fechar com o MOUSE é o "×" do cabeçalho (o `Esc` continua valendo).
@@ -348,7 +353,7 @@ test('abrir e fechar a gaveta não mexe na janela de tempo nem no mandato', asyn
   const anos = (v) => (Date.parse(v.to) - Date.parse(v.from)) / (365.25 * 24 * 60 * 60 * 1000);
   const anosAntes = anos(antes.viewport);
 
-  const gatilho = page.getByRole('button', { name: 'Séries e eixos' });
+  const gatilho = page.getByRole('button', { name: 'Configurações do gráfico' });
   const fechar = page.getByRole('button', { name: 'Fechar séries' });
 
   // 1 · ida e volta com a JANELA escolhida.
@@ -401,7 +406,7 @@ test('com série em erro, o gatilho da gaveta avisa com ponto de atenção', asy
     route.fulfill({ status: 200, contentType: 'application/json', body: '{"data":"não é uma lista"}' }),
   );
   await page.goto('/?series=selic-meta-acum-12m,ipca-acum-12m');
-  const gatilho = page.getByRole('button', { name: 'Séries e eixos' });
+  const gatilho = page.getByRole('button', { name: 'Configurações do gráfico' });
   await expect(gatilho).toHaveAttribute('aria-label', /há séries com erro/);
   const ponto = gatilho.locator('span[aria-hidden="true"]').last();
   await expect(ponto).toBeVisible();
@@ -427,7 +432,7 @@ test('abrir a gaveta direita encolhe o gráfico sem estourar a moldura', async (
   await expect(page.getByTestId('grafico')).toBeVisible();
   const largura = () => page.getByTestId('grafico').evaluate((el) => el.getBoundingClientRect().width);
   const semGaveta = await largura();
-  await page.getByRole('button', { name: 'Séries e eixos' }).click();
+  await page.getByRole('button', { name: 'Configurações do gráfico' }).click();
   await expect(page.getByTestId('gaveta-direita')).toBeVisible();
   await expect.poll(largura).toBeLessThan(semGaveta);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);

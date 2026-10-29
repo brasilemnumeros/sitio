@@ -7,10 +7,10 @@
   // nem o alvo de clique; e um trilho que não acompanha o zoom faria o gráfico saltar ao
   // clique enquanto ele fica parado (teleporte). NÃO "melhorar" para régua.
   //
-  // §8.1 — ESTE COMPONENTE NÃO FALA COM O GRÁFICO. Ele lê e escreve só a `mandateStore`
-  // (`mandatos`, `selecionado`) e as ações `selecionarMandato` / `limparSelecao`. Por isso
-  // não há — e não pode haver — nenhum import de `chart/` aqui, nem nada em `window`: o
-  // gráfico é espelho, não dono do estado.
+  // §8.1 — ESTE COMPONENTE NÃO FALA COM O GRÁFICO. Ele lê a `mandateStore` (`mandatos`,
+  // `selecionado`) e escreve com `aplicarMandato` (a regra única, em `stores/mandate.js`, que
+  // também é a do chip da barra superior e do clique no minimapa). Por isso não há — e não pode
+  // haver — nenhum import de `chart/` aqui, nem nada em `window`: o gráfico é espelho.
   //
   // ...e ELE ESCREVE A JANELA (§3, emenda de 2026-10-19): o clique no mandato FILTRA o período
   // daquele governo. `viewport` é outro store de tela (o `TimeFilters` faz o mesmo), não o
@@ -19,10 +19,9 @@
   // §1 e §7.3.4 — a identificação é por TEXTO (`Lula III · PT`), NUNCA por cor de partido:
   // cor por partido colide entre siglas e, pior, exigiria afirmar uma classificação no lugar
   // de publicar um dado. Sem cor, o trilho fica com uma paleta só e o partido se lê pela sigla.
-  import { mandateStore, selecionarMandato, limparSelecao } from '../stores/mandate.js';
-  import { definirJanela, resetarJanela } from '../stores/viewport.js';
+  import { mandateStore, aplicarMandato } from '../stores/mandate.js';
   import { dataMaximaStore } from '../stores/series.js';
-  import { ordenarMandatos, janelaDoMandato } from '../domain/mandates.js';
+  import { ordenarMandatos } from '../domain/mandates.js';
 
   // A store já guarda os mandatos ordenados (§7.3.6); reordenar é barato e mantém a regra
   // ("cronológica, com o em curso na ponta direita") verdadeira mesmo se a store mudar.
@@ -44,18 +43,10 @@
     `${CLASSE_BASE} ${m.id === selecionado ? CLASSE_SELECIONADO : CLASSE_APAGADO}`;
 
   /** §3 — o clique FILTRA o período do mandato (emenda de 2026-10-19) **e** o destaca. Clicar de
-   *  novo limpa e volta ao intervalo completo ("Tudo"), que é o par do `limparSelecao`.
-   *
-   *  ⚠ `escolhaDoUsuario`: quem escolheu foi o usuário, então o fit automático para e uma série
-   *  adicionada depois não move a janela (§8.1). Sem isto o filtro duraria ~150ms. */
+   *  novo limpa e volta ao intervalo completo ("Tudo"). A regra mora em `aplicarMandato` — a
+   *  MESMA do chip da barra superior e do minimapa, para os três não divergirem. */
   function alternar(m) {
-    if (m.id === selecionado) {
-      limparSelecao();
-      resetarJanela();
-    } else {
-      selecionarMandato(m.id);
-      definirJanela(janelaDoMandato(m, dataMaxima), { escolhaDoUsuario: true });
-    }
+    aplicarMandato(m.id, dataMaxima);
   }
 </script>
 

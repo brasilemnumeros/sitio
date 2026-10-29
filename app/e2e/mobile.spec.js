@@ -95,7 +95,7 @@ test('no celular o gráfico domina a tela e as gavetas abrem por toque', async (
   }));
   expect(altura.grafico / altura.janela).toBeGreaterThanOrEqual(0.5);
 
-  await page.getByRole('button', { name: 'Séries e eixos' }).click();
+  await page.getByRole('button', { name: 'Configurações do gráfico' }).click();
   const gaveta = page.getByTestId('gaveta-direita');
   await expect(gaveta).toBeVisible();
   const largura = await gaveta.evaluate((el) => el.getBoundingClientRect().width);
@@ -118,7 +118,7 @@ test('no celular o gráfico domina a tela e as gavetas abrem por toque', async (
  */
 test('Esc fecha só a camada do topo: a busca, depois a gaveta', async ({ page }) => {
   await page.goto('/');
-  const gatilho = page.getByRole('button', { name: 'Séries e eixos' });
+  const gatilho = page.getByRole('button', { name: 'Configurações do gráfico' });
   const gaveta = page.getByTestId('gaveta-direita');
   const modal = page.getByRole('dialog', { name: 'Buscar indicadores' });
 
@@ -151,7 +151,7 @@ test('a gaveta aberta prende o foco, e o resto fica inerte', async ({ page }) =>
   const barraInferior = page.getByTestId('barra-inferior');
   await expect(regiaoGrafico).not.toHaveAttribute('inert', '');
 
-  await page.getByRole('button', { name: 'Séries e eixos' }).click();
+  await page.getByRole('button', { name: 'Configurações do gráfico' }).click();
   await expect(page.getByTestId('gaveta-direita')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Fechar séries' })).toBeFocused();
   await expect(regiaoGrafico).toHaveAttribute('inert', '');

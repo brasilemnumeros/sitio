@@ -52,7 +52,7 @@ export async function abrirVazio(page) {
 export async function abrirGavetaDireita(page) {
   const gaveta = page.getByTestId('gaveta-direita');
   if (!(await gaveta.isVisible())) {
-    await page.getByRole('button', { name: /^Séries e eixos/ }).click();
+    await page.getByRole('button', { name: /^Configurações do gráfico/ }).click();
   }
   await expect(gaveta).toBeVisible();
 }

@@ -2,8 +2,13 @@
   // GAVETA INFERIOR (T8) — mandatos e comparação num lugar fixo (§1 do desenho do terminal).
   //
   // A barra de 36px deixou de ser um placeholder: ela é a ALÇA da gaveta e, fechada, mostra o
-  // RESUMO do que está em cena (`N séries · M eixos`). O resumo mora aqui, e não no gráfico,
-  // porque é a única frase que cabe na barra e responde "o que estou vendo?".
+  // RESUMO do que está em cena (`N séries · M eixos`) à direita e o rótulo "Comparação por
+  // mandato" à esquerda. O resumo mora aqui, e não no gráfico, porque é a única frase que cabe
+  // na barra e responde "o que estou vendo?".
+  //
+  // ⚠ Ele saiu por um dia (2026-10-28) na tentativa de liberar o canto direito para a atribuição
+  // do TradingView. A atribuição foi para o canto da BARRA SUPERIOR e o resumo voltou: sem ele a
+  // barra virava um rótulo solto, e o usuário perdeu a leitura de séries/eixos.
   //
   // O estado `aberta` NÃO vive neste componente: a gaveta é irmã da gaveta direita, e a
   // PRIORIDADE do `Esc` entre camadas (busca → direita → inferior) é da `App` (T9). Aqui só

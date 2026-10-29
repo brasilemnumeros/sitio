@@ -27,6 +27,23 @@
   let fundoAberto = $state(false);
   let itens = $derived($seriesStore.itens);
 
+  /**
+   * `?gaveta=fundo` — a gaveta inferior ABRE na entrada (2026-10-28).
+   *
+   * Sem isto, quem compartilhava o link com um mandato escolhido recebia a tela sem sinal nenhum
+   * de que havia um filtro em cena (a gaveta nasce recolhida). É LEITURA de link, como o
+   * `?series=`: acontece uma vez na montagem e NÃO escreve em `viewport`/`mandate` — a leitura é
+   * só de geometria, e a escrita é só para tirar a chave da URL (o resto é preservado).
+   */
+  onMount(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('gaveta') !== 'fundo') return;
+    fundoAberto = true;
+    params.delete('gaveta');
+    const q = params.toString();
+    history.replaceState(null, '', `${location.pathname}${q ? `?${q}` : ''}${location.hash}`);
+  });
+
   // §9.3 — erro TOTAL é quando NADA carregou; com uma série de pé, é degradação PARCIAL e o
   // chip de erro cuida dela. Estes dois ramos leem só o `status` dos itens (§8).
   let todosEmErro = $derived(itens.length > 0 && itens.every((i) => i.status === 'erro'));

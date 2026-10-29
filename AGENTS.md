@@ -219,6 +219,12 @@ migração; não os use como validação principal.
   O `dist/` já está pronto, então restaure o artefato de dev depois:
   `DADOS_LOCAL=1 npm run build:app && npm run preparar-publico`. Não precisa
   reiniciar o servidor de ninguém; basta recarregar a página.
+  Diagnóstico rápido de qual base o artefato em disco carrega (2026-10-29):
+  `grep -c 'brasilemnumeros.github.io/dados' public/assets/js/app/app.js`
+  — `0` é dev (`/dados`, middleware local), `1` é produção (Pages). Foi assim que a
+  faixa da Dilma II
+  “voltou a sobrepor” a do Temer: o código estava certo, o artefato lia o dado
+  publicado (que ainda tinha `fim: 2016-08-31`) em vez do local (`2016-05-11`).
 - **Artefato de dev não pode ir para produção:** `publico` exige a URL do Pages
   no `app.js` (`DADOS_LOCAL=1` só em dev).
 - **Números de teste e status em `docs/plans/` envelhecem** (contagens, “nada

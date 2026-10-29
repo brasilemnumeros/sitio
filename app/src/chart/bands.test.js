@@ -1,4 +1,4 @@
-import { faixasVisiveis, tomDaFaixa, posicaoNaGrade, emSegundos } from './bands.js';
+import { faixasVisiveis, tomDaFaixa, posicaoNaGrade, emSegundos, criarPrimitivaDeFaixas } from './bands.js';
 import { PALETA_PADRAO } from '../domain/color.js';
 
 const M = [
@@ -86,5 +86,51 @@ describe('tomDaFaixa', () => {
     // A regra é a AUSÊNCIA: o tom não pode coincidir com nenhuma cor da paleta das séries.
     expect(PALETA_PADRAO).not.toContain(tomDaFaixa(0));
     expect(PALETA_PADRAO).not.toContain(tomDaFaixa(1));
+  });
+});
+
+describe('faixasPx — a geometria que o minimapa usa para o CLIQUE', () => {
+  // O minimapa não sabe converter data em pixel (é a lib que sabe): ele pergunta à primitiva
+  // "onde estão as faixas AGORA" e responde pelo cursor/clique. Se as duas geometrias divergirem,
+  // o clique escolhe o governo da faixa VIZINHA — por isso ela sai do MESMO recálculo do desenho.
+  // ⚠ `logicalToCoordinate` e `timeToCoordinate` falam unidades DIFERENTES: a posição na grade é
+  // um ÍNDICE (a faixa é interpolada entre barras — ver `posicaoNaGrade`), e o índice →
+  // coordenada é da lib. O falso abaixo é essa régua: 10px por índice.
+  const chartFalso = (indexParaPx = (i) => i * 10) => {
+    const ts = {
+      timeToCoordinate: () => null,
+      logicalToCoordinate: indexParaPx,
+    };
+    return { chart: { timeScale: () => ts }, requestUpdate: () => {} };
+  };
+
+  it('devolve x1/x2 na escala da lib, por mandato', () => {
+    const base = emSegundos('2000-01-01');
+    const DIA = 86400;
+    // `+ 1` não é decoração: sem ele o último tempo da grade seria "expansível" e a ponta direita
+    // cairia num ponto que não existe — o cálculo descarta (correctamente) e o teste mediria a
+    // si mesmo. Com ele, TODA data do teste é ponto do dado e a expectativa é exata.
+    const tempos = Array.from({ length: 11 }, (_, d) => base + d * DIA);
+    const prim = criarPrimitivaDeFaixas(
+      [
+        { id: 'a', rotulo: 'A', partido: 'P', inicio: '2000-01-02', fim: '2000-01-04' },
+        { id: 'b', rotulo: 'B', partido: 'P', inicio: '2000-01-05', fim: '2000-01-08' },
+      ],
+      { temposDoDado: () => tempos },
+    );
+    const { chart, requestUpdate } = chartFalso();
+    prim.attached({ chart, requestUpdate });
+    const f = prim.faixasPx();
+    expect(f.map((x) => [x.id, x.x1, x.x2])).toEqual([
+      ['a', 10, 30],
+      ['b', 40, 70],
+    ]);
+  });
+
+  it('sem mandato nenhum devolve lista vazia — não `undefined`', () => {
+    const prim = criarPrimitivaDeFaixas([], {});
+    const { chart, requestUpdate } = chartFalso({});
+    prim.attached({ chart, requestUpdate });
+    expect(prim.faixasPx()).toEqual([]);
   });
 });

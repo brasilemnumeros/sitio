@@ -9,7 +9,7 @@ const FUNDO = '#0e1117';
  * Mostra sempre o intervalo completo, e desenha por cima a janela visível do gráfico grande.
  * Arrastar aqui move a janela do grande — é o que devolve o "voltar de qualquer zoom".
  */
-export function criarNavigator(container, { aoMudarJanela } = {}) {
+export function criarNavigator(container, { aoMudarJanela, aoEscolherMandato } = {}) {
   const chart = createChart(container, {
     height: 48,
     // ⚠ Sem `autoSize` a lib NÃO segue o container: ela dimensiona uma vez e pronto. E o
@@ -39,7 +39,7 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
   let janela = { from: null, to: null, de: null, ate: null };
   let primitiva = null;
   let cortinaAnexada = false;
-  let gesto = null;            // { modo: 'mover'|'redimensionar', lado?, agarrePx }
+  let gesto = null;            // { modo: 'mover'|'redimensionar'|'clicar-faixa', lado?, agarrePx }
   let pedirRedesenho = null;   // vem do `attached` da cortina — a lib redesenha por aqui
   let alinhado = { esquerda: -1, direita: -1 }; // margens já aplicadas (o alinhamento é idempotente)
   let destruido = false;
@@ -56,6 +56,11 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
    * Agora o gesto é RELATIVO: guarda-se ONDE o ponteiro agarrou e aplica-se a DIFERENÇA.
    */
   const PEGA = 6; // px de tolerância em cada borda, para pegar a ponta
+
+  /** Quanto o ponteiro tem de andar para o gesto deixar de ser CLIQUE (ver `aoPressionar`). 4px é
+   *  o limiar clássico de "arrasto acidental" — abaixo disso o toque/mouse oscila, acima o
+   *  usuário já está arrastando de propósito. */
+  const LIMIAR_CLIQUE = 4;
 
   /**
    * 🔴 O espaço do PONTEIRO (o container) não é, em geral, o espaço do GRÁFICO: a lib reserva
@@ -134,13 +139,33 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
       // Fora da janela: aqui o salto é o esperado — centra no ponto clicado.
       gesto = { modo: 'mover', agarrePx: ((janela.to ?? 0) - (janela.from ?? 0)) / 2 };
     }
+    // 🔴 A faixa do mandato deixa de ser MUDA (2026-10-28, a pedido do usuário): clicar numa faixa
+    //    filtra pelo mandato, como o chip da barra superior e o trilho. Mas um CLIQUE e um
+    //    ARRASTO começam igual (o `pointerdown`), e o arrasto tem de continuar sendo "mover a
+    //    janela". Por isso o gesto nasce em `clicar-faixa` e só o movimento (acima do limiar em
+    //    `aoMover`) o promove a arrasto — a escolha acontece na SOLTURA, e só se o ponteiro não
+    //    andou o suficiente para ser gesto.
+    gesto = { ...gesto, x0: x, faixa: faixaEm(x) };
     container.setPointerCapture?.(ev.pointerId);
+  }
+
+  /** O id do mandato sob `x` (espaço do gráfico), ou `null`. Lê o RESULTADO do desenho: a faixa
+   *  que está na tela é a mesma que o usuário vê. */
+  function faixaEm(x) {
+    const f = primitiva?.faixasPx?.().find((f) => x >= f.x1 && x <= (f.x2 ?? Infinity));
+    return f ? f.id : null;
   }
 
   function aoMover(ev) {
     if (!gesto) return;
     const r = container.getBoundingClientRect();
     const x = ev.clientX - r.left - deslocamentoDoPane();
+
+    // A PROMOÇÃO de clique a arrasto (ver `aoPressionar`): a partir do limiar, o gesto é gesto
+    // — e a faixa deixa de ser candidata a escolha, mesmo que a soltura volte ao ponto de partida.
+    if (!gesto.arrastou && gesto.x0 != null && Math.abs(x - gesto.x0) >= LIMIAR_CLIQUE) {
+      gesto.arrastou = true;
+    }
 
     if (gesto.modo === 'redimensionar') {
       const nova = gesto.lado === 'esquerda'
@@ -154,8 +179,15 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
     const deslocada = paraJanela(x - gesto.agarrePx, x - gesto.agarrePx + largura);
     if (deslocada) aoMudarJanela?.(deslocada);
   }
-  function aoSoltar() { gesto = null; }
 
+  /** Fim do gesto. Um `pointerup` SEM movimento sobre uma faixa é um CLIQUE: escolhe o mandato.
+   *  Arrastou (acima de `LIMIAR_CLIQUE`), não escolhe nada — a janela já é do gesto. */
+  function aoSoltar() {
+    const g = gesto;
+    gesto = null;
+    if (g?.faixa && !g.arrastou) aoEscolherMandato?.(g.faixa);
+  }
+  function aoCancelar() { gesto = null; }
   // A cortina é uma primitiva de pane, como as faixas — mesmo mecanismo, sem inventar outro.
   const cortina = {
     paneViews: () => [{
@@ -179,12 +211,15 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
     updateAllViews() {},
     attached({ requestUpdate }) { pedirRedesenho = requestUpdate; },
     detached() { pedirRedesenho = null; },
-    /** O cursor diz o que o gesto vai fazer — alça nas pontas, mão no meio (§2). */
+    /** O cursor diz o que o gesto vai fazer — alça nas pontas e `grab` em todo o resto, inclusive
+     *  FORA da janela (§2: ali o clique centra a janela). Desde 2026-10-28, fora da janela e
+     *  sobre uma FAIXA o MESMO clique também escolhe o mandato — mas só na soltura e só sem
+     *  movimento; o cursor continua `grab` porque arrastar dali também move a janela. */
     hitTest(x) {
       const lado = ladoPegavel(x);
       if (lado) return { externalId: `alca-${lado}`, zOrder: 'top', cursorStyle: 'ew-resize', hitTestPriority: 0 };
       const dentro = x >= (janela.from ?? 0) && x <= (janela.to ?? Infinity);
-      return { externalId: dentro ? 'dentro' : 'fora', zOrder: 'top', cursorStyle: dentro ? 'grab' : 'pointer', hitTestPriority: 0 };
+      return { externalId: dentro ? 'dentro' : 'fora', zOrder: 'top', cursorStyle: 'grab', hitTestPriority: 0 };
     },
   };
 
@@ -206,7 +241,8 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
   chart.timeScale().subscribeSizeChange(() => { if (!destruido) ressincronizarPixels(); });
 
   return {
-    /** As faixas do navegador são as MESMAS do gráfico grande — um só dado, dois desenhos. */
+    /** A geometria das faixas na escala ATUAL (para o clique) — nunca um estado guardado à parte. */
+    faixasPx() { return primitiva?.faixasPx?.() ?? []; },
     definirFaixas(mandatos, dadosParaAncora = []) {
       const pane = chart.panes()[0];
       if (primitiva) pane.detachPrimitive(primitiva);
@@ -231,9 +267,16 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
       // lugar errado (a cortina desenharia deslocada e o arrasto partiria de um valor falso).
       if (janela.de != null) ressincronizarPixels();
 
-      // A MESMA primitiva da T2 — sem opção nova.
+      // A MESMA primitiva da T2 — sem opção nova, EXCETO o clique: o mapa também escolhe mandato
+      // (2026-10-28). Quem trata o `pointerup` é a cortina (acima); a primitiva só responde "aqui
+      // há faixa" no `hitTest` (cursor `pointer`) e devolve, no `updateAllViews` abaixo, a
+      // geometria que o `aoSoltar` consulta.
       primitiva = criarPrimitivaDeFaixas(mandatos, { temposDoDado: () => temposDaAncora });
       pane.attachPrimitive(primitiva);
+      // ⚠ Anexar NÃO calcula nada: a primitiva recalcula no `attached` e no `updateAllViews`. Sem
+      // este segundo passo ela existiria, mas sem faixas — o clique não acharia nada, em silêncio.
+      // A leitura vem DEPOIS do `fitContent` (acima), que é o que fixa a escala do mapa.
+      primitiva.updateAllViews();
       // ⚠ Só UMA vez: sem a guarda, chamar `definirFaixas` duas vezes anexaria a cortina
       // duas vezes, e a lib desenharia a sobreposição em dobro.
       if (!cortinaAnexada) { pane.attachPrimitive(cortina); cortinaAnexada = true; }

@@ -5,7 +5,6 @@ import {
   carregarExemplo,
   abrirGavetaInferior,
 } from './apoio.js';
-import { presetDoDia, dataEmSaoPaulo } from '../src/data/presets.js';
 
 /** A janela visível, lida da STORE — o mesmo caminho de `minimapa.spec.js`. ⚠ `import` sem
  *  `?query`: com query o Vite cria outro nó no grafo e o estado lido não é o do app. */
@@ -281,34 +280,23 @@ test('a matriz aparece com série e traz os estados de célula por texto', async
 
 /**
  * A GAVETA INFERIOR (T8) — o trilho de mandatos e a matriz vivem numa gaveta, e a barra de 36px
- * é a ALÇA dela. O resumo (`N séries · M eixos`) é o único conteúdo da barra fechada: ele diz o
- * que está em cena sem precisar abrir. `Esc` fecha — a prioridade ENTRE camadas é da T9, aqui a
- * gaveta só respeita quem já tratou a tecla.
+ * é a ALÇA dela. `Esc` fecha — a prioridade ENTRE camadas é da T9, aqui a gaveta só respeita
+ * quem já tratou a tecla.
  *
  * ⚠ Sem `carregarExemplo`: a `/` já entra com o preset do dia (os ids curados do dia), então a
- * casca existe e a alça nasce habilitada. A asserção do resumo é por FORMA (`\d+`), não por
- * número: o preset muda de conteúdo a cada dia e o teste não pode apodrecer por isso.
+ * casca existe e a alça nasce habilitada. O teste NÃO afirma o conteúdo do preset — só a forma
+ * da barra —, então o dia que muda não apodrece o teste.
  */
-test('a gaveta inferior abre com mandatos e matriz, e o resumo conta', async ({ page }) => {
+test('a gaveta inferior abre com mandatos e matriz, e a alça diz o que abre', async ({ page }) => {
   await page.goto('/');
   const alca = page.getByRole('button', { name: /Comparação por mandato/ });
   await expect(alca).toHaveAttribute('aria-expanded', 'false');
-  await expect(alca).toContainText(/\d+ s[ée]ries? · \d+ eixos?/);
-
-  // O resumo CONCORDA com o número (`1 série · 1 eixo`, `2 séries · 2 eixos`): a barra dizia
-  // `1 séries` no preset de uma série só, que é o de hoje (27/10/2026, "Trabalho").
-  const texto = await alca.innerText();
-  const partes = texto.match(/(\d+) (s[ée]ries?) · (\d+) (eixos?)/);
-  expect(partes, `resumo fora da forma esperada: ${texto}`).not.toBeNull();
-  const [, nSeries, rotuloSeries, nEixos, rotuloEixos] = partes;
-  expect(rotuloSeries).toBe(Number(nSeries) === 1 ? 'série' : 'séries');
-  expect(rotuloEixos).toBe(Number(nEixos) === 1 ? 'eixo' : 'eixos');
-
-  // Hoje o preset do dia tem UMA série: a barra fecha em "1 série ·", nunca "1 séries".
-  if (presetDoDia(dataEmSaoPaulo()).indicadores.length === 1) {
-    expect(texto).toContain('1 série ·');
-    expect(texto).not.toContain('1 séries');
-  }
+  // A alça diz o que abre E conta o que está em cena: `N séries · M eixos` no canto direito da
+  // barra. Ele chegou a sair em 2026-10-28 para liberar o canto para a atribuição do TradingView,
+  // mas a atribuição foi para o canto da BARRA SUPERIOR e o resumo voltou — sem ele a barra vira
+  // um rótulo solto e some a única leitura de quantas séries/eixos estão no gráfico.
+  await expect(alca).toContainText('Comparação por mandato');
+  expect(await alca.innerText()).toMatch(/\d+ s[ée]ries? · \d+ eixos?/);
 
   await alca.click();
   const gaveta = page.getByTestId('gaveta-inferior');

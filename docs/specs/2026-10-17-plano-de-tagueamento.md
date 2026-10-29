@@ -3,7 +3,7 @@
 - **Data:** 2026-10-17
 - **Status:** proposta — **não implementado** (decisão de escopo do usuário: só o plano)
 - **Ferramenta:** GA4 `G-N4CFQ7CL1S` via `gtag` (sem GTM)
-- **Público primário:** jornalista / criador de conteúdo (ver `.agents/product-marketing.md`)
+- **Público primário:** jornalista / criador de conteúdo (ver `docs/produto/contexto-de-produto.md`)
 - **Contexto no repo:** o app novo é o `/` desde a virada (10/T3–T4, 2026-10-17)
 
 ---

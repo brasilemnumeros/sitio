@@ -1,5 +1,5 @@
 import { createChart, LineSeries } from 'lightweight-charts';
-import { criarPrimitivaDeFaixas } from './bands.js';
+import { criarPrimitivaDeFaixas, emSegundos } from './bands.js';
 import { paraISO, paraPontosDaBiblioteca } from './points.js';
 
 const FUNDO = '#0e1117';
@@ -34,6 +34,7 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
   // A decisão de produto continua a mesma (§2: faixas + janela, sem as séries na tela) — só
   // descobrimos que ela precisa de uma âncora invisível para funcionar.
   let ancora = null;
+  let temposDaAncora = [];
 
   let janela = { from: null, to: null, de: null, ate: null };
   let primitiva = null;
@@ -222,13 +223,16 @@ export function criarNavigator(container, { aoMudarJanela } = {}) {
       const porTempo = new Map();
       for (const p of paraPontosDaBiblioteca(dadosParaAncora)) porTempo.set(p.time, p);
       ancora.setData([...porTempo.values()].sort((a, b) => a.time - b.time));
+      // A grade de tempo da âncora — as faixas do minimapa usam a MESMA regra do gráfico
+      // grande (`indicesDaFaixa`): achar as pontas quando a data do mandato não é ponto do dado.
+      temposDaAncora = [...porTempo.keys()].sort((a, b) => a - b);
       chart.timeScale().fitContent();
       // `fitContent` MUDA A ESCALA — e os pixels da janela guardados antes apontariam para o
       // lugar errado (a cortina desenharia deslocada e o arrasto partiria de um valor falso).
       if (janela.de != null) ressincronizarPixels();
 
       // A MESMA primitiva da T2 — sem opção nova.
-      primitiva = criarPrimitivaDeFaixas(mandatos, {});
+      primitiva = criarPrimitivaDeFaixas(mandatos, { temposDoDado: () => temposDaAncora });
       pane.attachPrimitive(primitiva);
       // ⚠ Só UMA vez: sem a guarda, chamar `definirFaixas` duas vezes anexaria a cortina
       // duas vezes, e a lib desenharia a sobreposição em dobro.

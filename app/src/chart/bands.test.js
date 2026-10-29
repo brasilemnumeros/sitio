@@ -1,4 +1,4 @@
-import { faixasVisiveis, tomDaFaixa } from './bands.js';
+import { faixasVisiveis, tomDaFaixa, posicaoNaGrade, emSegundos } from './bands.js';
 import { PALETA_PADRAO } from '../domain/color.js';
 
 const M = [
@@ -39,6 +39,40 @@ describe('faixasVisiveis', () => {
     ];
     expect(faixasVisiveis(J, { from: '2004-12-31', to: '2005-01-01' }).map((m) => m.id))
       .toEqual(['x', 'y']);
+  });
+});
+
+describe('posicaoNaGrade', () => {
+  // A faixa é CONTEXTO e não pode depender da granularidade da série: com dado anual, encaixar
+  // as pontas no ponto existente jogava o início do Temer (12/05/2016) para 2017-01-01 e o fim
+  // da Dilma II (31/08/2016) para 2016-01-15 — um buraco de ~1 ano que não existe no preset de
+  // Juros (mensal). Medido em 2026-10-28. Por isso a posição é FRACIONÁRIA.
+  const GRADE = ['1995-01-01', '1995-01-15', '1996-01-01', '1996-01-15'].map(emSegundos);
+
+  it('data que É ponto da grade volta no índice exato', () => {
+    expect(posicaoNaGrade(GRADE, '1996-01-01')).toBe(2);
+  });
+
+  it('data ENTRE pontos vira fração do intervalo — o calendário manda, não o carimbo', () => {
+    const anual = ['2016-01-01', '2017-01-01'].map(emSegundos);
+    // 2016 é bissexto: 12/05 é o dia 132 de 366.
+    expect(posicaoNaGrade(anual, '2016-05-12')).toBeCloseTo(132 / 366, 6);
+  });
+
+  it('antes do primeiro ponto extrapola para a ESQUERDA (posição negativa)', () => {
+    expect(posicaoNaGrade(GRADE, '1994-12-31')).toBeCloseTo(-1 / 14, 6);
+  });
+
+  it('depois do último ponto extrapola para a DIREITA', () => {
+    expect(posicaoNaGrade(GRADE, '1996-01-22')).toBeCloseTo(3.5, 6);
+  });
+
+  it('grade de UM ponto só devolve 0 — não há intervalo para extrapolar', () => {
+    expect(posicaoNaGrade([emSegundos('2000-01-01')], '2010-01-01')).toBe(0);
+  });
+
+  it('sem grade (nenhuma série na tela) devolve null', () => {
+    expect(posicaoNaGrade([], '1999-01-01')).toBeNull();
   });
 });
 

@@ -1,6 +1,6 @@
 import { createChart, LineSeries } from 'lightweight-charts';
 import { paraPontosDaBiblioteca, paraISO } from './points.js';
-import { criarPrimitivaDeFaixas } from './bands.js';
+import { criarPrimitivaDeFaixas, emSegundos } from './bands.js';
 
 const FUNDO = '#0e1117';
 
@@ -33,6 +33,10 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
   // pela T3 da fatia 07, fora do escopo dela — o defeito é daqui.
   let temDado = false;
   let primitivaDeFaixas = null;
+  /** União dos tempos das séries na tela, em segundos. As faixas de governo precisam dela para
+   *  achar as pontas quando o mandato começa no dia 1º e a série carimba no fim do mês — ver
+   *  `indicesDaFaixa`. Recalculada só quando o DADO muda, não a cada desenho. */
+  let temposDoDado = [];
 
   // 🔴 O app abre no TODO, não no default da lib (≈ últimos 150 pontos).
   // Duas armadilhas medidas, e a segunda só apareceu na revisão:
@@ -149,6 +153,12 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
     }
     // "Há alguma barra na tela?" — é o que decide se a lib aceita mexer na janela.
     temDado = itens.some((i) => (i.series?.data?.length ?? 0) > 0);
+    // A grade de tempo do gráfico é a UNIÃO das séries (é dela que a lib monta a escala).
+    const tempos = new Set();
+    for (const item of itens) {
+      for (const p of item.series?.data ?? []) tempos.add(emSegundos(p.date));
+    }
+    temposDoDado = [...tempos].sort((a, b) => a - b);
     // O fit enquadra a UNIÃO de todas as séries: espera a rajada de carga assentar (debounce) e
     // re-agenda a cada chamada, de modo que só o ÚLTIMO `definirSeries` da rajada dispara o fit —
     // com todas as séries já no gráfico. Uma vez que o usuário TENHA a janela (§8.1 — gesto NO
@@ -177,6 +187,8 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
     if (primitivaDeFaixas) pane.detachPrimitive(primitivaDeFaixas);
     primitivaDeFaixas = criarPrimitivaDeFaixas(mandatos, {
       aoClicar: (id) => destacarMandato(id),
+      // A grade do gráfico, lida no recálculo — nunca copiada para dentro da primitiva.
+      temposDoDado: () => temposDoDado,
       // O mandato em curso hachura até o ÚLTIMO DADO, não até hoje (§7.3.5).
       ultimoDadoPorSerie: (m) => {
         let maior = null;

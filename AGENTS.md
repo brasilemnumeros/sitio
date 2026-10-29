@@ -188,8 +188,10 @@ migração; não os use como validação principal.
   o CSS perde as classes e o build falha no canário — a falha seria silenciosa.
 - **`assets/css/main.dist.css` é só dev/E2E.** Produção usa o CSS que o Astro
   emite em `dist/assets/*.css`. O arquivo é gitignored: rode `npm run css`.
-- **`.github/` é ignorado por convenção.** O workflow já é tracked; arquivo
-  **novo** ali exige `git add -f`.
+- **`.github/` NÃO é ignorado** (era, por convenção, até 2026-10-28). Continua
+  assim de propósito: ignorada, a pasta escondia arquivo **novo** no
+  `git status` (um segundo workflow, `dependabot.yml`) e o CI não rodava sem
+  aviso. Não reintroduza a entrada no `.gitignore`.
 - **Caminho de dado errado não falha.** O middleware responde HTML e o app
   “carrega” vazio. Confira `Content-Type`/dado, não só status 200.
 - **Artefato de dev não pode ir para produção:** `publico` exige a URL do Pages

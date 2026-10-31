@@ -211,8 +211,24 @@
       onpointerup={aoSoltar}
       onpointercancel={aoCancelar}
     >
-      <span class="text-slate-400" aria-hidden="true">▬</span>
-      <span class="min-w-0 flex-1 truncate">Comparação por mandato</span>
+      <!-- O gatilho se ANUNCIA: chevron apontando para o lado em que a gaveta vai (para cima quando
+         fechada, para baixo quando aberta). O `▬` de antes não dizia direção nenhuma — parecia um
+         minimizar. Um ícone só, girado por estado: a transição conta o movimento. -->
+    <svg
+      class="h-3 w-3 shrink-0 text-slate-400 transition-transform duration-200 {expandida
+        ? 'rotate-180'
+        : ''}"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="m6 15 6-6 6 6"></path>
+    </svg>
+      <span class="min-w-0 flex-1 truncate uppercase tracking-wide">Comparação por mandato</span>
       <span class="shrink-0 tabular-nums">{resumo}</span>
     </button>
 

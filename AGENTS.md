@@ -117,6 +117,11 @@ quando o defeito aparecer — e provar isso.
 - Dados: catálogo em `indicators.json`; séries e governos no repo `dados/`. Em
   dev, o middleware `app/vite-plugins/dados-locais.js` serve `/dados/**`; em
   produção o bundle aponta para `https://brasilemnumeros.github.io/dados`.
+- **Eixo x (2026-10-29):** sempre do início do FHC I (`1995-01-01`) ao **dia de
+  hoje**, independentemente das séries carregadas — âncoras mensais invisíveis em
+  `app/src/domain/horizonte.js`. O "Tudo" enquadra esse horizonte; não voltar a
+  enquadrar só a união das séries. O mandato em curso hachura até hoje e o minimapa
+  usa as mesmas âncoras.
 
 ## Site Astro
 
@@ -175,7 +180,7 @@ nova e aval do usuário.
 | Alvo | O que cobre |
 |---|---|
 | `app/src/**/*.test.js` (Vitest, ~20 arquivos) | domínio, stores, dados, permalink, presets |
-| `app/e2e/*.spec.js` (Playwright) | casca, busca, trilho, presets, permalink, mobile, geometria |
+| `app/e2e/*.spec.js` (Playwright) | casca, busca, mandato, presets, permalink, mobile, geometria |
 | `scripts/testar-*.sh` | HTML/CSS publicado, contrato de URLs, feed, sitemap, 404 |
 | `scripts/testar-analytics.mjs` | GA4 não carrega sem consentimento nem com DNT |
 | `scripts/testar-mobile.mjs` | todas as páginas de `dist/` sem transbordo a 375px |
@@ -301,6 +306,11 @@ migração; não os use como validação principal.
 - O build encadeia `app/` (Svelte/Vite) → `preparar-publico` → Astro → `verificar`.
   Não pular etapas ao validar.
 - Não commitar `dist/`, `node_modules/` nem credenciais.
+- **Commite ao trocar de tarefa ou de contexto.** Fechou uma fatia, mudou de assunto
+  ou recebeu instrução nova? Antes de encostar na próxima, commite o que está verde
+  (`npm run build` + os testes do alvo). Árvore suja atravessando contextos mistura
+  duas mudanças no mesmo commit e depois ninguém sabe qual delas quebrou o quê — pior
+  num repo onde o `git status` precisa dizer o que é seu e o que é do outro.
 - Atributos `data-bloco` / `data-testid` são contrato dos testes: não renomear
   sem atualizar os specs.
 

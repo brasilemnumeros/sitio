@@ -55,7 +55,6 @@ test('a casca carrega, o Tailwind aplicou (classe-canário) e o tema é escuro',
   const filtros = page.locator('[data-bloco="filtros"]');
   await expect(filtros).toHaveCount(1);
   await expect(filtros.getByRole('button', { name: 'Janela de 5 anos' })).toBeDisabled();
-  await expect(page.locator('[data-bloco="trilho"]')).toHaveCount(0);
   await expect(page.locator('[data-bloco="comparacao"]')).toHaveCount(0);
 
   // a captura registra o ABRIR MINIMALISTA (só busca + exemplo), já em tema escuro.
@@ -70,10 +69,8 @@ test('a casca carrega, o Tailwind aplicou (classe-canário) e o tema é escuro',
   // o "×" fecha; a gaveta inferior só abre com a direita fechada (o resto fica inerte — §Teclado)
   await page.getByRole('button', { name: 'Fechar séries' }).click();
   await abrirGavetaInferior(page);
-  await expect(page.locator('[data-bloco="trilho"]')).toHaveCount(1);
   await expect(page.locator('[data-bloco="comparacao"]')).toHaveCount(1);
-  // a estrutura é a das gavetas, não a ordem antiga de blocos na página
-  await expect(page.getByTestId('gaveta-inferior').locator('[data-bloco="trilho"]')).toHaveCount(1);
+  // a estrutura é das gavetas, não a ordem antiga de blocos na página
   await expect(
     page.getByTestId('gaveta-inferior').locator('[data-bloco="comparacao"]'),
   ).toHaveCount(1);
@@ -105,7 +102,6 @@ test('com série carregando o shell ainda não existe; ele aparece quando o dado
   const filtros = page.locator('[data-bloco="filtros"]');
   await expect(filtros).toHaveCount(1);
   await expect(filtros.getByRole('button', { name: 'Janela de 5 anos' })).toBeDisabled();
-  await expect(page.locator('[data-bloco="trilho"]')).toHaveCount(0);
   await expect(page.locator('[data-bloco="comparacao"]')).toHaveCount(0);
 
   // O DADO RESOLVE: o esqueleto sai e o shell aparece — a transição que a regra descreve.
@@ -114,7 +110,6 @@ test('com série carregando o shell ainda não existe; ele aparece quando o dado
   });
   await expect(page.locator('[data-bloco="esqueleto"]')).toHaveCount(0);
   await expect(filtros.getByRole('button', { name: 'Janela de 5 anos' })).toBeEnabled();
-  await expect(page.locator('[data-bloco="trilho"]')).toHaveCount(1);
   await expect(page.locator('[data-bloco="comparacao"]')).toHaveCount(1);
 
   await page.unroute('**/dados/**');
@@ -324,7 +319,7 @@ test('fechada e aberta, o trilho mostra só a engrenagem, que leva a vista ao to
 /**
  * §Moldura (T7) — abrir e fechar a gaveta é só GEOMETRIA. Se algum caminho da gaveta chamasse
  * `resetarJanela`/`limparSelecao`, o usuário perderia a janela e o mandato por um clique de UI.
- * A leitura é pelas STORES (mesmo caminho de `trilho.spec.js`/`minimapa.spec.js`), não pelo pixel.
+ * A leitura é pelas STORES (mesmo caminho de `mandato-janela.spec.js`/`minimapa.spec.js`), não pelo pixel.
  */
 test('abrir e fechar a gaveta não mexe na janela de tempo nem no mandato', async ({ page }) => {
   await page.goto('/');
@@ -373,8 +368,9 @@ test('abrir e fechar a gaveta não mexe na janela de tempo nem no mandato', asyn
   expect(depois.mandato).toBe(antes.mandato);
   await expect(preset).toHaveAttribute('aria-pressed', 'true');
 
-  // 2 · com um MANDATO escolhido. O trilho de mandatos chega na T8; até lá quem escolhe é a
-  // store, pelo mesmo import sem `?query` que as outras specs usam.
+  // 2 · com um MANDATO escolhido. O seletor visível é o chip da barra superior (o trilho da
+  // gaveta inferior saiu em 2026-10-30); aqui quem escolhe é a store, pelo mesmo import sem
+  // `?query` que as outras specs usam.
   await page.evaluate(async () => {
     const { mandateStore, selecionarMandato } = await import('/src/stores/mandate.js');
     let m = null;

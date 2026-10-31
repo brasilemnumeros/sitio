@@ -134,6 +134,24 @@ Um **minimapa** com o intervalo temporal completo e todas as faixas, sempre vis�
 
 ⚠ **O minimapa NÃO desenha as séries** — as faixas e a janela são o conteúdo; o dado das séries entra só como âncora invisível para o gráfico ter domínio de tempo. Se o minimapa aparece **vazio**, a causa provável é **não ter chegado faixa** (e não o desenho): os governos vêm de `governos/federal.json`, e a falha é engolida (§9.3). Em dev o `sitio` serve o dado local (`DADOS_LOCAL=1`); em produção, um `federal.json` publicado em 404 deixa o minimapa sem faixa, em silêncio.
 
+### Horizonte do eixo (2026-10-29)
+
+O eixo x **não nasce do dado**: ele sempre cobre do **início do FHC I (01/01/1995)** até o **dia
+de hoje**, qualquer que seja o conjunto de séries carregado. Antes, o enquadramento automático
+(`fitContent`) usava a união das séries, e trocar o indicador mudava o alcance do eixo — o mesmo
+mandato aparecia em posições diferentes, e o contexto de governo passava a depender da série.
+
+A implementação são **âncoras mensais invisíveis** (`domain/horizonte.js`): o dia 1º de cada mês
+até o mês corrente, mais o próprio dia de hoje, numa série oculta com escala de preço própria e
+invisível. Mensais — não só as duas pontas — para o eixo ficar proporcional ao calendário também
+nas séries anuais/esparsas; com uma âncora só em 1995, oito anos vazios caberiam numa coluna e o
+eixo mostraria 1995 e 2003 lado a lado. O minimapa usa as mesmas âncoras.
+
+Consequências: o mandato em curso hachura até hoje (acima); os presets relativos continuam
+ancorados na última data **do dado** (são janelas de análise, não o alcance do eixo); e a faixa
+estreita da Dilma II passa a receber rótulo, porque o limiar de largura caiu de 70px para 40px
+(com o `clip` já existente contendo o texto que não couber).
+
 ### Faixas de governo no gráfico
 
 Renderizadas por um `ISeriesPrimitive` customizado do Lightweight Charts (a lib não tem anotação nativa). Requisitos:
@@ -142,7 +160,8 @@ Renderizadas por um `ISeriesPrimitive` customizado do Lightweight Charts (a lib 
 - o rótulo traz **governo e sigla do partido** — `Lula III · PT`. **Texto, não cor**;
 - clique = seleção (seção acima);
 - **não** recortam nem filtram a série;
-- o mandato em curso leva hachura e corta no último dado disponível (seção 7.3).
+- o mandato em curso leva hachura e vai até **hoje** — o eixo também termina em hoje (emenda de
+  2026-10-29; antes cortava no último dado disponível, seção 7.3).
 
 **Por que sem cor de partido** (decidido em 2026-10-14): a cor por partido obrigaria a escolher entre duas coisas ruins. **Cor de marca** colide entre partidos — o vermelho é o mais disputado no Brasil (PT, PCdoB, PSOL, PSTU, PCO) — e não sobrevive ao fundo escuro, porque marca é desenhada para fundo branco. **Cor por espectro político** é juízo editorial sem fonte auditável: faria o site **afirmar uma classificação** no lugar de publicar um dado, num projeto cujo resto tem fonte declarada.
 
@@ -154,7 +173,16 @@ Sem cor, o gráfico fica com **uma paleta só** — as linhas das séries carreg
 
 ## 3. Trilho de mandatos
 
-O trilho é um **seletor**, não uma régua temporal. Uma caixa por governo, **largura igual**, desacoplado do eixo do tempo do gráfico. Cada caixa carrega: **logo pequeno do partido**, o rótulo do governo e a sigla, **hachura** quando o mandato está em curso e **contorno** quando está selecionado.
+> ⚠ **Nota de 2026-10-30 — o trilho saiu da UI.** O componente `MandateRail` foi **removido** da
+> gaveta inferior (decisão do usuário; ver `AGENTS.md` e a emenda da ADR 0001): a **escolha** de
+> mandato passou a viver no **chip da barra superior** (desktop) e na **faixa do minimapa**, e a
+> **leitura** passou a viver na **matriz de comparação**. Tudo o que esta seção descreve sobre o
+> seletor continua valendo como **regra** — largura igual, texto em vez de cor de partido, clique =
+> seleção + janela, um dono da janela por vez —, não como peça de tela. Onde se lê "trilho" como
+> seletor, leia-se "chip/minimapa"; e as menções a **logo no trilho** (§4/D5) descrevem um asset que
+> nunca foi implementado (a T4 não foi fechada).
+>
+> O trilho é um **seletor**, não uma régua temporal. Uma caixa por governo, **largura igual**, desacoplado do eixo do tempo do gráfico. Cada caixa carrega: **logo pequeno do partido**, o rótulo do governo e a sigla, **hachura** quando o mandato está em curso e **contorno** quando está selecionado.
 
 Papéis separados por elemento, sem sobreposição:
 
@@ -223,7 +251,8 @@ Os indicadores do site cobrem ordens de grandeza que não convivem: `%` (2 a 53)
 
 - **Razão de amplitude ≤ 50×** → um eixo só, sugerido automaticamente, sem aviso.
 - **Razão > 50×** → o app não encaixa em silêncio: avisa que a série não é legível na escala atual e oferece **normalizar para base 100** (aí sim, como ação explícita do usuário) ou **remover**.
-- **Limite de dois eixos** (esquerda/direita), com a atribuição **visível na legenda** e trocável por clique. Mais de dois não é legível em hipótese alguma.
+- **Limite de dois eixos** (esquerda/direita), com a atribuição **visível na legenda** e trocável por clique. Mais de dois não é legível em hipótese alguma. O **eixo-base é o DIREITO** (decisão de 2026-10-30, a pedido do usuário): num gráfico de série temporal o "agora" está na ponta direita, e é ali que o último valor mora — a série incompatível é que vai para a esquerda. Era `left` até então, herança do Chart.js antigo, sem decisão registrada a favor.
+- **A escala do lado SEM série não é desenhada** (mesma decisão). Antes as duas ficavam sempre visíveis "para a atribuição ter onde aparecer", e com o eixo-base na direita isso virou faixa morta de ~54px à esquerda — ~14% da largura num celular de 393px. A da esquerda aparece no instante em que uma série vai para lá; a lib reserva 0 para escala invisível, então o minimapa continua alinhado nos dois estados (é o que `adapter.largurasDasEscalas` + `navigator.alinharCom` provam).
 - Casos patológicos (população-total × população-variação, **20.921.102×**) não são salvos nem por dois eixos — a série menor vira uma reta colada no zero. Aí o aviso tem de ser mais duro: a combinação não é legível, ponto.
 
 **O corte é 50**, mas o valor exato não é crítico: qualquer limiar dentro de (21,2 · 125) particiona os dados de hoje de forma idêntica. 50 é o meio da faixa vazia.
@@ -442,7 +471,7 @@ Por isso a célula não carrega **contagem de pontos** — carrega o **período 
 
 Forma visual, decidida:
 
-- **Na faixa do gráfico: hachura diagonal, cortando no último dado disponível** — não na data de hoje. Hachura é convenção estabelecida para "período em aberto" e **não depende de cor**: funciona no tema escuro, no claro, e para quem não distingue cores.
+- **Na faixa do gráfico: hachura diagonal, indo até HOJE** (emenda de 2026-10-29; antes cortava no último dado disponível). Hachura é convenção estabelecida para "período em aberto" e **não depende de cor**: funciona no tema escuro, no claro, e para quem não distingue cores.
 - **No trilho: a mesma linguagem** (marca hachurada na caixa), para que a faixa e o seletor falem a mesma língua.
 - **Na matriz: o período real usado vive dentro de cada célula** (`parcial 03/2004–12/2006` ou `parcial até 10/2025`), em corpo menor. É verboso de propósito — é o único formato em que cada número aparece acompanhado do intervalo que o torna verdadeiro. Nenhum cabeçalho de coluna pode resumir isso, porque a cobertura varia **por série**.
 
@@ -468,7 +497,7 @@ Cinco camadas, e a dependência **desce**: nenhum nível conhece o de cima.
 
 ```
 src/
-  components/   App · SearchModal · SeriesChips · Chart · TimeFilters · MandateRail · ComparisonPanel
+  components/   App · SearchModal · SeriesChips · Chart · TimeFilters · ComparisonPanel
   stores/       series · mandate · axes · viewport · catalog
   domain/       scales · mandates · format
   chart/        adapter · bands · navigator
@@ -509,7 +538,7 @@ O **adapter** decide a autoria (§8.1), e o desenho é:
 
 | quem | o que faz | como |
 |---|---|---|
-| o app (filtro de tempo, minimapa, **trilho de mandatos** — §3) | declara a escolha | `definirJanela(j, { escolhaDoUsuario: true })` |
+| o app (filtro de tempo, minimapa, **chip de mandato** — §3) | declara a escolha | `definirJanela(j, { escolhaDoUsuario: true })` |
 | o gráfico grande (`pointerdown`/`wheel`) | declara a escolha | listeners no container → `assumir()` |
 | o eco do próprio adapter | **não** declara nada | `definirJanela(j)` — é reação, não escolha |
 | "Tudo" (`resetarJanela`) | avisa o **contrário** | `aoEscolherJanela(false)` **rearma** o fit |
@@ -549,7 +578,7 @@ Um campo que abre a busca — a **barra do topo, bloco 1 da §1**, que existe em
 
 **Rejeitado:** tela de boas-vindas com texto explicativo. Ela reaparece toda vez que o usuário limpa a seleção, e quem já conhece o site paga pedágio em toda visita. O atalho de exemplo resolve o primeiro uso sem obrigar ninguém a lê-lo.
 
-**Divulgação progressiva (decidido em 2026-10-17).** No estado inicial, os blocos **4 (filtros), 5 (trilho) e 6 (comparação) não existem** — não há série a controlar. Eles aparecem quando há série **e ela saiu do carregamento** (`itens.length > 0 && !todosCarregando`); enquanto carrega, o **`Esqueleto`** do bloco 3 já desenha a forma do conteúdo (§9.2), e é ele que evita o salto. A **ordem** da §1 não muda — só a **presença** passa a ser condicional. Medido no app real (2026-10-17): os três blocos ocupavam **172 px (47%** do shell de 364 px) no zero; ao entrar a 1ª série o conteúdo cresce **+665 px** sob a casca fixa contra **+837 px** sob a divulgação, mas **o gráfico domina os dois**, então o custo marginal medido é pequeno. **Consequência assumida:** o "sempre visível" do bloco 6 passa a significar *em todo estado com série*. A busca duplicada que havia nesta caixa saiu no mesmo dia (era um segundo "Buscar indicador…"; o campo é o do bloco 1). Ver ADR 0001.
+**Divulgação progressiva (decidido em 2026-10-17).** No estado inicial, os blocos **4 (filtros) e 6 (comparação) não existem** — não há série a controlar (o bloco 5, o trilho, existiu até 2026-10-30). Eles aparecem quando há série **e ela saiu do carregamento** (`itens.length > 0 && !todosCarregando`); enquanto carrega, o **`Esqueleto`** do bloco 3 já desenha a forma do conteúdo (§9.2), e é ele que evita o salto. A **ordem** da §1 não muda — só a **presença** passa a ser condicional. Medido no app real (2026-10-17): os três blocos ocupavam **172 px (47%** do shell de 364 px) no zero; ao entrar a 1ª série o conteúdo cresce **+665 px** sob a casca fixa contra **+837 px** sob a divulgação, mas **o gráfico domina os dois**, então o custo marginal medido é pequeno. **Consequência assumida:** o "sempre visível" do bloco 6 passa a significar *em todo estado com série*. A busca duplicada que havia nesta caixa saiu no mesmo dia (era um segundo "Buscar indicador…"; o campo é o do bloco 1). Ver ADR 0001.
 
 ### 9.2 Carregando
 

@@ -108,8 +108,8 @@ export function ordenarMandatos(mandatos) {
 }
 
 /**
- * A JANELA de um mandato, em ISO — o período que o clique no trilho enquadra (§3, emenda
- * de 2026-10-19: o botão de mandato é um atalho de janela, além do realce).
+ * A JANELA de um mandato, em ISO — o período que a escolha do mandato enquadra (§3, emenda
+ * de 2026-10-19: o mandato é um atalho de janela, além do realce).
  *
  * O mandato EM CURSO (`fim: null`) termina na **última data disponível**: a janela precisa de uma
  * ponta direita, e `null` aqui NÃO quer dizer "até o fim" — o adapter o lê como "mantenha a borda

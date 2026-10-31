@@ -1,6 +1,8 @@
 import { createChart, LineSeries } from 'lightweight-charts';
 import { criarPrimitivaDeFaixas, emSegundos } from './bands.js';
 import { paraISO, paraPontosDaBiblioteca } from './points.js';
+import { ancorasDoHorizonte } from '../domain/horizonte.js';
+import { dataEmSaoPaulo } from '../data/presets.js';
 
 const FUNDO = '#0e1117';
 
@@ -140,7 +142,7 @@ export function criarNavigator(container, { aoMudarJanela, aoEscolherMandato } =
       gesto = { modo: 'mover', agarrePx: ((janela.to ?? 0) - (janela.from ?? 0)) / 2 };
     }
     // 🔴 A faixa do mandato deixa de ser MUDA (2026-10-28, a pedido do usuário): clicar numa faixa
-    //    filtra pelo mandato, como o chip da barra superior e o trilho. Mas um CLIQUE e um
+    //    filtra pelo mandato, como o chip da barra superior. Mas um CLIQUE e um
     //    ARRASTO começam igual (o `pointerdown`), e o arrasto tem de continuar sendo "mover a
     //    janela". Por isso o gesto nasce em `clicar-faixa` e só o movimento (acima do limiar em
     //    `aoMover`) o promove a arrasto — a escolha acontece na SOLTURA, e só se o ponteiro não
@@ -258,6 +260,14 @@ export function criarNavigator(container, { aoMudarJanela, aoEscolherMandato } =
       if (!ancora) ancora = chart.addSeries(LineSeries, { visible: false });
       const porTempo = new Map();
       for (const p of paraPontosDaBiblioteca(dadosParaAncora)) porTempo.set(p.time, p);
+      // O minimapa cobre o MESMO horizonte do gráfico grande (1995 → hoje). Sem estas âncoras
+      // ele enquadraria só o dado e as faixas/cortina ficariam desalinhadas do gráfico de cima.
+      // Só entram como ponto com valor 0 (a lib descarta âncoras sem valor no `fitContent`)
+      // quando o tempo não tem dado — a linha é invisível, então o 0 não aparece.
+      for (const iso of ancorasDoHorizonte(dataEmSaoPaulo())) {
+        const t = emSegundos(iso);
+        if (!porTempo.has(t)) porTempo.set(t, { time: t, value: 0 });
+      }
       ancora.setData([...porTempo.values()].sort((a, b) => a.time - b.time));
       // A grade de tempo da âncora — as faixas do minimapa usam a MESMA regra do gráfico
       // grande (`indicesDaFaixa`): achar as pontas quando a data do mandato não é ponto do dado.
@@ -271,7 +281,12 @@ export function criarNavigator(container, { aoMudarJanela, aoEscolherMandato } =
       // (2026-10-28). Quem trata o `pointerup` é a cortina (acima); a primitiva só responde "aqui
       // há faixa" no `hitTest` (cursor `pointer`) e devolve, no `updateAllViews` abaixo, a
       // geometria que o `aoSoltar` consulta.
-      primitiva = criarPrimitivaDeFaixas(mandatos, { temposDoDado: () => temposDaAncora });
+      primitiva = criarPrimitivaDeFaixas(mandatos, {
+        temposDoDado: () => temposDaAncora,
+        // O mandato em curso também hachura até hoje aqui — o mapa e o gráfico grande contam
+        // a mesma história (antes o minimapa ia até a borda por `x2` nulo; agora é explícito).
+        fimDoMandatoEmCurso: () => dataEmSaoPaulo(),
+      });
       pane.attachPrimitive(primitiva);
       // ⚠ Anexar NÃO calcula nada: a primitiva recalcula no `attached` e no `updateAllViews`. Sem
       // este segundo passo ela existiria, mas sem faixas — o clique não acharia nada, em silêncio.

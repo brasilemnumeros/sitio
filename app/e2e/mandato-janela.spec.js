@@ -4,6 +4,8 @@ import {
   abrirVazio,
   carregarExemplo,
   abrirGavetaInferior,
+  escolherMandato,
+  mandatoEmCena,
 } from './apoio.js';
 
 /** A janela visível, lida da STORE — o mesmo caminho de `minimapa.spec.js`. ⚠ `import` sem
@@ -19,14 +21,22 @@ async function janela(page) {
 
 const anoDe = (iso) => Number(String(iso).slice(0, 4));
 
+/** Os ids vêm de `dados/governos/federal.json` (dado versionado, não do catálogo). */
+const LULA_I = 'federal-2003-lula';
+const LULA_II = 'federal-2007-lula';
+const LULA_III = 'federal-2023-lula';
+
 /**
- * O TRILHO DE MANDATOS (§3, posição 5). É um SELETOR de largura igual, desacoplado do eixo do
- * tempo — e a identificação é por TEXTO (`Lula III · PT`), nunca por cor de partido (§7.3.4).
+ * O MANDATO COMO ATALHO DE JANELA (§3, emenda de 2026-10-19) e a MATRIZ de comparação (§4).
  *
- * O DESTAQUE em si é desenhado no CANVAS (`adapter.destacarMandato` → primitiva de faixas): não se
- * afirma por pixel. Afirma-se o que é DOM — o `aria-pressed` que o clique liga — e captura-se a tela
- * para o canvas. O rótulo, sim, é DOM e é afirmado LITERALMENTE (o teste tem de morder se um
- * rótulo mudar).
+ * ⚠ O TRILHO de mandatos (`MandateRail`, `[data-bloco="trilho"]`) saiu em 2026-10-30: era um
+ * TERCEIRO seletor para o mesmo estado, dentro de uma gaveta que nasce recolhida. O controle
+ * ficou com o chip da barra superior (desktop) e a faixa do minimapa; os dois têm spec próprio em
+ * `mandato.spec.js`. Aqui a escolha é feita por `aplicarMandato` (ver `apoio.escolherMandato`), e
+ * o que se afirma é a JANELA — não o pixel do seletor.
+ *
+ * A identificação do governo é por TEXTO (`Lula III · PT`), nunca por cor de partido (§7.3.4); os
+ * rótulos são afirmados LITERALMENTE onde ainda são DOM: o cabeçalho da matriz.
  */
 const ROTULOS = [
   'FHC I · PSDB',
@@ -40,62 +50,11 @@ const ROTULOS = [
   'Lula III · PT',
 ];
 
-test('o trilho tem 9 botões, um por governo, com o rótulo por texto', async ({ page }) => {
-  await abrirVazio(page);
-  await carregarExemplo(page); // §9.1 — o trilho só existe com série (divulgação progressiva)
-  await abrirGavetaInferior(page);
-
-  const trilho = page.locator('[data-bloco="trilho"]');
-  const caixas = trilho.getByRole('button');
-  await expect(caixas).toHaveCount(9);
-
-  // rótulos LITERAIS e na ordem cronológica (§7.3.6)
-  for (let i = 0; i < ROTULOS.length; i++) {
-    await expect(caixas.nth(i)).toHaveText(ROTULOS[i]);
-  }
-
-  // nenhum aceso no início (o store começa com `selecionado: null`)
-  await expect(caixas.first()).toHaveAttribute('aria-pressed', 'false');
-  await page.screenshot({ path: 'e2e/.artefatos/trilho-sem-selecao.png', fullPage: true });
-});
-
-test('clicar num mandato destaca (aria-pressed) e clicar de novo limpa', async ({ page }) => {
-  await abrirVazio(page);
-  await carregarExemplo(page); // com série, o destaque também desenha a faixa no canvas
-  await abrirGavetaInferior(page);
-
-  const trilho = page.locator('[data-bloco="trilho"]');
-  const lulaTerceiro = trilho.getByRole('button', { name: 'Lula III · PT' });
-
-  await lulaTerceiro.click();
-  await expect(lulaTerceiro).toHaveAttribute('aria-pressed', 'true');
-  // os demais seguem apagados — a seleção é única
-  await expect(trilho.getByRole('button', { name: 'FHC I · PSDB' })).toHaveAttribute(
-    'aria-pressed',
-    'false',
-  );
-
-  // a captura registra a FAIXA desenhada no canvas (o canvas não se afirma por pixel)
-  await page.screenshot({ path: 'e2e/.artefatos/trilho-lula-iii-destacado.png', fullPage: true });
-
-  // §3 — um clique, um efeito: clicar de novo LIMPA (não dá zoom)
-  await lulaTerceiro.click();
-  await expect(lulaTerceiro).toHaveAttribute('aria-pressed', 'false');
-});
-
-/**
- * O MANDATO É UM ATALHO DE JANELA (emenda de 2026-10-19, §3). Antes, clicar só realçava a faixa e
- * o trilho era um SELETOR puro; agora o mesmo clique ENQUADRA o gráfico no período do governo e
- * declara a autoria da janela (§8.1), para que o fit automático não a desfaça. A §2 tinha
- * rejeitado "o mandato vira o enquadramento" por competir com o zoom pelo mesmo estado — a §8.1,
- * que veio depois, é o que tornou isso seguro; o usuário decidiu reverter.
- */
-test('clicar num mandato FILTRA o período dele e clicar de novo volta ao intervalo completo', async ({
+test('escolher um mandato FILTRA o período dele e limpar volta ao intervalo completo', async ({
   page,
 }) => {
   await abrirVazio(page);
-  await carregarExemplo(page); // §9.1 — os blocos 4/5/6 só existem com série
-  await abrirGavetaInferior(page);
+  await carregarExemplo(page); // §9.1 — a casca só existe com série
 
   // A janela de REPOUSO (o fit do exemplo) depende da largura do gráfico: no celular o fit é
   // mais estreito que no desktop, então o teste guarda a referência em vez de fixar um ano.
@@ -108,18 +67,10 @@ test('clicar num mandato FILTRA o período dele e clicar de novo volta ao interv
     .toBeGreaterThan(365 * 20);
   const repouso = await janela(page);
 
-  const trilho = page.locator('[data-bloco="trilho"]');
   const filtros = page.locator('[data-bloco="filtros"]');
-  const lulaI = trilho.getByRole('button', { name: 'Lula I · PT' });
 
-  // ⚠ NÃO se afirma o `aria-pressed` do "Tudo" aqui: com o exemplo no intervalo completo o botão
-  // deveria acender, e num viewport ESTREITO ele fica apagado por um defeito PRÉ-EXISTENTE (o
-  // `fitContent` arredonda o `barSpacing` e a borda esquerda ecoa em 1996-02 contra o dado de
-  // 1995-12 → `tudoAtivo` falso; medido com e sem esta mudança, 2026-10-19). Está registrado em
-  // AGENTS.md/Aberto. Aqui se afirma o CONTRATO: a janela.
-
-  await lulaI.click();
-  await expect(lulaI).toHaveAttribute('aria-pressed', 'true');
+  await escolherMandato(page, LULA_I);
+  await expect.poll(() => mandatoEmCena(page), { timeout: 20000 }).toBe(LULA_I);
 
   // a janela vai para o MANDATO — 2003-01 → 2006-12
   await expect.poll(async () => anoDe((await janela(page)).from), {
@@ -137,11 +88,12 @@ test('clicar num mandato FILTRA o período dele e clicar de novo volta ao interv
     await expect(filtros.getByRole('button', { name: nome })).toHaveAttribute('aria-pressed', 'false');
   }
 
-  await page.screenshot({ path: 'e2e/.artefatos/trilho-filtra-lula-i.png', fullPage: true });
+  await page.screenshot({ path: 'e2e/.artefatos/mandato-janela-lula-i.png', fullPage: true });
 
-  // clicar de novo LIMPA e volta ao intervalo completo
-  await lulaI.click();
-  await expect(lulaI).toHaveAttribute('aria-pressed', 'false');
+  // de novo no MESMO mandato LIMPA (§3: um clique, um efeito — limpar, não dar zoom) e volta ao
+  // intervalo completo
+  await escolherMandato(page, LULA_I);
+  await expect.poll(() => mandatoEmCena(page), { timeout: 20000 }).toBeNull();
   await expect
     .poll(async () => anoDe((await janela(page)).from), { timeout: 20000 })
     .toBe(anoDe(repouso.from));
@@ -154,10 +106,10 @@ test('o mandato EM CURSO filtra até a última data disponível (a janela tem po
 }) => {
   await abrirVazio(page);
   await carregarExemplo(page);
-  await abrirGavetaInferior(page);
+  await expect(page.getByTestId('grafico')).toBeVisible();
 
-  const trilho = page.locator('[data-bloco="trilho"]');
-  await trilho.getByRole('button', { name: 'Lula III · PT' }).click();
+  await escolherMandato(page, LULA_III);
+  await expect.poll(() => mandatoEmCena(page), { timeout: 20000 }).toBe(LULA_III);
 
   // ⚠ Sem a última data o `to` sairia NULO e o adapter manteria a borda direita ATUAL — o filtro
   // ficaria amarrado à janela anterior. A guarda é a ponta direita ser recente e não nula.
@@ -170,23 +122,17 @@ test('o mandato EM CURSO filtra até a última data disponível (a janela tem po
 test('escolher um preset DESMARCA o mandato (um dono da janela por vez)', async ({ page }) => {
   await abrirVazio(page);
   await carregarExemplo(page);
-  await abrirGavetaInferior(page);
+  await expect(page.getByTestId('grafico')).toBeVisible();
 
-  const trilho = page.locator('[data-bloco="trilho"]');
-  // `includeHidden`: com a gaveta inferior FECHADA o trilho sai da árvore de acessibilidade
-  // (`hidden`), e a asserção seguinte precisa alcançá-lo mesmo assim.
-  const lulaII = trilho.getByRole('button', { name: 'Lula II · PT', includeHidden: true });
-  await lulaII.click();
-  await expect(lulaII).toHaveAttribute('aria-pressed', 'true');
+  await escolherMandato(page, LULA_II);
+  await expect.poll(() => mandatoEmCena(page), { timeout: 20000 }).toBe(LULA_II);
 
-  // No celular o véu da gaveta inferior cobre a tela inteira: fecha antes de usar o topo.
-  await page.getByRole('button', { name: 'Fechar comparação' }).click();
   const dezAnos = page.locator('[data-bloco="filtros"]').getByRole('button', { name: 'Janela de 10 anos' });
   await dezAnos.click();
 
-  // o preset assume a janela e o realce do mandato sai — senão a tela diria duas coisas
+  // o preset assume a janela e a seleção do mandato sai — senão a tela diria duas coisas
   await expect(dezAnos).toHaveAttribute('aria-pressed', 'true');
-  await expect(lulaII).toHaveAttribute('aria-pressed', 'false');
+  await expect.poll(() => mandatoEmCena(page), { timeout: 20000 }).toBeNull();
 });
 
 /**
@@ -205,12 +151,10 @@ test('a janela invertida não chega à lib (onde a produção não tem asserçã
 }) => {
   await abrirVazio(page);
   await carregarExemplo(page);
-  await abrirGavetaInferior(page);
+  await expect(page.getByTestId('grafico')).toBeVisible();
 
   // leva a janela para o PASSADO pelo caminho do produto (é o estado em que a inversão nasce)
-  const lulaI = page.locator('[data-bloco="trilho"]').getByRole('button', { name: 'Lula I · PT' });
-  await lulaI.click();
-  await expect(lulaI).toHaveAttribute('aria-pressed', 'true');
+  await escolherMandato(page, LULA_I);
   await expect.poll(async () => anoDe((await janela(page)).to), { timeout: 20000 }).toBeLessThan(2010);
 
   // ...e pede SÓ a ponta esquerda, no FUTURO: o `to` herdado (2006) cairia antes do `from` (2025).
@@ -223,8 +167,6 @@ test('a janela invertida não chega à lib (onde a produção não tem asserçã
   // ⚠ A asserção que importa é a do fixture de `page`: sem a guarda sai
   // "pageerror (exceção não capturada): Assertion failed: right should be >= left".
   // O que sobra para afirmar aqui é que o app NÃO quebrou: "Tudo" ainda devolve o intervalo.
-  // No celular o véu da gaveta cobre a tela inteira: fecha antes de usar o topo.
-  await page.getByRole('button', { name: 'Fechar comparação' }).click();
   const tudo = page.locator('[data-bloco="filtros"]').getByRole('button', { name: 'Janela completa' });
   await tudo.click();
   // A largura do gráfico limita o enquadramento da lib: no celular "Tudo" não chega a 1996.
@@ -238,9 +180,12 @@ test('a janela invertida não chega à lib (onde a produção não tem asserçã
 });
 
 /**
- * O PAINEL DE COMPARAÇÃO (§4, posição 6) — sempre visível, largura total. A matriz aparece quando
- * há série, com os estados de célula EM TEXTO (§9.4): nada de símbolo — "—" faria concluir que
- * falta dado que existe.
+ * O PAINEL DE COMPARAÇÃO (§4, posição 6) — dentro da gaveta inferior. A matriz aparece quando há
+ * série, com os estados de célula EM TEXTO (§9.4): nada de símbolo — "—" faria concluir que falta
+ * dado que existe.
+ *
+ * O cabeçalho da matriz é, desde 2026-10-30, o ÚNICO lugar (nos dois viewports) onde os nove
+ * rótulos de governo aparecem como DOM — por isso a ordem cronológica é afirmada aqui, literal.
  */
 test('a matriz aparece com série e traz os estados de célula por texto', async ({ page }) => {
   await abrirVazio(page);
@@ -253,12 +198,15 @@ test('a matriz aparece com série e traz os estados de célula por texto', async
 
   const painel = page.locator('[data-bloco="comparacao"]');
 
-  // cabeçalho: a coluna do indicador + uma por mandato (9)
+  // cabeçalho: a coluna do indicador + uma por mandato (9), na ordem cronológica (§7.3.6)
   const tabela = painel.getByRole('table');
   await expect(tabela).toBeVisible();
-  await expect(painel.getByRole('columnheader')).toHaveCount(10);
-  await expect(painel.getByRole('columnheader', { name: 'FHC I · PSDB' })).toBeVisible();
-  await expect(painel.getByRole('columnheader', { name: 'Lula III · PT' })).toBeVisible();
+  const cabecalhos = painel.getByRole('columnheader');
+  await expect(cabecalhos).toHaveCount(ROTULOS.length + 1);
+  await expect(cabecalhos.first()).toHaveText('Indicador');
+  for (let i = 0; i < ROTULOS.length; i++) {
+    await expect(cabecalhos.nth(i + 1)).toHaveText(ROTULOS[i]);
+  }
 
   // duas linhas de dados (Selic e IPCA)
   await expect(tabela.locator('tbody tr')).toHaveCount(2);
@@ -279,15 +227,14 @@ test('a matriz aparece com série e traz os estados de célula por texto', async
 });
 
 /**
- * A GAVETA INFERIOR (T8) — o trilho de mandatos e a matriz vivem numa gaveta, e a barra de 36px
- * é a ALÇA dela. `Esc` fecha — a prioridade ENTRE camadas é da T9, aqui a gaveta só respeita
- * quem já tratou a tecla.
+ * A GAVETA INFERIOR (T8) — a matriz vive numa gaveta, e a barra de 36px é a ALÇA dela. `Esc` fecha
+ * — a prioridade ENTRE camadas é da T9, aqui a gaveta só respeita quem já tratou a tecla.
  *
  * ⚠ Sem `carregarExemplo`: a `/` já entra com o preset do dia (os ids curados do dia), então a
  * casca existe e a alça nasce habilitada. O teste NÃO afirma o conteúdo do preset — só a forma
  * da barra —, então o dia que muda não apodrece o teste.
  */
-test('a gaveta inferior abre com mandatos e matriz, e a alça diz o que abre', async ({ page }) => {
+test('a gaveta inferior abre com a matriz, e a alça diz o que abre', async ({ page }) => {
   await page.goto('/');
   const alca = page.getByRole('button', { name: /Comparação por mandato/ });
   await expect(alca).toHaveAttribute('aria-expanded', 'false');
@@ -301,8 +248,9 @@ test('a gaveta inferior abre com mandatos e matriz, e a alça diz o que abre', a
   await alca.click();
   const gaveta = page.getByTestId('gaveta-inferior');
   await expect(gaveta).toBeVisible();
-  await expect(gaveta.locator('[data-bloco="trilho"]')).toBeVisible();
   await expect(gaveta.locator('[data-bloco="comparacao"]')).toBeVisible();
+  // §7.3.4 / decisão de 2026-10-30 — a gaveta é LEITURA: nenhum seletor de mandato dentro dela.
+  await expect(gaveta.locator('[data-bloco="trilho"]')).toHaveCount(0);
   await expect(alca).toHaveAttribute('aria-expanded', 'true');
 
   await page.keyboard.press('Escape');

@@ -66,6 +66,39 @@ export async function abrirGavetaInferior(page) {
   await expect(gaveta).toBeVisible();
 }
 
+/**
+ * Escolhe um mandato pelo caminho do ESTADO: `aplicarMandato`, a mesma função que o chip da barra
+ * superior e a faixa do minimapa chamam.
+ *
+ * Por que não pela UI: o chip é `max-md:hidden` (não existe no celular) e mirar a faixa do minimapa
+ * por coordenada amarra o teste ao pixel. Os dois caminhos de UI têm spec próprio
+ * (`mandato.spec.js`); aqui o que se afirma é a JANELA que a escolha produz.
+ *
+ * ⚠ `aplicarMandato` ALTERNA: passar o id que já está selecionado LIMPA (é o "clicar de novo").
+ *
+ * @param {import('@playwright/test').Page} page
+ * @param {string|null} id  `null` limpa a seleção e volta ao intervalo completo.
+ */
+export async function escolherMandato(page, id) {
+  await page.evaluate(async (id) => {
+    const { aplicarMandato } = await import('/src/stores/mandate.js');
+    const { dataMaximaStore } = await import('/src/stores/series.js');
+    let maxima = null;
+    dataMaximaStore.subscribe((x) => (maxima = x))();
+    aplicarMandato(id, maxima);
+  }, id);
+}
+
+/** O `selecionado` do `mandateStore` — o estado que o chip, o minimapa e o gráfico leem. */
+export async function mandatoEmCena(page) {
+  return page.evaluate(async () => {
+    const { mandateStore } = await import('/src/stores/mandate.js');
+    let m = null;
+    mandateStore.subscribe((x) => (m = x))();
+    return m.selecionado;
+  });
+}
+
 /** Abre a modal de busca pelo botão do topo (posição 1 da §1). */
 export async function abrirBusca(page) {
   await page.getByRole('button', { name: 'Buscar indicador…' }).first().click();

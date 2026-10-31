@@ -1,7 +1,7 @@
 # ADR 0001 — Reconstruir a camada de gráficos como app isolado
 
-- **Status:** Aceita (emendada em 2026-10-14 — ver D7)
-- **Data:** 2026-10-13 · **Emenda:** 2026-10-14
+- **Status:** Aceita (emendada em 2026-10-14 — ver D7; emendada em 2026-10-30 — ver a emenda do trilho de mandatos, na Decisão)
+- **Data:** 2026-10-13 · **Emendas:** 2026-10-14, 2026-10-30
 - **Projeto:** Brasil em Números (`www.brasilemnumeros.ong.br`)
 - **Repositórios:** `sitio` (camada de apresentação) e, a partir da emenda de 2026-10-14, `dados` (contrato das séries — ver D7)
 
@@ -87,6 +87,8 @@ Perguntas feitas e respondidas ao longo da sessão (o espaço de busca considera
 **Emenda de 2026-10-14 (cor, em duas etapas):** primeiro a **cor saiu do dado** — manter uma cor por mandato à mão não sobrevive a 27 unidades federativas, quanto mais a 5.570 municípios. Na segunda etapa, no mesmo dia, **a cor de partido saiu do gráfico**: ela obrigaria a escolher entre **cor de marca** (colide entre partidos — o vermelho é o mais disputado no Brasil — e é desenhada para fundo branco, não para o fundo escuro) e **cor por espectro político** (juízo editorial sem fonte auditável, que faria o site afirmar uma classificação em vez de publicar um dado). As faixas ficam **sem cor**, com alternância sutil entre mandatos vizinhos e o **rótulo trazendo governo e sigla** (`Lula III · PT`). A identificação por partido passa a ser **logo pequeno + sigla**, no trilho e na ficha do mandato. O gráfico fica com uma paleta só: as séries.
 
 **Emenda de 2026-10-14 (escopo municipal):** o modelo **suporta** municipal — o caminho de arquivo e o índice já o comportam — mas o dado **não será populado** nesta rodada. Popular 5.570 entidades é projeto de dados por si só; a fonte candidata é o TSE.
+
+**Emenda de 2026-10-30 (o trilho de mandatos saiu da UI):** o componente `MandateRail` — a faixa de seleção de uma caixa por governo — foi **removido** da gaveta inferior, a pedido do usuário. Ele não era regra: era um **terceiro** caminho até `mandateStore` + `aplicarMandato`, ao lado do chip da barra superior (2026-10-28) e da faixa do minimapa, e vivia numa gaveta que nasce recolhida. A escolha de mandato fica com o **chip** (desktop) e o **minimapa** (os dois layouts); a gaveta inferior passa a ser **leitura** (a matriz de comparação), com o "×" de fechar na própria barra de 36px e **um único título** na tela. O que a D5 e a emenda de cor acima decidem **continua valendo**: identificação por **texto** (`Lula III · PT`), nunca por cor de partido. O `app/e2e/trilho.spec.js` foi renomeado para `app/e2e/mandato-janela.spec.js`; as provas de "mesmo estado" que liam o `aria-pressed` do trilho leem a `mandateStore`.
 
 **D6 — Custo zero é invariante.** A hospedagem segue estática e gratuita; nenhuma decisão desta ADR introduz custo recorrente.
 

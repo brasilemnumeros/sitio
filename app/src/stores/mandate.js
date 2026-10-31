@@ -38,11 +38,11 @@ export function mandatoSelecionado() {
 }
 
 /**
- * "USE ESTE MANDATO (ou nenhum) COMO A JANELA" — a regra ÚNICA dos três lugares que escolhem
- * mandato: o trilho da gaveta inferior, o chip da barra superior e o clique na faixa do
- * minimapa (2026-10-28). Estava escrita dentro do `MandateRail`; com três caminhos até o mesmo
- * estado, deixá-la copiada garantiria que um deles divergisse (um limpando o realce e o outro
- * não, um declarando a autoria da janela e o outro não).
+ * "USE ESTE MANDATO (ou nenhum) COMO A JANELA" — a regra ÚNICA dos caminhos que escolhem mandato:
+ * o chip da barra superior e o clique na faixa do minimapa (2026-10-28). O trilho da gaveta
+ * inferior, que também a usava, saiu em 2026-10-30. Estava escrita dentro do `MandateRail`; com
+ * mais de um caminho até o mesmo estado, deixá-la copiada garantiria que um deles divergisse (um
+ * limpando o realce e o outro não, um declarando a autoria da janela e o outro não).
  *
  * - `id` válido: seleciona o mandato e a janela vai para o PERÍODO dele.
  * - `id` nulo (ou o que JÁ está selecionado — clicar de novo desliga): limpa a seleção e volta ao

@@ -16,7 +16,7 @@
   const itens = $derived($seriesStore.itens);
 
   // O aviso de ESCALA vem do `axesStore`, indexado por ID — NÃO por posição (fatia 05): a lista
-  // é plana e só traz as séries que não conviveram com as que já estavam à esquerda.
+  // é plana e só traz as séries que não conviveram com as que já estavam no eixo-base (direita).
   const avisoEscala = (id) => $axesStore.avisos.find((a) => a.id === id);
 </script>
 

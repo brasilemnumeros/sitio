@@ -29,9 +29,9 @@
 </script>
 
 <section class="w-full" data-bloco="comparacao" aria-label="Comparação por mandato">
-  <h2 class="mb-2 text-xs font-medium tracking-wide text-slate-500 uppercase dark:text-slate-400">
-    Comparação por mandato
-  </h2>
+  <!-- SEM `h2`: o título da vista é o da BARRA da gaveta (`BottomDrawer`), que está sempre à
+       vista — um `h2` aqui repetia "Comparação por mandato" duas vezes na mesma dobra
+       (2026-10-30, a pedido do usuário). O nome acessível da seção fica na `aria-label`. -->
 
   {#if itens.length === 0}
     <!-- §9 — vazio com motivo, nunca um quadro mudo. -->

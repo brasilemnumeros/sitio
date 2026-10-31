@@ -11,8 +11,8 @@ export const LIMITE_SERIES = 10;
 export const seriesStore = writable({ itens: [] });
 
 /** A DATA DE REFERÊNCIA (§8): a mais recente entre as séries `ok`. Mora aqui, e não no componente,
- *  porque desde 2026-10-19 DOIS a usam — o filtro de tempo (o "10a" conta a partir dela) e o
- *  trilho de mandatos (o mandato em curso termina nela). Uma fonte só: duas cópias divergiriam.
+ *  porque desde 2026-10-19 DOIS a usam — o filtro de tempo (o "10a" conta a partir dela) e a
+ *  escolha de mandato (o mandato em curso termina nela). Uma fonte só: duas cópias divergiriam.
  *  Série com erro não conta: a referência não pode vir de dado que não chegou (§9.3). */
 export const dataMaximaStore = derived(seriesStore, ({ itens }) => {
   let max = null;

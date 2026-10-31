@@ -1,4 +1,4 @@
-import { test, expect, abrirVazio, carregarExemplo, abrirGavetaInferior } from './apoio.js';
+import { test, expect, abrirVazio, carregarExemplo, escolherMandato, mandatoEmCena } from './apoio.js';
 
 /**
  * O CHIP DE MANDATO na barra superior (decisão de 2026-10-28, a pedido do usuário).
@@ -6,10 +6,14 @@ import { test, expect, abrirVazio, carregarExemplo, abrirGavetaInferior } from '
  * O seletor de mandatos existia só dentro da gaveta inferior (`MandateRail`), e a gaveta nasce
  * RECOLHIDA — na prática, "os filtros por mandato sumiram". O chip devolve o controle à vista,
  * sem gastar altura de gráfico: mostra o mandato em cena (ou "Mandato"), abre a lista e filtra a
- * janela. É o MESMO dono da janela do trilho (`mandateStore` + `viewportStore`), então não há
+ * janela. É o MESMO dono da janela do minimapa (`mandateStore` + `viewportStore`), então não há
  * regra nova — só um segundo caminho até ela.
  *
- * A janela é lida da STORE (mesmo caminho de `trilho.spec.js`/`minimapa.spec.js`): o que se afirma
+ * ⚠ Em 2026-10-30 o trilho da gaveta saiu de vez (a pedido do usuário): restaram DOIS caminhos, o
+ * chip (só desktop — `max-md:hidden`) e a faixa do minimapa. As provas de "mesmo estado" que
+ * antes liam o `aria-pressed` do trilho leem agora a `mandateStore`.
+ *
+ * A janela é lida da STORE (mesmo caminho de `mandato-janela.spec.js`/`minimapa.spec.js`): o que se afirma
  * é o ESTADO, não o pixel.
  */
 const janela = (page) =>
@@ -43,8 +47,8 @@ test('o chip de mandato fica na barra superior e nasce sem mandato', async ({ pa
 });
 
 /**
- * Escolher um mandato no CHIP filtra a janela — e é o MESMO estado que o trilho da gaveta
- * inferior lê (`aria-pressed`). Escolher de novo ("Todos") devolve o intervalo completo.
+ * Escolher um mandato no CHIP filtra a janela — e é o MESMO estado que o minimapa escreve
+ * (`mandateStore`). Escolher de novo ("Todos") devolve o intervalo completo.
  */
 test('o chip filtra a janela pelo mandato e "Todos" devolve o intervalo completo', async ({
   page,
@@ -75,13 +79,8 @@ test('o chip filtra a janela pelo mandato e "Todos" devolve o intervalo completo
 
   // o chip passa a dizer o mandato — a barra superior responde "onde estou"
   await expect(chip).toContainText('Lula I · PT');
-  // §Gaveta: é o MESMO mandato do trilho, não um segundo estado
-  await abrirGavetaInferior(page);
-  await expect(page.locator('[data-bloco="trilho"]').getByRole('button', { name: 'Lula I · PT' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
-  await page.getByRole('button', { name: /Comparação por mandato/ }).click(); // fecha a gaveta
+  // §Estado: é o MESMO mandato que o minimapa e o gráfico leem, não um segundo estado
+  await expect.poll(() => mandatoEmCena(page), { timeout: 20000 }).toBe('federal-2003-lula');
 
   // "Todos" limpa a seleção e devolve o intervalo completo. ⚠ O eco do adapter NÃO devolve a
   // store vazia (`{null, null}`): ele preenche `from`/`to` com o que o `fitContent` enquadrou e o
@@ -90,9 +89,7 @@ test('o chip filtra a janela pelo mandato e "Todos" devolve o intervalo completo
   await chip.click();
   await page.getByTestId('menu-mandatos').getByRole('menuitem', { name: 'Todos' }).click();
   await expect(chip).not.toContainText('·');
-  await abrirGavetaInferior(page);
-  await expect(page.locator('[data-bloco="trilho"]').locator('button[aria-pressed="true"]')).toHaveCount(0);
-  await page.getByRole('button', { name: /Comparação por mandato/ }).click(); // fecha a gaveta
+  await expect.poll(() => mandatoEmCena(page), { timeout: 20000 }).toBeNull();
   await expect
     .poll(async () => {
       const j = await janela(page);
@@ -104,7 +101,7 @@ test('o chip filtra a janela pelo mandato e "Todos" devolve o intervalo completo
 /**
  * O "Tudo"/preset da barra TOMA a janela do chip (um dono por vez): com um mandato escolhido, o
  * chip não pode continuar dizendo "Lula I" enquanto a tela mostra o último ano — o mesmo contrato
- * que o `TimeFilters` já respeita com o trilho.
+ * que o `TimeFilters` já respeita com a seleção do mandato.
  */
 test('escolher uma janela de tempo desmarca o mandato do chip', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'o chip é escondido no topo de 36px');
@@ -127,7 +124,7 @@ test('escolher uma janela de tempo desmarca o mandato do chip', async ({ page },
  * comparando mandatos. É a única exceção à regra "gaveta não abre por clique de UI": nada aqui
  * escreve em `viewport` nem em `mandate`; só a geometria nasce aberta.
  */
-test('o link com ?gaveta=fundo abre a gaveta de mandatos, e Esc fecha', async ({ page }) => {
+test('o link com ?gaveta=fundo abre a gaveta de comparação, e Esc fecha', async ({ page }) => {
   await page.goto('/?gaveta=fundo');
   await expect(page.getByTestId('grafico')).toBeVisible();
   const gaveta = page.getByTestId('gaveta-inferior');
@@ -135,10 +132,7 @@ test('o link com ?gaveta=fundo abre a gaveta de mandatos, e Esc fecha', async ({
   await expect(gaveta).toBeVisible();
   await expect(alca).toHaveAttribute('aria-expanded', 'true');
   // só a geometria mudou: sem mandato escolhido
-  await expect(page.locator('[data-bloco="trilho"]').getByRole('button', { name: 'Lula I · PT' })).toHaveAttribute(
-    'aria-pressed',
-    'false',
-  );
+  expect(await mandatoEmCena(page)).toBeNull();
 
   await page.keyboard.press('Escape');
   await expect(gaveta).toBeHidden();
@@ -147,7 +141,7 @@ test('o link com ?gaveta=fundo abre a gaveta de mandatos, e Esc fecha', async ({
 
 /**
  * O MINIMAPA filtra por mandato: clicar numa FAIXA (onde o cursor é `pointer`) escolhe aquele
- * governo — o mesmo efeito do chip e do trilho. Não pode atropelar o gesto: ARRASTAR continua
+ * governo — o mesmo efeito do chip. Não pode atropelar o gesto: ARRASTAR continua
  * sendo "mover a janela" (um arrasto nunca vira escolha, mesmo com o botão do mouse preso).
  */
 test('clicar numa faixa do minimapa filtra pelo mandato, e arrastar continua movendo a janela', async ({
@@ -208,13 +202,10 @@ test('clicar numa faixa do minimapa filtra pelo mandato, e arrastar continua mov
   // Arrastar NÃO escolhe (o gesto manda): a janela muda pelo gesto e a seleção fica VAZIA.
   // Sem o limiar de movimento, o arrasto viraria "escolher o mandato" e a cada passo a janela
   // saltaria para o governo clicado — o defeito que o limiar existe para impedir.
-  await abrirGavetaInferior(page);
-  const trilho = page.locator('[data-bloco="trilho"]');
-  await expect(trilho.locator('button[aria-pressed="true"]')).toHaveCount(1);
-  const escolhido = (await trilho.locator('[aria-pressed="true"]').innerText()).trim();
-  await trilho.getByRole('button', { name: escolhido }).click(); // limpa: o teste do arrasto parte de "Todos"
-  await expect(trilho.locator('button[aria-pressed="true"]')).toHaveCount(0);
-  await page.getByRole('button', { name: /Comparação por mandato/ }).click(); // fecha a gaveta
+  const escolhido = await mandatoEmCena(page);
+  expect(escolhido, 'o clique na faixa tem de deixar UM mandato em cena').not.toBeNull();
+  await escolherMandato(page, escolhido); // alterna o MESMO id: limpa — o arrasto parte de "Todos"
+  expect(await mandatoEmCena(page)).toBeNull();
 
   // Arrastar NÃO escolhe. O arrasto começa numa faixa FORA da janela (é lá que o cursor é
   // `pointer` — a faixa visível ganha a janela por cima), e ali o `pointerdown` faz o que sempre
@@ -238,6 +229,5 @@ test('clicar numa faixa do minimapa filtra pelo mandato, e arrastar continua mov
     { from: c.from, to: c.to },
     'o arrasto tem de mover a janela',
   ).not.toEqual({ from: b.from, to: b.to });
-  await abrirGavetaInferior(page);
-  await expect(trilho.locator('button[aria-pressed="true"]')).toHaveCount(0);
+  expect(await mandatoEmCena(page), 'o arrasto não pode escolher mandato').toBeNull();
 });

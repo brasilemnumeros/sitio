@@ -60,10 +60,10 @@ it('R27 — não importa series.js, verificado NO FONTE e não por proxy', async
   expect(especificadores.filter((e) => /series/i.test(e))).toEqual([]);
 });
 
-// ─── aplicarMandato: a regra ÚNICA de escolha (trilho, chip da barra superior e minimapa) ───
-// Antes ela vivia dentro do `MandateRail`; com três caminhos até o mesmo estado, uma cópia por
-// caminho garantiria divergência (um limpando o realce, outro não; um declarando a autoria da
-// janela, outro não). Aqui se prova o CONTRATO que os três herdam.
+// ─── aplicarMandato: a regra ÚNICA de escolha (chip da barra superior e minimapa) ───
+// Antes ela vivia dentro do `MandateRail` (que saiu em 2026-10-30); com mais de um caminho até o
+// mesmo estado, uma cópia por caminho garantiria divergência (um limpando o realce, outro não; um
+// declarando a autoria da janela, outro não). Aqui se prova o CONTRATO que os dois herdam.
 it('aplicarMandato escolhe o governo E leva a janela para o período dele', async () => {
   const { viewportStore } = await import('./viewport.js');
   await carregarMandatos({ fetchImpl: okGovernos });

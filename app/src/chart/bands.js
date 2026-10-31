@@ -74,9 +74,10 @@ export function posicaoNaGrade(tempos, iso) {
  * Primitiva de pane das faixas de governo (§2). A lib não tem anotação nativa — este é o
  * código que passa a ser nosso para manter (ADR, "negativas").
  * Requisitos: pintar ao FUNDO (`zOrder: 'bottom'`); clique SELECIONA, não dá zoom;
- * hachura no mandato em curso, cortando no último dado disponível (§7.3.5).
+ * hachura no mandato em curso, que vai até HOJE (o eixo também termina em hoje — emenda de
+ * 2026-10-29 da §7.3.5; antes cortava no último dado).
  */
-export function criarPrimitivaDeFaixas(mandatos, { aoClicar, ultimoDadoPorSerie, temposDoDado } = {}) {
+export function criarPrimitivaDeFaixas(mandatos, { aoClicar, ultimoDadoPorSerie, temposDoDado, fimDoMandatoEmCurso } = {}) {
   let chart = null;
   let pedirAtualizacao = null;
   let selecionado = null;
@@ -109,8 +110,13 @@ export function criarPrimitivaDeFaixas(mandatos, { aoClicar, ultimoDadoPorSerie,
     const tempos = temposDoDado?.() ?? [];
     faixasPx = mandatos.map((m, i) => {
       const x1 = coordenadaDaData(ts, tempos, m.inicio);
-      // O mandato em curso termina no ÚLTIMO DADO, não na data de hoje (§7.3.5).
-      const fim = m.fim ?? ultimoDadoPorSerie?.(m) ?? null;
+      // O mandato em curso termina no DIA DE HOJE (2026-10-29): o eixo agora vai até hoje,
+      // então cortar a hachura no último dado deixaria um trecho sem faixa que se lê como
+      // "sem governo". O último dado continua sendo o limite de reserva quando não há hoje.
+      const fim = m.fim
+        ?? (m.emCurso ? fimDoMandatoEmCurso?.() : null)
+        ?? ultimoDadoPorSerie?.(m)
+        ?? null;
       const x2 = fim ? coordenadaDaData(ts, tempos, fim) : null;
       return { id: m.id, indice: i, x1, x2, emCurso: Boolean(m.emCurso) };
     }).filter((f) => f.x1 !== null);
@@ -152,8 +158,12 @@ export function criarPrimitivaDeFaixas(mandatos, { aoClicar, ultimoDadoPorSerie,
 
           // O RÓTULO é o canal de identificação — texto, nunca cor (§2, §7.3.4).
           // ⚠ O `clip` não é decorativo: sem ele, um rótulo longo ("FHC II · PSDB") numa faixa
-          // estreita VAZA para a faixa vizinha, e o limiar de 70px não garante o contrário.
-          if (largura > 70 * r) {
+          // estreita VAZA para a faixa vizinha, e o limiar sozinho não garante o contrário.
+          // ⚠ O limiar caiu de 70px para 40px (2026-10-29): a faixa da Dilma II tem ~43px no
+          // horizonte completo (1,36 ano × ~32px/ano) e, sem rótulo, o fundo pintado lia como
+          // "período vago" entre a Dilma I e o Temer. O `clip` abaixo contém o texto que não
+          // couber; o rótulo completo continua no chip e na matriz.
+          if (largura > 40 * r) {
             context.save();
             context.beginPath();
             context.rect(x1, 0, largura, bitmapSize.height);

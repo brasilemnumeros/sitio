@@ -1,6 +1,8 @@
 import { createChart, LineSeries } from 'lightweight-charts';
 import { paraPontosDaBiblioteca, paraISO } from './points.js';
 import { criarPrimitivaDeFaixas, emSegundos } from './bands.js';
+import { ancorasDoHorizonte } from '../domain/horizonte.js';
+import { dataEmSaoPaulo } from '../data/presets.js';
 
 const FUNDO = '#0e1117';
 
@@ -15,13 +17,21 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
     autoSize: true,
     layout: { background: { color: FUNDO }, textColor: '#c9d1d9' },
     grid: { vertLines: { color: 'rgba(255,255,255,0.04)' }, horzLines: { color: 'rgba(255,255,255,0.04)' } },
-    // §5: existem DOIS eixos, e os dois ficam visíveis — senão o eixo que a atribuição manda
-    // usar não teria onde aparecer e o `priceScaleId` cairia num eixo invisível.
-    leftPriceScale: { visible: true, borderColor: 'rgba(255,255,255,0.10)' },
+    // §5 — existem DOIS eixos, mas só a escala do lado que TEM série é desenhada. Antes as duas
+    // ficavam sempre visíveis "para a atribuição ter onde aparecer"; com o eixo-base na direita
+    // (2026-10-30), isso virava uma faixa morta de ~54px à esquerda — ~14% da largura no celular.
+    // Agora `definirSeries` liga a esquerda só quando alguma série está nela. A lib reserva 0 para
+    // escala invisível (`largurasDasEscalas`), então o minimapa se alinha sozinho nos dois estados.
+    leftPriceScale: { visible: false, borderVisible: false },
     rightPriceScale: { visible: true, borderColor: 'rgba(255,255,255,0.10)' },
     timeScale: { borderColor: 'rgba(255,255,255,0.10)' },
   });
   const porId = new Map();          // id -> ISeriesApi
+  /** Série INVISÍVEL que só carrega as âncoras mensais do horizonte (1995 → hoje).
+   *  O eixo não pode nascer do dado: sem ela, `fitContent` enquadra a união das séries e
+   *  o mesmo mandato muda de lugar conforme o indicador carregado (ver `domain/horizonte`).
+   *  Fica FORA de `porId`: não é série do usuário, não entra na legenda nem no eixo. */
+  let serieDoHorizonte = null;
 
   // 🔴 `setVisibleRange` e `fitContent` LANÇAM num gráfico sem NENHUMA barra. Medido em
   // 2026-10-15 (sonda no navegador, os dois builds): `setData([])` e depois `setVisibleRange`
@@ -129,6 +139,24 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
     for (const [id, serie] of porId) {
       if (!vivos.has(id)) { chart.removeSeries(serie); porId.delete(id); }
     }
+    // O horizonte é do EIXO, não da série: as âncoras valem mesmo com zero série carregada.
+    const ancoras = ancorasDoHorizonte(dataEmSaoPaulo());
+    if (!serieDoHorizonte) {
+      serieDoHorizonte = chart.addSeries(LineSeries, {
+        visible: false,
+        lastValueVisible: false,
+        priceLineVisible: false,
+        priceScaleId: 'horizonte',
+        // A série é só uma ÂNCORA de tempo: os valores 0 (necessários para a lib manter os
+        // pontos, inclusive os que estão DEPOIS do último dado real) não podem entrar no
+        // autoescalonamento do eixo de preço, senão puxariam a escala para o zero.
+        autoscaleInfoProvider: () => null,
+      });
+      // Escala própria e INVISÍVEL: se a âncora ficasse no eixo `right`, os zeros virariam
+      // rótulos (-0,60…0,70) ao lado do dado — o eixo mentiria sobre o que a série mede.
+      chart.priceScale('horizonte').applyOptions({ visible: false, borderVisible: false });
+    }
+    serieDoHorizonte.setData(ancoras.map((iso) => ({ time: emSegundos(iso), value: 0 })));
     for (const item of itens) {
       const eixo = atribuicao[item.id] === 'left' ? 'left' : 'right';
       let serie = porId.get(item.id);
@@ -151,17 +179,25 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
       }
       serie.setData(paraPontosDaBiblioteca(item.series?.data ?? []));
     }
+    // §5 (2026-10-30) — a escala da ESQUERDA existe só quando alguma série está nela. Vem DEPOIS
+    // da atribuição de `priceScaleId` acima e ANTES de qualquer saída antecipada: esconder uma
+    // escala que ainda tem série faria a linha sumir.
+    const temEsquerda = Object.values(atribuicao).includes('left');
+    chart.priceScale('left').applyOptions({ visible: temEsquerda, borderVisible: temEsquerda });
     // "Há alguma barra na tela?" — é o que decide se a lib aceita mexer na janela.
     temDado = itens.some((i) => (i.series?.data?.length ?? 0) > 0);
-    // A grade de tempo do gráfico é a UNIÃO das séries (é dela que a lib monta a escala).
+    // A grade de tempo do gráfico é a UNIÃO das séries + as âncoras do horizonte (é dela que a
+    // lib monta a escala, e é ela que a primitiva das faixas usa para posicionar as datas).
     const tempos = new Set();
     for (const item of itens) {
       for (const p of item.series?.data ?? []) tempos.add(emSegundos(p.date));
     }
+    for (const iso of ancoras) tempos.add(emSegundos(iso));
     temposDoDado = [...tempos].sort((a, b) => a - b);
-    // O fit enquadra a UNIÃO de todas as séries: espera a rajada de carga assentar (debounce) e
-    // re-agenda a cada chamada, de modo que só o ÚLTIMO `definirSeries` da rajada dispara o fit —
-    // com todas as séries já no gráfico. Uma vez que o usuário TENHA a janela (§8.1 — gesto NO
+    // O fit enquadra o HORIZONTE (1995 → hoje), que é a união das séries com as âncoras do
+    // eixo. Espera a rajada de carga assentar (debounce) e re-agenda a cada chamada, de modo que
+    // só o ÚLTIMO `definirSeries` da rajada dispara o fit — com todas as séries já no gráfico.
+    // Uma vez que o usuário TENHA a janela (§8.1 — gesto NO
     // gráfico, preset do filtro de tempo, ou arrasto do minimapa), paramos de re-enquadrar para
     // sempre: a partir dali o zoom é dele — e nem uma atualização de DADO a move (o `devolverJanela`
     // acima devolve o que o `setData`/`removeSeries` empurrou). O fit é adiado por um frame porque
@@ -189,7 +225,10 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
       aoClicar: (id) => destacarMandato(id),
       // A grade do gráfico, lida no recálculo — nunca copiada para dentro da primitiva.
       temposDoDado: () => temposDoDado,
-      // O mandato em curso hachura até o ÚLTIMO DADO, não até hoje (§7.3.5).
+      // O mandato em curso hachura até HOJE, não até o último dado (§7.3.5 emendado em
+      // 2026-10-29): o eixo agora vai até hoje e uma faixa que parasse antes deixaria um vão
+      // que se lê como "sem governo".
+      fimDoMandatoEmCurso: () => dataEmSaoPaulo(),
       ultimoDadoPorSerie: (m) => {
         let maior = null;
         for (const serie of porId.values()) {

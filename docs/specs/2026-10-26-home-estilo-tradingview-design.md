@@ -27,7 +27,7 @@ recolhidos).
 | App | `app/src/App.svelte` | `<main class="mx-auto flex max-w-6xl flex-col gap-4 p-4">` com 6 blocos |
 | Gráfico | `Chart.svelte` | Canvas fixo `h-[480px]` + minimapa `h-[48px]` |
 | Filtros de tempo | `TimeFilters.svelte` | Escreve em `viewport`; limpa seleção de mandato |
-| Trilho de mandatos | `MandateRail.svelte` | Escreve em `mandate` e `viewport` |
+| Chip de mandato | `HomeToolbar.svelte` (`mandate-chip`) | Escreve em `mandate` e `viewport`. O trilho da gaveta inferior (`MandateRail`) saiu em 2026-10-30 |
 | Comparação | `ComparisonPanel.svelte` | Matriz larga: linha por série, coluna por governo |
 | Legenda | `SeriesLegend.svelte` | Identificação textual + troca de cor + eixo |
 | Busca | `SearchModal.svelte` + `Ficha.svelte` | Modal com cascata, ficha e fontes |
@@ -91,16 +91,16 @@ preset do dia em vez de vazia.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│ 34px  ● Brasil em Números   ⌕ Buscar…⌘K   1A 5A 10A Máx   preset ⤓ ⤢ │
+│ 44px  ● Brasil em Números   ⌕ Buscar…⌘K   1A 5A 10A Máx   preset ⤓ ⤢ │
 ├───────────────────────────────────────────────────────┬──────────────┤
-│                                                       │ 34px         │
+│                                                       │ 44px         │
 │                    gráfico (flex-1)                   │ trilho       │
 │                                                       │ (ícones)     │
 │                                                       │              │
 ├───────────────────────────────────────────────────────┴──────────────┤
 │ 48px  minimapa                                                        │
 ├──────────────────────────────────────────────────────────────────────┤
-│ 26px  ▬ Comparação por mandato                    2 séries · 2 eixos │
+│ 36px  ▬ Comparação por mandato                    2 séries · 2 eixos │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -111,18 +111,18 @@ gráfico é `flex-1 min-h-0`. A página não rola; quem rola são as gavetas.
 
 | Elemento | Fechado | Aberto |
 |---|---|---|
-| Barra superior | 34px | 34px |
-| Trilho direito | 34px | 320px (320–360 conforme largura) |
+| Barra superior | 44px (36 no celular) | 44px (36 no celular) |
+| Trilho direito | 44px (40 no celular) | 320px (320–360 conforme largura) |
 | Área do gráfico | `flex-1` | `flex-1` (encolhe, não some) |
 | Minimapa | 48px | 48px |
-| Barra inferior | 26px | 40–45% da altura, máximo 360px |
-| Topo (mobile) | 30px | 30px |
+| Barra inferior | 36px (32 no celular) | 36px + a altura do CONTEÚDO, teto 45dvh / 360px (2026-10-30) |
+| Topo (mobile) | 36px | 36px |
 
 Breakpoint: `md` (768px). Abaixo disso, ver Mobile.
 
 ### Barra superior
 
-- Marca compacta (quadrado azul + "Brasil em Números"), altura 34px, sem fundo próprio.
+- Marca compacta (quadrado azul + "Brasil em Números"), altura 44px, sem fundo próprio.
 - Busca: pílula que abre o `SearchModal` existente. Atalho `⌘K` / `Ctrl+K`.
 - Janela de tempo: os presets do `TimeFilters` (`1A`, `5A`, `10A`, `Tudo`) como
   segmento. São os quatro existentes; nenhum rótulo é renomeado nem removido.
@@ -134,12 +134,13 @@ Breakpoint: `md` (768px). Abaixo disso, ver Mobile.
   preset **substitui** as séries em cena, numa única escrita atômica (sem estados
   intermediários na URL). Se a seleção atual não corresponde a nenhum preset — série
   adicionada/removida à mão ou `?series=` arbitrário — o chip mostra "Personalizado".
-- **Chip de mandato** (2026-10-28): o mesmo seletor do trilho, na barra superior, para não
+- **Chip de mandato** (2026-10-28): um seletor de mandato na barra superior, para não
   obrigar a abrir a gaveta inferior só para filtrar por governo. Escreve pelo
-  `aplicarMandato` (a regra única, também usada pelo trilho e pelo minimapa); os dois
+  `aplicarMandato` (a regra única, também usada pela faixa do minimapa); os dois
   menus (preset e mandato) nunca ficam abertos ao mesmo tempo, e `Esc` fecha o menu com foco
-  de volta ao chip. Escondido no celular: lá o caminho continua sendo o trilho da gaveta
-  inferior, e o topo de 36px é marca + busca + janela.
+  de volta ao chip. Escondido no celular: lá o caminho é a **faixa do minimapa**, e o topo de
+  36px é marca + busca + janela. (Até 2026-10-30 havia um terceiro caminho, o trilho da gaveta
+  inferior; ele saiu.)
 - Ações: permalink (copia a URL) e tela cheia (`requestFullscreen`, opcional; se falhar,
   não mostra). Não há menu do site.
 - Navegação para o conteúdo: link discreto **"Artigos"** → `/blog` (decisão minha; sem ele a
@@ -167,20 +168,25 @@ Botão "+ Série" abre a busca. O gatilho do trilho é **um** botão (engrenagem
 aberta a engrenagem leva a vista ao topo, sem fechar. Fechar é o "×" do cabeçalho; `Esc`
 fecha a gaveta com foco de volta ao gatilho.
 
-### Gaveta inferior — mandatos e comparação
+### Gaveta inferior — comparação por mandato
 
-Duas seções empilhadas, na ordem:
+Uma seção só: `ComparisonPanel` como matriz de largura total. Em telas estreitas, rolagem
+horizontal **dentro** da gaveta; a primeira coluna (indicador) fica fixa (`position: sticky`).
 
-1. `MandateRail` como faixa de seleção (largura total, uma caixa por governo, texto
-   `Lula III · PT`). O clique continua escrevendo `mandate` e `viewport`.
-2. `ComparisonPanel` como matriz de largura total. Em telas estreitas, rolagem horizontal
-   **dentro** da gaveta; a primeira coluna (indicador) fica fixa (`position: sticky`).
+**Decisão de 2026-10-30 (a pedido do usuário):** o `MandateRail` saiu desta gaveta. Ele era o
+terceiro caminho para o mesmo estado (chip + minimapa) e vivia numa gaveta que nasce recolhida.
+Consequências: a gaveta é **leitura**, não controle; o título é **um só** — o da barra de 36px
+("Comparação por mandato"), que já está sempre à vista, então a matriz não tem `h2`; e o "×" que
+fecha mora **na própria barra**, à direita do resumo, para não gastar uma faixa de altura só com
+ele.
 
 A gaveta cresce para cima e reduz a área do gráfico; o minimapa permanece visível. Abrir e
-fechar não altera `viewport` nem `mandate`.
+fechar não altera `viewport` nem `mandate`. **A altura acompanha o conteúdo** (decisão do usuário,
+2026-10-30): o teto é 360px / 45dvh — passando disso, a matriz rola por dentro. Antes era
+`h-[45dvh]` fixo e, como a matriz raramente enche, sobrava uma faixa cinza morta embaixo dela.
 
 O **minimapa também escolhe mandato** (2026-10-28): clicar numa faixa aplica o mesmo
-`aplicarMandato` do chip e do trilho. Clique e arrasto começam no mesmo `pointerdown`, então
+`aplicarMandato` do chip. Clique e arrasto começam no mesmo `pointerdown`, então
 o gesto nasce como clique e só vira arrasto depois de andar `LIMIAR_CLIQUE` (4px); a escolha
 acontece na soltura e só se o ponteiro não andou. A faixa sob o cursor é perguntada à
 primitiva que **desenhou** o mapa (`faixasPx()`), nunca a um estado paralelo — clique e
@@ -273,7 +279,7 @@ continua abrindo o conjunto do dia 26, e isso é intencional.
 | `app/src/App.svelte` | Nova moldura `h-dvh`, topo, gavetas; blocos viram conteúdo de gaveta |
 | `app/src/components/HomeToolbar.svelte` (novo) | Marca, busca, janela, preset, permalink |
 | `app/src/components/SeriesDrawer.svelte` (novo) | Envolve `SeriesLegend` + eixos |
-| `app/src/components/BottomDrawer.svelte` (novo) | Envolve `MandateRail` + `ComparisonPanel` |
+| `app/src/components/BottomDrawer.svelte` (novo) | Envolve `ComparisonPanel` (o `MandateRail` que entrava junto saiu em 2026-10-30) |
 | `app/src/components/TimeFilters.svelte` | Variante compacta (segmento) sem mudar a lógica de `viewport` |
 | `app/src/components/Chart.svelte` | Altura vem do container (`flex-1`), com `ResizeObserver` se necessário |
 | `app/src/data/presets.js` (novo) | Lista + `presetDoDia` |

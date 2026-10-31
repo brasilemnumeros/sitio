@@ -67,7 +67,7 @@ padrão do GA4 — estão marcados com *(GA4)*.
 | `exemplo_usado` | atalho "Selic × IPCA" | — | App.svelte → `pedirExemplo` |
 | `serie_removida` | remove um indicador | `id_indicador` | `stores/series.js` → `removerSerie` |
 | `serie_com_erro` | a série não carregou | `id_indicador`, `motivo` | `stores/series.js` (catch de add/retry) |
-| `mandato_selecionado` | clique no trilho de mandatos | `id_mandato` | `stores/mandate.js` / MandateRail |
+| `mandato_selecionado` | escolha de mandato (chip da barra superior ou faixa do minimapa) | `id_mandato` | `stores/mandate.js` → `aplicarMandato` |
 | `janela_alterada` | troca a janela de tempo | `janela` (`1a`/`5a`/`10a`/`tudo`) | `stores/viewport.js` / TimeFilters |
 | `eixo_alterado` | move a série de eixo | `id_indicador`, `eixo` (`left`/`right`) | `stores/axes.js` / SeriesLegend |
 | `cor_alterada` | cor custom de uma série | `id_indicador` | `stores/series.js` → `definirCor` |

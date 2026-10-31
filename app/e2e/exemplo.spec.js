@@ -49,6 +49,37 @@ test('exemplo pronto: dois chips, duas linhas na legenda e o gráfico monta', as
 });
 
 /**
+ * §5 (decisão de 2026-10-30) — A FAIXA DA ESQUERDA SÓ EXISTE COM SÉRIE NELA.
+ *
+ * Com o eixo-base na direita, deixar a escala esquerda sempre visível (como era antes) custava
+ * ~54px de faixa morta — ~14% da largura no celular. A leitura é pelo `marginLeft` do minimapa: o
+ * `navigator.alinharCom` copia para lá a largura REAL da escala esquerda, que é 0 quando ela está
+ * invisível (medido na lib). Assim o teste morde nos dois estados, sem depender de pixel do canvas.
+ */
+test('a escala da esquerda não reserva faixa sem série — e aparece quando uma série vai para lá', async ({
+  page,
+}) => {
+  await abrirVazio(page);
+  await carregarExemplo(page);
+
+  const margem = () =>
+    page.getByTestId('minimapa').evaluate((el) => parseFloat(el.style.marginLeft || '0'));
+
+  // tudo à direita (o padrão): nada reservado à esquerda
+  await expect.poll(margem, { timeout: 15000 }).toBe(0);
+
+  // manda a PRIMEIRA série para a esquerda pelo caminho do produto (o botão `dir.` da seção)
+  await abrirGavetaDireita(page);
+  const eixos = page.locator('[data-secao="eixos"]');
+  await eixos.getByRole('button', { name: 'dir.' }).first().click();
+  await expect.poll(margem, { timeout: 15000 }).toBeGreaterThan(20);
+
+  // e de volta: a faixa some outra vez
+  await eixos.getByRole('button', { name: 'esq.' }).first().click();
+  await expect.poll(margem, { timeout: 15000 }).toBe(0);
+});
+
+/**
  * REMOVER SÉRIE (§1) — e o caso perigoso: remover a ÚLTIMA com uma janela de tempo ativa. O
  * `setVisibleRange`/`fitContent` da lib LANÇA num gráfico sem NENHUMA barra (medido 2026-10-15); o
  * adapter ganhou guarda (`if (!temDado) return`). Aqui provamos que o app NÃO lança nesse caminho —

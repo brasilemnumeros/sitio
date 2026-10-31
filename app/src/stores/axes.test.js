@@ -13,29 +13,29 @@ const pequeno = { id: 'p', unit: { type: 'currency', symbol: 'R$' }, data: [{ da
 it('com tudo convivendo, tudo fica num eixo só (§5)', () => {
   recalcularEixos([s('a'), s('b')]);
   const { atribuicao, avisos } = get(axesStore);
-  expect(atribuicao).toEqual({ a: 'left', b: 'left' });
+  expect(atribuicao).toEqual({ a: 'right', b: 'right' }); // o eixo-base é o DIREITO (2026-10-30)
   expect(avisos).toEqual([]);
 });
 
-it('a série incompatível vai para a direita, e o aviso aponta a CULPADA', () => {
+it('a série incompatível vai para o outro eixo, e o aviso aponta a CULPADA', () => {
   recalcularEixos([grande, pequeno]);
   const { atribuicao, avisos } = get(axesStore);
-  expect(atribuicao.left ?? atribuicao.g).toBe('left');
-  expect(atribuicao.p).toBe('right');
+  expect(atribuicao.g).toBe('right'); // o eixo-base
+  expect(atribuicao.p).toBe('left'); // a incompatível sai do eixo-base
   expect(avisos).toHaveLength(1);
   expect(avisos[0].id).toBe('p');
   expect(avisos[0].contra).toBe(grande);          // a culpada, não um booleano
   expect(['avisa', 'ilegivel']).toContain(avisos[0].veredito);
 });
 
-it('moverParaEixo move uma série para a direita', () => {
+it('moverParaEixo move uma série para a esquerda', () => {
   recalcularEixos([s('a'), s('b')]);
-  moverParaEixo('a', 'right');
-  expect(get(axesStore).atribuicao.a).toBe('right');
+  moverParaEixo('a', 'left');
+  expect(get(axesStore).atribuicao.a).toBe('left');
 });
 
 it('só existem dois eixos — um terceiro valor é ignorado (§9.5)', () => {
   recalcularEixos([s('a')]);
   moverParaEixo('a', 'meio');
-  expect(get(axesStore).atribuicao.a).toBe('left'); // inalterado
+  expect(get(axesStore).atribuicao.a).toBe('right'); // inalterado
 });

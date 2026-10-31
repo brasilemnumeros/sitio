@@ -258,6 +258,48 @@ test('a gaveta inferior abre com a matriz, e a alça diz o que abre', async ({ p
 });
 
 /**
+ * LIMPAR FILTROS (2026-10-30, a pedido do usuário) — o botão do trilho é FIXO: sem filtro em cena
+ * ele fica desabilitado (nunca escondido — a mesma língua da alça da gaveta inferior e dos filtros
+ * de tempo), e com filtro devolve janela + mandato ao padrão pelo caminho único
+ * (`aplicarMandato(null)`).
+ *
+ * A DICA de primeiro uso aponta para ele na primeira vez que um filtro entra em cena, e sai no
+ * primeiro gesto. Ela espera 600ms antes de aparecer: no carregamento a janela nasce recortada por
+ * ~150ms (o adapter ainda não devolveu o fit) e a dica disparava sem ninguém ter filtrado nada.
+ */
+test('o limpar filtros é fixo no trilho, desabilita sem filtro e devolve o estado inicial', async ({
+  page,
+}) => {
+  await abrirVazio(page);
+  await carregarExemplo(page);
+  await expect(page.getByTestId('grafico')).toBeVisible();
+
+  const limpar = page.getByTestId('limpar-filtros');
+  await expect(limpar).toBeVisible();
+  await expect(limpar).toBeDisabled(); // sem filtro: presente e inerte
+
+  // filtra pela janela de 10 anos — o caminho da barra superior
+  await page
+    .locator('[data-bloco="filtros"]')
+    .getByRole('button', { name: 'Janela de 10 anos' })
+    .click();
+  await expect(limpar).toBeEnabled();
+  // a dica de primeiro uso aponta para o botão
+  await expect(page.getByRole('status')).toContainText('Limpar os filtros');
+
+  await limpar.click();
+  await expect(limpar).toBeDisabled();
+  await expect(page.getByRole('status')).toHaveCount(0); // o gesto tira a dica do caminho
+  // e a janela volta a cobrir o horizonte inteiro (o contrato, não o pixel)
+  await expect
+    .poll(async () => {
+      const j = await janela(page);
+      return j.from ? (Date.parse(j.to) - Date.parse(j.from)) / 86400000 : 0;
+    }, { timeout: 20000 })
+    .toBeGreaterThan(365 * 25);
+});
+
+/**
  * O ARRASTO da alça (mobile, §T8) fecha a gaveta e devolve o foco — e o `click` que o navegador
  * dispararia na soltura NÃO pode reabrir. O caso ruim é o dedo que sai de baixo da alça: o
  * `pointerup` chega, o `click` não. Antes, `arrasteFechou` ficava preso em `true` e engolia o

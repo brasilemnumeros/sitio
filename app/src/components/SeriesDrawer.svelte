@@ -2,29 +2,31 @@
   // GAVETA DIREITA (T7) — séries, cores e eixos num lugar fixo (§1 do desenho do terminal).
   //
   // São DOIS elementos, não um:
-  //   · o TRILHO (`aside[data-testid="trilho-direito"]`, 34px) fica sempre visível — é o gatilho
-  //     e o índice da gaveta. É ele que carrega o ponto de atenção quando há série em erro;
+  //   · o TRILHO (`aside[data-testid="trilho-direito"]`, 44px) fica sempre visível — é o gatilho
+  //     e o índice da gaveta, e carrega DOIS controles fixos: a engrenagem (abre) e o "limpar
+  //     filtros" (2026-10-30). É ele que carrega o ponto de atenção quando há série em erro;
   //   · o PAINEL (`aside[data-testid="gaveta-direita"]`, 320px) entra em fluxo ao lado do
   //     gráfico. Em fluxo, e não por cima: abrir a gaveta ENCOLHE o gráfico (que é `flex-1`),
   //     em vez de tapá-lo. E `hidden` quando fechada — um painel só deslocado por `translate`
   //     continuaria na árvore de acessibilidade e focável por TAB.
   //
   // A vista é ÚNICA e rolável, sem abas, com três seções nesta ordem: séries (chips), cores
-  // (legenda) e eixos (`AxesPanel`). O gatilho do trilho é uma ENGRENAGEM (ícone de
-  // configurações): o trilho abre a gaveta inteira, não só a lista de séries. Os três botões
-  // do trilho NÃO trocam de painel nem fecham a gaveta: rolam até a seção — é a mesma vista, só
-  // levada ao ponto certo. Fechar é o "×" do cabeçalho (sempre alcançável, porque o cabeçalho é
-  // grudado) ou `Esc`.
+  // (legenda) e eixos (`AxesPanel`). O gatilho do trilho é uma ENGRENAGEM: o trilho abre a
+  // gaveta inteira, não só a lista de séries; aberta, a engrenagem leva a vista de volta ao topo.
+  // Fechar é o "×" do cabeçalho (sempre alcançável, porque o cabeçalho é grudado) ou `Esc`.
   //
   // O estado `aberta` mora na `App` (é ela que decide a prioridade do `Esc` na T9), por isso a
   // prop é `$bindable`: o gatilho alterna, a App continua sendo a dona do estado.
   //
-  // Nada aqui escreve em `viewport` ou `mandate` (§Moldura): abrir e fechar a gaveta é só
-  // geometria — o recorte de tempo e o mandato em cena não podem ser zerados por um clique de UI.
+  // §Moldura — abrir e fechar a gaveta é SÓ geometria: nenhuma ação de `viewport` ou `mandate`
+  // sai daqui. A ÚNICA escrita nesses stores que este arquivo faz é o "limpar filtros", e ela é
+  // ESCOLHA do usuário — a mesma regra única do chip e do minimapa (`aplicarMandato(null)`), não
+  // efeito colateral de um clique de UI (2026-10-30).
   import SeriesChips from './SeriesChips.svelte';
   import SeriesLegend from './SeriesLegend.svelte';
   import AxesPanel from './AxesPanel.svelte';
   import { seriesStore } from '../stores/series.js';
+  import { filtroAtivo, resetarFiltros } from '../stores/filtros.js';
 
   let {
     aberta = $bindable(false),
@@ -47,15 +49,74 @@
 
   const itens = $derived($seriesStore.itens);
 
+  /** "Há filtro em cena?" (janela recortada ou mandato escolhido) — é o que faz o botão de
+   *  limpar existir no trilho. A regra mora em `stores/filtros.js`, não aqui. */
+  const temFiltro = $derived($filtroAtivo);
+
+  /**
+   * A DICA de primeiro uso (2026-10-30, a pedido do usuário): na PRIMEIRA vez em que um filtro
+   * entra em cena, um balão aponta para o "limpar". Aparece uma vez por navegador — a chave é
+   * gravada ao MOSTRAR, não ao fechar: quem nunca fechar não pode ver a mesma dica de novo.
+   *
+   * ⚠ `localStorage` pode lançar (modo privado, política do navegador). No erro a dica nasce
+   * "vista": ensinar de novo é melhor que quebrar a tela.
+   */
+  const CHAVE_DICA = 'dica-limpar-filtros';
+  let dicaJaVista = (() => {
+    try { return localStorage.getItem(CHAVE_DICA) === '1'; } catch { return true; }
+  })();
+  let mostrarDica = $state(false);
+
+  $effect(() => {
+    if (!temFiltro || dicaJaVista) return;
+    // ⚠ Espera o estado ASSENTAR (600ms): no carregamento a janela aparece recortada por ~150ms,
+    // enquanto o adapter ainda não devolveu o `fitContent` do horizonte — medido no app — e a
+    // dica disparava sem ninguém ter filtrado nada, queimando a chave de "já viu". O efeito
+    // re-roda quando `temFiltro` muda, então o `clearTimeout` abaixo cancela o falso positivo.
+    const t = setTimeout(() => {
+      dicaJaVista = true; // `let` comum, fora da reatividade: não re-dispara o efeito
+      try { localStorage.setItem(CHAVE_DICA, '1'); } catch { /* ver a nota acima */ }
+      mostrarDica = true;
+    }, 600);
+    return () => clearTimeout(t);
+  });
+
+  /** Qualquer gesto ou `Esc` tira a dica do caminho — ela nunca pede confirmação.
+   *  ⚠ Os primeiros 400ms são ignorados: a dica NASCE do clique que ligou o filtro, e sem a
+   *  carência o próprio gesto que a fez aparecer a apagava no mesmo instante (medido). Cobre
+   *  também o clique duplo de quem está com pressa. */
+  $effect(() => {
+    if (!mostrarDica) return;
+    const nasceu = performance.now();
+    const fechar = () => {
+      if (performance.now() - nasceu < 400) return;
+      mostrarDica = false;
+    };
+    const tecla = (e) => { if (e.key === 'Escape') mostrarDica = false; };
+    document.addEventListener('pointerdown', fechar);
+    document.addEventListener('keydown', tecla);
+    return () => {
+      document.removeEventListener('pointerdown', fechar);
+      document.removeEventListener('keydown', tecla);
+    };
+  });
+
+  function limparFiltros() {
+    mostrarDica = false;
+    resetarFiltros();
+  }
+
   // §Estados: erro PARCIAL e gaveta fechada → o aviso tem de caber no trilho, porque o chip de
   // erro está DENTRO da gaveta. Aberta, o chip já diz o que houve e o ponto sairia de contexto.
   const temErro = $derived(itens.some((i) => i.status === 'erro'));
 
   /**
-   * O trilho tem UM botão (a engrenagem): fechado, ele abre a gaveta; aberto, leva a vista de
-   * volta ao topo (seção das séries), que é onde ela começa. Não fecha — fechar tem dois caminhos
-   * explícitos: o "×" do cabeçalho e `Esc`. (Os atalhos "Cores"/"Eixos" que apareciam embaixo do
-   * gatilho saíram em 2026-10-28, a pedido do usuário: duplicavam os títulos das seções.)
+   * O trilho tem DOIS botões, fixos: a ENGRENAGEM (abre a gaveta; aberta, leva a vista de volta
+   * ao topo) e o LIMPAR FILTROS (2026-10-30). Nenhum dos dois sai do trilho quando não se aplica:
+   * o que muda é o estado — o limpar fica desabilitado sem filtro. Fechar a gaveta tem dois
+   * caminhos explícitos: o "×" do cabeçalho e `Esc`. (Os atalhos "Cores"/"Eixos" que apareciam
+   * embaixo do gatilho saíram em 2026-10-28, a pedido do usuário: duplicavam os títulos das
+   * seções.)
    */
   function aoGatilho() {
     if (!aberta) {
@@ -101,49 +162,104 @@
 <!-- TRILHO · 44px, sempre visível. `aria-expanded`/`aria-controls` descrevem a gaveta que ele
      abre; o `aria-label` inclui o estado de erro porque o ponto é só uma bolinha — quem não vê
      a cor precisa ouvir o motivo. -->
+{#snippet balao(texto)}
+  <!-- Tooltip PRÓPRIO, e não `title`: o nativo só aparece depois de ~1s e esse atraso é do
+       navegador — não há como encurtá-lo (2026-10-30, a pedido do usuário). `aria-hidden` porque
+       o nome acessível já vem do `aria-label` do botão; sem isto o leitor de tela diria duas vezes. -->
+  <span
+    aria-hidden="true"
+    class="pointer-events-none absolute top-1/2 right-full z-50 mr-2 -translate-y-1/2 rounded border border-slate-700 bg-[#161b22] px-2 py-1 text-xs whitespace-nowrap text-slate-200 opacity-0 shadow-lg transition-opacity duration-75 group-hover:opacity-100 group-focus-within:opacity-100"
+    >{texto}</span
+  >
+{/snippet}
+
 <aside
   data-testid="trilho-direito"
   inert={inativa}
-  class="flex w-10 shrink-0 flex-col items-center gap-1.5 border-l border-slate-800 py-1.5 md:w-11"
-  aria-label="Configurações do gráfico"
+  class="relative flex w-10 shrink-0 flex-col items-center gap-1 border-l border-slate-800 py-1.5 md:w-11"
+  aria-label="Controles do gráfico"
 >
-  <button
-    type="button"
-    bind:this={gatilho}
-    aria-label={temErro && !aberta ? 'Configurações do gráfico — há séries com erro' : 'Configurações do gráfico'}
-    aria-expanded={aberta}
-    aria-controls="gaveta-direita"
-    class="relative flex min-h-11 w-full items-center justify-center rounded px-1 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:min-h-0"
-    title={aberta ? 'Ir para as séries' : 'Abrir séries e eixos'}
-    onclick={aoGatilho}
-  >
-    <!-- Engrenagem: o trilho é a gaveta de CONFIGURAÇÕES (séries, cores e eixos), não um atalho
-         só para séries. O rótulo textual saiu em 2026-10-28 — o nome acessível vive no
-         `aria-label`. O trilho tem UM botão só, aberto ou fechado (decisão do usuário): os
-         atalhos "Cores"/"Eixos" que apareciam embaixo dele saíram, porque duplicavam os títulos
-         das seções dentro da própria gaveta. -->
-    <svg
-      class="h-4 w-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
+  <div class="group relative flex w-full justify-center">
+    <button
+      type="button"
+      bind:this={gatilho}
+      aria-label={temErro && !aberta ? 'Configurações do gráfico — há séries com erro' : 'Configurações do gráfico'}
+      aria-expanded={aberta}
+      aria-controls="gaveta-direita"
+      class="relative flex min-h-11 w-full items-center justify-center rounded px-1 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:min-h-0"
+      onclick={aoGatilho}
     >
-      <circle cx="12" cy="12" r="3"></circle>
-      <path
-        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
-      ></path>
-    </svg>
-    {#if temErro && !aberta}
-      <span
-        class="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-red-500"
+      <!-- Engrenagem: o trilho é a gaveta de CONFIGURAÇÕES (séries, cores e eixos), não um atalho
+           só para séries. O rótulo textual saiu em 2026-10-28 — o nome acessível vive no
+           `aria-label`. Os atalhos "Cores"/"Eixos" que apareciam embaixo dele saíram no mesmo dia,
+           porque duplicavam os títulos das seções dentro da própria gaveta. -->
+      <svg
+        class="h-4 w-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
         aria-hidden="true"
-      ></span>
+      >
+        <circle cx="12" cy="12" r="3"></circle>
+        <path
+          d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+        ></path>
+      </svg>
+      {#if temErro && !aberta}
+        <span
+          class="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-red-500"
+          aria-hidden="true"
+        ></span>
+      {/if}
+    </button>
+    {#if !mostrarDica}{@render balao(aberta ? 'Ir para as séries' : 'Abrir séries e eixos')}{/if}
+  </div>
+
+  <!-- LIMPAR FILTROS — sempre no trilho (2026-10-30, a pedido do usuário): esconder o botão
+       fazia o trilho mudar de tamanho sozinho e a pessoa não descobria que dava para limpar.
+       Sem filtro em cena ele fica DESABILITADO, não invisível — a mesma língua da alça da
+       gaveta inferior (§9.1) e dos filtros de tempo: o lugar é estável e o estado se lê. -->
+  <div class="group relative flex w-full justify-center">
+    <button
+      type="button"
+      data-testid="limpar-filtros"
+      aria-label="Limpar filtros"
+      disabled={!temFiltro}
+      class="flex min-h-11 w-full items-center justify-center rounded px-1 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-slate-100 disabled:cursor-not-allowed disabled:text-slate-600 disabled:hover:bg-transparent md:min-h-0"
+      onclick={limparFiltros}
+    >
+      <svg
+        class="h-4 w-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+        <path d="M3 3v5h5"></path>
+      </svg>
+    </button>
+    {#if !mostrarDica}
+      {@render balao(temFiltro ? 'Limpar filtros' : 'Nenhum filtro ativo')}
     {/if}
-  </button>
+
+    {#if mostrarDica}
+      <!-- A dica de primeiro uso: aponta PARA o botão (seta à direita) e não pede confirmação —
+           qualquer gesto ou `Esc` a tira do caminho. `role="status"` para quem ouve a página. -->
+      <div
+        role="status"
+        class="pointer-events-none absolute top-1/2 right-full z-50 mr-3 -translate-y-1/2 rounded border border-sky-700 bg-[#0b1a26] px-2 py-1.5 text-xs whitespace-nowrap text-sky-100 shadow-lg"
+      >
+        Limpar os filtros <span class="text-sky-300" aria-hidden="true">→</span>
+      </div>
+    {/if}
+  </div>
 </aside>
 
 <!-- VÉU da folha lateral no celular (T9). Fica FORA do `<aside>`: um `fixed` dentro de um

@@ -253,13 +253,13 @@ test('a gaveta direita abre, mostra as três seções e fecha com Esc', async ({
 });
 
 /**
- * §Gaveta direita (T7) — o trilho tem UM botão, a engrenagem (decisão de 2026-10-28: os atalhos
- * "Cores"/"Eixos" do trilho saíram, porque duplicavam os títulos das seções). Aberta a gaveta,
- * a engrenagem leva a vista ao topo (seção das séries) e NÃO fecha — fechar é o "×" ou `Esc`.
- * A prova é `scrollTop` voltar a 0: sem o `bind:this` do painel o botão era morto e o teste
- * passava sem rolar nada.
+ * §Gaveta direita (T7) — o trilho tem DOIS controles fixos: a engrenagem (2026-10-28: os atalhos
+ * "Cores"/"Eixos" saíram, porque duplicavam os títulos das seções) e o "limpar filtros"
+ * (2026-10-30). Aberta a gaveta, a engrenagem leva a vista ao topo (seção das séries) e NÃO
+ * fecha — fechar é o "×" ou `Esc`. A prova é `scrollTop` voltar a 0: sem o `bind:this` do painel
+ * o botão era morto e o teste passava sem rolar nada.
  */
-test('fechada e aberta, o trilho mostra só a engrenagem, que leva a vista ao topo', async ({
+test('fechada e aberta, o trilho mostra a engrenagem e o limpar, sem atalhos de seção', async ({
   page,
 }, testInfo) => {
   // SEIS séries de propósito: com uma só o conteúdo da gaveta cabe na caixa e não há o que
@@ -275,11 +275,13 @@ test('fechada e aberta, o trilho mostra só a engrenagem, que leva a vista ao to
 
   const gatilho = page.getByRole('button', { name: 'Configurações do gráfico' });
   const gaveta = page.getByTestId('gaveta-direita');
-  await expect(page.getByTestId('trilho-direito').getByRole('button')).toHaveCount(1);
+  // Dois botões, sempre — e o limpar nasce DESABILITADO (sem filtro em cena), não escondido.
+  await expect(page.getByTestId('trilho-direito').getByRole('button')).toHaveCount(2);
+  await expect(page.getByTestId('limpar-filtros')).toBeDisabled();
   await gatilho.click();
   await expect(gaveta).toBeVisible();
   await expect(gaveta.locator('[data-secao="series"]')).toBeVisible();
-  await expect(page.getByTestId('trilho-direito').getByRole('button')).toHaveCount(1);
+  await expect(page.getByTestId('trilho-direito').getByRole('button')).toHaveCount(2);
   await expect(page.getByRole('button', { name: 'Cores', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Eixos', exact: true })).toHaveCount(0);
 

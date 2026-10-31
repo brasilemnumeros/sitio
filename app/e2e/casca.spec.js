@@ -275,13 +275,17 @@ test('fechada e aberta, o trilho mostra a engrenagem e o limpar, sem atalhos de 
 
   const gatilho = page.getByRole('button', { name: 'Configurações do gráfico' });
   const gaveta = page.getByTestId('gaveta-direita');
-  // Dois botões, sempre — e o limpar nasce DESABILITADO (sem filtro em cena), não escondido.
-  await expect(page.getByTestId('trilho-direito').getByRole('button')).toHaveCount(2);
+  // Os controles do trilho são FIXOS: engrenagem, limpar filtros, permalink e (quando o
+  // navegador permite) tela cheia. O limpar nasce DESABILITADO sem filtro — presente, não escondido.
+  const botoesDoTrilho = page.getByTestId('trilho-direito').getByRole('button');
+  const permiteTelaCheia = await page.evaluate(() => document.fullscreenEnabled);
+  await expect(botoesDoTrilho).toHaveCount(permiteTelaCheia ? 4 : 3);
   await expect(page.getByTestId('limpar-filtros')).toBeDisabled();
+  await expect(page.getByTestId('botao-permalink')).toBeVisible();
   await gatilho.click();
   await expect(gaveta).toBeVisible();
   await expect(gaveta.locator('[data-secao="series"]')).toBeVisible();
-  await expect(page.getByTestId('trilho-direito').getByRole('button')).toHaveCount(2);
+  await expect(botoesDoTrilho).toHaveCount(permiteTelaCheia ? 4 : 3);
   await expect(page.getByRole('button', { name: 'Cores', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Eixos', exact: true })).toHaveCount(0);
 

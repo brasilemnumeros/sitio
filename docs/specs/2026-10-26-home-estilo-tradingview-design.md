@@ -91,7 +91,7 @@ preset do dia em vez de vazia.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│ 44px  ● Brasil em Números   ⌕ Buscar…⌘K   1A 5A 10A Máx   preset ⤓ ⤢ │
+│ 44px  ● Brasil em Números   ⌕ Buscar…⌘K   1A 5A 10A Máx   preset     │
 ├───────────────────────────────────────────────────────┬──────────────┤
 │                                                       │ 44px         │
 │                    gráfico (flex-1)                   │ trilho       │
@@ -129,7 +129,11 @@ Breakpoint: `md` (768px). Abaixo disso, ver Mobile.
   O estado "sem preset aceso" já existe quando há mandato escolhido — preservar.
 - Trilho direito: o gatilho da gaveta é um **ícone de engrenagem**, com o nome acessível
   "Configurações do gráfico" — a gaveta reúne séries, cores e eixos, então não se chama
-  "Séries".
+  "Séries". Abaixo dele vivem os outros controles fixos do gráfico (2026-10-30): **limpar
+  filtros** (desabilitado, nunca escondido, sem filtro em cena), **permalink** e **tela cheia**.
+  Os dois últimos estavam nesta barra e eram `hidden md:*` — não existiam no celular, onde
+  compartilhar é justamente a conversão. Todos com tooltip próprio (instantâneo: o `title`
+  nativo espera ~1s e o atraso é do navegador) e com o nome acessível no `aria-label`.
 - Chip do preset atual, que abre um menu com os presets nomeados + "do dia". Escolher um
   preset **substitui** as séries em cena, numa única escrita atômica (sem estados
   intermediários na URL). Se a seleção atual não corresponde a nenhum preset — série
@@ -141,8 +145,8 @@ Breakpoint: `md` (768px). Abaixo disso, ver Mobile.
   de volta ao chip. Escondido no celular: lá o caminho é a **faixa do minimapa**, e o topo de
   36px é marca + busca + janela. (Até 2026-10-30 havia um terceiro caminho, o trilho da gaveta
   inferior; ele saiu.)
-- Ações: permalink (copia a URL) e tela cheia (`requestFullscreen`, opcional; se falhar,
-  não mostra). Não há menu do site.
+- Ações do gráfico (permalink e tela cheia) moram no **trilho direito** desde 2026-10-30, não
+  aqui: no topo eram `hidden md:*` e o celular ficava sem "copiar link". Não há menu do site.
 - Navegação para o conteúdo: link discreto **"Artigos"** → `/blog` (decisão minha; sem ele a
   home vira uma ilha). A marca permanece identidade, não link para si mesma.
 - **Atribuição do TradingView** (obrigação Apache-2.0): link discreto no **canto superior direito
@@ -162,11 +166,12 @@ Uma **vista única rolável**, sem abas, com três seções nesta ordem:
 2. `SeriesLegend` — identificação textual, avisos de colisão de cor e de escala, cor e remoção.
 3. Eixos — atribuição `left`/`right` (`axesStore` + `moverParaEixo`) e o aviso de escala.
 
-Botão "+ Série" abre a busca. O gatilho do trilho é **um** botão (engrenagem,
-"Configurações do gráfico"): ele abre a gaveta inteira, não um painel — os antigos atalhos
-"Cores"/"Eixos" saíram em 2026-10-28 porque duplicavam os títulos das seções; com a gaveta
-aberta a engrenagem leva a vista ao topo, sem fechar. Fechar é o "×" do cabeçalho; `Esc`
-fecha a gaveta com foco de volta ao gatilho.
+Botão "+ Série" abre a busca. O gatilho do trilho é a **engrenagem** ("Configurações do
+gráfico"): ela abre a gaveta inteira, não um painel — os antigos atalhos "Cores"/"Eixos"
+saíram em 2026-10-28 porque duplicavam os títulos das seções; com a gaveta aberta a engrenagem
+leva a vista ao topo, sem fechar. Fechar é o "×" do cabeçalho; `Esc` fecha a gaveta com foco
+de volta ao gatilho. O trilho tem mais três controles fixos (limpar filtros, permalink, tela
+cheia), que **não** abrem a gaveta nem trocam de painel.
 
 ### Gaveta inferior — comparação por mandato
 

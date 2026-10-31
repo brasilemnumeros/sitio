@@ -1,7 +1,11 @@
 <script>
   // BARRA SUPERIOR do terminal (fatia 12, posição 1). Saiu daqui a busca solta da T5: o topo
-  // agora tem lugar fixo para cada coisa — marca, busca, as CINCO janelas do gráfico, o chip do
-  // preset, o chip de MANDATO (2026-10-28), a saída para o blog e as ações de permalink/tela cheia.
+  // agora tem lugar fixo para cada coisa — marca, busca, as QUATRO janelas do gráfico, o chip do
+  // preset, o chip de MANDATO (2026-10-28) e a saída para o blog.
+  //
+  // ⚠ Permalink e tela cheia SAÍRAM daqui em 2026-10-30, a pedido do usuário: foram para o trilho
+  // direito. O motivo não é estético — os dois eram `hidden md:*`, então **não existiam no
+  // celular**, e compartilhar é a conversão do produto. No trilho existem nos dois layouts.
   //
   // A barra NÃO fala com o gráfico: as janelas são o `TimeFilters` de sempre (que só escreve na
   // store `viewport`) e o preset escreve o conjunto de séries numa única chamada a
@@ -10,7 +14,6 @@
   // No celular (abaixo de `md`) ficam só marca, busca e janela — é o topo de 36px da spec.
   // As janelas continuam visíveis: quem rola é a PRÓPRIA barra (`overflow-x-auto`), nunca o
   // documento (o `testar-mobile` do build mede 375px e não pode achar transbordo).
-  import { onMount, onDestroy } from 'svelte';
   import TimeFilters from './TimeFilters.svelte';
   import { seriesStore, substituirSeries, dataMaximaStore } from '../stores/series.js';
   import { indicadorPorId } from '../stores/catalog.js';
@@ -21,12 +24,9 @@
 
   let itens = $derived($seriesStore.itens);
   let menuAberto = $state(false);
-  let copiado = $state(false);
-  let podeTelaCheia = $state(false);
   /** Elemento do chip e da raiz do menu — o foco volta para o chip ao fechar com Esc. */
   let chip = $state(null);
   let raizChip = $state(null);
-  let timerCopiado = null;
 
   // ─── CHIP DE MANDATO (2026-10-28, a pedido do usuário) ───
   // O seletor de mandatos só existia DENTRO da gaveta inferior, e ela nasce recolhida — o
@@ -76,32 +76,6 @@
     await substituirSeries(entries);
   }
 
-  /** Permalink: copia a URL do estado atual e confirma no rótulo por 1,5 s. Sem Clipboard API
-   *  (contexto inseguro, permissão negada) o rótulo NÃO mente e nada é logado. */
-  async function copiarPermalink() {
-    try {
-      await navigator.clipboard.writeText(location.href);
-    } catch {
-      return;
-    }
-    copiado = true;
-    clearTimeout(timerCopiado);
-    timerCopiado = setTimeout(() => (copiado = false), 1500);
-  }
-
-  /** Tela cheia é opcional na spec: se o navegador recusar, engole a rejeição — sem alarde. */
-  async function alternarTelaCheia() {
-    try {
-      if (document.fullscreenElement) {
-        await document.exitFullscreen();
-      } else {
-        await document.documentElement.requestFullscreen();
-      }
-    } catch {
-      // Política do navegador, iframe sem `allowfullscreen`, permissão negada: fica como está.
-    }
-  }
-
   function aoTeclar(evento) {
     if ((evento.metaKey || evento.ctrlKey) && evento.key.toLowerCase() === 'k') {
       evento.preventDefault();
@@ -134,14 +108,6 @@
     document.addEventListener('pointerdown', fechar);
     return () => document.removeEventListener('pointerdown', fechar);
   });
-
-  onMount(() => {
-    // `fullscreenEnabled` não existe no servidor e pode ser `false` por política: o botão só
-    // aparece quando a ação é possível (um botão que não faz nada é pior que nenhum).
-    podeTelaCheia = Boolean(document.fullscreenEnabled);
-  });
-
-  onDestroy(() => clearTimeout(timerCopiado));
 </script>
 
 <svelte:window onkeydown={aoTeclar} />
@@ -338,49 +304,4 @@
     >Artigos</a
   >
 
-  <button
-    type="button"
-    data-testid="botao-permalink"
-    class="hidden shrink-0 items-center gap-1 rounded px-2 py-1 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:flex"
-    aria-label={copiado ? 'Link copiado' : 'Copiar link do estado atual'}
-    title="Copiar link do estado atual"
-    onclick={copiarPermalink}
-  >
-    <svg
-      class="h-4 w-4"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      aria-hidden="true"
-    >
-      <path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"></path>
-      <path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"></path>
-    </svg>
-    <span>{copiado ? 'Copiado' : 'Permalink'}</span>
-  </button>
-
-  {#if podeTelaCheia}
-    <button
-      type="button"
-      class="hidden shrink-0 items-center gap-1 rounded px-2 py-1 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:flex"
-      aria-label="Tela cheia"
-      title="Tela cheia"
-      onclick={alternarTelaCheia}
-    >
-      <svg
-        class="h-4 w-4"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        aria-hidden="true"
-      >
-        <path d="M4 9V4h5"></path>
-        <path d="M20 15v5h-5"></path>
-        <path d="M15 4h5v5"></path>
-        <path d="M9 20H4v-5"></path>
-      </svg>
-    </button>
-  {/if}
 </header>

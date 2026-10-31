@@ -3,8 +3,10 @@
   //
   // São DOIS elementos, não um:
   //   · o TRILHO (`aside[data-testid="trilho-direito"]`, 44px) fica sempre visível — é o gatilho
-  //     e o índice da gaveta, e carrega DOIS controles fixos: a engrenagem (abre) e o "limpar
-  //     filtros" (2026-10-30). É ele que carrega o ponto de atenção quando há série em erro;
+  //     e o índice da gaveta, e carrega os controles fixos do gráfico, nesta ordem: engrenagem
+  //     (abre), limpar filtros (2026-10-30), permalink e tela cheia (os dois últimos mudaram
+  //     para cá em 2026-10-30, porque no topo eram `hidden md:*` e não existiam no celular). É
+  //     ele que carrega o ponto de atenção quando há série em erro;
   //   · o PAINEL (`aside[data-testid="gaveta-direita"]`, 320px) entra em fluxo ao lado do
   //     gráfico. Em fluxo, e não por cima: abrir a gaveta ENCOLHE o gráfico (que é `flex-1`),
   //     em vez de tapá-lo. E `hidden` quando fechada — um painel só deslocado por `translate`
@@ -27,6 +29,7 @@
   import AxesPanel from './AxesPanel.svelte';
   import { seriesStore } from '../stores/series.js';
   import { filtroAtivo, resetarFiltros } from '../stores/filtros.js';
+  import { onMount, onDestroy } from 'svelte';
 
   let {
     aberta = $bindable(false),
@@ -106,17 +109,62 @@
     resetarFiltros();
   }
 
+  /**
+   * PERMALINK e TELA CHEIA moram aqui desde 2026-10-30 (pedido do usuário; vieram da barra
+   * superior). O motivo não é estético: no topo os dois eram `hidden md:*`, então **não existiam
+   * no celular** — e compartilhar é a conversão do produto. O trilho está nos dois layouts.
+   *
+   * Sem o rótulo textual, a confirmação do copiar é o ícone (link → check) mais o balão
+   * "Link copiado": sem isso o clique não teria resposta visível nenhuma.
+   */
+  let copiado = $state(false);
+  let podeTelaCheia = $state(false);
+  let timerCopiado = null;
+
+  /** Sem Clipboard API (contexto inseguro, permissão negada) o rótulo NÃO mente e nada é logado. */
+  async function copiarPermalink() {
+    try {
+      await navigator.clipboard.writeText(location.href);
+    } catch {
+      return;
+    }
+    copiado = true;
+    clearTimeout(timerCopiado);
+    timerCopiado = setTimeout(() => (copiado = false), 1500);
+  }
+
+  /** Tela cheia é opcional na spec: se o navegador recusar, engole a rejeição — sem alarde. */
+  async function alternarTelaCheia() {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch {
+      // Política do navegador, iframe sem `allowfullscreen`, permissão negada: fica como está.
+    }
+  }
+
+  onMount(() => {
+    // `fullscreenEnabled` não existe no servidor e pode ser `false` por política: o botão só
+    // aparece quando a ação é possível (um botão que não faz nada é pior que nenhum).
+    podeTelaCheia = Boolean(document.fullscreenEnabled);
+  });
+
+  onDestroy(() => clearTimeout(timerCopiado));
+
   // §Estados: erro PARCIAL e gaveta fechada → o aviso tem de caber no trilho, porque o chip de
   // erro está DENTRO da gaveta. Aberta, o chip já diz o que houve e o ponto sairia de contexto.
   const temErro = $derived(itens.some((i) => i.status === 'erro'));
 
   /**
-   * O trilho tem DOIS botões, fixos: a ENGRENAGEM (abre a gaveta; aberta, leva a vista de volta
-   * ao topo) e o LIMPAR FILTROS (2026-10-30). Nenhum dos dois sai do trilho quando não se aplica:
-   * o que muda é o estado — o limpar fica desabilitado sem filtro. Fechar a gaveta tem dois
-   * caminhos explícitos: o "×" do cabeçalho e `Esc`. (Os atalhos "Cores"/"Eixos" que apareciam
-   * embaixo do gatilho saíram em 2026-10-28, a pedido do usuário: duplicavam os títulos das
-   * seções.)
+   * O trilho tem dois controles fixos aqui: a ENGRENAGEM (abre a gaveta; aberta, leva a vista de
+   * volta ao topo) e o LIMPAR FILTROS (2026-10-30). Nenhum dos dois sai do trilho quando não se
+   * aplica: o que muda é o estado — o limpar fica desabilitado sem filtro. Fechar a gaveta tem
+   * dois caminhos explícitos: o "×" do cabeçalho e `Esc`. (Os atalhos "Cores"/"Eixos" que
+   * apareciam embaixo do gatilho saíram em 2026-10-28, a pedido do usuário: duplicavam os títulos
+   * das seções.)
    */
   function aoGatilho() {
     if (!aberta) {
@@ -164,11 +212,14 @@
      a cor precisa ouvir o motivo. -->
 {#snippet balao(texto)}
   <!-- Tooltip PRÓPRIO, e não `title`: o nativo só aparece depois de ~1s e esse atraso é do
-       navegador — não há como encurtá-lo (2026-10-30, a pedido do usuário). `aria-hidden` porque
-       o nome acessível já vem do `aria-label` do botão; sem isto o leitor de tela diria duas vezes. -->
+       navegador — não há como encurtá-lo (2026-10-30, a pedido do usuário).
+       ⚠ SÓ HOVER — nada de `focus-within`: fechar a gaveta devolve o foco ao gatilho (contrato
+       do §Teclado), e o balão ficava preso na tela até o usuário clicar em outro lugar (defeito
+       relatado). O nome acessível vive no `aria-label` do botão, e o balão é `aria-hidden` para
+       o leitor de tela não dizer duas vezes. -->
   <span
     aria-hidden="true"
-    class="pointer-events-none absolute top-1/2 right-full z-50 mr-2 -translate-y-1/2 rounded border border-slate-700 bg-[#161b22] px-2 py-1 text-xs whitespace-nowrap text-slate-200 opacity-0 shadow-lg transition-opacity duration-75 group-hover:opacity-100 group-focus-within:opacity-100"
+    class="pointer-events-none absolute top-1/2 right-full z-50 mr-2 -translate-y-1/2 rounded border border-slate-700 bg-[#161b22] px-2 py-1 text-xs whitespace-nowrap text-slate-200 opacity-0 shadow-lg transition-opacity duration-75 group-hover:opacity-100"
     >{texto}</span
   >
 {/snippet}
@@ -260,6 +311,76 @@
       </div>
     {/if}
   </div>
+
+  <!-- PERMALINK · a conversão do produto, agora alcançável no celular também (no topo era
+       `hidden md:flex`). O feedback do copiar é o ícone virando check + o balão "Link copiado". -->
+  <div class="group relative flex w-full justify-center">
+    <button
+      type="button"
+      data-testid="botao-permalink"
+      aria-label={copiado ? 'Link copiado' : 'Copiar link do estado atual'}
+      class="flex min-h-11 w-full items-center justify-center rounded px-1 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:min-h-0"
+      onclick={copiarPermalink}
+    >
+      {#if copiado}
+        <svg
+          class="h-4 w-4 text-emerald-300"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="m5 13 4 4L19 7"></path>
+        </svg>
+      {:else}
+        <svg
+          class="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"></path>
+          <path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"></path>
+        </svg>
+      {/if}
+    </button>
+    {@render balao(copiado ? 'Link copiado' : 'Copiar link')}
+  </div>
+
+  {#if podeTelaCheia}
+    <div class="group relative flex w-full justify-center">
+      <button
+        type="button"
+        aria-label="Tela cheia"
+        class="flex min-h-11 w-full items-center justify-center rounded px-1 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:min-h-0"
+        onclick={alternarTelaCheia}
+      >
+        <svg
+          class="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M4 9V4h5"></path>
+          <path d="M20 15v5h-5"></path>
+          <path d="M15 4h5v5"></path>
+          <path d="M9 20H4v-5"></path>
+        </svg>
+      </button>
+      {@render balao('Tela cheia')}
+    </div>
+  {/if}
 </aside>
 
 <!-- VÉU da folha lateral no celular (T9). Fica FORA do `<aside>`: um `fixed` dentro de um

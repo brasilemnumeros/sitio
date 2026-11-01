@@ -76,3 +76,52 @@ test('clique fora fecha a modal (o overlay é um <button>, R31)', async ({ page 
     .click({ position: { x: 24, y: 24 } });
   await expect(page.getByRole('dialog', { name: 'Buscar indicadores' })).toBeHidden();
 });
+
+/**
+ * TECLADO (§12.1) — 2026-11-01: as setas têm de ACENDER o item que movem, e ⏎ abre a ficha dele.
+ *
+ * 🔴 A regressão que este teste existe para pegar: `emMobile()` decidia pelo `display` do próprio
+ * elemento, mas no desktop quem está oculto é o CONTÊINER (`md:hidden`) — o filho continua
+ * `display: block`. Resultado: o desktop caía no ramo do celular, com lista vazia, e ␣↓ não fazia
+ * nada (a ficha de ⏎ abria o item errado). Nenhum teste pegava, porque os specs só usavam ⏎/Esc.
+ */
+test('as setas andam nas categorias, → entra nos itens e a ficha acompanha', async ({
+  page,
+}, testInfo) => {
+  // Só desktop: no celular a coluna dos grupos não existe (ela vira a fileira de chips), e o
+  // caminho do teclado lá é outro — este teste mede a CASCATA de três colunas.
+  test.skip(testInfo.project.name !== 'desktop', 'cascata de 3 colunas é do desktop');
+  await abrirVazio(page);
+  await abrirBusca(page);
+  const campo = page.getByRole('searchbox');
+  const ficha = page.locator('[data-bloco="ficha"]');
+  const ACESO = /dark:bg-slate-700/;
+  const botao = (nome) => page.getByRole('button', { name: nome, exact: true });
+
+  // ␣↓ anda nas CATEGORIAS (não entra nos itens) e a ficha continua vazia.
+  await expect(botao(/🏦 Política Monetária/)).toHaveClass(ACESO);
+  await campo.press('ArrowDown');
+  await expect(botao(/📈 Inflação/)).toHaveClass(ACESO);
+  await expect(botao(/IPCA \(%\)/)).not.toHaveClass(ACESO);
+  await expect(ficha).toContainText('Escolha um indicador');
+
+  // ␣→ entra nos itens da categoria acesa, no primeiro — e a ficha JÁ mostra ele.
+  await campo.press('ArrowRight');
+  await expect(botao('IPCA (%)')).toHaveClass(ACESO);
+  await expect(ficha).toContainText('IPCA (%)');
+
+  // ␣↓ anda entre os itens e a ficha TROCA junto (2026-11-01, a pedido do usuário).
+  await campo.press('ArrowDown');
+  await expect(botao('IGP-M (%)')).toHaveClass(ACESO);
+  await expect(ficha).toContainText('IGP-M (%)');
+
+  // ⏎ confirma a ação da ficha (adicionar), como no clique — a ficha já estava aberta.
+  await campo.press('Enter');
+  await expect(ficha.getByRole('button', { name: 'Remover do gráfico' })).toBeVisible();
+  await expect(page.getByTestId('legenda-grafico')).toContainText(/IGP-M/i);
+
+  // ␣← com a ficha fechada devolve a seleção à categoria.
+  await campo.press('Escape');
+  await campo.press('ArrowLeft');
+  await expect(botao(/📈 Inflação/)).toHaveClass(ACESO);
+});

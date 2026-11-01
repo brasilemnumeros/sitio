@@ -76,6 +76,11 @@ disso.
   perguntando antes.
 - O mesmo vale para `npm run build` e para os E2E, que sobem servidor próprio:
   confira a porta livre antes e não mate o que já estava rodando.
+- **Nunca rode DOIS E2E ao mesmo tempo.** O `playwright.config.js` usa
+  `reuseExistingServer: !CI` com `--strictPort`: o segundo suite **reaproveita o servidor do
+  primeiro** em vez de subir o seu, e as duas rodadas disputam o mesmo app. Medido em
+  2026-11-01: um suite focado junto com o completo deu falhas em cascata em testes de arrasto
+  do minimapa que passam 3/3 sozinhos — o mesmo sintoma que eu tinha atribuído a "flake".
 
 ## Cadeia de build (não pular etapas)
 

@@ -68,6 +68,37 @@
   });
 
   let buscando = $derived(termo.trim() !== '');
+  /**
+   * A coluna que o TECLADO está percorrendo. Com termo de busca, a cascata some e sobra uma lista
+   * só — então o foco vive nela, mesmo que `focoColuna` ainda diga 1 (§12.1: uma regra só, e ela
+   * sabe em que superfície está). Sem isto, ␣↓ no campo mexia num estado que NADA desenhava como
+   * ativo: o usuário navegava às cegas e ⏎ abria a ficha de um item sem destaque (relatado em
+   * 2026-11-01).
+   */
+  let colunaAtiva = $derived(buscando ? 2 : focoColuna);
+  /**
+   * Já se ENTROU na coluna dos indicadores? (`focoColuna === 2` não basta: o foco do DOM fica no
+   * campo de busca, então toda tecla chega como "no campo".) Sem esta flag, ␣↓ depois de ␣→ pulava
+   * de volta para as categorias — relatado em 2026-11-01. Ela também resolve a PRIMEIRA tecla:
+   * entrar aceso no item 0, em vez de já somar 1 e pousar no segundo.
+   */
+  let indicadorAceso = $state(false);
+
+  /** Anda um item na coluna 2, entrando ACESO no primeiro (ou no último, com ␣↑).
+   *
+   *  ⚠ A FICHA ACOMPANHA as setas (2026-11-01, a pedido do usuário): navegar entre as séries
+   *  mostra a ficha de cada uma, sem ⏎ — o mesmo que o hover já fazia. Consequência assumida: ⏎
+   *  deixa de ser "abrir a ficha" (ela já está aberta) e passa a ser "confirmar a ação da ficha"
+   *  — adicionar ou remover, como no clique. É a mesma regra do hover, não uma nova. */
+  function moverIndicador(dir) {
+    if (!indicadorAceso) {
+      focoIndicador = dir > 0 ? 0 : Math.max(0, lista.length - 1);
+      indicadorAceso = true;
+    } else {
+      focoIndicador = prender(focoIndicador + dir, lista.length);
+    }
+    abrirFicha(lista[focoIndicador]);
+  }
   let grupos = $derived(Object.entries($catalogStore.groups));
   let grupoAtivo = $derived(grupos[focoGrupo]?.[0] ?? null);
 
@@ -168,18 +199,43 @@
     focoColuna = 1;
     focoGrupo = i;
     focoIndicador = 0;
+    indicadorAceso = false;
+    // A ficha era de um item da categoria ANTERIOR: sai junto com a troca de lista.
+    fecharFicha();
   }
 
   function escolherIndicador(ind, i) {
     focoColuna = 2;
     focoIndicador = i;
+    indicadorAceso = true;
     abrirFicha(ind);
   }
+
+  /**
+   * HOVER (2026-11-01, a pedido do usuário) nos DOIS níveis da cascata: passar o mouse num GRUPO
+   * troca a coluna do meio; passar numa LINHA abre a ficha. Sem clique em nenhum dos dois.
+   *
+   * ⚠ Com DEBOUNCE de 90ms: atravessar 10 linhas abriria 10 fichas em sequência, cada uma
+   * disparando `loadSeries` (barato pelo cache, mas a terceira coluna pisca). O atraso é curto o
+   * bastante para parecer instantâneo e longo o bastante para uma travessia não disparar nada.
+   *
+   * ⚠ O FOCO também abre: teclado e toque NÃO têm hover, e a regra tem de valer para os três —
+   * senão a ficha só existiria para quem usa mouse.
+   */
+  let hoverAgendado = null;
+  function agendarHover(acao) {
+    clearTimeout(hoverAgendado);
+    hoverAgendado = setTimeout(acao, 90);
+  }
+  // Fecha a modal com um hover pendente: o timer não pode agir numa tela que já saiu.
+  $effect(() => () => clearTimeout(hoverAgendado));
 
   /** §12.1 — tocar num chip do celular troca o grupo da lista (ou volta para "Todos"). */
   function escolherGrupoMobile(id) {
     filtroMobile = id;
     focoIndicador = 0;
+    indicadorAceso = false;
+    fecharFicha();
   }
 
   /** §12.1 — ⏎ com a ficha aberta confirma a AÇÃO da ficha: adicionar se ela não está no
@@ -211,12 +267,23 @@
   function emMobile(el) {
     if (el?.closest?.('[data-mobile]')) return true;
     const lista = document.querySelector('[data-lista-mobile]');
-    return !!lista && getComputedStyle(lista).display !== 'none';
+    if (!lista) return false;
+    // 🔴 A caixa RENDERIZADA, não o `display` do elemento: quem fica oculto no desktop é o
+    // CONTÊINER (`md:hidden`), e o filho continua `display: block`. Era o defeito de 2026-11-01:
+    // no desktop a função dizia "é mobile", o ␣↑/␣↓ caía no ramo da lista do celular — que ali
+    // tem zero itens — e as setas não faziam nada. `getBoundingClientRect().height` é 0 quando
+    // escondida por qualquer ancestral.
+    return lista.getBoundingClientRect().height > 0;
   }
 
   function aoTeclado(e) {
-    const mobile = emMobile(e.currentTarget);
-    const noCampo = e.currentTarget.tagName === 'INPUT';
+    // 🔴 `e.target`, NÃO `e.currentTarget`: o Svelte 5 DELEGA `keydown` (e `click`) na raiz, e
+    // dentro do handler o `currentTarget` não é o elemento que recebeu a tecla. Era o defeito
+    // de 2026-11-01: `noCampo` dava falso sempre, então ␣↑/␣↓ no campo mexia em `focoIndicador`
+    // sem acender nada, e ⏎ abria a ficha de um item sem destaque. `e.target` é o elemento real.
+    const alvo = e.target ?? e.currentTarget;
+    const mobile = emMobile(alvo);
+    const noCampo = alvo?.tagName === 'INPUT';
 
     if (e.key === 'Escape') {
       e.preventDefault();
@@ -235,12 +302,25 @@
       if (mobile) {
         focoIndicador = prender(focoIndicador + dir, itensMobile.length);
       } else if (noCampo) {
-        focoIndicador = prender(focoIndicador + dir, lista.length);
+        // No campo com a cascata visível, ␣↑/␣↓ anda nas CATEGORIAS (é onde a seleção nasce) e
+        // ␣→/⏎ entra nos indicadores da categoria. Durante a BUSCA não há categorias na tela:
+        // aí a lista de resultados é o alvo, e a primeira tecla acende o primeiro item (ou o
+        // último, com ␣↑) — sem isto quem abria a modal pousava no SEGUNDO item, porque o
+        // índice já começava em 0 e a tecla somava 1.
+        if (buscando || focoColuna === 2) {
+          focoColuna = 2;
+          moverIndicador(dir);
+        } else {
+          focoGrupo = prender(focoGrupo + dir, grupos.length);
+          focoIndicador = 0;
+          indicadorAceso = false;
+        }
       } else if (focoColuna === 1 && !buscando) {
         focoGrupo = prender(focoGrupo + dir, grupos.length);
         focoIndicador = 0;
+        indicadorAceso = false;
       } else {
-        focoIndicador = prender(focoIndicador + dir, lista.length);
+        moverIndicador(dir);
       }
       return;
     }
@@ -261,7 +341,13 @@
       }
       // desktop: coluna anterior/seguinte, focando o primeiro item dela.
       focoColuna = focoColuna === 1 ? 2 : 1;
-      if (focoColuna === 2) focoIndicador = 0;
+      if (focoColuna === 2) {
+        focoIndicador = 0;
+        indicadorAceso = true; // entrou: o próximo ␣↓ anda para o segundo
+        abrirFicha(lista[0]);  // a ficha acompanha, como nas setas (2026-11-01)
+      } else {
+        indicadorAceso = false;
+      }
       return;
     }
 
@@ -276,18 +362,23 @@
         abrirFicha(itensMobile[focoIndicador]);
         return;
       }
-      if (focoColuna === 1 && !buscando && !noCampo) {
-        // ⏎ no grupo entra na coluna dos indicadores, focando o primeiro.
+      if (colunaAtiva === 1) {
+        // ⏎ no grupo (ou no campo, com um grupo aceso) ENTRA na coluna dos indicadores,
+        // focando o primeiro — o mesmo que ␣→. Sem o `!noCampo`, ⏎ no campo com a cascata
+        // aberta pulava a categoria acesa e abria o primeiro indicador dela: dois significados
+        // para a mesma tecla.
         focoColuna = 2;
         focoIndicador = 0;
+        indicadorAceso = true;
         return;
       }
       abrirFicha(lista[focoIndicador]);
     }
   }
 
-  // §12.1 — a linha da lista: nome · **distintivo de escala** · botão "i".
-  // Tocar na linha NÃO adiciona: abre a ficha (o "i" faz o mesmo — o alvo é maior).
+  // §12.1 — a linha da lista: nome · "no gráfico" · **distintivo de escala** · botão "i".
+  // Passar o mouse (ou focar) JÁ abre a ficha — 2026-11-01; tocar na linha faz o mesmo, e é o
+  // caminho do celular, que não tem hover. O "i" continua existindo como alvo explícito.
   // O distintivo e o "i" só existem no celular (`md:hidden`); no desktop a linha é a da §1.1.
   //
   // ⚠ A CAIXA saiu em 2026-11-01 (a pedido do usuário). Era um `checkbox` DESABILITADO que só
@@ -301,10 +392,20 @@
     <button
       type="button"
       onclick={() => escolherIndicador(ind, i)}
+      onmouseenter={() => agendarHover(() => escolherIndicador(ind, i))}
+      onfocus={() => escolherIndicador(ind, i)}
       onkeydown={aoTeclado}
       class={classeLinha(ativo)}
     >
       <span class="min-w-0 flex-1 truncate">{ind.name}</span>
+      {#if jaNoGrafico(ind.id)}
+        <!-- Só INFORMAÇÃO, sem cara de controle (2026-11-01): devolve o sinal que o checkbox
+             dava, sem o checkbox. O estado acionável vive no botão da ficha. -->
+        <span
+          class="shrink-0 rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none text-sky-700 dark:bg-sky-950/60 dark:text-sky-300"
+          >no gráfico</span
+        >
+      {/if}
       {#if distintivo(ind)}
         <span
           class="shrink-0 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none text-slate-600 md:hidden dark:bg-slate-700 dark:text-slate-200"
@@ -350,7 +451,7 @@
         bind:this={buscaEl}
         bind:value={termo}
         onkeydown={aoTeclado}
-        oninput={() => (focoIndicador = 0)}
+        oninput={() => { focoIndicador = 0; indicadorAceso = false; fecharFicha(); }}
         type="search"
         aria-label="Buscar indicador"
         placeholder="Buscar indicador…"
@@ -398,8 +499,10 @@
               <button
                 type="button"
                 onclick={() => escolherGrupo(i)}
+                onmouseenter={() => agendarHover(() => escolherGrupo(i))}
+                onfocus={() => escolherGrupo(i)}
                 onkeydown={aoTeclado}
-                class={classeLinha(focoColuna === 1 && focoGrupo === i)}
+                class={classeLinha(colunaAtiva === 1 && focoGrupo === i)}
               >
                 {g.name}
               </button>
@@ -419,7 +522,7 @@
             </li>
           {/if}
           {#each lista as ind, i (ind.id)}
-            {@render linhaItem(ind, i, focoColuna === 2 && focoIndicador === i)}
+            {@render linhaItem(ind, i, colunaAtiva === 2 && focoIndicador === i)}
           {/each}
         </ul>
 

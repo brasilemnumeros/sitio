@@ -43,19 +43,19 @@
     },
     {
       "id": "mvgr-nominal",
-      "nome": "MVG-R Nominal (R$)",
+      "nome": "Valor mediano do imóvel em garantia (R$)",
       "grupo": "imobiliario",
       "arquivo": "mvgr/mvgr-nominal.json",
       "escala": "moeda",
-      "descricao": "Mediana dos Valores de Garantia de Imóveis Residenciais Financiados (MVG-R), em reais correntes"
+      "descricao": "Mediana dos valores de avaliação dos imóveis residenciais dados em garantia a financiamentos imobiliários, em reais correntes (janela móvel de 3 meses)"
     },
     {
       "id": "mvgr-real",
-      "nome": "MVG-R Real (R$)",
+      "nome": "Valor mediano do imóvel em garantia (R$ de mar/2004)",
       "grupo": "imobiliario",
       "arquivo": "mvgr/mvgr-real.json",
       "escala": "moeda",
-      "descricao": "Mediana dos Valores de Garantia de Imóveis Residenciais Financiados (MVG-R), em reais constantes de março de 2004 (deflacionada pelo IPCA)"
+      "descricao": "Mediana dos valores de avaliação dos imóveis residenciais dados em garantia a financiamentos imobiliários, em reais constantes de março de 2004 (deflacionada pelo IPCA)"
     },
     {
       "id": "caged-total-mensal",

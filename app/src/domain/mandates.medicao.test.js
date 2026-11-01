@@ -64,21 +64,33 @@ const mandato = (rotulo) => MANDATOS.find((m) => m.rotulo === rotulo);
  *   somá-las e ganhou o trecho que a fonte já tinha — 349 → 382 pontos, de
  *   `1996-07`–`2025-07` para `1995-01`–`2026-10`. Efeito: a última coluna (Lula III) sobe de
  *   31 para 46 (2023-01 a 2026-10).
+ * - **As outras seis famílias refeitas (2026-11-01):** mesmos efeitos de cobertura, agora que
+ *   cada série termina no último período fechado da fonte:
+ *   `caged` e `mvgr` ganham 2025-08..2026-08 (Lula III 32/31 → 44); `pib` ganha 2025 (2 → 3);
+ *   `homicidios` ganha 2024 no total (1 → 2) e 2023 em armas e proporção (0 → 1, o que tira as
+ *   duas de "sem cobertura" e as transforma em ponto único);
+ *   `populacao` passa a começar em 2000 (FHC II: total 4 → 3, variação 4 → 2) e vai até 2026
+ *   (Lula III 2 → 4, nas duas);
+ *   `selic-meta` passa a começar em 2000-03, quando a janela de 12 meses fecha pela primeira vez
+ *   (FHC II 46 → 34) e vai até 2026-10 (Lula III 34 → 46); `selic-over` ganha o mesmo fim.
+ *   Com isso o resumo da §7.3 vai a 4 → 2 células sem cobertura, 1 → 2 pontos únicos e
+ *   18 → 20 células abaixo do esperado (as duas séries de população no FHC II, que agora
+ *   começam em 2000/2001).
  */
 const ESPERADO = {
-  'caged-total-mensal': [48, 48, 48, 48, 17, 31, 48, 32],
-  'homicidios-anual': [4, 4, 4, 4, 2, 2, 4, 1],
-  'homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 0],
-  'proporcao-homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 0],
+  'caged-total-mensal': [48, 48, 48, 48, 17, 31, 48, 44],
+  'homicidios-anual': [4, 4, 4, 4, 2, 2, 4, 2],
+  'homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 1],
+  'proporcao-homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 1],
   'igpm-acum-12m': [48, 48, 48, 48, 17, 31, 48, 46],
   'ipca-acum-12m': [48, 48, 48, 48, 17, 31, 48, 45],
-  'mvgr-nominal': [0, 34, 48, 48, 17, 31, 48, 31],
-  'mvgr-real': [0, 34, 48, 48, 17, 31, 48, 31],
-  'pib-real-anual': [4, 4, 4, 4, 2, 2, 4, 2],
-  'populacao-total-anual': [4, 4, 4, 4, 2, 2, 4, 2],
-  'populacao-variacao-anual': [4, 4, 4, 4, 2, 2, 4, 2],
-  'selic-meta-acum-12m': [46, 48, 48, 48, 17, 31, 48, 34],
-  'selic-over-acum-12m': [48, 48, 48, 48, 17, 31, 48, 34],
+  'mvgr-nominal': [0, 34, 48, 48, 17, 31, 48, 44],
+  'mvgr-real': [0, 34, 48, 48, 17, 31, 48, 44],
+  'pib-real-anual': [4, 4, 4, 4, 2, 2, 4, 3],
+  'populacao-total-anual': [3, 4, 4, 4, 2, 2, 4, 4],
+  'populacao-variacao-anual': [2, 4, 4, 4, 2, 2, 4, 4],
+  'selic-meta-acum-12m': [34, 48, 48, 48, 17, 31, 48, 46],
+  'selic-over-acum-12m': [48, 48, 48, 48, 17, 31, 48, 46],
 };
 
 describe('medição da §7.3 sobre os dados reais', () => {
@@ -91,19 +103,19 @@ describe('medição da §7.3 sobre os dados reais', () => {
     expect(obtido).toEqual(ESPERADO);
   });
 
-  it('resume a medição: 104 células, 4 sem cobertura, 1 ponto único', () => {
+  it('resume a medição: 104 células, 2 sem cobertura, 2 pontos únicos', () => {
     const estados = [];
     for (const id of Object.keys(ESPERADO)) {
       const s = serieReal(id);
       for (const m of MANDATOS) estados.push(deltaNoMandato(s, m).estado);
     }
     expect(estados).toHaveLength(104);
-    expect(estados.filter((e) => e === COBERTURA.SEM)).toHaveLength(4);
-    expect(estados.filter((e) => e === COBERTURA.PONTO_UNICO)).toHaveLength(1);
-    expect(estados.filter((e) => e !== COBERTURA.SEM && e !== COBERTURA.PONTO_UNICO)).toHaveLength(99);
+    expect(estados.filter((e) => e === COBERTURA.SEM)).toHaveLength(2);
+    expect(estados.filter((e) => e === COBERTURA.PONTO_UNICO)).toHaveLength(2);
+    expect(estados.filter((e) => e !== COBERTURA.SEM && e !== COBERTURA.PONTO_UNICO)).toHaveLength(100);
   });
 
-  it('reproduz as 18 células "abaixo do esperado" da §7.3, com o mandato fechado', () => {
+  it('reproduz as 20 células "abaixo do esperado" da §7.3, com o mandato fechado', () => {
     // A régua é `pontos < esperados` para a granularidade da série — a mesma que a §7.3
     // publica. Comparar datas cruas marcaria 49 células (todo ponto mensal cai no dia 1º).
     const abaixo = [];
@@ -114,7 +126,7 @@ describe('medição da §7.3 sobre os dados reais', () => {
         if (pontos < pontosEsperados(s.granularidade, m)) abaixo.push(`${id}|${m.rotulo}`);
       }
     }
-    expect(abaixo).toHaveLength(18);
+    expect(abaixo).toHaveLength(20);
     expect(abaixo.filter((c) => c.endsWith('|Temer'))).toHaveLength(13);
     expect(abaixo).toContain('mvgr-nominal|Lula I');
     expect(abaixo).toContain('selic-meta-acum-12m|FHC II');

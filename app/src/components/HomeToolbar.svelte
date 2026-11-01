@@ -317,6 +317,7 @@
   <!-- Saída para o conteúdo: sem ela a home vira uma ilha. Discreta e fora do celular. -->
   <a
     href="/blog"
+    data-testid="link-artigos"
     class="hidden shrink-0 rounded px-2 py-1 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:inline"
     >Artigos</a
   >

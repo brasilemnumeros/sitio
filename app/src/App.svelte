@@ -86,7 +86,11 @@
   let jaTentouTour = false;
   let timerTour = null;
   $effect(() => {
-    if (jaTentouTour || itens.length === 0) return;
+    // `itens.length > 0` NÃO serve: o item entra na store com `status: 'carregando'` antes do
+    // `fetch`, então o teste ficaria verdadeiro sobre o esqueleto. O tour abria com 4 dos 6
+    // passos (legenda e escala ainda não existem) e queimava a chave, fazendo a pessoa perder
+    // esses dois para sempre. Exigir uma série `ok` prova que o gráfico está montado.
+    if (jaTentouTour || !itens.some((i) => i.status === 'ok')) return;
     jaTentouTour = true;
 
     timerTour = setTimeout(() => {

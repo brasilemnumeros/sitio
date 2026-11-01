@@ -73,6 +73,17 @@
         side: 'left',
       },
     },
+    {
+      // O último passo sai do gráfico e aponta para o conteúdo editorial: a home é uma ilha,
+      // e o texto é onde o número ganha contexto e fonte. É convite, não recomendação.
+      element: '[data-testid="link-artigos"]',
+      popover: {
+        title: 'Artigos e análises',
+        description:
+          'Cada indicador tem um texto explicando de onde vem o número e o que ele mede. Vale conferir antes de citar.',
+        side: 'bottom',
+      },
+    },
   ];
 
   // ⚠ Instância NÃO-reativa de propósito: `$state` dentro de um `$effect` que também a lê
@@ -83,13 +94,25 @@
   $effect(() => {
     if (!aberto) return;
 
-    // Elemento ausente (série em erro, legenda que ainda não montou) = passo pulado. O
-    // driver.js não pula sozinho: ele centraliza o balão no vazio.
-    const passos = filtrarPassos(PASSOS, (seletor) => !!document.querySelector(seletor));
+    // Elemento ausente (série em erro, legenda que ainda não montou) = passo pulado: o driver
+    // centralizaria o balão no vazio. A caixa tem de ser não-vazia também — a âncora da escala
+    // é um div com a largura que o adapter mediu, e ela pode existir com 0×0 no primeiro frame.
+    const passos = filtrarPassos(PASSOS, (seletor) => {
+      const el = document.querySelector(seletor);
+      if (!el) return false;
+      const caixa = el.getBoundingClientRect();
+      return caixa.width > 0 && caixa.height > 0;
+    });
     if (passos.length === 0) {
       aoFechar();
       return;
     }
+
+    // Quem tinha o foco antes do tour. O driver guarda o `activeElement` de CADA passo e, do
+    // passo 2 em diante, ele é um botão do popover anterior — que já foi removido do DOM.
+    // Sem este retorno explícito, fechar o tour joga o foco no `<body>` e quem usa teclado
+    // recomeça o Tab do topo da página.
+    const focoAnterior = document.activeElement;
 
     const instancia = driver({
       steps: passos,
@@ -101,9 +124,11 @@
       // O overlay escuro é o mesmo dos véus das gavetas; `#0e1117` é o fundo do terminal.
       overlayColor: '#0e1117',
       overlayOpacity: 0.75,
+      // O filtro acima roda uma vez, na abertura. Se um alvo desaparecer ENTRE passos, o padrão
+      // (`false`) faria o driver cair no elemento fantasma e centralizar o balão.
+      skipMissingElement: true,
       popoverClass: 'tour-terminal',
-      // `onDestroyed` dispara também quando o `destroy()` vem da limpeza abaixo; `aoFechar`
-      // é idempotente no App (`tourAberto = false`), mas o guarda evita o eco.
+      // Caminho "de bem": o driver avisa. Não dá para confiar SÓ nisto — ver o vigia abaixo.
       onDestroyed: () => {
         if (driverObj !== null) {
           driverObj = null;
@@ -114,11 +139,45 @@
     driverObj = instancia;
     instancia.drive();
 
+    // ⚠ O `driver.js` NEM SEMPRE chama `onDestroyed`: fechar por `Esc`, pelo "×" ou pelo véu
+    // passa por um caminho interno que destrói sem emitir o gancho (medido em 2026-11-01 — o
+    // popover sumia, `tourAberto` ficava `true` e o "?" nunca mais reabria o tour). O vigia
+    // fecha o estado pelo fato observável, não pela promessa da biblioteca.
+    const fecharSeInativo = () => {
+      if (instancia.isActive()) return;
+      clearInterval(vigia);
+      driverObj = null;
+      aoFechar();
+    };
+
+    const vigia = setInterval(fecharSeInativo, 150);
+
+    // O vigia sozinho deixa uma janela de até 150ms em que o popover já sumiu mas `tourAberto`
+    // ainda é `true` — quem clica no "?" nesse intervalo não reabre nada, porque o estado não
+    // muda. O driver fecha por `keyup` (`Esc`) e por `click` ("×", véu), então esses dois
+    // eventos fecham o estado na hora, com um microtask para deixar o driver terminar.
+    const aposEvento = (e) => {
+      if (e.type === 'keyup' && e.key !== 'Escape') return;
+      queueMicrotask(fecharSeInativo);
+    };
+    window.addEventListener('keyup', aposEvento);
+    window.addEventListener('click', aposEvento);
+
     return () => {
-      // Fechar por qualquer caminho (Esc, ×, "Entendi") já passa pelo `onDestroyed`.
+      clearInterval(vigia);
+      window.removeEventListener('keyup', aposEvento);
+      window.removeEventListener('click', aposEvento);
       const atual = driverObj;
       driverObj = null;
       atual?.destroy();
+
+      // `document.contains(body)` é sempre verdadeiro — sem excluir o `<body>`, o "foco de
+      // volta" seria devolver o foco a lugar nenhum.
+      const alvo =
+        focoAnterior && focoAnterior !== document.body && document.contains(focoAnterior)
+          ? focoAnterior
+          : document.querySelector('[data-testid="botao-tour"]');
+      alvo?.focus();
     };
   });
 </script>

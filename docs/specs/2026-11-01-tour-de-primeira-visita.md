@@ -12,7 +12,7 @@ só ensina o que a pessoa já tentou usar — quem nunca abre a gaveta nunca des
 
 ## O que queremos
 
-Um **tour com destaques** na primeira visita, no desktop. Seis passos, na ordem em que a pessoa
+Um **tour com destaques** na primeira visita, no desktop. Sete passos, na ordem em que a pessoa
 esbarra neles, encerrável a qualquer momento e reabrível depois.
 
 1. **Busca** (`⌘K`) — achar qualquer indicador.

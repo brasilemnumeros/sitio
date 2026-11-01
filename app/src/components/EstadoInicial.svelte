@@ -10,7 +10,7 @@
   // que não há nada para controlar, a tela mostrava dois "Buscar indicador…". Fica um só.
   //
   // NÃO lê store (§8). Recebe uma ação do App e apenas a dispara — quem resolve o par
-  // "Selic × IPCA" por ID no `indicators.json` é o App, na hora de adicionar (§9.1: nada de
+  // "Selic × IPCA" por ID no `indicadores.json` é o App, na hora de adicionar (§9.1: nada de
   // hardcodar nome nem URL aqui).
   let { aoPedirExemplo } = $props();
 </script>

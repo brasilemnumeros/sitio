@@ -132,7 +132,7 @@
     return falhas.map((i) => `${i.name}: ${i.error}`).join('\n');
   });
 
-  // §9.1 — o atalho de primeiro uso. Os IDs vivem no `indicators.json`; o par "Selic × IPCA" é
+  // §9.1 — o atalho de primeiro uso. Os IDs vivem no `indicadores.json`; o par "Selic × IPCA" é
   // RESOLVIDO no catálogo carregado NA HORA DE ADICIONAR — nada de hardcodar nome nem URL aqui.
   const EXEMPLO_IDS = ['selic-meta-acum-12m', 'ipca-acum-12m'];
 

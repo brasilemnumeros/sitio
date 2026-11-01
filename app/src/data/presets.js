@@ -14,7 +14,7 @@ const preset = (id, nome, indicadores) =>
   Object.freeze({ id, nome, indicadores: Object.freeze([...indicadores]) });
 
 // Ordem importa: é a rotação do "preset do dia" (juros → inflação → … → trabalho → juros).
-// Os ids de indicador são os do catálogo (`indicators.json`), sem inventar apelidos.
+// Os ids de indicador são os do catálogo (`indicadores.json`), sem inventar apelidos.
 /** @type {ReadonlyArray<Preset>} */
 export const PRESETS = Object.freeze([
   preset('juros', 'Juros', ['selic-meta-acum-12m', 'selic-over-acum-12m']),

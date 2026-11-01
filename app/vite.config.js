@@ -10,7 +10,7 @@ import { dadosLocais } from './vite-plugins/dados-locais.js';
  * "local serve dado local"). O catálogo NÃO passa por aqui: é embutido no bundle.
  *
  * Os CAMINHOS são resolvidos AQUI (não no módulo): ele vive em `app/vite-plugins/`,
- * então um `../indicators.json` relativo a ele seria `sitio/app/indicators.json`.
+ * então um `../indicadores.json` relativo a ele seria `sitio/app/indicadores.json`.
  * Um caminho errado NÃO falha — só nunca casa, e o dev server responde HTML.
  *
  * O Tailwind CLI é rebuildado à parte (o script `css` do `sitio/package.json`).

@@ -486,7 +486,7 @@
           {/each}
         </ul>
       {:else}
-        <!-- coluna 1 · grupos — os 7 do `indicators.json` (§1.1); só no desktop -->
+        <!-- coluna 1 · grupos — os 7 do `indicadores.json` (§1.1); só no desktop -->
         <ul
           data-coluna="1"
           aria-label="Grupos"

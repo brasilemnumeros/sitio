@@ -37,11 +37,11 @@ function serieReal(id) {
     for (const f of readdirSync(dir).filter((n) => n.endsWith('.json'))) {
       if (f.replace(/\.json$/, '') !== id) continue;
       const bruto = JSON.parse(readFileSync(join(dir, f), 'utf8'));
-      // Adaptador temporário: as séries ainda publicam `rate` (migração = fatia 11).
+      // Schema 2: cada ponto tem só `date` e `value` (o `rate` de convivência saiu).
       return {
         id,
         granularity: GRANULARIDADE[id],
-        data: bruto.data.map((p) => ({ date: p.date, value: p.value ?? p.rate })),
+        data: bruto.data.map((p) => ({ date: p.date, value: p.value })),
       };
     }
   }
@@ -67,7 +67,7 @@ const ESPERADO = {
   'homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 0],
   'proporcao-homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 0],
   'igpm-acum-12m': [48, 48, 48, 48, 17, 31, 48, 31],
-  'ipca-acum-12m': [48, 48, 48, 48, 17, 31, 48, 30],
+  'ipca-acum-12m': [48, 48, 48, 48, 17, 31, 48, 45],
   'mvgr-nominal': [0, 34, 48, 48, 17, 31, 48, 31],
   'mvgr-real': [0, 34, 48, 48, 17, 31, 48, 31],
   'pib-real-anual': [4, 4, 4, 4, 2, 2, 4, 2],

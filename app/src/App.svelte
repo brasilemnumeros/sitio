@@ -122,8 +122,8 @@
 
   onDestroy(() => clearTimeout(timerTour));
 
-  // O motivo vem das PRÓPRIAS séries: a mensagem do validador já diz o que houve — um `schema`
-  // não suportado, por exemplo, chega com a palavra "schema" (§6). NUNCA "erro desconhecido":
+  // O motivo vem das PRÓPRIAS séries: a mensagem do validador já diz o que houve — uma unidade
+  // desconhecida, por exemplo, chega com o código da regra (§6). NUNCA "erro desconhecido":
   // o vazio sempre diz por quê (§9). Várias séries → um motivo por linha.
   let motivoErro = $derived.by(() => {
     const falhas = itens.filter((i) => i.status === 'erro' && i.error);

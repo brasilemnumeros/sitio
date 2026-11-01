@@ -64,6 +64,14 @@
 
   const TIPO = { percentage: 'percentual', number: 'contagem', currency: 'moeda' };
   const GRANULARIDADE = { daily: 'diária', monthly: 'mensal', annual: 'anual' };
+  /** C5 do contrato — o que o número É. `granularity` diz de quanto em quanto tempo há ponto. */
+  const MEDIDA = {
+    nivel: 'valor no período',
+    'acumulado-12m': 'acumulado em 12 meses',
+    'variacao-anual': 'variação anual',
+    estoque: 'total no período',
+    participacao: 'participação no total',
+  };
 
   /** Vírgula é a convenção dos números em português. */
   const numero = (n) => n.toLocaleString('pt-BR');
@@ -114,6 +122,12 @@
           <dt class="text-slate-500 dark:text-slate-400">Granularidade</dt>
           <dd class="text-right text-slate-700 dark:text-slate-200">
             {GRANULARIDADE[estado.series.granularity]}
+          </dd>
+        </div>
+        <div class="flex justify-between gap-3">
+          <dt class="text-slate-500 dark:text-slate-400">Medida</dt>
+          <dd class="text-right text-slate-700 dark:text-slate-200">
+            {MEDIDA[estado.series.medida] ?? estado.series.medida}
           </dd>
         </div>
         <div class="flex justify-between gap-3">

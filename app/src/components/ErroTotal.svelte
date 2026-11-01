@@ -3,9 +3,9 @@
   // só que no nível da tela: título, motivo e botão de tentar de novo. Uma série que falha não
   // chega aqui — isso é degradação parcial, e o chip cuida dela.
   //
-  // O `motivo` é texto que o CHAMADOR monta — nunca "erro desconhecido": um `schema` não
-  // suportado, por exemplo, chega aqui com a mensagem do próprio validador, que diz que é
-  // schema (§6, §9.3). A §9 é explícita: o vazio sempre diz por quê.
+  // O `motivo` é texto que o CHAMADOR monta — nunca "erro desconhecido": uma versão
+  // desconhecida, por exemplo, chega aqui com a mensagem do próprio validador, que cita a
+  // regra do contrato (§6, §9.3). A §9 é explícita: o vazio sempre diz por quê.
   let { titulo, motivo, aoTentarNovamente } = $props();
 </script>
 

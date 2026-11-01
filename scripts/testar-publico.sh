@@ -18,7 +18,7 @@ done
 # `__BASE_DADOS__`, que em PRODUÇÃO é o Pages do repo `dados`. Um artefato de dev (base `/dados`)
 # publicado deixaria o gráfico vazio em silêncio — o `fetch` falharia e o app mostraria erro, mas
 # ninguém veria isso no CI. A URL do Pages no bundle é o que prova o ramo de produção.
-grep -q 'https://brasilemnumeros.github.io/dados' dist/assets/js/app/app.js \
+grep -q 'https://brasilemnumeros.github.io/dados/indicadores' dist/assets/js/app/app.js \
   || { echo "publico: app.js não aponta para o Pages (artefato de dev?)" >&2; falha=1; }
 [ "$falha" -eq 0 ] || exit 1
 # O AVISO SOBRE OS DADOS NA HOME (2026-11-01). A `/` não usa o rodapé do site, então o link

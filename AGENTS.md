@@ -40,6 +40,7 @@ migração (ADR 0002).
 | `app/e2e/` | Playwright (10 specs + `apoio.js`) | comportamento/geometria no navegador |
 | `scripts/` | guardas do build publicado | `npm run build` falhar em voz alta |
 | `docs/specs/` | desenhos aprovados (o que o produto deve ser) | ler antes de mudar produto |
+| `docs/contrato-de-indicadores.md` | **contrato normativo** dos arquivos de série (schema 1) | qualquer mudança em `validate.js`, no corpus ou nos dados |
 | `docs/adr/0001-...app-isolado.md` | ADR 0001: app de gráficos isolado, Svelte + Lightweight Charts, contrato de dados | antes de mexer na fronteira do app ou nos dados |
 | `docs/adr/0002-...astro.md` | ADR 0002: migração Jekyll → Astro, contrato de URL, feed/sitemap | antes de mexer em build, rotas ou deploy |
 | `docs/plans/` | planos por fatia — **histórico**, pode estar defasado | referência, não verdade |
@@ -127,6 +128,12 @@ quando o defeito aparecer — e provar isso.
   `fetch`). Em dev, o middleware `app/vite-plugins/dados-locais.js` serve
   `/dados/**` para as séries; em produção a base aponta para
   `https://brasilemnumeros.github.io/dados/indicadores`.
+- **Contrato das séries: schema 1 (versão única)** (`docs/contrato-de-indicadores.md`, regras `C1…C14`).
+  Cada série traz `unit`, `eixo` (comparabilidade declarada), `medida` (o que o número é),
+  `granularity`, `source` e `data` com `{date, value}` — sem `rate`, ordem ascendente, um
+  ponto por período. O corpus em `dados/tests/contrato/` é rodado pelos DOIS validadores
+  (`validate.js` e `validar.py`); mudar o contrato é mudar doc + corpus + os dois validadores
+  no mesmo conjunto de commits.
 - **Eixo x (2026-10-29):** sempre do início do FHC I (`1995-01-01`) ao **dia de
   hoje**, independentemente das séries carregadas — âncoras mensais invisíveis em
   `app/src/domain/horizonte.js`. O "Tudo" enquadra esse horizonte; não voltar a
@@ -190,7 +197,7 @@ nova e aval do usuário.
 
 | Alvo | O que cobre |
 |---|---|
-| `app/src/**/*.test.js` (Vitest, ~20 arquivos) | domínio, stores, dados, permalink, presets |
+| `app/src/**/*.test.js` (Vitest, ~20 arquivos) | domínio, stores, dados, permalink, presets; inclui o **corpus do contrato** (`dados/tests/contrato/`) |
 | `app/e2e/*.spec.js` (Playwright) | casca, busca, mandato, presets, permalink, mobile, geometria |
 | `scripts/testar-*.sh` | HTML/CSS publicado, contrato de URLs, feed, sitemap, 404 |
 | `scripts/testar-analytics.mjs` | GA4 não carrega sem consentimento nem com DNT |

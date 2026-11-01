@@ -11,7 +11,7 @@ import { PALETA_PADRAO } from '../domain/color.js';
 const entrada = (id) => ({ id, name: `Indicador ${id}`, datafile: `https://x/${id}.json`, unit: { type: 'percentage', symbol: '%', decimals: 2 } });
 const okSerie = (id) => async () => ({
   ok: true, status: 200,
-  json: async () => ({ schema: 1, id, unit: { type: 'percentage', symbol: '%', decimals: 2 }, granularity: 'monthly', source: 'fonte', data: [{ date: '2020-01-01', value: 1 }] }),
+  json: async () => ({ schema: 1, id, unit: { type: 'percentage', symbol: '%', decimals: 2 }, eixo: 'percentual', medida: 'nivel', granularity: 'monthly', source: 'fonte', data: [{ date: '2020-01-01', value: 1 }] }),
 });
 
 // O cache de `loadSeries` é por URL e vive no módulo — sem zerá-lo, um sucesso de um teste
@@ -26,7 +26,7 @@ describe('dataMaximaStore (§8 — a data de referência vem do estado)', () => 
       ok: true, status: 200,
       json: async () => ({
         schema: 1, id: 'a', unit: { type: 'percentage', symbol: '%', decimals: 2 },
-        granularity: 'monthly', source: 'fonte',
+        eixo: 'percentual', medida: 'nivel', granularity: 'monthly', source: 'fonte',
         data: [{ date: '2020-01-01', value: 1 }, { date: '2021-05-01', value: 2 }],
       }),
     });

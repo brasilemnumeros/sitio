@@ -59,6 +59,8 @@ function fixture(idsDoCatalogo) {
         schema: 1,
         id,
         unit: { type: 'percentage', symbol: '%', decimals: 2 },
+        eixo: 'percentual',
+        medida: 'nivel',
         granularity: 'monthly',
         source: 'fonte',
         data: [{ date: '2020-01-01', value: 1 }],

@@ -5,6 +5,8 @@ const JSON_VALIDO = {
   schema: 1,
   id: 'ipca-acum-12m',
   unit: { type: 'percentage', symbol: '%', decimals: 2 },
+  eixo: 'percentual',
+  medida: 'acumulado-12m',
   granularity: 'monthly',
   source: 'Banco Central do Brasil',
   data: [{ date: '1995-12-31', value: 1.64 }],
@@ -51,7 +53,7 @@ describe('loadSeries', () => {
     );
   });
 
-  it('propaga o SchemaError de um schema desconhecido', async () => {
+  it('propaga o SchemaError de uma versão desconhecida', async () => {
     const fetchImpl = vi.fn(async () => respostaOk({ ...JSON_VALIDO, schema: 99 }));
     await expect(loadSeries('https://exemplo/x.json', { fetchImpl })).rejects.toThrow(/schema 99/);
   });

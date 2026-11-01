@@ -44,6 +44,21 @@ jobs:
             package-lock.json
             app/package-lock.json
 
+      # O repo `dados/` é necessário ANTES dos testes: o teste de integração lê as séries e o
+      # corpus do contrato (`dados/tests/contrato/`) direto do disco. Ele é um repo SEPARADO,
+      # então o checkout padrão não o traz. O `path: dados` o põe na raiz do workspace — que de
+      # `app/` é `../dados/` (é o valor que o `DADOS_DIR` recebe abaixo). Até 2026-11-01 este
+      # passo vinha DEPOIS dos testes de unidade, e o `integracao.test.js` lia um diretório
+      # inexistente.
+      # ⚠️ `ref: ${github.ref_name}`: numa branch de feature o repo `dados` não tem essa branch
+      #    → este passo falha. Em `main` (a branch que dispara este deploy) ele existe.
+      - name: Checkout do repo de dados
+        uses: actions/checkout@v4
+        with:
+          repository: brasilemnumeros/dados
+          ref: ${{ github.ref_name }}
+          path: dados
+
       # Falhar rápido: as contas que erram calado são testadas antes de gastar o build (§10.7)
       - name: Testes do app
         run: npm ci --prefix app && npm test --prefix app
@@ -56,19 +71,6 @@ jobs:
       # a fatia 00 — o `assets/css/main.css` era caminho morto.
       - name: CSS do site (Tailwind CLI, da raiz de sitio/)
         run: npm ci && npx -y @tailwindcss/cli -i ./src/styles/main.css -o ./assets/css/main.dist.css
-
-      # O E2E precisa do repo `dados/` para servir as SÉRIES (os governos passaram a ser dado
-      # versionado no próprio `sitio`, em 2026-11-01). Ele é um repo
-      # SEPARADO, então o checkout padrão não o traz. O `path: dados` o põe na raiz do
-      # workspace — que de `app/` é `../dados/` (é o valor que o `DADOS_DIR` recebe abaixo).
-      # ⚠️ `ref: ${github.ref_name}`: numa branch de feature o repo `dados` não tem essa branch
-      #    → este passo falha. Em `main` (a branch que dispara este deploy) ele existe.
-      - name: Checkout do repo de dados
-        uses: actions/checkout@v4
-        with:
-          repository: brasilemnumeros/dados
-          ref: ${{ github.ref_name }}
-          path: dados
 
       - name: Instalar o navegador do Playwright
         run: npx --prefix app playwright install --with-deps chromium

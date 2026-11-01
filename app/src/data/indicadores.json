@@ -47,7 +47,7 @@
       "grupo": "imobiliario",
       "arquivo": "mvgr/mvgr-nominal.json",
       "escala": "moeda",
-      "descricao": "Mediana dos Valores de Garantia de Imóveis Residenciais Financiados (MVG-R) em Reais (R$)"
+      "descricao": "Mediana dos Valores de Garantia de Imóveis Residenciais Financiados (MVG-R), em reais correntes"
     },
     {
       "id": "mvgr-real",
@@ -55,7 +55,7 @@
       "grupo": "imobiliario",
       "arquivo": "mvgr/mvgr-real.json",
       "escala": "moeda",
-      "descricao": "Mediana dos Valores de Garantia de Imóveis Residenciais Financiados (MVG-R) em Reais, descontada a inflação (IPCA)"
+      "descricao": "Mediana dos Valores de Garantia de Imóveis Residenciais Financiados (MVG-R), em reais constantes de março de 2004 (deflacionada pelo IPCA)"
     },
     {
       "id": "caged-total-mensal",
@@ -71,7 +71,7 @@
       "grupo": "demografia",
       "arquivo": "populacao/populacao-total-anual.json",
       "escala": "numero",
-      "descricao": "Número total da população brasileira conforme dados do IBGE"
+      "descricao": "População residente do Brasil em 1º de julho, projeções de 2024 do IBGE (conciliadas ao Censo 2022)"
     },
     {
       "id": "populacao-variacao-anual",
@@ -79,7 +79,7 @@
       "grupo": "demografia",
       "arquivo": "populacao/populacao-variacao-anual.json",
       "escala": "percentual",
-      "descricao": "Variação anual da população brasileira conforme dados do IBGE"
+      "descricao": "Variação anual da população residente (1º de julho contra 1º de julho), projeções de 2024 do IBGE"
     },
     {
       "id": "homicidios-anual",

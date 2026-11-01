@@ -22,8 +22,14 @@
 
   /** `aoTeclado` é a regra única de teclado da modal (§12.1) — repassada para o Adicionar não
    *  perder `Esc`/setas quando ele está focado. */
-  let { indicador = null, noLimite = false, motivo = null, aoAdicionar, aoTeclado = undefined } =
-    $props();
+  let {
+    indicador = null,
+    noLimite = false,
+    motivo = null,
+    aoAdicionar,
+    aoRemover,
+    aoTeclado = undefined,
+  } = $props();
 
   /** Estado do carregamento da PRÓPRIA série da ficha (ela é sobre um dado ainda não escolhido). */
   let estado = $state({ status: 'idle', series: null, error: null });
@@ -165,22 +171,36 @@
       {/if}
     {/if}
 
-    <!-- §9.5 — no teto, o botão fica VISÍVEL e desabilitado, dizendo o motivo (a paleta). Nada é
-         removido para abrir espaço. -->
+    <!-- O botão é CHAVE DE DUAS POSIÇÕES (2026-11-01, a pedido do usuário): o estado "está no
+         gráfico" deixou de ser um `checkbox` desabilitado na lista e passou a ser a própria ação —
+         "Adicionar ao gráfico" ou "Remover do gráfico". Um estado, um lugar: o controle que age.
+         §9.5 — no teto, o Adicionar fica VISÍVEL e desabilitado, dizendo o motivo (a paleta);
+         nada é removido para abrir espaço. Remover continua habilitado: o teto não é prisão. -->
     <div class="mt-4">
-      <button
-        type="button"
-        onclick={() => aoAdicionar?.(indicador)}
-        onkeydown={aoTeclado}
-        disabled={noLimite || jaNoGrafico}
-        class="w-full rounded border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
-      >
-        {jaNoGrafico ? 'Já está no gráfico' : 'Adicionar'}
-      </button>
+      {#if jaNoGrafico}
+        <button
+          type="button"
+          onclick={() => aoRemover?.(indicador)}
+          onkeydown={aoTeclado}
+          class="w-full rounded border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/40"
+        >
+          Remover do gráfico
+        </button>
+      {:else}
+        <button
+          type="button"
+          onclick={() => aoAdicionar?.(indicador)}
+          onkeydown={aoTeclado}
+          disabled={noLimite}
+          class="w-full rounded border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          Adicionar ao gráfico
+        </button>
 
-      {#if noLimite && motivo}
-        <!-- A frase vem PRONTA de `motivoDoLimite()` (o motivo é a PALETA, não o layout). -->
-        <p class="mt-2 text-xs text-amber-700 dark:text-amber-400">{motivo}</p>
+        {#if noLimite && motivo}
+          <!-- A frase vem PRONTA de `motivoDoLimite()` (o motivo é a PALETA, não o layout). -->
+          <p class="mt-2 text-xs text-amber-700 dark:text-amber-400">{motivo}</p>
+        {/if}
       {/if}
     </div>
   {/if}

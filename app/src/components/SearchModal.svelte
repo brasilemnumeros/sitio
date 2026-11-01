@@ -19,6 +19,7 @@
   import {
     seriesStore,
     adicionarSerie,
+    removerSerie,
     motivoDoLimite,
     LIMITE_SERIES,
   } from '../stores/series.js';
@@ -181,9 +182,13 @@
     focoIndicador = 0;
   }
 
-  /** §12.1 — ⏎ com a ficha aberta confirma o Adicionar. A store já guarda o teto e a duplicata. */
-  function confirmarAdicionar() {
-    if (indicadorAberto) adicionarSerie(indicadorAberto);
+  /** §12.1 — ⏎ com a ficha aberta confirma a AÇÃO da ficha: adicionar se ela não está no
+   *  gráfico, remover se está (2026-11-01 — a ficha virou chave de duas posições; ver `Ficha`).
+   *  A store já guarda o teto e a duplicata. */
+  function confirmarAcao() {
+    if (!indicadorAberto) return;
+    if (jaNoGrafico(indicadorAberto.id)) removerSerie(indicadorAberto.id);
+    else adicionarSerie(indicadorAberto);
   }
 
   // Foco automático no campo de busca ao abrir (§12.1) — por efeito, não pelo atributo
@@ -264,7 +269,7 @@
       e.preventDefault();
       // §12.1 — com a ficha aberta, ⏎ confirma o Adicionar.
       if (indicadorAberto) {
-        confirmarAdicionar();
+        confirmarAcao();
         return;
       }
       if (mobile) {
@@ -281,22 +286,18 @@
     }
   }
 
-  // §12.1 — a linha da lista: caixa · nome · **distintivo de escala** · botão "i".
+  // §12.1 — a linha da lista: nome · **distintivo de escala** · botão "i".
   // Tocar na linha NÃO adiciona: abre a ficha (o "i" faz o mesmo — o alvo é maior).
   // O distintivo e o "i" só existem no celular (`md:hidden`); no desktop a linha é a da §1.1.
+  //
+  // ⚠ A CAIXA saiu em 2026-11-01 (a pedido do usuário). Era um `checkbox` DESABILITADO que só
+  // dizia "já está no gráfico" — parecia controle e não fazia nada, e a informação de estado já
+  // vive no botão da ficha, que agora é chave de duas posições ("Adicionar ao gráfico" /
+  // "Remover do gráfico"). Um estado, um lugar: o botão que AGE.
 </script>
 
 {#snippet linhaItem(ind, i, ativo, classe = '')}
   <li class="flex items-center gap-2 {classe}">
-    <input
-      type="checkbox"
-      disabled
-      checked={jaNoGrafico(ind.id)}
-      aria-label={jaNoGrafico(ind.id)
-        ? `${ind.name}: já está no gráfico`
-        : `${ind.name}: não está no gráfico`}
-      class="h-4 w-4 shrink-0"
-    />
     <button
       type="button"
       onclick={() => escolherIndicador(ind, i)}
@@ -518,6 +519,7 @@
           {noLimite}
           motivo={motivoLimite}
           aoAdicionar={(ind) => adicionarSerie(ind)}
+          aoRemover={(ind) => removerSerie(ind.id)}
           {aoTeclado}
         />
       </div>

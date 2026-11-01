@@ -163,11 +163,14 @@ Uma **vista única rolável**, sem abas, com três seções nesta ordem:
 
 1. `SeriesChips` — status por série (carregando/erro), "tentar de novo" e aviso do teto de
    10 séries. Continua com `data-bloco="chips"`; sai da página, não do produto.
-2. `SeriesLegend` — identificação textual, avisos de colisão de cor e de escala, cor e remoção.
+2. `SeriesLegend` — identificação textual, aviso de colisão de cor, cor e remoção. (O aviso de
+   ESCALA saiu de todas as superfícies em 2026-11-01 — ver
+   `2026-11-01-aviso-de-escala-design.md`.)
    Desde 2026-10-31 a LEITURA e o controle rápido (esconder/remover) também estão na legenda
    dentro do gráfico (`ChartLegend`); aqui fica a EDIÇÃO do objeto — cor, "restaurar" e o aviso
    de cor parecida. Dois lugares, papéis distintos (decisão explícita, não duplicação).
-3. Eixos — atribuição `left`/`right` (`axesStore` + `moverParaEixo`) e o aviso de escala.
+3. Eixos — atribuição `left`/`right` (`axesStore` + `moverParaEixo`) e mais nada: desde
+   2026-11-01 não há selo de escala aqui (a atribuição automática continua).
 
 Botão "+ Série" abre a busca. O gatilho do trilho é a **engrenagem** ("Configurações do
 gráfico"): ela abre a gaveta inteira, não um painel — os antigos atalhos "Cores"/"Eixos"

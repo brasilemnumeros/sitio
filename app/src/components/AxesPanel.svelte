@@ -15,9 +15,10 @@
 
   const itens = $derived($seriesStore.itens);
 
-  // O aviso de ESCALA vem do `axesStore`, indexado por ID — NÃO por posição (fatia 05): a lista
-  // é plana e só traz as séries que não conviveram com as que já estavam no eixo-base (direita).
-  const avisoEscala = (id) => $axesStore.avisos.find((a) => a.id === id);
+  // 🗑 O SELO DE ESCALA (`⚠ escala N×`) SAIU EM 2026-11-01, junto com o bloco da ficha: os dois
+  //    diziam a mesma coisa e nenhum dos dois bloqueava nada — o app já põe a série incompatível
+  //    no eixo esquerdo automaticamente. Quem quiser trocar o lado usa o botão abaixo, que é o
+  //    controle de verdade. Ver docs/specs/2026-11-01-aviso-de-escala-design.md.
 </script>
 
 <ul class="flex flex-col gap-1" aria-label="Eixos das séries" data-painel="eixos">
@@ -27,21 +28,6 @@
   {#each itens as item (item.id)}
     <li class="flex flex-wrap items-center gap-2 text-sm">
       <span class="min-w-0 flex-1 truncate text-slate-700 dark:text-slate-200">{item.name}</span>
-
-      {#if avisoEscala(item.id)}
-        {@const escala = avisoEscala(item.id)}
-        <!-- Dois graus: `avisa` (> 50×) e `ilegivel` (> 1.000.000×). Informa, NÃO bloqueia. -->
-        <span
-          class="text-xs {escala.veredito === 'ilegivel'
-            ? 'font-semibold text-red-600 dark:text-red-400'
-            : 'text-amber-600 dark:text-amber-400'}"
-          title="Razão de amplitude {escala.ratio.toFixed(0)}× — {escala.veredito === 'ilegivel'
-            ? 'nem dois eixos tornam esta combinação legível'
-            : 'acima do limite de 50×'}"
-        >
-          ⚠ escala {escala.ratio.toFixed(0)}×
-        </span>
-      {/if}
 
       <!-- Mesmo nome acessível de sempre: o rótulo é o eixo ATUAL (`esq.`/`dir.`) e o clique
            alterna. A store diz o lado; o componente não decide nada (§8.1). -->

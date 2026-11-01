@@ -1,24 +1,20 @@
 <script>
   // §1.1 — a terceira coluna da modal: a FICHA do indicador.
   //
-  // Ela existe por um motivo específico da §5: o aviso de compatibilidade de escala tem de vir
-  // ANTES da escolha, não depois como erro. O chip é pequeno demais e o gráfico já está desenhado
-  // quando o problema aparece — a ficha transforma um erro futuro em informação presente. É a
-  // diferença entre informar e punir.
+  // Ela existe para a §5 — mas não com um aviso de escala. Até 2026-11-01 havia aqui um bloco
+  // "escala incompatível" que vinha ANTES da escolha; ele saiu porque descrevia um impedimento
+  // inexistente (ver o comentário grande mais abaixo). O que a ficha faz hoje é o que sempre fez
+  // de fato: mostrar os campos do DADO antes de a pessoa decidir.
   //
   // §6 — cada campo vem do PRÓPRIO DADO (a série), não do catálogo: unidade, granularidade,
   // período coberto, nº de pontos e fonte. O catálogo só tem esses campos durante a transição;
   // a série é a fonte canônica. Por isso a ficha carrega a série sob demanda com `loadSeries` —
   // o MESMO cache por URL do resto do app, então reabrir a mesma ficha custa zero.
   //
-  // §5 — o aviso é calculado sobre a SÉRIE INTEIRA, nunca sobre a janela visível: um aviso que se
-  // recalcula no zoom pisca na tela e ensina o usuário a ignorá-lo.
-  //
   // §8 — nada de `window`; runes, nunca `$:`. Nenhuma frase de UI é reescrita aqui: o motivo do
   // limite chega PRONTO da store (`motivoDoLimite()`), via prop.
   import { loadSeries } from '../data/series.js';
   import { seriesStore } from '../stores/series.js';
-  import { comparabilidade } from '../domain/scales.js';
 
   /** `aoTeclado` é a regra única de teclado da modal (§12.1) — repassada para o Adicionar não
    *  perder `Esc`/setas quando ele está focado. */
@@ -56,24 +52,13 @@
     };
   });
 
-  // §5 — as séries que já estão no gráfico, com dado carregado. A própria ficha é EXCLUÍDA: se o
-  // indicador já está no gráfico, o aviso dele vive na legenda, não aqui.
-  let carregadas = $derived(
-    $seriesStore.itens.filter((i) => i.series && i.id !== indicador?.id).map((i) => i.series),
-  );
-
-  let aviso = $derived.by(() => {
-    const s = estado.series;
-    if (!s || carregadas.length === 0) return { veredito: 'convive', ratio: 1, contra: null };
-    return comparabilidade(s, carregadas);
-  });
-
-  /** Nome da série culpada — a que produziu a pior razão (§5). */
-  let nomeContra = $derived.by(() => {
-    const id = aviso.contra?.id;
-    if (!id) return null;
-    return $seriesStore.itens.find((i) => i.id === id)?.name ?? id;
-  });
+  // 🗑 O AVISO DE ESCALA SAIU DAQUI em 2026-11-01 (a pedido do usuário) — e a razão importa para
+  //    ele não voltar: o bloco dizia "escala incompatível / não é legível no mesmo eixo" quando o
+  //    app JÁ resolvia o caso, mandando a série para o eixo esquerdo (`stores/axes.js`) sem
+  //    bloquear nada. Um aviso que descreve um impedimento inexistente faz a pessoa desistir de
+  //    adicionar. O app não explica escala em lugar nenhum: a tela mostra duas escalas, e quem
+  //    quiser trocar o lado usa o botão `esq./dir.` da seção Eixos (ver
+  //    docs/specs/2026-11-01-aviso-de-escala-design.md).
 
   let jaNoGrafico = $derived($seriesStore.itens.some((i) => i.id === indicador?.id));
 
@@ -146,29 +131,6 @@
           <dd class="text-right text-slate-700 dark:text-slate-200">{estado.series.source}</dd>
         </div>
       </dl>
-
-      <!-- §5 — o AVISO DE ESCALA, em dois graus: `avisa` (> 50×) e `ilegivel` (> 1.000.000×).
-           Vem ANTES da escolha, como informação: informa, NÃO bloqueia. -->
-      {#if aviso.veredito !== 'convive'}
-        <div
-          class="mt-4 rounded border p-3 text-xs {aviso.veredito === 'ilegivel'
-            ? 'border-red-300 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-300'
-            : 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300'}"
-        >
-          <p class="font-medium">
-            ⚠ Escala incompatível — razão ≈ {numero(Math.round(aviso.ratio))}× com «{nomeContra}».
-          </p>
-          <p class="mt-1">
-            {#if aviso.veredito === 'ilegivel'}
-              Nem dois eixos tornam esta combinação legível: na mesma escala, a série de menor
-              amplitude vira uma reta colada no zero.
-            {:else}
-              Acima do limite de 50× de amplitude, a série não é legível no mesmo eixo das que já
-              estão no gráfico.
-            {/if}
-          </p>
-        </div>
-      {/if}
     {/if}
 
     <!-- O botão é CHAVE DE DUAS POSIÇÕES (2026-11-01, a pedido do usuário): o estado "está no

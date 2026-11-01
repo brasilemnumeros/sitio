@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import { comparabilidade } from '../domain/scales.js';
 
-const inicial = { atribuicao: {}, avisos: [] };
+const inicial = { atribuicao: {} };
 const store = writable(inicial);
 export const axesStore = { subscribe: store.subscribe };
 
@@ -10,11 +10,16 @@ const EIXOS = ['left', 'right'];
 /** Sugere eixo para cada série, na ordem dada: a primeira vai para a **direita** — o eixo-base do
  * terminal, como no TradingView, porque o "agora" está na ponta direita e é ali que o último valor
  * mora (decisão de 2026-10-30; era `left`, herança do Chart.js). Cada seguinte fica à direita SE
- * conviver com as que já estão lá — senão vai para a esquerda com um aviso apontando a culpada
- * (§5). Só existem dois eixos (§9.5): não há terceiro. */
+ * conviver com as que já estão lá — senão vai para a esquerda (§5). Só existem dois eixos (§9.5):
+ * não há terceiro.
+ *
+ * 🗑 A store publicava também uma lista `avisos` (veredito + culpada), que alimentava o bloco da
+ *    ficha e o selo `⚠ escala N×` da seção Eixos. Os dois saíram em 2026-11-01: diziam
+ *    "incompatível" para uma situação que este mesmo laço já resolve, e a pessoa desistia de
+ *    adicionar. `comparabilidade` continua aqui porque é ela que DECIDE o lado — o que saiu foi só
+ *    o veredito publicado. Ver docs/specs/2026-11-01-aviso-de-escala-design.md. */
 export function recalcularEixos(seriesList) {
   const atribuicao = {};
-  const avisos = [];
   const base = [];
   for (const s of seriesList) {
     if (base.length === 0) {
@@ -28,10 +33,9 @@ export function recalcularEixos(seriesList) {
       base.push(s);
     } else {
       atribuicao[s.id] = 'left';
-      avisos.push({ ...v, id: s.id });
     }
   }
-  store.set({ atribuicao, avisos });
+  store.set({ atribuicao });
 }
 
 /** Só `left` e `right`. Um terceiro valor é ignorado em silêncio — o app não inventa eixo. */

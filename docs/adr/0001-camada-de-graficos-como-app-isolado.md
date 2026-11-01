@@ -175,7 +175,9 @@ já estão consolidadas nas seções acima — nominalmente, não se repetem aqu
   (a legenda), nos dois graus da §5: `avisa` acima de 50×, `ilegivel` acima de 1.000.000×. O item
   já estava anotado no `AGENTS.md` como pendência sem dono; a fatia 07 era a dona e **o plano não
   o carregava**. Fica o registro: uma pendência escrita com dono não é suficiente se o plano
-  seguinte não a lê.
+  seguinte não a lê. *(2026-11-01: o aviso saiu de TODAS as superfícies — ficha e seção Eixos —
+  por decisão do usuário; a atribuição automática do eixo incompatível continua. Ver
+  `docs/specs/2026-11-01-aviso-de-escala-design.md`.)*
 - **A janela do gráfico não age num gráfico sem barra nenhuma** (`setVisibleRange`/`fitContent`
   lançam `Value is null` com zero barras). Defeito da fatia 06, achado pela 07. A guarda está no
   adapter; **a alcançabilidade no app foi medida por terceiro, não pelo controlador** — registrado

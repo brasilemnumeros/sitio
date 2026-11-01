@@ -12,20 +12,18 @@ const pequeno = { id: 'p', unit: { type: 'currency', symbol: 'R$' }, data: [{ da
 
 it('com tudo convivendo, tudo fica num eixo só (§5)', () => {
   recalcularEixos([s('a'), s('b')]);
-  const { atribuicao, avisos } = get(axesStore);
-  expect(atribuicao).toEqual({ a: 'right', b: 'right' }); // o eixo-base é o DIREITO (2026-10-30)
-  expect(avisos).toEqual([]);
+  expect(get(axesStore)).toEqual({ atribuicao: { a: 'right', b: 'right' } }); // base = DIREITO
 });
 
-it('a série incompatível vai para o outro eixo, e o aviso aponta a CULPADA', () => {
+// 2026-11-01 — o que se prova aqui é só a ATRIBUIÇÃO: a store não publica mais veredito nenhum
+// (§5 emendada). O aviso saiu da ficha e da seção Eixos porque descrevia um impedimento que não
+// existe — adicionar nunca ficou bloqueado.
+it('a série de amplitude incompatível vai para o eixo que não está em uso', () => {
   recalcularEixos([grande, pequeno]);
-  const { atribuicao, avisos } = get(axesStore);
+  const { atribuicao } = get(axesStore);
   expect(atribuicao.g).toBe('right'); // o eixo-base
   expect(atribuicao.p).toBe('left'); // a incompatível sai do eixo-base
-  expect(avisos).toHaveLength(1);
-  expect(avisos[0].id).toBe('p');
-  expect(avisos[0].contra).toBe(grande);          // a culpada, não um booleano
-  expect(['avisa', 'ilegivel']).toContain(avisos[0].veredito);
+  expect(get(axesStore)).not.toHaveProperty('avisos');
 });
 
 it('moverParaEixo move uma série para a esquerda', () => {

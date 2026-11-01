@@ -5,6 +5,7 @@ import {
   carregarExemplo,
   adicionarPorBusca,
   abrirGavetaDireita,
+  abrirBusca,
 } from './apoio.js';
 
 /** Espera a rajada de carga assentar: `definirSeries` faz debounce de 150ms + um rAF até o `fitContent`. */
@@ -124,6 +125,44 @@ test('a escala da esquerda não reserva faixa sem série — e aparece quando um
   // e de volta: a faixa some outra vez
   await eixos.getByRole('button', { name: 'esq.' }).first().click();
   await expect.poll(margem, { timeout: 15000 }).toBe(0);
+});
+
+/**
+ * ATRIBUIÇÃO AUTOMÁTICA DE EIXO (§5, emendada em 2026-11-01) — e o aviso que NÃO existe mais.
+ *
+ * O caso: uma série de população (amplitude de milhões) ao lado de uma taxa Selic (%). O app põe
+ * a incompatível no eixo ESQUERDO sozinho, e a escala daquele lado passa a ser desenhada. Antes
+ * disso a ficha exibia um bloco "escala incompatível — não é legível no mesmo eixo", que levava a
+ * pessoa a achar que não podia adicionar — nada nunca ficou bloqueado. Ver
+ * docs/specs/2026-11-01-aviso-de-escala-design.md.
+ *
+ * A guarda é de COMPORTAMENTO: a tela mostra dois eixos, e nenhuma superfície fala de escala.
+ */
+test('série de amplitude incompatível vai sozinha para a esquerda, sem aviso em lugar nenhum', async ({
+  page,
+}) => {
+  await page.goto('/?series=selic-meta-acum-12m,populacao-total-anual');
+  await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(2);
+
+  // 1) a escala da esquerda passa a reservar faixa (a leitura é o `marginLeft` do minimapa)
+  const margem = () =>
+    page.getByTestId('minimapa').evaluate((el) => parseFloat(el.style.marginLeft || '0'));
+  await expect.poll(margem, { timeout: 15000 }).toBeGreaterThan(20);
+
+  // 2) a alça conta os dois eixos — a atribuição automática aconteceu de fato
+  const alca = page.getByRole('button', { name: /Comparação por mandato/ });
+  expect(await alca.innerText()).toMatch(/2 séries · 2 eixos/);
+
+  // 3) a ficha da série de população não acusa nada e o Adicionar continua possível
+  await abrirBusca(page);
+  const campo = page.getByRole('searchbox');
+  await campo.fill('População Total');
+  // ⏎ abre a ficha do primeiro resultado — e NÃO adiciona (a ação é o botão dela)
+  await campo.press('Enter');
+  const ficha = page.locator('[data-bloco="ficha"]');
+  await expect(ficha).toContainText('População Total');
+  await expect(ficha).not.toContainText(/incompat|não é legível|ilegível/i);
+  await expect(ficha.getByRole('button', { name: 'Remover do gráfico' })).toBeEnabled();
 });
 
 /**

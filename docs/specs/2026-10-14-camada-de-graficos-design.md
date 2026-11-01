@@ -262,10 +262,18 @@ Os indicadores do site cobrem ordens de grandeza que não convivem: `%` (2 a 53)
 **O usuário escolhe o eixo, e o app sugere um padrão.**
 
 - **Razão de amplitude ≤ 50×** → um eixo só, sugerido automaticamente, sem aviso.
-- **Razão > 50×** → o app não encaixa em silêncio: avisa que a série não é legível na escala atual e oferece **normalizar para base 100** (aí sim, como ação explícita do usuário) ou **remover**.
+- **Razão > 50×** → a série vai para o **segundo eixo** automaticamente, e a escala daquele lado
+  passa a ser desenhada. **Nenhum aviso** *(emendado em 2026-11-01, a pedido do usuário — ver
+  `2026-11-01-aviso-de-escala-design.md`)*: havia um bloco na ficha ("escala incompatível — não é
+  legível no mesmo eixo") e um selo `⚠ escala N×` na seção Eixos, e os dois descreviam um
+  impedimento que não existia — adicionar nunca ficou bloqueado, e quem lia o bloco desistia. Hoje
+  a pessoa vê duas escalas na tela e troca o lado pelo botão `esq./dir.` se quiser.
 - **Limite de dois eixos** (esquerda/direita), com a atribuição **visível na legenda** e trocável por clique. Mais de dois não é legível em hipótese alguma. O **eixo-base é o DIREITO** (decisão de 2026-10-30, a pedido do usuário): num gráfico de série temporal o "agora" está na ponta direita, e é ali que o último valor mora — a série incompatível é que vai para a esquerda. Era `left` até então, herança do Chart.js antigo, sem decisão registrada a favor.
 - **A escala do lado SEM série não é desenhada** (mesma decisão). Antes as duas ficavam sempre visíveis "para a atribuição ter onde aparecer", e com o eixo-base na direita isso virou faixa morta de ~54px à esquerda — ~14% da largura num celular de 393px. A da esquerda aparece no instante em que uma série vai para lá; a lib reserva 0 para escala invisível, então o minimapa continua alinhado nos dois estados (é o que `adapter.largurasDasEscalas` + `navigator.alinharCom` provam).
-- Casos patológicos (população-total × população-variação, **20.921.102×**) não são salvos nem por dois eixos — a série menor vira uma reta colada no zero. Aí o aviso tem de ser mais duro: a combinação não é legível, ponto.
+- Casos patológicos (população-total × população-variação, **20.921.102×**) não são salvos nem por dois eixos — a série menor vira uma reta colada no zero. *(Até 2026-11-01 este era o
+  único caso em que o aviso era verdadeiro, e por isso mesmo ele era o menos legível: usava as
+  mesmas palavras do caso de 50×. Com o aviso fora, a escala separada continua sendo aplicada —
+  só não se promete legibilidade que ela não entrega, e não se explica escala em lugar nenhum.)*
 
 **O corte é 50**, mas o valor exato não é crítico: qualquer limiar dentro de (21,2 · 125) particiona os dados de hoje de forma idêntica. 50 é o meio da faixa vazia.
 
@@ -787,6 +795,11 @@ Ordem sugerida de ataque:
    ("transforma um erro futuro em informação presente"). As duas posturas descartadas só mostram
    o aviso **depois** de mais um toque — traem a promessa no próprio gesto que ela existe para
    proteger. A escolhida mantém o aviso visível **enquanto se varre a lista**, sem abrir ficha.
+
+   *(2026-11-01 — o aviso de escala deixou de existir em 2026-11-01, a pedido do usuário: ele
+   descrevia um impedimento que não existe, já que o app manda a série incompatível para o outro
+   eixo sozinho. Este critério é histórico; a postura escolhida continua valendo. Ver
+   `2026-11-01-aviso-de-escala-design.md`.)*
 
    **Corte de layout:** `< 768px` (o `md` do Tailwind) usa esta forma; daí para cima vale a §1.1
    sem mudança.

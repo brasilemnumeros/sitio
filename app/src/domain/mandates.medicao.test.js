@@ -60,13 +60,17 @@ const mandato = (rotulo) => MANDATOS.find((m) => m.rotulo === rotulo);
  *   Temer 32 → 31, o mesmo 31 do `ipca-acum-12m`, que já usava o dia 01.
  * - **Fim do exercício da Dilma II:** 2016-08-31 (cassação) → 2016-05-11 (último dia de exercício),
  *   como manda a §7.3.1. Efeito: a coluna Dilma II das séries mensais cai de 20 para 17.
+ * - **IGP-M refeito (2026-11-01):** a série passou a compor as variações mensais em vez de
+ *   somá-las e ganhou o trecho que a fonte já tinha — 349 → 382 pontos, de
+ *   `1996-07`–`2025-07` para `1995-01`–`2026-10`. Efeito: a última coluna (Lula III) sobe de
+ *   31 para 46 (2023-01 a 2026-10).
  */
 const ESPERADO = {
   'caged-total-mensal': [48, 48, 48, 48, 17, 31, 48, 32],
   'homicidios-anual': [4, 4, 4, 4, 2, 2, 4, 1],
   'homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 0],
   'proporcao-homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 0],
-  'igpm-acum-12m': [48, 48, 48, 48, 17, 31, 48, 31],
+  'igpm-acum-12m': [48, 48, 48, 48, 17, 31, 48, 46],
   'ipca-acum-12m': [48, 48, 48, 48, 17, 31, 48, 45],
   'mvgr-nominal': [0, 34, 48, 48, 17, 31, 48, 31],
   'mvgr-real': [0, 34, 48, 48, 17, 31, 48, 31],

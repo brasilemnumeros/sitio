@@ -26,3 +26,22 @@ export function valorNaUnidade(valor, unit) {
   if (unit?.type === 'currency') return `${simbolo} ${numero}`;
   return simbolo === '%' ? `${numero}${simbolo}` : `${numero} ${simbolo}`;
 }
+
+/**
+ * Versão COMPACTA, para superfícies onde largura é escassa (a caixa do cursor e a tabela, 2026-11-01).
+ *
+ * A mesma régua do eixo Y (`chart/adapter.js` → `rotuloDoEixo`): só a partir de UM MILHÃO, onde o
+ * ganho é real ("216.000.000" → "216 mi"). Abaixo disso, compactar milhar não economiza pixel e
+ * ainda custa exatidão. O valor exato continua disponível em `valorNaUnidade` — quem exibe o
+ * compacto deve pôr o exato no `title`.
+ */
+const COMPACTO = new Intl.NumberFormat('pt-BR', { notation: 'compact', maximumFractionDigits: 1 });
+
+export function valorCompacto(valor, unit) {
+  if (!(Math.abs(valor) >= 1_000_000)) return valorNaUnidade(valor, unit);
+  const numero = COMPACTO.format(valor);
+  const simbolo = unit?.symbol ?? '';
+  if (simbolo === '') return numero;
+  if (unit?.type === 'currency') return `${simbolo} ${numero}`;
+  return simbolo === '%' ? `${numero}${simbolo}` : `${numero} ${simbolo}`;
+}

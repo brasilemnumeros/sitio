@@ -65,17 +65,27 @@ test('o chip filtra a janela pelo mandato e "Todos" devolve o intervalo completo
   await menu.getByRole('menuitem', { name: 'Lula I · PT' }).click();
   await expect(menu).toBeHidden();
 
-  // a janela vai para o MANDATO — 2003-01-01 → 2006-12-31
+  // A janela vai para o MANDATO — 2003-01-01 → 2006-12-31.
+  //
+  // ⚠ O contrato é COBRIR o mandato, não `from === '2003-01-01'`. A lib reporta também a barra
+  //    PARCIALMENTE visível na borda, e qual barra é essa depende da largura da plotagem: medido
+  //    em 2026-11-01, quando os rótulos compactos do eixo Y alargaram o gráfico em 22px e a borda
+  //    esquerda passou a incluir dez/2002 (um mês ANTES do mandato — a direita já incluía jan/2007,
+  //    um mês depois, desde sempre). Igualdade exata aqui mede o arredondamento da lib, não o
+  //    produto. O que se afirma: a janela desceu para o mandato (não é o "Tudo") e a folga nas
+  //    pontas é de no máximo uma barra.
   const ano = (iso) => Number(String(iso).slice(0, 4));
   await expect
-    .poll(async () => ano((await janela(page)).from), {
+    .poll(async () => (await janela(page)).from, {
       message: 'a ponta esquerda tem de cair no mandato da Lula I',
       timeout: 20000,
     })
-    .toBe(2003);
+    .toMatch(/^200[23]-/);
   const j = await janela(page);
-  expect(ano(j.to)).toBeGreaterThanOrEqual(2006);
-  expect(ano(j.to)).toBeLessThanOrEqual(2007);
+  expect(j.from <= '2003-01-01').toBe(true);
+  expect(j.from >= '2002-11-01', `folga de mais de uma barra à esquerda: ${j.from}`).toBe(true);
+  expect(j.to >= '2006-12-31').toBe(true);
+  expect(j.to <= '2007-02-01', `folga de mais de uma barra à direita: ${j.to}`).toBe(true);
 
   // o chip passa a dizer o mandato — a barra superior responde "onde estou"
   await expect(chip).toContainText('Lula I · PT');

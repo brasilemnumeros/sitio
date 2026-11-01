@@ -79,3 +79,15 @@ ADR 0001: o gráfico é espelho dos stores, e componente de UI não chama a lib.
 - Mostrar o último valor parado na legenda (já está no eixo Y — dito pelo usuário).
 - Mover o eixo, mexer em escala, tooltip flutuante ou linha horizontal seguindo o cursor.
 - Tocar o minimapa.
+
+## Números compactos (2026-11-01, mesma rodada)
+
+Motivo: no celular de 390px, dois eixos com números longos comiam **194px de 350** — o gráfico
+ficava com 156px. Medido depois da mudança: **142px de eixos e 208px de gráfico** (+33%).
+
+- **Eixo Y** (`chart/adapter.js` → `rotuloDoEixo`): `locale: 'pt-BR'` e notação compacta a partir de
+  **1 milhão** (`216.000.000` → `216 mi`). Abaixo disso o valor é exato — "320 mil" tem a mesma
+  largura de "320.000", então compactar milhar não ganha pixel e quebra a coerência do eixo.
+  Efeito colateral bem-vindo: o ponto decimal virou vírgula (antes a lib escrevia `320000.00`).
+- **Caixa do cursor** (`domain/format.js` → `valorCompacto`): mesma régua, e o valor EXATO vai no
+  `title` de cada linha (`193 mi hab.` na tela, `192.989.569 hab. · 2011-01-01` no hover).

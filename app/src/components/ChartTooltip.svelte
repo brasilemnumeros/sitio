@@ -10,7 +10,7 @@
   import { seriesStore } from '../stores/series.js';
   import { cursorStore } from '../stores/cursor.js';
   import { valorNaData } from '../domain/seriesValue.js';
-  import { valorNaUnidade } from '../domain/format.js';
+  import { valorNaUnidade, valorCompacto } from '../domain/format.js';
 
   let {
     largura = 0,
@@ -24,9 +24,15 @@
   const itens = $derived($seriesStore.itens.filter((i) => !i.oculta && i.status === 'ok'));
 
   const valorDe = (item) => valorNaData(item.series?.data ?? [], cursor.data);
+  const unidadeDe = (item) => item.series?.unit ?? item.unit;
+  /** Compacto na tela (`R$ 216 mi`), EXATO no `title` — a caixa ganha largura sem perder o dado. */
   const textoDoValor = (item) => {
     const v = valorDe(item);
-    return v === null ? '—' : valorNaUnidade(v, item.series?.unit ?? item.unit);
+    return v === null ? '—' : valorCompacto(v, unidadeDe(item));
+  };
+  const textoExato = (item) => {
+    const v = valorDe(item);
+    return v === null ? `Sem dado em ${cursor.data}` : `${valorNaUnidade(v, unidadeDe(item))} · ${cursor.data}`;
   };
 
   /** Mês e ano apenas (2026-11-01, a pedido do usuário): a caixa acompanha o cursor, não é um
@@ -86,7 +92,9 @@
             ></span>
             <span class="truncate text-slate-300">{item.name}</span>
           </span>
-          <span class="shrink-0 tabular-nums text-slate-100">{textoDoValor(item)}</span>
+          <span class="shrink-0 tabular-nums text-slate-100" title={textoExato(item)}
+            >{textoDoValor(item)}</span
+          >
         </li>
       {/each}
     </ul>

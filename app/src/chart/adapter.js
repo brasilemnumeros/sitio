@@ -11,10 +11,41 @@ const FUNDO = '#0e1117';
  * O gráfico é espelho do store: a única direção é store → adapter, e o retorno da janela
  * visível é o callback explícito (§8.1).
  */
+
+/**
+ * Rótulo de um tick do eixo de preço. Puro e no módulo, e não dentro do `createChart`, porque a
+ * lib chama isto a cada redesenho da escala — e os `Intl` são construídos UMA vez, não por tick.
+ */
+const FORMATO_COMPACTO = new Intl.NumberFormat('pt-BR', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+const FORMATO_CURTO = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
+const FORMATO_DECIMAL = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
+
+function rotuloDoEixo(valor) {
+  const abs = Math.abs(valor);
+  // O corte é em 1 MILHÃO, não em 100 mil: "320 mil" tem exatamente a mesma largura de "320.000"
+  // (medido em 2026-11-01) — compactar milhar não economiza pixel e ainda quebrava a coerência
+  // dentro do MESMO eixo (topo "300 mil", base "80.000"). A partir do milhão o ganho é real:
+  // "216.000.000" → "216 mi".
+  if (abs >= 1_000_000) return FORMATO_COMPACTO.format(valor);
+  if (abs >= 10) return FORMATO_CURTO.format(valor); // 320.000 · 20.000 · 250
+  return FORMATO_DECIMAL.format(valor); // 9,62 · 0,5
+}
+
 export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
   const chart = createChart(container, {
     // A ALTURA vem do container (`flex-1` da moldura); `autoSize` faz a lib seguir o container.
     autoSize: true,
+    // 📏 RÓTULOS DO EIXO EM pt-BR, COMPACTOS ACIMA DE 6 DÍGITOS (2026-11-01). Medido num celular
+    //    de 390px: `População Total` + `MVG-R Nominal` gastavam 86px + 108px = 194px de 350 de
+    //    pane para os DOIS eixos, sobrando 156px de gráfico. Era o padrão da lib (en-US): ponto
+    //    decimal e o número inteiro ("320000.00"). "320 mil" / "216 mi" cortam mais da metade.
+    //    Abaixo de 100.000 o valor é exato: arredondar `9,62%` só esconderia dígito sem ganhar
+    //    espaço nenhum.
+    locale: 'pt-BR',
+    localization: { priceFormatter: rotuloDoEixo },
     layout: { background: { color: FUNDO }, textColor: '#c9d1d9' },
     grid: { vertLines: { color: 'rgba(255,255,255,0.04)' }, horzLines: { color: 'rgba(255,255,255,0.04)' } },
     // §5 — existem DOIS eixos, mas só a escala do lado que TEM série é desenhada. Antes as duas

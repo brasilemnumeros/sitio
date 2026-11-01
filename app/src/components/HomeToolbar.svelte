@@ -143,6 +143,7 @@
        nome acessível continuar sendo "Buscar indicador…" nos dois tamanhos. -->
   <button
     type="button"
+    data-testid="botao-busca"
     class="flex shrink-0 items-center gap-1.5 rounded border border-slate-700 px-2.5 py-1 text-slate-300 hover:bg-slate-800 hover:text-slate-100"
     onclick={aoAbrirBusca}
     title="Buscar indicador (⌘K)"

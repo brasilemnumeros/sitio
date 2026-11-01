@@ -277,15 +277,19 @@ test('fechada e aberta, o trilho mostra a engrenagem e o limpar, sem atalhos de 
   const gaveta = page.getByTestId('gaveta-config');
   // Os controles do trilho são FIXOS: engrenagem, limpar filtros, permalink e (quando o
   // navegador permite) tela cheia. O limpar nasce DESABILITADO sem filtro — presente, não escondido.
+  // O `?` do tour entrou em 2026-11-01 e é `hidden lg:flex`: só conta no desktop, porque abaixo
+  // de 1024px o tour não roda e o botão não existe.
   const botoesDoTrilho = page.getByTestId('trilho').getByRole('button');
   const permiteTelaCheia = await page.evaluate(() => document.fullscreenEnabled);
-  await expect(botoesDoTrilho).toHaveCount(permiteTelaCheia ? 4 : 3);
+  const temTour = testInfo.project.name === 'desktop';
+  const fixos = (permiteTelaCheia ? 4 : 3) + (temTour ? 1 : 0);
+  await expect(botoesDoTrilho).toHaveCount(fixos);
   await expect(page.getByTestId('limpar-filtros')).toBeDisabled();
   await expect(page.getByTestId('botao-permalink')).toBeVisible();
   await gatilho.click();
   await expect(gaveta).toBeVisible();
   await expect(gaveta.locator('[data-secao="series"]')).toBeVisible();
-  await expect(botoesDoTrilho).toHaveCount(permiteTelaCheia ? 4 : 3);
+  await expect(botoesDoTrilho).toHaveCount(fixos);
   await expect(page.getByRole('button', { name: 'Cores', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Eixos', exact: true })).toHaveCount(0);
 

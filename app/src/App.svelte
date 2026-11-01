@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { catalogStore, carregarCatalogo } from './stores/catalog.js';
   import { seriesStore, adicionarSerie, tentarNovamente } from './stores/series.js';
   import { carregarMandatos } from './stores/mandate.js';
@@ -11,6 +11,8 @@
   import HomeToolbar from './components/HomeToolbar.svelte';
   import SeriesDrawer from './components/SeriesDrawer.svelte';
   import BottomDrawer from './components/BottomDrawer.svelte';
+  import Tour from './components/Tour.svelte';
+  import { deveMostrarTour, CHAVE_TOUR } from './domain/tour.js';
   // 🔴 Só se importa o que JÁ EXISTE. Um import de arquivo inexistente QUEBRA O BUILD.
   // Os controles das gavetas vivem no seu lugar fixo, não numa pilha de blocos: a de
   // configurações (chips, legenda e eixos) veio na T7 e mora à ESQUERDA desde 2026-11-01;
@@ -22,11 +24,19 @@
    *  do `Esc` entre camadas (busca → gavetas) é da `App` (T9). O componente recebe `bind:aberta`
    *  para o gatilho do trilho poder alternar sem duplicar a fonte da verdade. */
   let configAberta = $state(false);
+  /** O tour de primeira visita é a camada mais externa de todas: ele cobre a tela inteira
+   *  com o overlay do `driver.js`, então o `Esc` fecha ele antes de encostar numa gaveta. */
+  let tourAberto = $state(false);
   /** A gaveta inferior (mandatos + comparação) também é da `App`, pelo mesmo motivo: a
    *  prioridade do `Esc` entre camadas é daqui (T9). `mostrarCasca` é a regra §9.1 — sem série
    *  a alça existe DESABILITADA (a moldura não pula), e o conteúdo nem é montado. */
   let fundoAberto = $state(false);
   let itens = $derived($seriesStore.itens);
+
+  /** `true` quando a URL CHEGOU com `?series=` — lido no `main.js`, antes de qualquer escrita
+   *  (ver a nota de lá: o preset do dia entra na URL e faria toda visita parecer compartilhada).
+   *  Link compartilhado não abre tour: quem abriu veio ver um gráfico. */
+  let { entrouComSeries = false } = $props();
 
   /**
    * `?gaveta=fundo` — a gaveta inferior ABRE na entrada (2026-10-28).
@@ -57,6 +67,56 @@
    *  recebe isto como `mostrarCasca`: com `false` a alça continua no lugar (a moldura não
    *  pula), desabilitada, e o conteúdo nem é montado. */
   let mostrarCasca = $derived(itens.length > 0 && !todosCarregando);
+
+  /**
+   * O DISPARO do tour de primeira visita (desenho de 2026-11-01).
+   *
+   * Duas esperas, cada uma com motivo: a primeira é o GRÁFICO existir (`itens.length > 0` — sem
+   * série não há legenda para o passo 5 apontar); a segunda são os 600ms que o `fitContent` do
+   * horizonte leva para assentar, o mesmo cuidado da dica do "limpar filtros", que disparava
+   * sozinha no carregamento e queimava a chave.
+   *
+   * `jaTentouTour` é um `let` comum, fora da reatividade: escrever num `$state` aqui dentro
+   * re-dispararia o próprio efeito.
+   *
+   * ⚠ O timer NÃO volta como limpeza do efeito. Ele voltava, e o efeito re-roda quando `itens`
+   * muda de "carregando" para "ok" — a limpeza cancelava o `setTimeout` e o guarda já impedia
+   * reagendar, então o tour nunca abria a partir do preset do dia (medido em 2026-11-01).
+   */
+  let jaTentouTour = false;
+  let timerTour = null;
+  $effect(() => {
+    if (jaTentouTour || itens.length === 0) return;
+    jaTentouTour = true;
+
+    timerTour = setTimeout(() => {
+      // No erro de `localStorage` (modo privado, política do navegador) nasce "visto":
+      // ensinar de novo é melhor que quebrar a home.
+      let jaVisto = true;
+      try {
+        jaVisto = localStorage.getItem(CHAVE_TOUR) === '1';
+      } catch {
+        /* acima */
+      }
+
+      const deve = deveMostrarTour({
+        largura: window.innerWidth,
+        urlTemSeries: entrouComSeries,
+        jaVisto,
+      });
+      if (!deve) return;
+
+      // Gravada ao ABRIR, não ao fechar: quem fecha no passo 2 não vê o roteiro de novo.
+      try {
+        localStorage.setItem(CHAVE_TOUR, '1');
+      } catch {
+        /* acima */
+      }
+      tourAberto = true;
+    }, 600);
+  });
+
+  onDestroy(() => clearTimeout(timerTour));
 
   // O motivo vem das PRÓPRIAS séries: a mensagem do validador já diz o que houve — um `schema`
   // não suportado, por exemplo, chega com a palavra "schema" (§6). NUNCA "erro desconhecido":
@@ -101,6 +161,9 @@
     // A modal de busca é a camada do topo e cuida do próprio `Esc`; aqui só se evita fechar
     // a gaveta que está ATRÁS dela.
     if (buscaAberta) return;
+    // O tour se fecha sozinho (`driver.js` escuta o `Esc`); aqui só se evita fechar a gaveta
+    // que está por baixo dele no mesmo gesto.
+    if (tourAberto) return;
     if (configAberta) {
       evento.preventDefault();
       configAberta = false;
@@ -153,6 +216,7 @@
       bind:aberta={configAberta}
       aoFechar={() => (configAberta = false)}
       aoAbrirBusca={() => (buscaAberta = true)}
+      aoAbrirTour={() => (tourAberto = true)}
       inativa={fundoAberto && !configAberta}
     />
 
@@ -197,6 +261,10 @@
     mostrarCasca={mostrarCasca}
     inativa={configAberta}
   />
+
+  {#if tourAberto}
+    <Tour aberto={true} aoFechar={() => (tourAberto = false)} />
+  {/if}
 
   {#if buscaAberta}
     <!-- A modal traz o próprio overlay (é um <button>, não um <div> — R31) e fecha por ESC

@@ -37,6 +37,7 @@
     aberta = $bindable(false),
     aoFechar = () => {},
     aoAbrirBusca = () => {},
+    aoAbrirTour = () => {},
     inativa = false,
   } = $props();
 
@@ -383,6 +384,35 @@
       {@render balao('Tela cheia')}
     </div>
   {/if}
+
+  <!-- TOUR. `hidden lg:flex` porque abaixo de 1024px o tour não roda (ver `domain/tour.js`):
+       um botão que não faz nada é pior que um botão ausente. Fica no pé do trilho, longe dos
+       controles de uso diário, para não competir com a engrenagem. -->
+  <div class="group relative mt-auto flex w-full justify-center">
+    <button
+      type="button"
+      data-testid="botao-tour"
+      aria-label="Ver o tour de novo"
+      class="hidden min-h-11 w-full items-center justify-center rounded px-1 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-slate-100 lg:flex md:min-h-0"
+      onclick={aoAbrirTour}
+    >
+      <svg
+        class="h-4 w-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="9"></circle>
+        <path d="M9.5 9.2a2.6 2.6 0 1 1 3.4 2.5c-.7.3-.9.8-.9 1.6"></path>
+        <path d="M12 17h.01"></path>
+      </svg>
+    </button>
+    {@render balao('Ver o tour')}
+  </div>
 </aside>
 
 <!-- VÉU da folha lateral no celular (T9). Fica FORA do `<aside>`: um `fixed` dentro de um

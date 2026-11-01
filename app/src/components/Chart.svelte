@@ -164,6 +164,17 @@
       {margemDireita}
       legenda={caixaLegenda}
     />
+    <!-- A ESCALA DE PREÇO é desenhada em canvas, então não existe como elemento. O passo
+         "arraste para reduzir ou aumentar" do tour de primeira visita precisa de um alvo:
+         este div publica a área dela para o DOM, com a largura que o adapter mediu. Sem
+         ponteiro (`pointer-events-none`) para não roubar o arrasto do gráfico, e fora da
+         árvore de acessibilidade porque não há nada para anunciar. -->
+    <div
+      class="pointer-events-none absolute top-0 right-0 bottom-0"
+      style:width="{margemDireita}px"
+      data-testid="escala-y"
+      aria-hidden="true"
+    ></div>
   </div>
   <div bind:this={containerMini} class="h-10 md:h-12 shrink-0" data-testid="minimapa"></div>
 </div>

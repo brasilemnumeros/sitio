@@ -21,7 +21,7 @@ const catalogoMinimo = {
 
 describe('validateCatalog', () => {
   it('aceita um catálogo bem-formado e resolve o arquivo contra a base de dados', () => {
-    const c = validateCatalog(catalogoMinimo, { base: 'https://exemplo/dados' });
+    const c = validateCatalog(catalogoMinimo, { base: 'https://exemplo/dados/indicadores' });
     expect(c.indicators[0]).toEqual({
       id: 'selic-meta-acum-12m',
       name: 'Taxa Selic Meta (%)',
@@ -30,7 +30,7 @@ describe('validateCatalog', () => {
       escala: 'percentage',
       chartType: 'line',
       description: 'Taxa básica de juros',
-      datafile: 'https://exemplo/dados/selic/selic-meta-acum-12m.json',
+      datafile: 'https://exemplo/dados/indicadores/selic/selic-meta-acum-12m.json',
     });
   });
 
@@ -96,7 +96,8 @@ describe('catalogoEmbutido', () => {
     const c = catalogoEmbutido();
     expect(c.indicators).toHaveLength(13);
     expect(Object.keys(c.groups)).toHaveLength(7);
-    for (const ind of c.indicators) expect(ind.datafile).toMatch(/\/dados\/[^/]+\/[^/]+\.json$/);
+    for (const ind of c.indicators)
+      expect(ind.datafile).toMatch(/\/dados\/indicadores\/[^/]+\/[^/]+\.json$/);
   });
 
   it('o arquivo versionado não repete o que é dono da série (unit/granularity)', () => {

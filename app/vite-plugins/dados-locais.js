@@ -11,8 +11,8 @@
 // a tela. Este plugin mata o silêncio com um 404 EM VOZ ALTA.
 //
 // **Local serve dado LOCAL** para as SÉRIES: em dev o app compõe a URL com
-// `__BASE_DADOS__ = '/dados'` (ver `app/vite.config.js`) e este middleware serve o repo
-// irmão. O CATÁLOGO não passa por aqui desde 2026-11-01: ele é versionado no `sitio`
+// `__BASE_DADOS__ = '/dados/indicadores'` (ver `app/vite.config.js`) e este middleware serve o
+// repo irmão. O CATÁLOGO não passa por aqui desde 2026-11-01: ele é versionado no `sitio`
 // (`app/src/data/indicadores.json`) e entra no bundle.
 //
 // 🔴 Os CAMINHOS são PASSADOS PELO CHAMADOR, nunca adivinhados aqui. Este módulo vive em

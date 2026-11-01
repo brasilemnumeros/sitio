@@ -27,14 +27,14 @@ const CSS_DO_SITE = fileURLToPath(new URL('../assets/css/main.dist.css', import.
 export default defineConfig(({ command }) => ({
   // O app busca as SÉRIES no repo `dados/`. O catálogo é embutido (`app/src/data/indicadores.json`)
   // e não depende disto; ele guarda o caminho `familia/arquivo.json`, e a BASE vem daqui.
-  // Em **dev** a base é `/dados` (o middleware acima serve o repo irmão); em **produção**, o Pages.
-  // `DADOS_LOCAL=1` (posto pelo script `dev` do `sitio`) existe porque o `astro dev` roda
-  // `build:app` em modo BUILD — sem ele, o dev do site leria o dado publicado.
+  // Em **dev** a base é `/dados/indicadores` (o middleware acima serve o repo irmão); em
+  // **produção**, o Pages. `DADOS_LOCAL=1` (posto pelo script `dev` do `sitio`) existe porque
+  // o `astro dev` roda `build:app` em modo BUILD — sem ele, o dev do site leria o dado publicado.
   define: {
     __BASE_DADOS__: JSON.stringify(
       command === 'serve' || process.env.DADOS_LOCAL === '1'
-        ? '/dados'
-        : 'https://brasilemnumeros.github.io/dados'
+        ? '/dados/indicadores'
+        : 'https://brasilemnumeros.github.io/dados/indicadores'
     ),
   },
   plugins: [

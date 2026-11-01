@@ -122,11 +122,11 @@ quando o defeito aparecer — e provar isso.
   `EstadoInicial`; sem a chave entra o **preset do dia** (calculado em
   `America/Sao_Paulo`). `permalink-init.js` roda antes de qualquer escrita de URL.
 - Dados: catálogo embutido em `app/src/data/indicadores.json` (o registro guarda o caminho
-  `familia/arquivo.json`; a URL sai de `__BASE_DADOS__`); séries no repo `dados/`; governos em
-  `app/src/data/governos/` (versionados aqui, **importados** no bundle — não há
+  `familia/arquivo.json`; a URL sai de `__BASE_DADOS__`); séries em `dados/indicadores/`;
+  governos em `app/src/data/governos/` (versionados aqui, **importados** no bundle — não há
   `fetch`). Em dev, o middleware `app/vite-plugins/dados-locais.js` serve
   `/dados/**` para as séries; em produção a base aponta para
-  `https://brasilemnumeros.github.io/dados`.
+  `https://brasilemnumeros.github.io/dados/indicadores`.
 - **Eixo x (2026-10-29):** sempre do início do FHC I (`1995-01-01`) ao **dia de
   hoje**, independentemente das séries carregadas — âncoras mensais invisíveis em
   `app/src/domain/horizonte.js`. O "Tudo" enquadra esse horizonte; não voltar a

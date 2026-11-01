@@ -16,6 +16,8 @@ import { validateSeries } from './validate.js';
 
 // `sitio/app/src/data/` → sobe 4 níveis → raiz do workspace → `dados/`.
 const RAIZ_DADOS = fileURLToPath(new URL('../../../../dados', import.meta.url));
+// As séries moram em `dados/indicadores/<familia>/<arquivo>.json` desde 2026-11-01.
+const RAIZ_SERIES = join(RAIZ_DADOS, 'indicadores');
 // O catálogo vive ao lado deste teste desde 2026-11-01 (era `sitio/indicators.json`).
 const REGISTRO = fileURLToPath(new URL('./indicadores.json', import.meta.url));
 
@@ -37,10 +39,10 @@ function indicadoresRegistrados() {
 function arquivosDeSerie() {
   const familias = new Set(indicadoresRegistrados().map((i) => i.familia));
   const out = [];
-  for (const fam of readdirSync(RAIZ_DADOS, { withFileTypes: true })) {
+  for (const fam of readdirSync(RAIZ_SERIES, { withFileTypes: true })) {
     if (!fam.isDirectory() || !familias.has(fam.name)) continue;
-    for (const arquivo of readdirSync(join(RAIZ_DADOS, fam.name)).filter((n) => n.endsWith('.json'))) {
-      out.push({ familia: fam.name, arquivo, caminho: join(RAIZ_DADOS, fam.name, arquivo) });
+    for (const arquivo of readdirSync(join(RAIZ_SERIES, fam.name)).filter((n) => n.endsWith('.json'))) {
+      out.push({ familia: fam.name, arquivo, caminho: join(RAIZ_SERIES, fam.name, arquivo) });
     }
   }
   return out;
@@ -74,7 +76,7 @@ describe('o contrato publicado em dados/ é o que o app valida (§6)', () => {
   it('a escala que o catálogo declara é a MESMA unidade da série (um dono por campo)', () => {
     const { indicators } = JSON.parse(readFileSync(REGISTRO, 'utf8'));
     for (const ind of indicators) {
-      const caminho = join(RAIZ_DADOS, ind.arquivo);
+      const caminho = join(RAIZ_SERIES, ind.arquivo);
       const serie = JSON.parse(readFileSync(caminho, 'utf8'));
       // Antes de 2026-11-01 o catálogo repetia `unit` inteiro — e divergia em 8 de 13.
       expect(ind.escala, `${ind.id}: escala do catálogo × unit.type da série`).toBe(serie.unit.type);

@@ -23,6 +23,10 @@
   let { deslocamento = 0 } = $props();
 
   const itens = $derived($seriesStore.itens);
+
+  // 🗑 O VALOR POR SÉRIE SAIU DAQUI (2026-11-01): chegou a existir nesta legenda, e o usuário
+  //    escolheu a CAIXA FLUTUANTE (`ChartTooltip`), que lê a data e os valores como um bloco só.
+  //    A leitura do cursor (`cursorStore`) e a regra de valor por data ficam lá.
 </script>
 
 <ul
@@ -101,6 +105,7 @@
           <path d="M18 6 6 18"></path>
         </svg>
       </button>
+
     </li>
   {/each}
 </ul>

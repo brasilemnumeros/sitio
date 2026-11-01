@@ -19,5 +19,10 @@ export function valorNaUnidade(valor, unit) {
   const simbolo = unit?.symbol ?? '';
   if (simbolo === '') return numero;
   // O símbolo cola no número quando é `%` (44,22%) e ganha espaço quando é palavra (hab.).
+  // 💰 Moeda é PREFIXO em português — `R$ 155.000`, nunca `155.000,00 R$`. A regra do sufixo
+  //    valia só para símbolo de unidade; ao expor o valor no gráfico (2026-11-01) o sufixo virou
+  //    erro visível na legenda. Corrigido AQUI, e não no componente: a matriz de comparação usa a
+  //    mesma função e teria a mesma leitura errada.
+  if (unit?.type === 'currency') return `${simbolo} ${numero}`;
   return simbolo === '%' ? `${numero}${simbolo}` : `${numero} ${simbolo}`;
 }

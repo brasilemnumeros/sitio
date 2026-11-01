@@ -11,7 +11,7 @@ const FUNDO = '#0e1117';
  * O gráfico é espelho do store: a única direção é store → adapter, e o retorno da janela
  * visível é o callback explícito (§8.1).
  */
-export function criarAdapter(container, { aoMudarJanela } = {}) {
+export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
   const chart = createChart(container, {
     // A ALTURA vem do container (`flex-1` da moldura); `autoSize` faz a lib seguir o container.
     autoSize: true,
@@ -117,6 +117,20 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
   chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
     if (!range) return aoMudarJanela?.({ from: null, to: null });
     aoMudarJanela?.({ from: paraISO(range.from), to: paraISO(range.to) });
+  });
+
+  // O CURSOR (§2026-11-01, "valor no ponto"): a lib entrega o `time` da barra sob o cursor em
+  // segundos. `param.time` ausente = cursor fora da área de plot (ou sobre a legenda, que tem
+  // `pointer-events` próprio) → `null`, e a legenda apaga os valores. A direção continua
+  // adapter → store (§8.1): quem desenha o número é a legenda, não o gráfico.
+  chart.subscribeCrosshairMove((param) => {
+    // `point` é a posição do cursor DENTRO do pane, em px — a caixa flutuante (variante B) usa
+    // para colar no ponto em vez de ficar parada num canto.
+    aoMoverCursor?.(
+      param?.time == null ? null : paraISO(param.time),
+      param?.point?.x ?? 0,
+      param?.point?.y ?? 0,
+    );
   });
 
   /** Devolve a janela que o `setData`/`removeSeries` moveu. Vai no FRAME SEGUINTE: `setVisibleRange`

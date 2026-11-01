@@ -8,6 +8,11 @@ describe('valorNaUnidade', () => {
       '50.337.190 hab.',
     );
   });
+  it('moeda é PREFIXO (R$ 155.000), não sufixo', () => {
+    expect(valorNaUnidade(155000, { type: 'currency', symbol: 'R$', decimals: 0 })).toBe(
+      'R$ 155.000',
+    );
+  });
   it('formata em pt-BR', () => {
     expect(valorNaUnidade(-3.55, { type: 'percentage', symbol: '%', decimals: 2 })).toBe('-3,55%');
   });

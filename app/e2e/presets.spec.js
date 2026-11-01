@@ -1,4 +1,4 @@
-import { test, expect, abrirVazio, abrirGavetaDireita, abrirGavetaInferior } from './apoio.js';
+import { test, expect, abrirVazio, abrirGavetaConfig, abrirGavetaInferior } from './apoio.js';
 
 /**
  * A BARRA SUPERIOR do terminal (T6) — marca, busca, as quatro janelas, o chip do preset e a
@@ -30,7 +30,7 @@ test('a barra superior traz marca, busca, quatro janelas e o chip do preset', as
  */
 test('/ abre com o preset do dia (não vazia)', async ({ page }) => {
   await page.goto('/');
-  await abrirGavetaDireita(page);
+  await abrirGavetaConfig(page);
   await expect(page.locator('[data-bloco="chips"] li').first()).toBeVisible();
   await expect(page.getByTestId('preset-chip')).not.toHaveText('Personalizado');
   // o preset escreve a URL UMA vez: o link do dia é copiável
@@ -45,18 +45,18 @@ test('/ abre com o preset do dia (não vazia)', async ({ page }) => {
  */
 test('?series= vence o preset e não duplica', async ({ page }) => {
   await page.goto('/?series=selic-meta-acum-12m');
-  await abrirGavetaDireita(page);
+  await abrirGavetaConfig(page);
   await expect(page.locator('[data-bloco="chips"] li')).toHaveCount(1);
   await expect(page.getByTestId('preset-chip')).toHaveText('Personalizado');
   await page.reload();
-  await abrirGavetaDireita(page);
+  await abrirGavetaConfig(page);
   await expect(page.locator('[data-bloco="chips"] li')).toHaveCount(1);
 });
 
 test('escolher outro preset SUBSTITUI o conjunto e reescreve a URL', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'o chip do preset é escondido no topo de 36px');
   await page.goto('/');
-  await abrirGavetaDireita(page);
+  await abrirGavetaConfig(page);
   const chip = page.getByTestId('preset-chip');
   const atual = (await chip.textContent()).trim();
   await chip.click();
@@ -74,7 +74,7 @@ test('escolher outro preset SUBSTITUI o conjunto e reescreve a URL', async ({ pa
 test('trocar de preset duas vezes em sequência não duplica séries', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'o chip do preset é escondido no topo de 36px');
   await page.goto('/');
-  await abrirGavetaDireita(page);
+  await abrirGavetaConfig(page);
   const chip = page.getByTestId('preset-chip');
   await chip.click();
   await page.getByTestId('menu-presets').getByRole('menuitem').nth(0).click();
@@ -98,7 +98,7 @@ test('trocar de preset duas vezes em sequência não duplica séries', async ({ 
 test('?utm_source sem series recebe preset e preserva a chave', async ({ page }) => {
   await page.goto('/?utm_source=teste');
   await expect.poll(() => new URL(page.url()).searchParams.get('utm_source')).toBe('teste');
-  await abrirGavetaDireita(page);
+  await abrirGavetaConfig(page);
   await expect(page.locator('[data-bloco="chips"] li').first()).toBeVisible();
 });
 

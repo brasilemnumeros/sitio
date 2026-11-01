@@ -1,5 +1,5 @@
 <script>
-  // EIXOS (§5, §9.5) — a terceira seção da gaveta direita (T7).
+  // EIXOS (§5, §9.5) — a terceira seção da gaveta de configurações (T7).
   //
   // Esta peça nasceu da LEGENDA: o botão `esq.`/`dir.` e o aviso de escala viviam lá, e a partir
   // da T7 passam a morar aqui, sozinhos. Não há duplicata de propósito: dois controles do mesmo

@@ -12,15 +12,16 @@
   import SeriesDrawer from './components/SeriesDrawer.svelte';
   import BottomDrawer from './components/BottomDrawer.svelte';
   // 🔴 Só se importa o que JÁ EXISTE. Um import de arquivo inexistente QUEBRA O BUILD.
-  // Os controles das gavetas vivem no seu lugar fixo, não numa pilha de blocos: a direita
-  // (chips, legenda e eixos) veio na T7; a inferior (mandatos e comparação) chega aqui na T8.
+  // Os controles das gavetas vivem no seu lugar fixo, não numa pilha de blocos: a de
+  // configurações (chips, legenda e eixos) veio na T7 e mora à ESQUERDA desde 2026-11-01;
+  // a inferior (mandatos e comparação) veio na T8.
   // Os FILTROS DE TEMPO voltaram pela T6, dentro da barra superior (`HomeToolbar`).
 
   let buscaAberta = $state(false);
-  /** A gaveta direita é dona da própria abertura? NÃO: o estado vive aqui, porque a prioridade
+  /** A gaveta de configurações é dona da própria abertura? NÃO: o estado vive aqui, porque a prioridade
    *  do `Esc` entre camadas (busca → gavetas) é da `App` (T9). O componente recebe `bind:aberta`
    *  para o gatilho do trilho poder alternar sem duplicar a fonte da verdade. */
-  let direitaAberta = $state(false);
+  let configAberta = $state(false);
   /** A gaveta inferior (mandatos + comparação) também é da `App`, pelo mesmo motivo: a
    *  prioridade do `Esc` entre camadas é daqui (T9). `mostrarCasca` é a regra §9.1 — sem série
    *  a alça existe DESABILITADA (a moldura não pula), e o conteúdo nem é montado. */
@@ -91,7 +92,7 @@
 
   /**
    * §Teclado — a prioridade do `Esc` entre as camadas mora AQUI, num lugar só: busca (que trata
-   * a própria tecla) → gaveta direita → gaveta inferior. Cada gaveta não escuta mais o teclado:
+   * a própria tecla) → gaveta de configurações → gaveta inferior. Cada gaveta não escuta mais o teclado:
    * duas donas da mesma tecla fechariam duas camadas de uma vez. O foco de volta ao gatilho é
    * do componente (o `$effect` dele observa `aberta`), não desta função.
    */
@@ -100,9 +101,9 @@
     // A modal de busca é a camada do topo e cuida do próprio `Esc`; aqui só se evita fechar
     // a gaveta que está ATRÁS dela.
     if (buscaAberta) return;
-    if (direitaAberta) {
+    if (configAberta) {
       evento.preventDefault();
-      direitaAberta = false;
+      configAberta = false;
       return;
     }
     if (fundoAberto) {
@@ -133,10 +134,28 @@
        (um segundo "Buscar indicador…" na mesma tela) continua desfeito. -->
   <HomeToolbar aoAbrirBusca={() => (buscaAberta = true)} />
 
-  <!-- MIOLO: a coluna do gráfico (`flex-1`) e o trilho direito (44px, marcador da T7). O
+  <!-- MIOLO: a coluna do gráfico (`flex-1`) e o trilho de controles (44px, marcador da T7). O
        `min-h-0` é o que permite o gráfico ENCOLHER quando a gaveta inferior abrir (T8);
        sem ele um filho flex recusa ficar menor que o próprio conteúdo e a moldura estoura. -->
   <div class="flex min-h-0 flex-1">
+    <!-- 2 · gaveta de configurações: trilho de 44px, sempre visível, MAIS o painel de 320px que
+         entra em fluxo ao lado do gráfico (`hidden` quando fechado). Em fluxo, e não por cima:
+         abrir encolhe o gráfico em vez de tapá-lo, e nada rola junto com a área do gráfico.
+         O componente é um só porque as duas peças compartilham o estado e a rolagem das seções.
+         🔴 LADO (2026-11-01, a pedido do usuário): era o trilho DIREITO. Aqui ele vem ANTES da
+         coluna do gráfico no DOM, então fica colado na borda esquerda e NÃO se move quando o
+         painel abre — o painel nasce à direita dele e o gráfico cede pela esquerda. Na ordem
+         antiga o trilho andava ~320px para dentro ao abrir.
+         Os nomes acompanharam (2026-11-01): `trilho` e `gaveta-config` no lugar de
+         `trilho-direito`/`gaveta-direita`, que passariam a mentir sobre o lado. O `id` do painel
+         e o `aria-controls` mudaram junto; os specs foram atualizados na mesma rodada. -->
+    <SeriesDrawer
+      bind:aberta={configAberta}
+      aoFechar={() => (configAberta = false)}
+      aoAbrirBusca={() => (buscaAberta = true)}
+      inativa={fundoAberto && !configAberta}
+    />
+
     <div class="flex min-w-0 flex-1 flex-col">
       <!-- A ÁREA DO GRÁFICO é o único filho flexível da coluna: os quatro estados se revezam
            DENTRO dela e a moldura não muda de tamanho (§9.2 — carregar não pode dar salto).
@@ -147,7 +166,7 @@
            `flex-1` da própria área, então quando ele está montado não há o que rolar. -->
       <div
         data-regiao="grafico"
-        inert={direitaAberta || fundoAberto}
+        inert={configAberta || fundoAberto}
         class="relative flex min-h-0 flex-1 flex-col overflow-y-auto"
       >
         {#if itens.length === 0}
@@ -166,17 +185,6 @@
         {/if}
       </div>
     </div>
-
-    <!-- 2 · gaveta direita (T7): trilho de 44px, sempre visível, MAIS o painel de 320px que
-         entra em fluxo ao lado do gráfico (`hidden` quando fechado). Em fluxo, e não por cima:
-         abrir encolhe o gráfico em vez de tapá-lo, e nada rola junto com a área do gráfico.
-         O componente é um só porque as duas peças compartilham o estado e a rolagem das seções. -->
-    <SeriesDrawer
-      bind:aberta={direitaAberta}
-      aoFechar={() => (direitaAberta = false)}
-      aoAbrirBusca={() => (buscaAberta = true)}
-      inativa={fundoAberto && !direitaAberta}
-    />
   </div>
 
   <!-- 3 · gaveta inferior (36px fechada; 32px no celular). O QUE ERA UM PLACEHOLDER NA T5 é agora a alça de
@@ -187,7 +195,7 @@
     aberta={fundoAberto}
     aoAlternar={() => (fundoAberto = !fundoAberto)}
     mostrarCasca={mostrarCasca}
-    inativa={direitaAberta}
+    inativa={configAberta}
   />
 
   {#if buscaAberta}

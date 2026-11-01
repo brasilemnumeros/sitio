@@ -48,9 +48,9 @@ export async function abrirVazio(page) {
   await expect(page.locator('[data-bloco="inicial"]')).toBeVisible();
 }
 
-/** Abre a gaveta direita SE ainda não estiver aberta (o trilho é o gatilho). */
-export async function abrirGavetaDireita(page) {
-  const gaveta = page.getByTestId('gaveta-direita');
+/** Abre a gaveta de configurações SE ainda não estiver aberta (o trilho é o gatilho). */
+export async function abrirGavetaConfig(page) {
+  const gaveta = page.getByTestId('gaveta-config');
   if (!(await gaveta.isVisible())) {
     await page.getByRole('button', { name: /^Configurações do gráfico/ }).click();
   }
@@ -143,8 +143,8 @@ export async function medirCaixas(page) {
       topo: r('[data-testid="barra-superior"]'),
       grafico: r('[data-testid="grafico"]'),
       minimapa: r('[data-testid="minimapa"]'),
-      trilho: r('[data-testid="trilho-direito"]'),
-      direita: r('[data-testid="gaveta-direita"]'),
+      trilho: r('[data-testid="trilho"]'),
+      config: r('[data-testid="gaveta-config"]'),
       inferior: r('[data-testid="barra-inferior"]'),
       vw: window.innerWidth,
       vh: window.innerHeight,

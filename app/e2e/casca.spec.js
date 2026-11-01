@@ -4,7 +4,7 @@ import {
   abrirApp,
   abrirVazio,
   carregarExemplo,
-  abrirGavetaDireita,
+  abrirGavetaConfig,
   abrirGavetaInferior,
 } from './apoio.js';
 
@@ -63,7 +63,7 @@ test('a casca carrega, o Tailwind aplicou (classe-canário) e o tema é escuro',
   // 6 · com série, os blocos aparecem DENTRO das gavetas (a página não é mais uma pilha).
   await carregarExemplo(page);
   await expect(filtros.getByRole('button', { name: 'Janela de 5 anos' })).toBeEnabled();
-  await abrirGavetaDireita(page);
+  await abrirGavetaConfig(page);
   await expect(page.locator('[data-bloco="chips"]')).toHaveCount(1);
   await expect(page.getByTestId('legenda-series')).toHaveCount(1);
   // o "×" fecha; a gaveta inferior só abre com a direita fechada (o resto fica inerte — §Teclado)
@@ -169,7 +169,7 @@ test('a home ocupa o viewport e não rola', async ({ page }) => {
   expect(medida.scroll).toBeLessThanOrEqual(medida.altura + 1);
   await expect(page.getByTestId('barra-superior')).toBeVisible();
   await expect(page.getByTestId('barra-inferior')).toBeVisible();
-  await expect(page.getByTestId('trilho-direito')).toBeVisible();
+  await expect(page.getByTestId('trilho')).toBeVisible();
 
   // §Conteúdo longo — a medidas do estado são FECHADAS: nada do miolo atravessa o topo do
   // footer. `ErroTotal` não tem marcador próprio (R29); o `<button>` "Tentar de novo" é o
@@ -228,17 +228,17 @@ test('com série, o gráfico ocupa a maior parte da altura', async ({ page }) =>
 });
 
 /**
- * §Gaveta direita (T7) — séries, cores e eixos num lugar fixo. A gaveta é um SEGUNDO `<aside>`,
+ * §Gaveta de configurações (T7) — séries, cores e eixos num lugar fixo. A gaveta é um SEGUNDO `<aside>`,
  * separado do trilho de 44px: o trilho não some (é o gatilho) e o painel entra em fluxo ao lado
  * do gráfico. `hidden` — e não `translate` — é o que a mantém fora da árvore de acessibilidade
  * quando fechada; um painel só deslocado continuaria focável por TAB.
  */
-test('a gaveta direita abre, mostra as três seções e fecha com Esc', async ({ page }) => {
+test('a gaveta de configurações abre, mostra as três seções e fecha com Esc', async ({ page }) => {
   await page.goto('/');
   const gatilho = page.getByRole('button', { name: 'Configurações do gráfico' });
   await expect(gatilho).toHaveAttribute('aria-expanded', 'false');
   await gatilho.click();
-  const gaveta = page.getByTestId('gaveta-direita');
+  const gaveta = page.getByTestId('gaveta-config');
   await expect(gaveta).toBeVisible();
   const secoes = await gaveta.locator('[data-secao]').evaluateAll((els) => els.map((e) => e.dataset.secao));
   expect(secoes).toEqual(['series', 'cores', 'eixos']);
@@ -253,7 +253,7 @@ test('a gaveta direita abre, mostra as três seções e fecha com Esc', async ({
 });
 
 /**
- * §Gaveta direita (T7) — o trilho tem DOIS controles fixos: a engrenagem (2026-10-28: os atalhos
+ * §Gaveta de configurações (T7) — o trilho tem DOIS controles fixos: a engrenagem (2026-10-28: os atalhos
  * "Cores"/"Eixos" saíram, porque duplicavam os títulos das seções) e o "limpar filtros"
  * (2026-10-30). Aberta a gaveta, a engrenagem leva a vista ao topo (seção das séries) e NÃO
  * fecha — fechar é o "×" ou `Esc`. A prova é `scrollTop` voltar a 0: sem o `bind:this` do painel
@@ -274,10 +274,10 @@ test('fechada e aberta, o trilho mostra a engrenagem e o limpar, sem atalhos de 
   await expect(page.getByRole('button', { name: 'Eixos', exact: true })).toHaveCount(0);
 
   const gatilho = page.getByRole('button', { name: 'Configurações do gráfico' });
-  const gaveta = page.getByTestId('gaveta-direita');
+  const gaveta = page.getByTestId('gaveta-config');
   // Os controles do trilho são FIXOS: engrenagem, limpar filtros, permalink e (quando o
   // navegador permite) tela cheia. O limpar nasce DESABILITADO sem filtro — presente, não escondido.
-  const botoesDoTrilho = page.getByTestId('trilho-direito').getByRole('button');
+  const botoesDoTrilho = page.getByTestId('trilho').getByRole('button');
   const permiteTelaCheia = await page.evaluate(() => document.fullscreenEnabled);
   await expect(botoesDoTrilho).toHaveCount(permiteTelaCheia ? 4 : 3);
   await expect(page.getByTestId('limpar-filtros')).toBeDisabled();
@@ -359,9 +359,9 @@ test('abrir e fechar a gaveta não mexe na janela de tempo nem no mandato', asyn
 
   // 1 · ida e volta com a JANELA escolhida.
   await gatilho.click();
-  await expect(page.getByTestId('gaveta-direita')).toBeVisible();
+  await expect(page.getByTestId('gaveta-config')).toBeVisible();
   await fechar.click();
-  await expect(page.getByTestId('gaveta-direita')).toBeHidden();
+  await expect(page.getByTestId('gaveta-config')).toBeHidden();
 
   // ⚠ Igualdade EXATA não serve aqui, e o motivo é medido: ao mudar a largura do pane, o adapter
   // ecoa para a store a faixa LÓGICA que a lib mantém — a borda esquerda anda ~1 mês. Isso
@@ -387,9 +387,9 @@ test('abrir e fechar a gaveta não mexe na janela de tempo nem no mandato', asyn
   expect(comMandato.mandato, 'o mandato precisa ter sido escolhido de fato').not.toBeNull();
 
   await gatilho.click();
-  await expect(page.getByTestId('gaveta-direita')).toBeVisible();
+  await expect(page.getByTestId('gaveta-config')).toBeVisible();
   await page.keyboard.press('Escape'); // o outro caminho de fechar também não pode zerar nada
-  await expect(page.getByTestId('gaveta-direita')).toBeHidden();
+  await expect(page.getByTestId('gaveta-config')).toBeHidden();
   const depoisComMandato = await estado();
   expect(depoisComMandato.mandato, 'o mandato escolhido continua escolhido').toBe(
     comMandato.mandato,
@@ -416,7 +416,7 @@ test('com série em erro, o gatilho da gaveta avisa com ponto de atenção', asy
   // CSS do Tailwind é um arquivo à parte; uma classe no DOM sem regra deixaria o ponto invisível).
   await expect(ponto).toHaveClass(/bg-red-500/);
   await expect(ponto).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
-  await expect(page.getByTestId('gaveta-direita')).toBeHidden();
+  await expect(page.getByTestId('gaveta-config')).toBeHidden();
   await page.unroute('**/dados/**');
 });
 
@@ -424,7 +424,7 @@ test('com série em erro, o gatilho da gaveta avisa com ponto de atenção', asy
  * §Moldura (T7) — abrir a gaveta ENCOLHE o gráfico, não o empurra para fora. A prova é dupla:
  * a largura do gráfico cai, e o documento não ganha rolagem horizontal (a moldura é `h-dvh`).
  */
-test('abrir a gaveta direita encolhe o gráfico sem estourar a moldura', async ({ page }, testInfo) => {
+test('abrir a gaveta de configurações encolhe o gráfico sem estourar a moldura', async ({ page }, testInfo) => {
   // No celular a gaveta é uma FOLHA sobre o gráfico (§Mobile), não uma coluna em fluxo: ela não
   // encolhe nada. A geometria de lá é afirmada em `mobile.spec.js` (folha de 88%).
   test.skip(testInfo.project.name !== 'desktop', 'no celular a gaveta é folha lateral');
@@ -435,7 +435,7 @@ test('abrir a gaveta direita encolhe o gráfico sem estourar a moldura', async (
   const largura = () => page.getByTestId('grafico').evaluate((el) => el.getBoundingClientRect().width);
   const semGaveta = await largura();
   await page.getByRole('button', { name: 'Configurações do gráfico' }).click();
-  await expect(page.getByTestId('gaveta-direita')).toBeVisible();
+  await expect(page.getByTestId('gaveta-config')).toBeVisible();
   await expect.poll(largura).toBeLessThan(semGaveta);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
 });

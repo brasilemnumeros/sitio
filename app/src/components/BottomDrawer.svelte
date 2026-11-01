@@ -16,7 +16,7 @@
   // do TradingView. A atribuição foi para o canto da BARRA SUPERIOR e o resumo voltou: sem ele a
   // barra virava um rótulo solto, e o usuário perdeu a leitura de séries/eixos.
   //
-  // O estado `aberta` NÃO vive neste componente: a gaveta é irmã da gaveta direita, e a
+  // O estado `aberta` NÃO vive neste componente: a gaveta é irmã da gaveta de configurações, e a
   // PRIORIDADE do `Esc` entre camadas (busca → direita → inferior) é da `App` (T9). Aqui só
   // existe a geometria e o gatilho; `aoAlternar` é o caminho único de abrir/fechar.
   //
@@ -43,7 +43,7 @@
   const itens = $derived($seriesStore.itens);
 
   // M = 2 quando as séries ocupam os DOIS eixos, senão 1 (`axesStore` é a fonte da atribuição —
-  // o mesmo dado que a gaveta direita edita). Conta os LADOS usados, não "existe alguma à
+  // o mesmo dado que a gaveta de configurações edita). Conta os LADOS usados, não "existe alguma à
   // direita": com o eixo-base na direita (2026-10-30) toda atribuição contém `right`, e o resumo
   // diria "2 eixos" com uma série só.
   const eixos = $derived(new Set(Object.values($axesStore.atribuicao)).size || 1);

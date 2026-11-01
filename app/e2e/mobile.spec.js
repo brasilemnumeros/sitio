@@ -96,7 +96,7 @@ test('no celular o gráfico domina a tela e as gavetas abrem por toque', async (
   expect(altura.grafico / altura.janela).toBeGreaterThanOrEqual(0.5);
 
   await page.getByRole('button', { name: 'Configurações do gráfico' }).click();
-  const gaveta = page.getByTestId('gaveta-direita');
+  const gaveta = page.getByTestId('gaveta-config');
   await expect(gaveta).toBeVisible();
   const largura = await gaveta.evaluate((el) => el.getBoundingClientRect().width);
   expect(largura / (await page.evaluate(() => window.innerWidth))).toBeGreaterThanOrEqual(0.85);
@@ -112,14 +112,14 @@ test('no celular o gráfico domina a tela e as gavetas abrem por toque', async (
 });
 
 /**
- * §Teclado (T9) — `Esc` fecha SÓ a camada do topo: busca → gaveta direita → gaveta inferior.
+ * §Teclado (T9) — `Esc` fecha SÓ a camada do topo: busca → gaveta de configurações → gaveta inferior.
  * Uma tecla que fechasse duas camadas de uma vez faria o usuário perder a gaveta que ainda
  * queria. A busca é a única que trata a própria tecla; a `App` decide entre as gavetas.
  */
 test('Esc fecha só a camada do topo: a busca, depois a gaveta', async ({ page }) => {
   await page.goto('/');
   const gatilho = page.getByRole('button', { name: 'Configurações do gráfico' });
-  const gaveta = page.getByTestId('gaveta-direita');
+  const gaveta = page.getByTestId('gaveta-config');
   const modal = page.getByRole('dialog', { name: 'Buscar indicadores' });
 
   await gatilho.click();
@@ -152,7 +152,7 @@ test('a gaveta aberta prende o foco, e o resto fica inerte', async ({ page }) =>
   await expect(regiaoGrafico).not.toHaveAttribute('inert', '');
 
   await page.getByRole('button', { name: 'Configurações do gráfico' }).click();
-  await expect(page.getByTestId('gaveta-direita')).toBeVisible();
+  await expect(page.getByTestId('gaveta-config')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Fechar séries' })).toBeFocused();
   await expect(regiaoGrafico).toHaveAttribute('inert', '');
   await expect(barraInferior).toHaveAttribute('inert', '');

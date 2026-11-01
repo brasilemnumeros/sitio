@@ -4,7 +4,7 @@ import {
   abrirVazio,
   carregarExemplo,
   adicionarPorBusca,
-  abrirGavetaDireita,
+  abrirGavetaConfig,
   abrirBusca,
 } from './apoio.js';
 
@@ -21,8 +21,8 @@ test('exemplo pronto: dois chips, duas linhas na legenda e o gráfico monta', as
   await carregarExemplo(page);
 
   // duas séries → dois chips (§1, posição 2) e dois itens na legenda (§12.2). Os dois moram na
-  // gaveta direita desde o terminal — abrir é o caminho do produto.
-  await abrirGavetaDireita(page);
+  // gaveta de configurações desde o terminal — abrir é o caminho do produto.
+  await abrirGavetaConfig(page);
   await expect(page.locator('[data-bloco="chips"] li')).toHaveCount(2);
   await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(2);
 
@@ -117,7 +117,7 @@ test('a escala da esquerda não reserva faixa sem série — e aparece quando um
   await expect.poll(margem, { timeout: 15000 }).toBe(0);
 
   // manda a PRIMEIRA série para a esquerda pelo caminho do produto (o botão `dir.` da seção)
-  await abrirGavetaDireita(page);
+  await abrirGavetaConfig(page);
   const eixos = page.locator('[data-secao="eixos"]');
   await eixos.getByRole('button', { name: 'dir.' }).first().click();
   await expect.poll(margem, { timeout: 15000 }).toBeGreaterThan(20);
@@ -187,8 +187,8 @@ test('remover o ✕ do chip tira a série; remover a última com janela ativa n�
     'true',
   );
 
-  // 2 · remove a PRIMEIRA pelo ✕ do chip (os chips moram na gaveta direita)
-  await abrirGavetaDireita(page);
+  // 2 · remove a PRIMEIRA pelo ✕ do chip (os chips moram na gaveta de configurações)
+  await abrirGavetaConfig(page);
   const chips = page.locator('[data-bloco="chips"]');
   await chips.getByRole('button', { name: /^Remover / }).first().click();
   await expect(chips.locator('li')).toHaveCount(1);

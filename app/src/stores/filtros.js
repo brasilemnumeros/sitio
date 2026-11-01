@@ -5,7 +5,7 @@ import { HORIZONTE_INICIO } from '../domain/horizonte.js';
 import { dataEmSaoPaulo } from '../data/presets.js';
 
 /**
- * "HÁ FILTRO EM CENA?" — a condição que faz o botão de limpar aparecer no trilho direito.
+ * "HÁ FILTRO EM CENA?" — a condição que faz o botão de limpar aparecer no trilho de controles.
  *
  * Quais contam como filtro: a JANELA de tempo recortada e o MANDATO escolhido. NÃO contam as
  * séries (o chip de preset já troca o conjunto e tem "Do dia" no menu) nem a cor/eixo de uma

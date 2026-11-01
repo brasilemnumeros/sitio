@@ -1,7 +1,7 @@
 import {
   test,
   expect,
-  abrirGavetaDireita,
+  abrirGavetaConfig,
   abrirGavetaInferior,
   semTransbordo,
   medirCaixas,
@@ -52,29 +52,29 @@ for (const [nome, width, height] of [
   test(`gavetas em ${nome}: abrir não transborda e não cobre a barra`, async ({ page }) => {
     await page.setViewportSize({ width, height });
     await page.goto('/');
-    await abrirGavetaDireita(page);
-    await expect(page.getByTestId('gaveta-direita')).toBeVisible();
+    await abrirGavetaConfig(page);
+    await expect(page.getByTestId('gaveta-config')).toBeVisible();
     await semTransbordo(page);
 
     const c = await medirCaixas(page);
     if (width >= 1024) {
-      expect(Math.abs(c.direita.w - 320)).toBeLessThanOrEqual(2);
-      expect(c.grafico.w + c.direita.w).toBeLessThanOrEqual(c.vw + TOL);
+      expect(Math.abs(c.config.w - 320)).toBeLessThanOrEqual(2);
+      expect(c.grafico.w + c.config.w).toBeLessThanOrEqual(c.vw + TOL);
     } else {
       // folha de 88% no celular
-      expect(c.direita.w / c.vw).toBeGreaterThan(0.85);
+      expect(c.config.w / c.vw).toBeGreaterThan(0.85);
       // A folha COBRE o gráfico: sem fundo opaco o canvas aparece através dela (medido na revisão
       // visual de 390px). `rgba(0, 0, 0, 0)` é o único valor transparente aceito como "sem fundo".
       const fundo = await page
-        .getByTestId('gaveta-direita')
+        .getByTestId('gaveta-config')
         .evaluate((el) => getComputedStyle(el).backgroundColor);
       expect(fundo, 'a folha precisa de fundo opaco').not.toMatch(/rgba\([^)]*, 0\)$/);
       expect(fundo).not.toBe('transparent');
     }
 
-    await page.screenshot({ path: `e2e/.artefatos/visual-${nome}-gaveta-direita.png` });
+    await page.screenshot({ path: `e2e/.artefatos/visual-${nome}-gaveta-config.png` });
     await page.getByRole('button', { name: 'Fechar séries' }).click();
-    await expect(page.getByTestId('gaveta-direita')).toBeHidden();
+    await expect(page.getByTestId('gaveta-config')).toBeHidden();
     await abrirGavetaInferior(page);
     await expect(page.getByTestId('barra-inferior')).toBeVisible();
     await semTransbordo(page);

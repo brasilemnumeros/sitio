@@ -1,13 +1,15 @@
 <script>
-  // GAVETA DIREITA (T7) — séries, cores e eixos num lugar fixo (§1 do desenho do terminal).
+  // GAVETA DE CONFIGURAÇÕES (T7) — séries, cores e eixos num lugar fixo (§1 do desenho do
+  // terminal). Ficava à DIREITA até 2026-11-01; hoje o trilho fica colado na borda esquerda e o
+  // painel abre à direita dele (ver o comentário do lado no `App.svelte`).
   //
   // São DOIS elementos, não um:
-  //   · o TRILHO (`aside[data-testid="trilho-direito"]`, 44px) fica sempre visível — é o gatilho
+  //   · o TRILHO (`aside[data-testid="trilho"]`, 44px) fica sempre visível — é o gatilho
   //     e o índice da gaveta, e carrega os controles fixos do gráfico, nesta ordem: engrenagem
   //     (abre), limpar filtros (2026-10-30), permalink e tela cheia (os dois últimos mudaram
   //     para cá em 2026-10-30, porque no topo eram `hidden md:*` e não existiam no celular). É
   //     ele que carrega o ponto de atenção quando há série em erro;
-  //   · o PAINEL (`aside[data-testid="gaveta-direita"]`, 320px) entra em fluxo ao lado do
+  //   · o PAINEL (`aside[data-testid="gaveta-config"]`, 320px) entra em fluxo ao lado do
   //     gráfico. Em fluxo, e não por cima: abrir a gaveta ENCOLHE o gráfico (que é `flex-1`),
   //     em vez de tapá-lo. E `hidden` quando fechada — um painel só deslocado por `translate`
   //     continuaria na árvore de acessibilidade e focável por TAB.
@@ -176,9 +178,9 @@
 
   /** Atalho do trilho: leva a vista até a seção. Não troca de painel (§1 — vista única). */
   function irPara(secao) {
-    if (!painel) throw new Error('gaveta direita sem painel montado (falta `bind:this`)');
+    if (!painel) throw new Error('gaveta de configurações sem painel montado (falta `bind:this`)');
     const alvo = painel.querySelector(`[data-secao="${secao}"]`);
-    if (!alvo) throw new Error(`gaveta direita sem a seção "${secao}"`);
+    if (!alvo) throw new Error(`gaveta de configurações sem a seção "${secao}"`);
     alvo.scrollIntoView({ block: 'start' });
   }
 
@@ -219,15 +221,15 @@
        o leitor de tela não dizer duas vezes. -->
   <span
     aria-hidden="true"
-    class="pointer-events-none absolute top-1/2 right-full z-50 mr-2 -translate-y-1/2 rounded border border-slate-700 bg-[#161b22] px-2 py-1 text-xs whitespace-nowrap text-slate-200 opacity-0 shadow-lg transition-opacity duration-75 group-hover:opacity-100"
+    class="pointer-events-none absolute top-1/2 left-full z-50 ml-2 -translate-y-1/2 rounded border border-slate-700 bg-[#161b22] px-2 py-1 text-xs whitespace-nowrap text-slate-200 opacity-0 shadow-lg transition-opacity duration-75 group-hover:opacity-100"
     >{texto}</span
   >
 {/snippet}
 
 <aside
-  data-testid="trilho-direito"
+  data-testid="trilho"
   inert={inativa}
-  class="relative flex w-10 shrink-0 flex-col items-center gap-1 border-l border-slate-800 py-1.5 md:w-11"
+  class="relative flex w-10 shrink-0 flex-col items-center gap-1 border-r border-slate-800 py-1.5 md:w-11"
   aria-label="Controles do gráfico"
 >
   <div class="group relative flex w-full justify-center">
@@ -236,7 +238,7 @@
       bind:this={gatilho}
       aria-label={temErro && !aberta ? 'Configurações do gráfico — há séries com erro' : 'Configurações do gráfico'}
       aria-expanded={aberta}
-      aria-controls="gaveta-direita"
+      aria-controls="gaveta-config"
       class="relative flex min-h-11 w-full items-center justify-center rounded px-1 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-slate-100 md:min-h-0"
       onclick={aoGatilho}
     >
@@ -305,9 +307,9 @@
            qualquer gesto ou `Esc` a tira do caminho. `role="status"` para quem ouve a página. -->
       <div
         role="status"
-        class="pointer-events-none absolute top-1/2 right-full z-50 mr-3 -translate-y-1/2 rounded border border-sky-700 bg-[#0b1a26] px-2 py-1.5 text-xs whitespace-nowrap text-sky-100 shadow-lg"
+        class="pointer-events-none absolute top-1/2 left-full z-50 ml-3 -translate-y-1/2 rounded border border-sky-700 bg-[#0b1a26] px-2 py-1.5 text-xs whitespace-nowrap text-sky-100 shadow-lg"
       >
-        Limpar os filtros <span class="text-sky-300" aria-hidden="true">→</span>
+        <span class="text-sky-300" aria-hidden="true">←</span> Limpar os filtros
       </div>
     {/if}
   </div>
@@ -401,14 +403,14 @@
      `bind:this={painel}`: é ELE que os atalhos do trilho rolam (sem isto, botão morto).
      No celular (T9) vira folha lateral de 88% da largura, por cima do gráfico. -->
 <aside
-  id="gaveta-direita"
-  data-testid="gaveta-direita"
+  id="gaveta-config"
+  data-testid="gaveta-config"
   bind:this={painel}
   hidden={!aberta}
   inert={inativa}
   aria-label="Séries, cores e eixos"
   class={aberta
-    ? 'flex w-[320px] shrink-0 flex-col overflow-y-auto border-l border-slate-800 bg-[#0e1117] max-md:fixed max-md:inset-y-0 max-md:right-0 max-md:z-40 max-md:w-[88%] max-md:shadow-2xl'
+    ? 'flex w-[320px] shrink-0 flex-col overflow-y-auto border-r border-slate-800 bg-[#0e1117] max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-40 max-md:w-[88%] max-md:shadow-2xl'
     : ''}
 >
   <!-- Cabeçalho grudado: com a gaveta rolada até o fim, o botão de fechar continua alcançável.

@@ -119,7 +119,23 @@
   <!-- Marca: identidade, NÃO link para a própria home (a spec veta a ilha de navegação).
        O texto fica no DOM mesmo quando encolhe (`truncate`). -->
   <div class="flex min-w-0 items-center gap-1.5">
-    <span class="h-2.5 w-2.5 shrink-0 rounded-sm bg-sky-500" aria-hidden="true"></span>
+    <!-- Bandeira no lugar do quadradinho azul (2026-11-01). SVG inline e não `<img>` do
+         `logo.svg`: o app roda no dev server do Vite (e no E2E), onde `/assets/img` não é
+         servido — a imagem quebraria só nesse ambiente, em silêncio. As cores são as MESMAS
+         do `public/assets/img/logo.svg` do site, para a marca não mudar de tom entre a barra
+         de navegação e a home. `aria-hidden`: o nome acessível é o texto ao lado. -->
+    <svg class="h-3 w-[18px] shrink-0" viewBox="0 0 36 24" aria-hidden="true">
+      <rect width="36" height="24" rx="3" fill="#008F3E" />
+      <path d="M18 3.2 33 12 18 20.8 3 12Z" fill="#F8C300" />
+      <circle cx="18" cy="12" r="5" fill="#28166F" />
+      <path
+        d="M13.4 10.1c2.9-1.3 6.4-.5 8.9 1.8"
+        fill="none"
+        stroke="#FFFFFF"
+        stroke-width="1.5"
+        stroke-linecap="round"
+      />
+    </svg>
     <span class="truncate font-semibold text-slate-200">Brasil em Números</span>
   </div>
 

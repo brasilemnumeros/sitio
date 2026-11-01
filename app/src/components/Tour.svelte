@@ -37,15 +37,21 @@
       popover: {
         title: 'Comparar governos',
         description:
-          'A barra de baixo compara o mesmo indicador entre mandatos. Abrir é ela crescer — o gráfico não é coberto.',
+          'A matriz abaixo mostra a variação de cada indicador em cada mandato: uma linha por série, uma coluna por governo.',
       },
     },
     {
       element: '[data-testid="trilho"]',
       popover: {
-        title: 'Controles',
-        description:
-          'A engrenagem abre séries, cores e eixos. O elo copia o link com o estado atual do gráfico.',
+        title: 'Controles do gráfico',
+        description: `<p>De cima para baixo:</p>
+          <ul>
+            <li><b>engrenagem</b> — séries, cores e eixos;</li>
+            <li><b>seta de retorno</b> — esquece os filtros de tempo e de mandato;</li>
+            <li><b>elo</b> — copia o link com o estado atual do gráfico;</li>
+            <li><b>cantos</b> — tela cheia;</li>
+            <li><b>?</b> — revê este tour.</li>
+          </ul>`,
         side: 'right',
       },
     },
@@ -146,6 +152,23 @@
     padding: 0 4px;
     font-size: 11px;
     color: #e2e8f0;
+  }
+
+  /* A lista de ícones do passo "Controles do gráfico". O popover tem 300px e `all: unset`, então
+     sem esta regra o `<ul>` perde marcador, recuo e espaçamento. */
+  :global(.tour-terminal .driver-popover-description ul) {
+    margin: 6px 0 0;
+    padding-left: 16px;
+    list-style: disc;
+  }
+
+  :global(.tour-terminal .driver-popover-description li) {
+    margin-bottom: 2px;
+  }
+
+  :global(.tour-terminal .driver-popover-description li b) {
+    color: #f1f5f9;
+    font-weight: 600;
   }
 
   :global(.tour-terminal .driver-popover-progress-text) {

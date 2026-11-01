@@ -386,9 +386,10 @@
   {/if}
 
   <!-- TOUR. `hidden lg:flex` porque abaixo de 1024px o tour não roda (ver `domain/tour.js`):
-       um botão que não faz nada é pior que um botão ausente. Fica no pé do trilho, longe dos
-       controles de uso diário, para não competir com a engrenagem. -->
-  <div class="group relative mt-auto flex w-full justify-center">
+       um botão que não faz nada é pior que um botão ausente. Fica na MESMA coluna dos outros
+       controles (2026-11-01, a pedido do usuário — antes descia para o pé do trilho e parecia
+       de outra família). -->
+  <div class="group relative flex w-full justify-center">
     <button
       type="button"
       data-testid="botao-tour"

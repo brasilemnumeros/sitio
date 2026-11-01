@@ -50,7 +50,7 @@ migração (ADR 0002).
 | Comando | O que faz |
 |---|---|
 | `npm run build` | cadeia completa: `build:app` → `preparar-publico` → Astro → `verificar` |
-| `npm run dev` | build do app + `preparar-publico` + `astro dev` (com `DADOS_LOCAL=1`, serve o dado local) |
+| `npm run dev` | build do app + `preparar-publico` + `astro dev` (serve o dado local pelo middleware) |
 | `npm run css` | regenera `assets/css/main.dist.css` (Tailwind CLI) — **necessário para o dev/E2E do app** |
 | `npm run canario` | confere a classe-canário no CSS de `dist/` (exige build) |
 | `npm run test:analytics` | gate de consentimento/DNT contra `dist/` (exige build) |
@@ -224,23 +224,13 @@ migração; não os use como validação principal.
   aviso. Não reintroduza a entrada no `.gitignore`.
 - **Caminho de dado errado não falha.** O middleware responde HTML e o app
   “carrega” vazio. Confira `Content-Type`/dado, não só status 200.
-- **`npm run build` estraga o `npm run dev` que já está no ar.** Os dois escrevem
-  o MESMO `public/assets/js/app/app.js`, com bases de dado diferentes: o `dev`
-  embute `/dados` (middleware local), o `build` embute a URL do Pages. Se você
-  buildar em produção enquanto o servidor de dev do usuário estiver aberto, a
-  página dele passa a ler o dado **publicado** — inclusive dado velho — e o
-  sintoma é um defeito que “não existe no código” (ex.: faixa com data antiga).
-  O `dist/` já está pronto, então restaure o artefato de dev depois:
-  `DADOS_LOCAL=1 npm run build:app && npm run preparar-publico`. Não precisa
-  reiniciar o servidor de ninguém; basta recarregar a página.
-  Diagnóstico rápido de qual base o artefato em disco carrega (2026-10-29):
-  `grep -c 'brasilemnumeros.github.io/dados' public/assets/js/app/app.js`
-  — `0` é dev (`/dados`, middleware local), `1` é produção (Pages). Foi assim que a
-  faixa da Dilma II
-  “voltou a sobrepor” a do Temer: o código estava certo, o artefato lia o dado
-  publicado (que ainda tinha `fim: 2016-08-31`) em vez do local (`2016-05-11`).
-- **Artefato de dev não pode ir para produção:** `publico` exige a URL do Pages
-  no `app.js` (`DADOS_LOCAL=1` só em dev).
+- **`npm run build` não estraga mais o `npm run dev` (2026-11-01).** O `app.js` não
+  embute base de dado nenhuma: as séries vêm do `datafile` do `indicators.json` em
+  runtime (o middleware de dev reescreve a cópia servida) e os governos são
+  importados no bundle. Por isso o artefato de dev e o de produção são o mesmo —
+  não é mais preciso restaurar o artefato de dev depois de buildar. A lição de 2026-10-29 continua válida para *qualquer* dado
+  embutido no bundle: um artefato que lia o dado publicado fez a faixa da Dilma II
+  “voltar a sobrepor” a do Temer, com o código certo.
 - **Números de teste e status em `docs/plans/` envelhecem** (contagens, “nada
   publicado”). A verdade é o código + `docs/specs/` + `docs/adr/`.
 

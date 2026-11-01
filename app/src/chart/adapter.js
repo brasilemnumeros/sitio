@@ -240,6 +240,12 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
     if (primitivaDeFaixas) pane.detachPrimitive(primitivaDeFaixas);
     primitivaDeFaixas = criarPrimitivaDeFaixas(mandatos, {
       aoClicar: (id) => destacarMandato(id),
+      // SEM rótulo de faixa no gráfico grande (decisão de 2026-11-01, variante B): o topo do
+      // pane pertence à legenda das séries (`ChartLegend`). A identificação textual do governo
+      // continua na MESMA linha do tempo, logo abaixo, no minimapa — que é rotulado e alinhado
+      // às mesmas datas —, além do chip da barra superior e da matriz de comparação. A faixa
+      // aqui vira CONTEXTO (sombra + hachura do mandato em curso), não rótulo.
+      rotulos: false,
       // A grade do gráfico, lida no recálculo — nunca copiada para dentro da primitiva.
       temposDoDado: () => temposDoDado,
       // O mandato em curso hachura até HOJE, não até o último dado (§7.3.5 emendado em

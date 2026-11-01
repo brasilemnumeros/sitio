@@ -15,6 +15,8 @@
   // gráfico — dá para arrastar e dar zoom por cima da legenda, exceto em cima dos botões.
   import { seriesStore, alternarVisibilidade, removerSerie } from '../stores/series.js';
 
+  // O topo do pane é dela: desde 2026-11-01 (variante B) o gráfico grande não desenha mais o
+  // rótulo das faixas de governo — eles ficam no minimapa, alinhados às mesmas datas.
   /** Largura da escala de preço da ESQUERDA, em px (0 quando ela não existe). Sem isto, no caso
    *  de dois eixos a legenda senta em cima dos rótulos da escala — medido em 2026-11-01 com 9
    *  séries (dois eixos), onde os números apareciam por baixo das linhas da legenda. */
@@ -27,7 +29,7 @@
   data-testid="legenda-grafico"
   aria-label="Séries no gráfico"
   style="left:{deslocamento}px"
-  class="pointer-events-none absolute top-0 z-10 mt-6 flex max-h-[45%] max-w-[70%] flex-col items-start gap-1 overflow-y-auto p-2"
+  class="pointer-events-none absolute top-0 z-10 flex max-h-[45%] max-w-[70%] flex-col items-start gap-1 overflow-y-auto p-2"
 >
   {#each itens as item (item.id)}
     <li

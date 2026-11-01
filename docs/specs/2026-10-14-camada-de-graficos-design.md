@@ -165,6 +165,16 @@ Renderizadas por um `ISeriesPrimitive` customizado do Lightweight Charts (a lib 
 - o mandato em curso leva hachura e vai até **hoje** — o eixo também termina em hoje (emenda de
   2026-10-29; antes cortava no último dado disponível, seção 7.3).
 
+> **Emenda de 2026-11-01 — o rótulo da faixa só existe no MINIMAPA.** Decisão do usuário
+> (variante B, escolhida entre duas capturas): o topo do pane do gráfico grande passa a ser da
+> **legenda das séries** (`ChartLegend`), e o rótulo `Lula III · PT` da faixa sai de lá. A
+> identificação textual do governo continua na MESMA linha do tempo, logo abaixo, no minimapa —
+> que é rotulado e alinhado às mesmas datas —, além do chip da barra superior e da matriz de
+> comparação. Consequência assumida: no gráfico grande a faixa é **contexto** (sombra + hachura do
+> mandato em curso), não rótulo. Tecnicamente é a opção `rotulos` da primitiva, por superfície
+> (`adapter.js` passa `false`; o `navigator.js` mantém o padrão `true`), porque as duas usam o
+> MESMO código.
+
 **Por que sem cor de partido** (decidido em 2026-10-14): a cor por partido obrigaria a escolher entre duas coisas ruins. **Cor de marca** colide entre partidos — o vermelho é o mais disputado no Brasil (PT, PCdoB, PSOL, PSTU, PCO) — e não sobrevive ao fundo escuro, porque marca é desenhada para fundo branco. **Cor por espectro político** é juízo editorial sem fonte auditável: faria o site **afirmar uma classificação** no lugar de publicar um dado, num projeto cujo resto tem fonte declarada.
 
 Sem cor, o gráfico fica com **uma paleta só** — as linhas das séries carregam todo o significado e as faixas são contexto puro — e a identificação por partido passa a ser feita por **logo e sigla**, que informam sem classificar.

@@ -29,7 +29,7 @@ recolhidos).
 | Filtros de tempo | `TimeFilters.svelte` | Escreve em `viewport`; limpa seleção de mandato |
 | Chip de mandato | `HomeToolbar.svelte` (`mandate-chip`) | Escreve em `mandate` e `viewport`. O trilho da gaveta inferior (`MandateRail`) saiu em 2026-10-30 |
 | Comparação | `ComparisonPanel.svelte` | Matriz larga: linha por série, coluna por governo |
-| Legenda | `SeriesLegend.svelte` (gaveta) + `ChartLegend.svelte` (gráfico) | No gráfico: cor + nome + olho (esconder) + "×" (remover). Na gaveta: troca de cor, restaurar e aviso de cor parecida |
+| Legenda | `SeriesLegend.svelte` (gaveta) + `ChartLegend.svelte` (gráfico) | No gráfico: cor + nome + olho (esconder) + "×" (remover), no topo do pane. Na gaveta: troca de cor, restaurar e aviso de cor parecida. Desde 2026-11-01 o rótulo das faixas de governo saiu do gráfico grande: ele vive no minimapa (variante B) |
 | Busca | `SearchModal.svelte` + `Ficha.svelte` | Modal com cascata, ficha e fontes |
 | Permalink | `permalink-init.js` | Lê `?series=` uma vez na entrada; escreve com `replaceState` |
 

@@ -34,6 +34,19 @@ it('o registro REAL embutido tem 9 mandatos, sem sobreposição e sem cor de par
   for (const m of mandatos) expect(m).not.toHaveProperty('cor');
 });
 
+it('o registro REAL fecha a fronteira Dilma II → Temer e deixa o mandato em curso aberto', () => {
+  // "Sem sobreposição" não basta: um vão de um dia também some da faixa e da matriz de comparação.
+  // E o mandato em curso NÃO pode ter `fim` inventado — a janela dele vai até a última data da
+  // série, não até uma data fixa (o "hoje cego" que a spec evita).
+  carregarMandatos();
+  const { mandatos } = get(mandateStore);
+  const dilma2 = mandatos.find((m) => m.id === 'federal-2015-dilma');
+  const temer = mandatos.find((m) => m.id === 'federal-2016-temer');
+  expect(dilma2.fim).toBe('2016-05-11');
+  expect(temer.inicio).toBe('2016-05-12');
+  expect(mandatos.at(-1)).toMatchObject({ id: 'federal-2023-lula', fim: null, emCurso: true });
+});
+
 it('seleciona e limpa', async () => {
   carregarMandatos({ dados: GOVERNOS });
   selecionarMandato('bolsonaro');

@@ -1,7 +1,7 @@
 # Governos passam a morar no `sitio` (e entram no bundle)
 
 **Data:** 2026-11-01
-**Status:** aguardando aval
+**Status:** aceita (2026-11-01)
 **Decisão que muda:** ADR 0001, item **D5** (diz `dados/governos/`)
 
 ## Intenção
@@ -63,16 +63,22 @@ app/src/data/governos/index.json     ← modelo das esferas (documentação; nã
 
 ### Guarda do build
 
-`scripts/testar-publico.sh` hoje prova o ramo de produção procurando
-`https://brasilemnumeros.github.io/dados` no bundle. Esse sinal deixa de existir. No
-lugar:
+`scripts/testar-publico.sh` provava o ramo de produção procurando
+`https://brasilemnumeros.github.io/dados` no bundle. Esse sinal deixa de existir.
 
-1. `dist/assets/js/app/app.js` contém um mandato conhecido (`federal-2023-lula`) — prova
-   que o dado foi embutido;
-2. o bundle **não** contém `github.io/dados/governos` — prova que ninguém voltou a
-   apontar para o repo antigo.
+**Decisão do usuário (2026-11-01): a guarda nova foi dispensada.** A antiga saiu (não
+podia mais passar), e o `verificar` não afirma nada sobre o registro embutido. O que
+garante o quê hoje, para não confundir:
 
-Sem os dois, o build reprova.
+- **Vitest** (`app/src/stores/mandate.test.js`) garante o **conteúdo**: 9 mandatos, sem
+  sobreposição, fronteira Dilma II → Temer em 2016-05-11/12 e Lula III com
+  `fim: null`/`emCurso: true`. O Vitest roda no CI **antes** do build, mas não pelo
+  `npm run build`.
+- **Build** garante só a **existência** do artefato: sem `federal.json`, o `import` falha
+  e o bundle não é gerado.
+
+Se o bundle voltar a embutir uma base de dado, a guarda certa é a URL que ele embutir —
+o comentário em `scripts/testar-publico.sh` registra isso.
 
 ### Documentação
 

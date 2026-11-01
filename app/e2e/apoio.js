@@ -10,7 +10,21 @@ import { test as base, expect } from '@playwright/test';
  * deste pacote falha o teste no fim se algo foi logado como erro.
  */
 export const test = base.extend({
-  page: async ({ page }, use) => {
+  // O tour de primeira visita (2026-11-01) abriria em cima de TODO spec que navega para `/`
+  // sem `?series=` — `abrirApp` é um deles. A semente da chave mantém a suíte alheia alheia ao
+  // tour; `tour.spec.js` liga esta opção para ser o único lugar onde ele aparece.
+  tourNaPrimeiraVisita: [false, { option: true }],
+  page: async ({ page, tourNaPrimeiraVisita }, use) => {
+    if (!tourNaPrimeiraVisita) {
+      await page.addInitScript(() => {
+        try {
+          localStorage.setItem('tour-visto', '1');
+        } catch {
+          /* modo privado: sem a chave, o teste vê o tour — e é o teste do tour que sabe disso */
+        }
+      });
+    }
+
     const erros = [];
     page.on('console', (msg) => {
       if (msg.type() === 'error') erros.push(`console.error: ${msg.text()}`);

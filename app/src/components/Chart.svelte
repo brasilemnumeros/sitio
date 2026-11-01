@@ -70,16 +70,16 @@
       aoEscolherMandato: (id) => aplicarMandato(id, get(dataMaximaStore)),
     });
 
-    // As séries `ok` na forma que o `axesStore` entende (`{id, unit, data}`), como na fatia 05.
+    // As séries `ok` na forma que o `axesStore` entende (`{id, unidade, dados}`), como na fatia 05.
     const seriesOk = () => get(seriesStore).itens.filter((i) => i.status === 'ok');
-    const paraEixo = (i) => ({ id: i.id, unit: i.series?.unit, data: i.series?.data ?? [] });
+    const paraEixo = (i) => ({ id: i.id, unidade: i.series?.unidade, dados: i.series?.dados ?? [] });
 
     // O minimapa desenha faixas E séries: as duas fontes podem chegar em qualquer ordem.
     // Por isso ele é atualizado tanto pela mudança das SÉRIES quanto pela dos MANDATOS —
     // sem isto, os mandatos que chegam depois da última série nunca viram faixa no minimapa.
     const atualizarMinimapa = () => {
       const ok = get(seriesStore).itens.filter((i) => i.status === 'ok');
-      navigator.definirFaixas(get(mandateStore).mandatos, ok.flatMap((i) => i.series?.data ?? []));
+      navigator.definirFaixas(get(mandateStore).mandatos, ok.flatMap((i) => i.series?.dados ?? []));
     };
 
     // ⚠ A ORDEM IMPORTA (§5): o eixo é DERIVADO das séries, então `recalcularEixos` roda

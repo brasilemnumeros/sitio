@@ -9,11 +9,11 @@ const FHC_II = { id: 'federal-1999-fhc', rotulo: 'FHC II', inicio: '1999-01-01',
 
 /** Série mensal que começa em 03/2004 (MVG-R, §7.3.5). */
 function mensal(de, ate) {
-  const data = [];
+  const dados = [];
   for (let a = +de.slice(0, 4), m = +de.slice(5, 7); a < +ate.slice(0, 4) || (a === +ate.slice(0, 4) && m <= +ate.slice(5, 7)); m === 12 ? (m = 1, a++) : m++) {
-    data.push({ date: `${a}-${String(m).padStart(2, '0')}-28`, value: 42 + m });
+    dados.push({ data: `${a}-${String(m).padStart(2, '0')}-28`, valor: 42 + m });
   }
-  return { id: 'mvgr-nominal', granularity: 'monthly', data };
+  return { id: 'mvgr-nominal', granularidade: 'mensal', dados };
 }
 
 describe('deltaNoMandato (§4, §7.3.5)', () => {
@@ -34,7 +34,7 @@ describe('deltaNoMandato (§4, §7.3.5)', () => {
   });
 
   it('ponto único é estado distinto, explicitamente sem Δ', () => {
-    const serieAnual = { id: 'homicidios-anual', granularity: 'annual', data: [{ date: '2023-01-01', value: 30.5 }] };
+    const serieAnual = { id: 'homicidios-anual', granularidade: 'anual', dados: [{ data: '2023-01-01', valor: 30.5 }] };
     const c = deltaNoMandato(serieAnual, LULA_III);
     expect(c.estado).toBe(COBERTURA.PONTO_UNICO);
     expect(c.delta).toBeNull();
@@ -57,7 +57,7 @@ describe('deltaNoMandato (§4, §7.3.5)', () => {
   it('nunca devolve 0 para ausência de dado', () => {
     for (const c of [
       deltaNoMandato(mensal('2004-03', '2025-07'), FHC_II),
-      deltaNoMandato({ id: 'x', granularity: 'annual', data: [{ date: '2023-01-01', value: 1 }] }, LULA_III),
+      deltaNoMandato({ id: 'x', granularidade: 'anual', dados: [{ data: '2023-01-01', valor: 1 }] }, LULA_III),
     ]) {
       expect(c.delta).not.toBe(0);
     }
@@ -72,17 +72,17 @@ describe('formatarPeriodo', () => {
 
 describe('pontosEsperados — a régua da cobertura (§7.3.5)', () => {
   it('mensal conta meses inclusive nas duas pontas', () => {
-    expect(pontosEsperados('monthly', LULA_I)).toBe(48);
-    expect(pontosEsperados('monthly', { inicio: '2016-05-12', fim: '2018-12-31' })).toBe(32);
+    expect(pontosEsperados('mensal', LULA_I)).toBe(48);
+    expect(pontosEsperados('mensal', { inicio: '2016-05-12', fim: '2018-12-31' })).toBe(32);
   });
 
   it('anual conta anos inclusive', () => {
-    expect(pontosEsperados('annual', { inicio: '2019-01-01', fim: '2022-12-31' })).toBe(4);
-    expect(pontosEsperados('annual', { inicio: '2016-05-12', fim: '2018-12-31' })).toBe(3);
+    expect(pontosEsperados('anual', { inicio: '2019-01-01', fim: '2022-12-31' })).toBe(4);
+    expect(pontosEsperados('anual', { inicio: '2016-05-12', fim: '2018-12-31' })).toBe(3);
   });
 
   it('mandato em curso não tem régua', () => {
-    expect(pontosEsperados('monthly', LULA_III)).toBeNull();
+    expect(pontosEsperados('mensal', LULA_III)).toBeNull();
   });
 });
 

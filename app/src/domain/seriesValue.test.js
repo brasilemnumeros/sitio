@@ -2,9 +2,9 @@ import { it, expect } from 'vitest';
 import { valorNaData } from './seriesValue.js';
 
 const serie = [
-  { date: '2020-01-01', value: 10 },
-  { date: '2020-02-01', value: 20 },
-  { date: '2020-03-01', value: 30 },
+  { data: '2020-01-01', valor: 10 },
+  { data: '2020-02-01', valor: 20 },
+  { data: '2020-03-01', valor: 30 },
 ];
 
 it('acha o valor na data exata', () => {
@@ -22,13 +22,13 @@ it('data sem ponto devolve null — nunca o vizinho', () => {
 });
 
 it('não se perde com série de um ponto só nem com dado vazio', () => {
-  expect(valorNaData([{ date: '2020-05-05', value: 7 }], '2020-05-05')).toBe(7);
-  expect(valorNaData([{ date: '2020-05-05', value: 7 }], '2020-05-06')).toBeNull();
+  expect(valorNaData([{ data: '2020-05-05', valor: 7 }], '2020-05-05')).toBe(7);
+  expect(valorNaData([{ data: '2020-05-05', valor: 7 }], '2020-05-06')).toBeNull();
   expect(valorNaData([], '2020-05-05')).toBeNull();
   expect(valorNaData(null, '2020-05-05')).toBeNull();
   expect(valorNaData(serie, null)).toBeNull();
 });
 
 it('aceita data com hora no arquivo (compara só o dia)', () => {
-  expect(valorNaData([{ date: '2020-02-01T00:00:00', value: 5 }], '2020-02-01')).toBe(5);
+  expect(valorNaData([{ data: '2020-02-01T00:00:00', valor: 5 }], '2020-02-01')).toBe(5);
 });

@@ -4,7 +4,7 @@ import { comparabilidade, AMPLITUDE_LIMIT, AMPLITUDE_LIMIT_ILEGIVEL } from './sc
 
 /** Série de fixture: só as amplitudes importam (spec §5, anexo). */
 function serie(id, min, max) {
-  return { id, data: [{ date: '2000-01-01', value: min }, { date: '2001-01-01', value: max }] };
+  return { id, dados: [{ data: '2000-01-01', valor: min }, { data: '2001-01-01', valor: max }] };
 }
 
 describe('seriesSpan', () => {
@@ -13,7 +13,7 @@ describe('seriesSpan', () => {
   });
 
   it('é 0 numa série de um ponto só', () => {
-    expect(seriesSpan({ id: 'x', data: [{ date: '2000-01-01', value: 5 }] })).toBe(0);
+    expect(seriesSpan({ id: 'x', dados: [{ data: '2000-01-01', valor: 5 }] })).toBe(0);
   });
 });
 
@@ -42,7 +42,7 @@ describe('amplitudeRatio', () => {
   });
 
   it('duas séries constantes convivem (razão 1)', () => {
-    expect(amplitudeRatio({ id: 'a', data: [] }, { id: 'b', data: [] })).toBe(1);
+    expect(amplitudeRatio({ id: 'a', dados: [] }, { id: 'b', dados: [] })).toBe(1);
   });
 });
 

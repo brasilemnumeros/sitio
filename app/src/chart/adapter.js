@@ -239,7 +239,7 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
         serie.applyOptions({ autoscaleInfoProvider: escalaDaOculta });
         if (oculta) ocultas.add(item.id); else ocultas.delete(item.id);
       }
-      serie.setData(paraPontosDaBiblioteca(item.series?.data ?? []));
+      serie.setData(paraPontosDaBiblioteca(item.series?.dados ?? []));
     }
     // §5 (2026-10-30) — a escala da ESQUERDA existe só quando alguma série está nela. Vem DEPOIS
     // da atribuição de `priceScaleId` acima e ANTES de qualquer saída antecipada: esconder uma
@@ -247,12 +247,12 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
     const temEsquerda = Object.values(atribuicao).includes('left');
     chart.priceScale('left').applyOptions({ visible: temEsquerda, borderVisible: temEsquerda });
     // "Há alguma barra na tela?" — é o que decide se a lib aceita mexer na janela.
-    temDado = itens.some((i) => (i.series?.data?.length ?? 0) > 0);
+    temDado = itens.some((i) => (i.series?.dados?.length ?? 0) > 0);
     // A grade de tempo do gráfico é a UNIÃO das séries + as âncoras do horizonte (é dela que a
     // lib monta a escala, e é ela que a primitiva das faixas usa para posicionar as datas).
     const tempos = new Set();
     for (const item of itens) {
-      for (const p of item.series?.data ?? []) tempos.add(emSegundos(p.date));
+      for (const p of item.series?.dados ?? []) tempos.add(emSegundos(p.data));
     }
     for (const iso of ancoras) tempos.add(emSegundos(iso));
     temposDoDado = [...tempos].sort((a, b) => a - b);

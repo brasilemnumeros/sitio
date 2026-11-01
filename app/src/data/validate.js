@@ -1,5 +1,8 @@
 /**
  * Validação do arquivo de série — o contrato é `sitio/docs/contrato-de-indicadores.md`.
+ * As chaves e os valores são em português (`unidade`, `dados`, `data`/`valor`): o arquivo é
+ * lido e publicado assim, sem camada de tradução.
+ *
  * Cada erro começa pelo CÓDIGO da regra (`C3`, `C11`…), porque o corpus de conformidade
  * (`dados/tests/contrato/`) carrega o código no nome do caso: é assim que os validadores de
  * Python e de JS provam que concordam.
@@ -15,28 +18,28 @@ export class SchemaError extends Error {
  *  todos os arquivos, não abrir um ramo novo (decisão de 2026-11-01). */
 export const SCHEMA_VERSION = 1;
 
-export const UNIT_TYPES = new Set(['percentage', 'number', 'currency']);
-export const GRANULARITIES = new Set(['daily', 'monthly', 'annual']);
+export const TIPOS_DE_UNIDADE = new Set(['percentual', 'numero', 'moeda']);
+export const GRANULARIDADES = new Set(['diaria', 'mensal', 'anual']);
 /** C4 — comparabilidade declarada: duas séries só dividem eixo y se o `eixo` for igual. */
 export const EIXOS = new Set(['percentual', 'reais', 'contagem', 'por-100-mil']);
-/** O `unit.type` que cada eixo obriga (C4). */
+/** O `unidade.tipo` que cada eixo obriga (C4). */
 export const TIPO_DO_EIXO = {
-  percentual: 'percentage',
-  reais: 'currency',
-  contagem: 'number',
-  'por-100-mil': 'number',
+  percentual: 'percentual',
+  reais: 'moeda',
+  contagem: 'numero',
+  'por-100-mil': 'numero',
 };
-/** C5 — o que o número É (≠ `granularity`, que diz de quanto em quanto tempo há ponto). */
+/** C5 — o que o número É (≠ `granularidade`, que diz de quanto em quanto tempo há ponto). */
 export const MEDIDAS = new Set(['nivel', 'acumulado-12m', 'variacao-anual', 'estoque', 'participacao']);
 export const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const ID = /^[a-z0-9-]+$/;
-const LOCALE = /^[a-z]{2}(-[A-Z]{2})?$/;
+const IDIOMA = /^[a-z]{2}(-[A-Z]{2})?$/;
 
 const CHAVES_SERIE = new Set([
-  'schema', 'id', 'unit', 'eixo', 'medida', 'granularity', 'source', 'sourceUrl', 'data',
+  'versao', 'id', 'unidade', 'eixo', 'medida', 'granularidade', 'fonte', 'urlFonte', 'dados',
 ]);
-const CHAVES_UNIDADE = new Set(['type', 'symbol', 'decimals', 'locale']);
-const CHAVES_PONTO = new Set(['date', 'value']);
+const CHAVES_UNIDADE = new Set(['tipo', 'simbolo', 'casas', 'idioma']);
+const CHAVES_PONTO = new Set(['data', 'valor']);
 
 const erro = (codigo, texto) => {
   throw new SchemaError(`${codigo}: ${texto}`);
@@ -51,128 +54,130 @@ function dataValida(iso) {
 }
 
 /**
- * Normaliza e valida uma unidade — C3/C3.1. `locale` é opcional.
- * @param {unknown} unit
- * @param {string} [where]
+ * Normaliza e valida uma unidade — C3/C3.1. `idioma` é opcional.
+ * @param {unknown} unidade
+ * @param {string} [onde]
  */
-export function validateUnit(unit, where = 'unit') {
-  if (unit === null || typeof unit !== 'object' || Array.isArray(unit)) {
-    erro('C3', `${where}: ausente ou não é objeto`);
+export function validateUnit(unidade, onde = 'unidade') {
+  if (unidade === null || typeof unidade !== 'object' || Array.isArray(unidade)) {
+    erro('C3', `${onde}: ausente ou não é objeto`);
   }
-  for (const chave of Object.keys(unit)) {
-    if (!CHAVES_UNIDADE.has(chave)) erro('C3', `${where}: campo desconhecido "${chave}"`);
+  for (const chave of Object.keys(unidade)) {
+    if (!CHAVES_UNIDADE.has(chave)) erro('C3', `${onde}: campo desconhecido "${chave}"`);
   }
-  if (!UNIT_TYPES.has(unit.type)) erro('C3', `${where}.type "${unit.type}" desconhecido`);
-  if (typeof unit.symbol !== 'string' || unit.symbol === '') {
-    erro('C3', `${where}.symbol ausente ou vazio`);
+  if (!TIPOS_DE_UNIDADE.has(unidade.tipo)) {
+    erro('C3', `${onde}.tipo "${unidade.tipo}" desconhecido`);
   }
-  if (!Number.isInteger(unit.decimals) || unit.decimals < 0) {
-    erro('C3', `${where}.decimals deve ser inteiro ≥ 0`);
+  if (typeof unidade.simbolo !== 'string' || unidade.simbolo === '') {
+    erro('C3', `${onde}.simbolo ausente ou vazio`);
   }
-  if (unit.locale !== undefined && (typeof unit.locale !== 'string' || !LOCALE.test(unit.locale))) {
-    erro('C3.1', `${where}.locale deve ser tag BCP 47 (ex.: pt-BR)`);
+  if (!Number.isInteger(unidade.casas) || unidade.casas < 0) {
+    erro('C3', `${onde}.casas deve ser inteiro ≥ 0`);
   }
-  return unit.locale === undefined
-    ? { type: unit.type, symbol: unit.symbol, decimals: unit.decimals }
-    : { type: unit.type, symbol: unit.symbol, decimals: unit.decimals, locale: unit.locale };
+  if (unidade.idioma !== undefined && (typeof unidade.idioma !== 'string' || !IDIOMA.test(unidade.idioma))) {
+    erro('C3.1', `${onde}.idioma deve ser tag BCP 47 (ex.: pt-BR)`);
+  }
+  return unidade.idioma === undefined
+    ? { tipo: unidade.tipo, simbolo: unidade.simbolo, casas: unidade.casas }
+    : { tipo: unidade.tipo, simbolo: unidade.simbolo, casas: unidade.casas, idioma: unidade.idioma };
 }
 
 /** Chave de unicidade do período (C11): dia, mês ou ano conforme a granularidade. */
-const chaveDoPeriodo = (date, granularity) => {
-  if (granularity === 'annual') return date.slice(0, 4);
-  if (granularity === 'monthly') return date.slice(0, 7);
-  return date;
+const chaveDoPeriodo = (data, granularidade) => {
+  if (granularidade === 'anual') return data.slice(0, 4);
+  if (granularidade === 'mensal') return data.slice(0, 7);
+  return data;
 };
 
 /**
  * Valida e normaliza uma série — o contrato inteiro (C1…C14).
- * @param {unknown} raw
+ * @param {unknown} bruto
  * @param {{expectedId?: string}} [options]
  */
-export function validateSeries(raw, { expectedId } = {}) {
-  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+export function validateSeries(bruto, { expectedId } = {}) {
+  if (bruto === null || typeof bruto !== 'object' || Array.isArray(bruto)) {
     erro('C1', 'série não é um objeto JSON');
   }
-  for (const chave of Object.keys(raw)) {
+  for (const chave of Object.keys(bruto)) {
     if (!CHAVES_SERIE.has(chave)) erro('C8.1', `campo desconhecido na raiz: "${chave}"`);
   }
-  if (raw.schema !== SCHEMA_VERSION) {
+  if (bruto.versao !== SCHEMA_VERSION) {
     erro(
       'C1',
-      `schema ${JSON.stringify(raw.schema)} desconhecido; este app entende o schema ${SCHEMA_VERSION}`,
+      `versao ${JSON.stringify(bruto.versao)} desconhecida; este app entende a versão ${SCHEMA_VERSION}`,
     );
   }
-  if (typeof raw.id !== 'string' || !ID.test(raw.id)) {
+  if (typeof bruto.id !== 'string' || !ID.test(bruto.id)) {
     erro('C2', `campo "id" ausente ou fora do padrão ${ID}`);
   }
-  if (expectedId !== undefined && raw.id !== expectedId) {
-    erro('C2', `veio o id "${raw.id}" mas o arquivo se chama "${expectedId}"`);
+  if (expectedId !== undefined && bruto.id !== expectedId) {
+    erro('C2', `veio o id "${bruto.id}" mas o arquivo se chama "${expectedId}"`);
   }
-  const unit = validateUnit(raw.unit, 'unit');
+  const unidade = validateUnit(bruto.unidade, 'unidade');
 
-  if (!EIXOS.has(raw.eixo)) {
-    erro('C4', `eixo ${JSON.stringify(raw.eixo)} desconhecido`);
+  if (!EIXOS.has(bruto.eixo)) {
+    erro('C4', `eixo ${JSON.stringify(bruto.eixo)} desconhecido`);
   }
-  if (TIPO_DO_EIXO[raw.eixo] !== unit.type) {
+  if (TIPO_DO_EIXO[bruto.eixo] !== unidade.tipo) {
     erro(
       'C4',
-      `eixo "${raw.eixo}" exige unit.type "${TIPO_DO_EIXO[raw.eixo]}", veio "${unit.type}"`,
+      `eixo "${bruto.eixo}" exige unidade.tipo "${TIPO_DO_EIXO[bruto.eixo]}", veio "${unidade.tipo}"`,
     );
   }
-  if (!MEDIDAS.has(raw.medida)) {
-    erro('C5', `medida ${JSON.stringify(raw.medida)} desconhecida`);
+  if (!MEDIDAS.has(bruto.medida)) {
+    erro('C5', `medida ${JSON.stringify(bruto.medida)} desconhecida`);
   }
-  if (!GRANULARITIES.has(raw.granularity)) {
-    erro('C6', `granularity ${JSON.stringify(raw.granularity)} desconhecida`);
+  if (!GRANULARIDADES.has(bruto.granularidade)) {
+    erro('C6', `granularidade ${JSON.stringify(bruto.granularidade)} desconhecida`);
   }
-  if (typeof raw.source !== 'string' || raw.source === '') {
-    erro('C7', 'campo "source" ausente');
+  if (typeof bruto.fonte !== 'string' || bruto.fonte === '') {
+    erro('C7', 'campo "fonte" ausente');
   }
-  if (raw.sourceUrl !== undefined) {
-    if (typeof raw.sourceUrl !== 'string' || !/^https:\/\/\S+$/.test(raw.sourceUrl)) {
-      erro('C7.1', 'sourceUrl deve ser URL https://');
+  if (bruto.urlFonte !== undefined) {
+    if (typeof bruto.urlFonte !== 'string' || !/^https:\/\/\S+$/.test(bruto.urlFonte)) {
+      erro('C7.1', 'urlFonte deve ser URL https://');
     }
   }
-  if (!Array.isArray(raw.data)) erro('C8', 'campo "data" deve ser uma lista');
-  if (raw.data.length === 0) erro('C8', 'campo "data" vazio');
+  if (!Array.isArray(bruto.dados)) erro('C8', 'campo "dados" deve ser uma lista');
+  if (bruto.dados.length === 0) erro('C8', 'campo "dados" vazio');
 
   const vistos = new Map();
   let anterior = null;
-  const data = raw.data.map((point, i) => {
-    if (point === null || typeof point !== 'object' || Array.isArray(point)) {
-      erro('C8', `data[${i}] não é um objeto`);
+  const dados = bruto.dados.map((ponto, i) => {
+    if (ponto === null || typeof ponto !== 'object' || Array.isArray(ponto)) {
+      erro('C8', `dados[${i}] não é um objeto`);
     }
-    for (const chave of Object.keys(point)) {
-      if (!CHAVES_PONTO.has(chave)) erro('C8.1', `data[${i}]: campo desconhecido "${chave}"`);
+    for (const chave of Object.keys(ponto)) {
+      if (!CHAVES_PONTO.has(chave)) erro('C8.1', `dados[${i}]: campo desconhecido "${chave}"`);
     }
-    if (typeof point.date !== 'string' || !dataValida(point.date)) {
-      erro('C9', `data[${i}]: "date" deve ser YYYY-MM-DD válido, veio ${JSON.stringify(point.date)}`);
+    if (typeof ponto.data !== 'string' || !dataValida(ponto.data)) {
+      erro('C9', `dados[${i}]: "data" deve ser YYYY-MM-DD válido, veio ${JSON.stringify(ponto.data)}`);
     }
-    if (typeof point.value !== 'number' || !Number.isFinite(point.value)) {
-      erro('C10', `data[${i}]: "value" deve ser número finito, veio ${JSON.stringify(point.value)}`);
+    if (typeof ponto.valor !== 'number' || !Number.isFinite(ponto.valor)) {
+      erro('C10', `dados[${i}]: "valor" deve ser número finito, veio ${JSON.stringify(ponto.valor)}`);
     }
-    const chave = chaveDoPeriodo(point.date, raw.granularity);
+    const chave = chaveDoPeriodo(ponto.data, bruto.granularidade);
     if (vistos.has(chave)) {
-      erro('C11', `data[${i}]: período "${chave}" repetido (também no ponto ${vistos.get(chave)})`);
+      erro('C11', `dados[${i}]: período "${chave}" repetido (também no ponto ${vistos.get(chave)})`);
     }
     vistos.set(chave, i);
-    if (anterior !== null && point.date <= anterior) {
-      erro('C12', `data[${i}]: "${point.date}" não é posterior a "${anterior}" (ordem ascendente)`);
+    if (anterior !== null && ponto.data <= anterior) {
+      erro('C12', `dados[${i}]: "${ponto.data}" não é posterior a "${anterior}" (ordem ascendente)`);
     }
-    anterior = point.date;
-    return { date: point.date, value: point.value };
+    anterior = ponto.data;
+    return { data: ponto.data, valor: ponto.valor };
   });
 
   const serie = {
-    schema: SCHEMA_VERSION,
-    id: raw.id,
-    unit,
-    eixo: raw.eixo,
-    medida: raw.medida,
-    granularity: raw.granularity,
-    source: raw.source,
-    data,
+    versao: SCHEMA_VERSION,
+    id: bruto.id,
+    unidade,
+    eixo: bruto.eixo,
+    medida: bruto.medida,
+    granularidade: bruto.granularidade,
+    fonte: bruto.fonte,
+    dados,
   };
-  if (raw.sourceUrl !== undefined) serie.sourceUrl = raw.sourceUrl;
+  if (bruto.urlFonte !== undefined) serie.urlFonte = bruto.urlFonte;
   return serie;
 }

@@ -55,14 +55,14 @@ describe('o contrato publicado em dados/ é o que o app valida (§6)', () => {
     for (const { arquivo, caminho } of arquivos) {
       const id = arquivo.replace(/\.json$/, '');
       const serie = validateSeries(JSON.parse(readFileSync(caminho, 'utf8')), { expectedId: id });
-      expect(serie.data.length, `${arquivo} sem pontos`).toBeGreaterThan(0);
+      expect(serie.dados.length, `${arquivo} sem pontos`).toBeGreaterThan(0);
     }
   });
 
   it('nenhuma série tem mês repetido (o defeito da MVG-R/CAGED, corrigido)', () => {
     for (const { arquivo, caminho } of arquivosDeSerie()) {
       const bruto = JSON.parse(readFileSync(caminho, 'utf8'));
-      const meses = bruto.data.map((p) => p.date.slice(0, 7));
+      const meses = bruto.dados.map((p) => p.data.slice(0, 7));
       expect(new Set(meses).size, `${arquivo} tem mês repetido`).toBe(meses.length);
     }
   });
@@ -79,8 +79,8 @@ describe('o contrato publicado em dados/ é o que o app valida (§6)', () => {
       const caminho = join(RAIZ_SERIES, ind.arquivo);
       const serie = JSON.parse(readFileSync(caminho, 'utf8'));
       // Antes de 2026-11-01 o catálogo repetia `unit` inteiro — e divergia em 8 de 13.
-      expect(ind.escala, `${ind.id}: escala do catálogo × unit.type da série`).toBe(serie.unit.type);
-      expect(ind, `${ind.id}: catálogo não deve duplicar a unidade`).not.toHaveProperty('unit');
+      expect(ind.escala, `${ind.id}: escala do catálogo × unidade.tipo da série`).toBe(serie.unidade.tipo);
+      expect(ind, `${ind.id}: catálogo não deve duplicar a unidade`).not.toHaveProperty('unidade');
     }
   });
 });

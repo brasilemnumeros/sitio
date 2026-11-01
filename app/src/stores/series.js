@@ -5,7 +5,7 @@ import { PALETA_PADRAO } from '../domain/color.js';
 /** O teto vem da PALETA, não do layout (§1): sem ciclo, não há 11ª cor. */
 export const LIMITE_SERIES = 10;
 
-/** @typedef {{id:string, name:string, unit:object, cor:string,
+/** @typedef {{id:string, name:string, unidade:object, cor:string,
  *             status:'carregando'|'ok'|'erro', series:object|null, error:string|null,
  *             oculta:boolean}} Item */
 
@@ -18,8 +18,8 @@ export const seriesStore = writable({ itens: [] });
 export const dataMaximaStore = derived(seriesStore, ({ itens }) => {
   let max = null;
   for (const item of itens) {
-    if (item.status !== 'ok' || !Array.isArray(item.series?.data)) continue;
-    for (const { date } of item.series.data) if (max === null || date > max) max = date;
+    if (item.status !== 'ok' || !Array.isArray(item.series?.dados)) continue;
+    for (const { data } of item.series.dados) if (max === null || data > max) max = data;
   }
   return max;
 });
@@ -38,7 +38,7 @@ const paraItem = (entry) => ({
   id: entry.id,
   name: entry.name,
   url: entry.datafile,
-  unit: entry.unit ?? null,
+  unidade: entry.unidade ?? null,
   cor: null,
   corPessoal: false,
   status: 'carregando',
@@ -56,7 +56,7 @@ const paraItem = (entry) => ({
  *  catálogo, e o id interno do JSON pode divergir do id do preset sem que a troca falhe. */
 const carregarItem = async (entry, { fetchImpl, expectedId } = {}) => {
   const series = await loadSeries(entry.datafile, { expectedId, fetchImpl });
-  escrever((itens) => itens.map((i) => (i.id === entry.id ? { ...i, status: 'ok', series, unit: series.unit, error: null } : i)));
+  escrever((itens) => itens.map((i) => (i.id === entry.id ? { ...i, status: 'ok', series, unidade: series.unidade, error: null } : i)));
 };
 
 const registrarFalha = (id, error) => {
@@ -125,7 +125,7 @@ export async function tentarNovamente(id, { fetchImpl } = {}) {
     // A unidade vem da SÉRIE, não do catálogo (§6) — igual ao caminho de `adicionarSerie`.
     // Sem isto, a MESMA série ficaria com unidade diferente conforme tivesse vindo pelo
     // add ou pela retentativa (R28).
-    escrever((itens) => itens.map((i) => (i.id === id ? { ...i, status: 'ok', series, unit: series.unit, error: null } : i)));
+    escrever((itens) => itens.map((i) => (i.id === id ? { ...i, status: 'ok', series, unidade: series.unidade, error: null } : i)));
   } catch (error) {
     escrever((itens) => itens.map((i) => (i.id === id ? { ...i, status: 'erro', error: error.message } : i)));
   }

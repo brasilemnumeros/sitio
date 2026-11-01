@@ -11,14 +11,14 @@
  * @returns {number}
  */
 export function seriesSpan(series) {
-  const values = series.data.map((p) => p.value);
+  const values = series.dados.map((p) => p.valor);
   if (values.length < 2) return 0;
   return Math.max(...values) - Math.min(...values);
 }
 
 /**
  * Razão entre a maior e a menor amplitude. É a régua da comparabilidade (§5) —
- * medida por magnitude, nunca por `unit.type`.
+ * medida por magnitude, nunca por `unidade.tipo`.
  * @param {Series} a
  * @param {Series} b
  * @returns {number}

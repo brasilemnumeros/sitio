@@ -18,8 +18,8 @@
 
   /** @type {{ celula: {estado:string, delta:number|null, pontos:number,
    *                     periodo:{inicio:string,fim:string}|null, motivo:string|null},
-   *            unit: object|null }} */
-  let { celula, unit = null } = $props();
+   *            unidade: object|null }} */
+  let { celula, unidade = null } = $props();
 
   // A distinção visual entre "calculável" e "parcial" NÃO é só a legenda embaixo: a parcial leva
   // também uma borda tracejada à esquerda, para que a diferença se leia antes de o olho chegar ao
@@ -39,11 +39,11 @@
 >
   {#if celula.estado === COBERTURA.CALCULAVEL}
     <span class="tabular-nums text-slate-800 dark:text-slate-100">
-      {valorNaUnidade(celula.delta, unit)}
+      {valorNaUnidade(celula.delta, unidade)}
     </span>
   {:else if celula.estado === COBERTURA.PARCIAL}
     <span class="tabular-nums text-slate-800 dark:text-slate-100">
-      {valorNaUnidade(celula.delta, unit)}
+      {valorNaUnidade(celula.delta, unidade)}
     </span>
     <em class="block text-[10px] text-slate-500 dark:text-slate-400">
       parcial {formatarPeriodo(celula.periodo)}

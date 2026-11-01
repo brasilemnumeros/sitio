@@ -173,14 +173,14 @@
 
   // §12.1 — o **distintivo de escala**: a classe de escala do indicador, que o catálogo declara
   // em `escala` (a unidade completa é dona da SÉRIE; aqui só a classe, que é o que a lista
-  // precisa antes de o dado chegar). O catálogo garante que `escala` == `unit.type` da série.
+  // precisa antes de o dado chegar). O catálogo garante que `escala` == `unidade.tipo` da série.
   // É a peça que mantém o aviso visível **antes** da escolha — dá para
   // varrer procurando o que não colide sem abrir ficha. NÃO é o veredito da §5 (esse exige a
   // amplitude da série e vive na ficha): é o rótulo da escala, curto por construção.
   const ESCALA = {
-    percentage: { texto: '%', rotulo: 'percentual' },
-    currency: { texto: 'R$', rotulo: 'moeda' },
-    number: { texto: 'nº', rotulo: 'contagem' },
+    percentual: { texto: '%', rotulo: 'percentual' },
+    moeda: { texto: 'R$', rotulo: 'moeda' },
+    numero: { texto: 'nº', rotulo: 'contagem' },
   };
   function distintivo(ind) {
     if (!ind?.escala) return null;

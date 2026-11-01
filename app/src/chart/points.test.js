@@ -3,8 +3,8 @@ import { paraPontosDaBiblioteca, paraISO } from './points.js';
 describe('paraPontosDaBiblioteca', () => {
   it('converte {date, value} para o tempo da lib (segundos UNIX UTC)', () => {
     const pontos = paraPontosDaBiblioteca([
-      { date: '2004-03-01', value: 42 },
-      { date: '2004-04-01', value: 43 },
+      { data: '2004-03-01', valor: 42 },
+      { data: '2004-04-01', valor: 43 },
     ]);
     expect(pontos).toEqual([
       { time: 1078099200, value: 42 },
@@ -14,15 +14,15 @@ describe('paraPontosDaBiblioteca', () => {
 
   it('ordena por tempo — a lib exige série ordenada', () => {
     const pontos = paraPontosDaBiblioteca([
-      { date: '2004-04-01', value: 43 },
-      { date: '2004-03-01', value: 42 },
+      { data: '2004-04-01', valor: 43 },
+      { data: '2004-03-01', valor: 42 },
     ]);
     expect(pontos.map((p) => p.value)).toEqual([42, 43]);
   });
 
   it('corta a data em 10 caracteres — o dado é diário, não horário', () => {
     // O caminho publicado já teve data com hora; sem o corte, o fuso desloca o ponto de dia.
-    const [p] = paraPontosDaBiblioteca([{ date: '2004-03-01T23:00:00-03:00', value: 1 }]);
+    const [p] = paraPontosDaBiblioteca([{ data: '2004-03-01T23:00:00-03:00', valor: 1 }]);
     expect(p.time).toBe(1078099200);
   });
 
@@ -34,9 +34,9 @@ describe('paraPontosDaBiblioteca', () => {
     // Medido: o build de DEV tem asserção (`data must be asc ordered by time`) que o de PROD não
     // tem. E a exceção aborta o laço de quem chama — as séries seguintes nunca desenham.
     const pontos = paraPontosDaBiblioteca([
-      { date: '2005-01-01', value: 3.2 },
-      { date: '2005-01-01', value: 3.1 }, // repetida
-      { date: '2005-02-01', value: 3.4 },
+      { data: '2005-01-01', valor: 3.2 },
+      { data: '2005-01-01', valor: 3.1 }, // repetida
+      { data: '2005-02-01', valor: 3.4 },
     ]);
     expect(pontos).toHaveLength(2);
     // Fica a ÚLTIMA leitura do mês: numa república, a posterior é a revisão.
@@ -45,9 +45,9 @@ describe('paraPontosDaBiblioteca', () => {
 
   it('duplicata ESPALHADA também cai — não é só a vizinha', () => {
     const pontos = paraPontosDaBiblioteca([
-      { date: '2005-01-01', value: 1 },
-      { date: '2010-01-01', value: 2 },
-      { date: '2005-01-01', value: 9 }, // repetida, fora de ordem
+      { data: '2005-01-01', valor: 1 },
+      { data: '2010-01-01', valor: 2 },
+      { data: '2005-01-01', valor: 9 }, // repetida, fora de ordem
     ]);
     expect(pontos.map((p) => p.value)).toEqual([9, 2]);
   });

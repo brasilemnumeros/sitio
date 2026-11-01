@@ -8,10 +8,10 @@ import {
 import { clearSeriesCache } from '../data/series.js';
 import { PALETA_PADRAO } from '../domain/color.js';
 
-const entrada = (id) => ({ id, name: `Indicador ${id}`, datafile: `https://x/${id}.json`, unit: { type: 'percentage', symbol: '%', decimals: 2 } });
+const entrada = (id) => ({ id, name: `Indicador ${id}`, datafile: `https://x/${id}.json`, unidade: { tipo: 'percentual', simbolo: '%', casas: 2 } });
 const okSerie = (id) => async () => ({
   ok: true, status: 200,
-  json: async () => ({ schema: 1, id, unit: { type: 'percentage', symbol: '%', decimals: 2 }, eixo: 'percentual', medida: 'nivel', granularity: 'monthly', source: 'fonte', data: [{ date: '2020-01-01', value: 1 }] }),
+  json: async () => ({ versao: 1, id, unidade: { tipo: 'percentual', simbolo: '%', casas: 2 }, eixo: 'percentual', medida: 'nivel', granularidade: 'mensal', fonte: 'fonte', dados: [{ data: '2020-01-01', valor: 1 }] }),
 });
 
 // O cache de `loadSeries` é por URL e vive no módulo — sem zerá-lo, um sucesso de um teste
@@ -25,9 +25,9 @@ describe('dataMaximaStore (§8 — a data de referência vem do estado)', () => 
     const duasDatas = async () => ({
       ok: true, status: 200,
       json: async () => ({
-        schema: 1, id: 'a', unit: { type: 'percentage', symbol: '%', decimals: 2 },
-        eixo: 'percentual', medida: 'nivel', granularity: 'monthly', source: 'fonte',
-        data: [{ date: '2020-01-01', value: 1 }, { date: '2021-05-01', value: 2 }],
+        versao: 1, id: 'a', unidade: { tipo: 'percentual', simbolo: '%', casas: 2 },
+        eixo: 'percentual', medida: 'nivel', granularidade: 'mensal', fonte: 'fonte',
+        dados: [{ data: '2020-01-01', valor: 1 }, { data: '2021-05-01', valor: 2 }],
       }),
     });
     await adicionarSerie(entrada('a'), { fetchImpl: duasDatas });
@@ -71,13 +71,13 @@ describe('seriesStore', () => {
     // O catálogo carrega uma unidade TRANSITÓRIA; quem manda é a série (§6).
     // As duas unidades são de propósito DIFERENTES — com `entrada()`/`okSerie()` iguais o
     // teste passaria sem provar nada.
-    const doCatalogo = { type: 'number', symbol: '', decimals: 0 };
-    const daSerie = { type: 'percentage', symbol: '%', decimals: 2 };
-    await adicionarSerie({ ...entrada('b'), unit: doCatalogo }, { fetchImpl: async () => ({ ok: false, status: 500, json: async () => ({}) }) });
-    expect(get(seriesStore).itens[0].unit).toEqual(doCatalogo);   // ainda a do catálogo
+    const doCatalogo = { tipo: 'numero', simbolo: '', casas: 0 };
+    const daSerie = { tipo: 'percentual', simbolo: '%', casas: 2 };
+    await adicionarSerie({ ...entrada('b'), unidade: doCatalogo }, { fetchImpl: async () => ({ ok: false, status: 500, json: async () => ({}) }) });
+    expect(get(seriesStore).itens[0].unidade).toEqual(doCatalogo);   // ainda a do catálogo
 
     await tentarNovamente('b', { fetchImpl: okSerie('b') });
-    expect(get(seriesStore).itens[0].unit).toEqual(daSerie);      // agora a da SÉRIE
+    expect(get(seriesStore).itens[0].unidade).toEqual(daSerie);      // agora a da SÉRIE
   });
 
   it('o override de cor sobrevive à remoção de outra série — a chave é o id (§1)', async () => {

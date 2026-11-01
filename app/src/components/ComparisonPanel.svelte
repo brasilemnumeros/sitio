@@ -84,7 +84,7 @@
 
               {#if item.status === 'ok' && item.series}
                 {#each mandatos as m (m.id)}
-                  <Celula celula={deltaNoMandato(item.series, m)} unit={item.unit ?? item.series.unit} />
+                  <Celula celula={deltaNoMandato(item.series, m)} unidade={item.unidade ?? item.series.unidade} />
                 {/each}
               {:else}
                 <!-- §9.3 — uma série que ainda não tem dado NÃO some da matriz: ela diz o estado. -->

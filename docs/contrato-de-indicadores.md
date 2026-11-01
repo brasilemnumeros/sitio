@@ -9,6 +9,9 @@ código (`C1`, `C2`…) citado nos dois validadores e no corpus de conformidade.
 o código divergirem, **este documento vale** — e a divergência é defeito a corrigir no mesmo
 commit, não interpretação.
 
+**Chaves e valores são em português.** O arquivo é lido e publicado nessa forma, sem camada de
+tradução: `unidade`, `granularidade`, `fonte`, `dados`, `data`, `valor`.
+
 Não confundir com o **catálogo** (`sitio/app/src/data/indicadores.json`): o catálogo é
 apresentação (nome, grupo, descrição, tipo de gráfico, escala, caminho do arquivo). O arquivo da
 série descreve **o dado**.
@@ -27,17 +30,17 @@ dados/indicadores/<familia>/<id>.json
 
 ```json
 {
-  "schema": 1,
+  "versao": 1,
   "id": "ipca-acum-12m",
-  "unit": { "type": "percentage", "symbol": "%", "decimals": 2 },
+  "unidade": { "tipo": "percentual", "simbolo": "%", "casas": 2 },
   "eixo": "percentual",
   "medida": "acumulado-12m",
-  "granularity": "monthly",
-  "source": "IBGE",
-  "sourceUrl": "https://sidra.ibge.gov.br/tabela/1737",
-  "data": [
-    { "date": "1995-01-01", "value": 631.54 },
-    { "date": "1995-02-01", "value": 426.83 }
+  "granularidade": "mensal",
+  "fonte": "IBGE",
+  "urlFonte": "https://sidra.ibge.gov.br/tabela/1737",
+  "dados": [
+    { "data": "1995-01-01", "valor": 631.54 },
+    { "data": "1995-02-01", "valor": 426.83 }
   ]
 }
 ```
@@ -46,18 +49,18 @@ dados/indicadores/<familia>/<id>.json
 
 ### Identidade e versão
 
-- **C1 — raiz.** O arquivo é um objeto JSON. `schema` é o inteiro `1`. Versão desconhecida é
+- **C1 — raiz.** O arquivo é um objeto JSON. `versao` é o inteiro `1`. Versão desconhecida é
   erro, nunca tentativa de leitura parcial.
 - **C2 — id.** `id` é texto, casa com `^[a-z0-9-]+$` e é **igual ao nome do arquivo** sem
   `.json`. Mudar o id é mudar a URL pública (`?series=<id>`), não renomear arquivo.
 
 ### Unidade
 
-- **C3 — unit.** Objeto com exatamente `type`, `symbol`, `decimals`.
-  - `type` ∈ `percentage` | `number` | `currency`.
-  - `symbol` é texto não vazio. `''` é erro: a unidade tem de aparecer na tela.
-  - `decimals` é inteiro ≥ 0 (quantas casas o produto exibe/arredonda).
-- **C3.1 — locale.** Opcional; quando presente, é uma tag BCP 47 (`pt-BR`). Existe para
+- **C3 — unidade.** Objeto com exatamente `tipo`, `simbolo`, `casas`.
+  - `tipo` ∈ `percentual` | `numero` | `moeda`.
+  - `simbolo` é texto não vazio. `''` é erro: a unidade tem de aparecer na tela.
+  - `casas` é inteiro ≥ 0 (quantas casas o produto exibe/arredonda).
+- **C3.1 — idioma.** Opcional; quando presente, é uma tag BCP 47 (`pt-BR`). Existe para
   formatação de moeda/número; não altera o valor.
 
 ### Significado do número
@@ -66,12 +69,12 @@ dados/indicadores/<familia>/<id>.json
   **só podem dividir o mesmo eixo y** se tiverem o mesmo `eixo`. É declaração, não inferência
   por magnitude (ADR 0001, D7).
 
-  | `eixo` | `unit.type` obrigatório | exemplo |
+  | `eixo` | `unidade.tipo` obrigatório | exemplo |
   |---|---|---|
-  | `percentual` | `percentage` | Selic, IPCA, PIB |
-  | `reais` | `currency` | MVG-R |
-  | `contagem` | `number` | CAGED, população |
-  | `por-100-mil` | `number` | homicídios |
+  | `percentual` | `percentual` | Selic, IPCA, PIB |
+  | `reais` | `moeda` | MVG-R |
+  | `contagem` | `numero` | CAGED, população |
+  | `por-100-mil` | `numero` | homicídios |
 
 - **C5 — medida.** `medida` diz **o que o número é**:
 
@@ -83,33 +86,34 @@ dados/indicadores/<familia>/<id>.json
   | `estoque` | total num instante (empregos, habitantes) |
   | `participacao` | parte de um todo, em % |
 
-  `granularity` diz **de quanto em quanto tempo** há ponto; `medida` diz **o que o ponto
+  `granularidade` diz **de quanto em quanto tempo** há ponto; `medida` diz **o que o ponto
   significa**. "Acumulado 12 meses" é medida, não granularidade.
 
 ### Periodicidade
 
-- **C6 — granularity.** ∈ `daily` | `monthly` | `annual`. É o espaçamento das datas, não o
+- **C6 — granularidade.** ∈ `diaria` | `mensal` | `anual`. É o espaçamento das datas, não o
   intervalo de publicação.
 
 ### Proveniência
 
-- **C7 — source.** Texto não vazio, o nome da instituição/fonte (`IBGE`, `Banco Central do
+- **C7 — fonte.** Texto não vazio, o nome da instituição/fonte (`IBGE`, `Banco Central do
   Brasil`).
-- **C7.1 — sourceUrl.** Opcional; URL `https://` do recorte exato (tabela, série SGS). Quando
+- **C7.1 — urlFonte.** Opcional; URL `https://` do recorte exato (tabela, série SGS). Quando
   existir, é o caminho para auditar o número.
 
 ### Pontos
 
-- **C8 — data.** Lista **não vazia**. Cada item tem exatamente `date` e `value`.
-- **C8.1 — sem campos extras.** Campo desconhecido no ponto ou na raiz (fora de `locale`) é
-  erro. Em particular, **`rate` não faz parte do contrato** (era a convivência do formato antigo).
-- **C9 — date.** Texto `YYYY-MM-DD`, dígitos ASCII, data de calendário válida.
+- **C8 — dados.** Lista **não vazia**. Cada item tem exatamente `data` e `valor`.
+- **C8.1 — sem campos extras.** Campo desconhecido no ponto ou na raiz (fora de `idioma`) é
+  erro. Em particular, **`rate` não faz parte do contrato** (era a convivência do formato
+  antigo).
+- **C9 — data.** Texto `YYYY-MM-DD`, dígitos ASCII, data de calendário válida.
   - A convenção de dia é **uma por série** (hoje: dia 01; `homicidios-armas-fogo-anual` usa
     dia 15) e não muda sem revisão de dados: mudar o dia gera diff falso em toda a série.
   - A data é o **início** do período de referência.
-- **C10 — value.** Número finito (`int` ou `float`, nunca booleano, nunca `null`, nunca texto).
-- **C11 — um ponto por período.** Não há dois pontos no mesmo período, onde período é `date`
-  (daily), `YYYY-MM` (monthly) ou `YYYY` (annual).
+- **C10 — valor.** Número finito (`int` ou `float`, nunca booleano, nunca `null`, nunca texto).
+- **C11 — um ponto por período.** Não há dois pontos no mesmo período, onde período é `data`
+  (diaria), `AAAA-MM` (mensal) ou `AAAA` (anual).
 - **C12 — ordem.** Datas **estritamente ascendentes**. Consumidores podem assumir isso e fazer
   busca binária; produtor que publicar fora de ordem reprova.
 
@@ -133,14 +137,14 @@ dados/indicadores/<familia>/<id>.json
 - **Dado real:** os 13 arquivos de `dados/indicadores/` passam em `python3 scripts/validar.py`
   e em `npm --prefix app test` (o teste de integração lê o repo `dados`).
 - **Catálogo × série:** o teste de integração confere que `escala` do catálogo é
-  `unit.type` da série — o catálogo não duplica unidade nem medida.
+  `unidade.tipo` da série — o catálogo não duplica unidade nem medida.
 
 ## Versão
 
-- Existe **uma** versão do formato: `schema: 1`. Não há convivência entre versões — o projeto
+- Existe **uma** versão do formato: `versao: 1`. Não há convivência entre versões — o projeto
   não carrega compatibilidade retroativa (decisão de 2026-11-01).
 - Mudança de forma ou de semântica **migra os 13 arquivos** no mesmo conjunto de commits, com
   os dois validadores, o corpus e este documento. Se um dia houver uma geração nova do
-  formato, ela substitui a atual: `schema: 2` só existe se `1` deixar de existir.
-- O app entende o `schema` que declara em `validate.js` (`SCHEMA_VERSION`); arquivo com outro
+  formato, ela substitui a atual: `versao: 2` só existe se `1` deixar de existir.
+- O app entende a `versao` que declara em `validate.js` (`SCHEMA_VERSION`); arquivo com outro
   valor é `SchemaError` em voz alta — não é leitura parcial.

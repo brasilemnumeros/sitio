@@ -4,7 +4,7 @@ import bruto from './indicadores.json';
 const CHART_TYPES = new Set(['line', 'bar']);
 /** As três CLASSES DE ESCALA do distintivo da busca (§12.1). A unidade completa (símbolo,
  *  casas, locale) é dona da SÉRIE — aqui fica só o que a lista precisa antes do dado chegar. */
-const ESCALAS = new Set(['percentage', 'currency', 'number']);
+const ESCALAS = new Set(['percentual', 'moeda', 'numero']);
 /** `arquivo` é o caminho dentro do repo `dados/`, nunca URL: a base é resolvida na leitura. */
 const ARQUIVO = /^[a-z0-9-]+\/[a-z0-9-]+\.json$/;
 
@@ -16,7 +16,7 @@ const ARQUIVO = /^[a-z0-9-]+\/[a-z0-9-]+\.json$/;
  * @property {string} arquivo   caminho relativo em `dados/` (fonte)
  * @property {string} datafile  URL resolvida contra a base (é o que stores e componentes usam)
  * @property {'line'|'bar'} chartType
- * @property {'percentage'|'currency'|'number'} escala
+ * @property {'percentual'|'moeda'|'numero'} escala
  */
 
 /**
@@ -59,7 +59,7 @@ export function validateCatalog(raw, { base = __BASE_DADOS__ } = {}) {
       throw new SchemaError(`${where}.chartType deve ser "line" ou "bar", veio ${JSON.stringify(ind.chartType)}`);
     }
     if (!ESCALAS.has(ind.escala)) {
-      throw new SchemaError(`${where}.escala deve ser percentage|currency|number, veio ${JSON.stringify(ind.escala)}`);
+      throw new SchemaError(`${where}.escala deve ser percentual|moeda|numero, veio ${JSON.stringify(ind.escala)}`);
     }
     // PRESERVA o resto do registro (R16 emendado): `description` e afins são curadoria de
     // APRESENTAÇÃO e pertencem ao catálogo (§6) — descartá-los em silêncio seria perda

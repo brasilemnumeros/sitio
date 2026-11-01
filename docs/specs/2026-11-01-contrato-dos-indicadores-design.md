@@ -20,7 +20,7 @@ Descartadas: JSON Schema (não expressa mês repetido/id/ordem e adicionaria `aj
 
 ## Decisões
 
-- **Schema 1 (versão única)**: some o campo `rate` (o IPCA já não o publica), entram `eixo` e
+- **`versao: 1` (versão única)**: some o campo `rate` (o IPCA já não o publica), entram `eixo` e
   `medida`; validação estrita (campo desconhecido é erro).
 - **`eixo`** (`percentual`, `reais`, `contagem`, `por-100-mil`) é a comparabilidade declarada;
   o `unit.type` obrigatório por eixo está na tabela do contrato.

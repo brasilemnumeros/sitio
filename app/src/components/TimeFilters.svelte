@@ -7,7 +7,7 @@
   // isso não há — e não pode haver — nenhum import de `chart/` aqui: o gráfico é espelho,
   // não dono do estado.
   //
-  // A data de referência vem do ESTADO (§8): a última data de `item.series.data` entre as
+  // A data de referência vem do ESTADO (§8): a última data de `item.series.dados` entre as
   // séries com `status === 'ok'` em `$seriesStore.itens`. Nunca se pergunta ao gráfico.
   import { seriesStore, dataMaximaStore } from '../stores/series.js';
   import { viewportStore, definirJanela, resetarJanela } from '../stores/viewport.js';
@@ -35,8 +35,8 @@
   let dataMinima = $derived.by(() => {
     let min = null;
     for (const item of itens) {
-      if (item.status !== 'ok' || !Array.isArray(item.series?.data)) continue;
-      for (const { date } of item.series.data) {
+      if (item.status !== 'ok' || !Array.isArray(item.series?.dados)) continue;
+      for (const { data } of item.series.dados) {
         if (min === null || date < min) min = date;
       }
     }

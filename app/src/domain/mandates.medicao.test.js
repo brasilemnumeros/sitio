@@ -12,19 +12,19 @@ const governos = JSON.parse(
 const MANDATOS = governos.mandatos.filter((m) => m.rotulo !== 'FHC I'); // 8 colunas da §7.3
 
 const GRANULARIDADE = {
-  'caged-total-mensal': 'monthly',
-  'homicidios-anual': 'annual',
-  'homicidios-armas-fogo-anual': 'annual',
-  'proporcao-homicidios-armas-fogo-anual': 'annual',
-  'igpm-acum-12m': 'monthly',
-  'ipca-acum-12m': 'monthly',
-  'mvgr-nominal': 'monthly',
-  'mvgr-real': 'monthly',
-  'pib-real-anual': 'annual',
-  'populacao-total-anual': 'annual',
-  'populacao-variacao-anual': 'annual',
-  'selic-meta-acum-12m': 'monthly',
-  'selic-over-acum-12m': 'monthly',
+  'caged-total-mensal': 'mensal',
+  'homicidios-anual': 'anual',
+  'homicidios-armas-fogo-anual': 'anual',
+  'proporcao-homicidios-armas-fogo-anual': 'anual',
+  'igpm-acum-12m': 'mensal',
+  'ipca-acum-12m': 'mensal',
+  'mvgr-nominal': 'mensal',
+  'mvgr-real': 'mensal',
+  'pib-real-anual': 'anual',
+  'populacao-total-anual': 'anual',
+  'populacao-variacao-anual': 'anual',
+  'selic-meta-acum-12m': 'mensal',
+  'selic-over-acum-12m': 'mensal',
 };
 
 function serieReal(id) {
@@ -40,8 +40,8 @@ function serieReal(id) {
       // Schema 2: cada ponto tem só `date` e `value` (o `rate` de convivência saiu).
       return {
         id,
-        granularity: GRANULARIDADE[id],
-        data: bruto.data.map((p) => ({ date: p.date, value: p.value })),
+        granularidade: GRANULARIDADE[id],
+        dados: bruto.dados.map((p) => ({ data: p.data, valor: p.valor })),
       };
     }
   }
@@ -107,7 +107,7 @@ describe('medição da §7.3 sobre os dados reais', () => {
       const s = serieReal(id);
       for (const m of MANDATOS.filter((x) => !x.emCurso)) {
         const pontos = deltaNoMandato(s, m).pontos;
-        if (pontos < pontosEsperados(s.granularity, m)) abaixo.push(`${id}|${m.rotulo}`);
+        if (pontos < pontosEsperados(s.granularidade, m)) abaixo.push(`${id}|${m.rotulo}`);
       }
     }
     expect(abaixo).toHaveLength(18);

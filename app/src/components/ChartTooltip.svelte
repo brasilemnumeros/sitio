@@ -23,8 +23,8 @@
   const cursor = $derived($cursorStore);
   const itens = $derived($seriesStore.itens.filter((i) => !i.oculta && i.status === 'ok'));
 
-  const valorDe = (item) => valorNaData(item.series?.data ?? [], cursor.data);
-  const unidadeDe = (item) => item.series?.unit ?? item.unit;
+  const valorDe = (item) => valorNaData(item.series?.dados ?? [], cursor.data);
+  const unidadeDe = (item) => item.series?.unidade ?? item.unidade;
   /** Compacto na tela (`R$ 216 mi`), EXATO no `title` — a caixa ganha largura sem perder o dado. */
   const textoDoValor = (item) => {
     const v = valorDe(item);

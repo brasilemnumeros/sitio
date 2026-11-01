@@ -6,8 +6,8 @@ const CATALOGO = {
   schema: 1,
   groups: { monetary: { name: '🏦 Política Monetária' }, inflation: { name: '📈 Inflação' } },
   indicators: [
-    { id: 'selic-meta-acum-12m', name: 'Taxa Selic Meta (%)', group: 'monetary', arquivo: 'selic/selic-meta-acum-12m.json', escala: 'percentage', chartType: 'line' },
-    { id: 'ipca-acum-12m', name: 'IPCA (%)', group: 'inflation', arquivo: 'ipca/ipca-acum-12m.json', escala: 'percentage', chartType: 'line' },
+    { id: 'selic-meta-acum-12m', name: 'Taxa Selic Meta (%)', group: 'monetary', arquivo: 'selic/selic-meta-acum-12m.json', escala: 'percentual', chartType: 'line' },
+    { id: 'ipca-acum-12m', name: 'IPCA (%)', group: 'inflation', arquivo: 'ipca/ipca-acum-12m.json', escala: 'percentual', chartType: 'line' },
   ],
 };
 

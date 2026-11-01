@@ -48,7 +48,7 @@ function fixture(idsDoCatalogo) {
       arquivo: `g/${id}.json`,
       datafile: `data:${id}`,
       chartType: 'line',
-      escala: 'percentage',
+      escala: 'percentual',
     })),
     error: null,
   });
@@ -56,14 +56,14 @@ function fixture(idsDoCatalogo) {
     if (url.startsWith('data:')) {
       const id = url.slice('data:'.length);
       return resposta({
-        schema: 1,
+        versao: 1,
         id,
-        unit: { type: 'percentage', symbol: '%', decimals: 2 },
+        unidade: { tipo: 'percentual', simbolo: '%', casas: 2 },
         eixo: 'percentual',
         medida: 'nivel',
-        granularity: 'monthly',
-        source: 'fonte',
-        data: [{ date: '2020-01-01', value: 1 }],
+        granularidade: 'mensal',
+        fonte: 'fonte',
+        dados: [{ data: '2020-01-01', valor: 1 }],
       });
     }
     throw new Error(`url inesperada no fixture: ${url}`);

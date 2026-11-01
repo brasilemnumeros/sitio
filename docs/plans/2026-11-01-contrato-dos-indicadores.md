@@ -20,7 +20,7 @@
 3. **Validador JS** — `validate.js` com códigos de regra, estrito, ordem/unicidade, calendário;
    `SCHEMA_VERSION = 2`. ✅ (testes, inclusive o corpus)
 4. **Validador Python** — mesmas regras e códigos; testes com o corpus. ✅
-5. **Dados** — 13 arquivos: `schema: 1`, `eixo`, `medida`, sem `rate`. ✅
+5. **Dados** — 13 arquivos: `versao: 1`, `eixo`, `medida`, sem `rate`. ✅
 6. **App** — `Ficha` mostra `medida`; testes de fixture atualizados. ✅
 7. **Docs e CI** — `AGENTS.md` dos dois repos; checkout do `dados` antes dos testes de unidade. ✅
 8. **Verificação** — build, Vitest, pytest, E2E, analytics.

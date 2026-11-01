@@ -62,9 +62,9 @@
 
   let jaNoGrafico = $derived($seriesStore.itens.some((i) => i.id === indicador?.id));
 
-  const TIPO = { percentage: 'percentual', number: 'contagem', currency: 'moeda' };
-  const GRANULARIDADE = { daily: 'diária', monthly: 'mensal', annual: 'anual' };
-  /** C5 do contrato — o que o número É. `granularity` diz de quanto em quanto tempo há ponto. */
+  const TIPO = { percentual: 'percentual', numero: 'contagem', moeda: 'moeda' };
+  const GRANULARIDADE = { diaria: 'diária', mensal: 'mensal', anual: 'anual' };
+  /** C5 do contrato — o que o número É. `granularidade` diz de quanto em quanto tempo há ponto. */
   const MEDIDA = {
     nivel: 'valor no período',
     'acumulado-12m': 'acumulado em 12 meses',
@@ -81,9 +81,9 @@
   };
 
   let periodo = $derived.by(() => {
-    const d = estado.series?.data;
+    const d = estado.series?.dados;
     if (!d || d.length === 0) return null;
-    return `${dataBr(d[0].date)} – ${dataBr(d[d.length - 1].date)}`;
+    return `${dataBr(d[0].data)} – ${dataBr(d[d.length - 1].data)}`;
   });
 </script>
 
@@ -114,14 +114,14 @@
         <div class="flex justify-between gap-3">
           <dt class="text-slate-500 dark:text-slate-400">Unidade</dt>
           <dd class="text-right text-slate-700 dark:text-slate-200">
-            {estado.series.unit.symbol}
-            <span class="text-slate-400 dark:text-slate-500">({TIPO[estado.series.unit.type]})</span>
+            {estado.series.unidade.simbolo}
+            <span class="text-slate-400 dark:text-slate-500">({TIPO[estado.series.unidade.tipo]})</span>
           </dd>
         </div>
         <div class="flex justify-between gap-3">
           <dt class="text-slate-500 dark:text-slate-400">Granularidade</dt>
           <dd class="text-right text-slate-700 dark:text-slate-200">
-            {GRANULARIDADE[estado.series.granularity]}
+            {GRANULARIDADE[estado.series.granularidade]}
           </dd>
         </div>
         <div class="flex justify-between gap-3">
@@ -137,7 +137,7 @@
         <div class="flex justify-between gap-3">
           <dt class="text-slate-500 dark:text-slate-400">Pontos</dt>
           <dd class="text-right text-slate-700 dark:text-slate-200">
-            {numero(estado.series.data.length)}
+            {numero(estado.series.dados.length)}
           </dd>
         </div>
         <div class="flex justify-between gap-3">

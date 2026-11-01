@@ -19,9 +19,9 @@ const ymd = (date) => date.slice(0, 10);
 export function pontosNoMandato(series, mandato) {
   const inicio = ymd(mandato.inicio);
   const fim = mandato.fim ? ymd(mandato.fim) : '9999-12-31';
-  return series.data
-    .filter((p) => ymd(p.date) >= inicio && ymd(p.date) <= fim)
-    .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  return series.dados
+    .filter((p) => ymd(p.data) >= inicio && ymd(p.data) <= fim)
+    .sort((a, b) => (a.data < b.data ? -1 : a.data > b.data ? 1 : 0));
 }
 
 /**
@@ -29,16 +29,16 @@ export function pontosNoMandato(series, mandato) {
  * É a régua da cobertura (§7.3.5): "abaixo do esperado para a própria granularidade".
  * `null` para mandato em curso — não há período fechado para comparar.
  */
-export function pontosEsperados(granularity, mandato) {
+export function pontosEsperados(granularidade, mandato) {
   if (mandato.emCurso || mandato.fim === null) return null;
-  if (granularity === 'annual') {
+  if (granularidade === 'anual') {
     return Number(mandato.fim.slice(0, 4)) - Number(mandato.inicio.slice(0, 4)) + 1;
   }
-  if (granularity === 'monthly') {
+  if (granularidade === 'mensal') {
     const meses = (d) => Number(d.slice(0, 4)) * 12 + Number(d.slice(5, 7));
     return meses(mandato.fim) - meses(mandato.inicio) + 1;
   }
-  return null; // 'daily': sem régua declarada nesta camada
+  return null; // 'diaria': sem régua declarada nesta camada
 }
 
 /**
@@ -69,9 +69,9 @@ export function deltaNoMandato(series, mandato) {
   if (pontos.length === 1) {
     return { estado: COBERTURA.PONTO_UNICO, delta: null, pontos: 1, periodo: null, motivo: null };
   }
-  const periodo = { inicio: pontos[0].date, fim: pontos[pontos.length - 1].date };
-  const delta = pontos[pontos.length - 1].value - pontos[0].value;
-  const esperados = pontosEsperados(series.granularity, mandato);
+  const periodo = { inicio: pontos[0].data, fim: pontos[pontos.length - 1].data };
+  const delta = pontos[pontos.length - 1].valor - pontos[0].valor;
+  const esperados = pontosEsperados(series.granularidade, mandato);
   const completa = esperados !== null && pontos.length >= esperados;
   return {
     estado: completa ? COBERTURA.CALCULAVEL : COBERTURA.PARCIAL,
@@ -83,8 +83,8 @@ export function deltaNoMandato(series, mandato) {
 }
 
 function motivoDaAusencia(series, mandato) {
-  if (series.data.length === 0) return 'série sem dados';
-  const datas = series.data.map((p) => p.date).sort();
+  if (series.dados.length === 0) return 'série sem dados';
+  const datas = series.dados.map((p) => p.data).sort();
   const primeira = datas[0];
   const ultima = datas[datas.length - 1];
   const inicio = ymd(mandato.inicio);

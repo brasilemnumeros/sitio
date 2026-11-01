@@ -117,8 +117,8 @@ test('com série carregando o shell ainda não existe; ele aparece quando o dado
 
 test('o dado local carrega: o catálogo traz os 7 grupos', async ({ page }, testInfo) => {
   await abrirApp(page);
-  // O middleware serve `/indicators.json` do repo local com o `datafile` reescrito (vite.config.js).
-  // Se o catálogo não carregasse, a cascata da busca viria sem grupos.
+  // O catálogo é embutido no bundle desde 2026-11-01 (não há `/indicators.json`).
+  // Se ele não carregasse, a cascata da busca viria sem grupos.
   await page.getByRole('button', { name: 'Buscar indicador…' }).first().click();
   // O controle dos grupos tem DUAS realizações (§12.1): a coluna 1 da cascata (desktop, uma
   // lista) e a fileira de chips (celular, um `role="group"` — a coluna está `md:block`, logo

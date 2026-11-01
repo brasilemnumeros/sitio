@@ -1,17 +1,18 @@
 import { writable, get } from 'svelte/store';
-import { loadCatalog } from '../data/catalog.js';
+import { validateCatalog, catalogoEmbutido } from '../data/catalog.js';
 
 const inicial = { status: 'idle', groups: {}, indicators: [], error: null };
 
 /** Camada 2 — não conhece a Lightweight Charts nem o DOM (§8). */
 export const catalogStore = writable(inicial);
 
-/** Ação nomeada: única forma de escrever no store (§8). */
-export async function carregarCatalogo({ url, fetchImpl } = {}) {
+/** Ação nomeada: única forma de escrever no store (§8). `dados` é injetável para os testes;
+ *  em produção o catálogo é o `indicadores.json` importado no bundle. */
+export function carregarCatalogo({ dados } = {}) {
   if (get(catalogStore).status === 'loading' || get(catalogStore).status === 'ready') return;
   catalogStore.set({ ...inicial, status: 'loading' });
   try {
-    const { groups, indicators } = await loadCatalog({ url, fetchImpl });
+    const { groups, indicators } = dados ? validateCatalog(dados) : catalogoEmbutido();
     catalogStore.set({ status: 'ready', groups, indicators, error: null });
   } catch (error) {
     catalogStore.set({ ...inicial, status: 'error', error: error.message });

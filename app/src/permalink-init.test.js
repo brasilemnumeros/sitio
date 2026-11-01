@@ -32,23 +32,27 @@ function janelaFalsa(search = '') {
 const resposta = (body) => ({ ok: true, status: 200, json: async () => body });
 
 /**
- * `fetchImpl` de FIXTURE, com URL `data:` (evita ter de limpar `app/public/`, AGENTS.md).
- * Roteia: o catálogo vem de `/indicators.json`; cada série, da própria URL `data:<id>`.
+ * Fixa o CATÁLOGO na store (ele é embutido no bundle desde 2026-11-01 — não há `fetch` dele)
+ * e devolve o `fetchImpl` de FIXTURE, com URL `data:` para as séries (evita ter de limpar
+ * `app/public/`, AGENTS.md). O `iniciarPermalink` continua chamando `carregarCatalogo`, que
+ * não refaz nada quando a store já está `ready`.
  */
 function fixture(idsDoCatalogo) {
-  const catalogo = {
+  catalogStore.set({
+    status: 'ready',
     groups: { g: { name: 'G', description: '' } },
     indicators: idsDoCatalogo.map((id) => ({
       id,
       name: `Ind ${id}`,
       group: 'g',
+      arquivo: `g/${id}.json`,
       datafile: `data:${id}`,
       chartType: 'line',
-      yAxisTitle: null,
+      escala: 'percentage',
     })),
-  };
+    error: null,
+  });
   return async (url) => {
-    if (url === '/indicators.json') return resposta(catalogo);
     if (url.startsWith('data:')) {
       const id = url.slice('data:'.length);
       return resposta({

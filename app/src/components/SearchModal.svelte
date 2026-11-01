@@ -171,8 +171,10 @@
         : 'border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800',
     ].join(' ');
 
-  // §12.1 — o **distintivo de escala**: a classe de escala do indicador, derivada da unidade
-  // do PRÓPRIO catálogo. É a peça que mantém o aviso visível **antes** da escolha — dá para
+  // §12.1 — o **distintivo de escala**: a classe de escala do indicador, que o catálogo declara
+  // em `escala` (a unidade completa é dona da SÉRIE; aqui só a classe, que é o que a lista
+  // precisa antes de o dado chegar). O catálogo garante que `escala` == `unit.type` da série.
+  // É a peça que mantém o aviso visível **antes** da escolha — dá para
   // varrer procurando o que não colide sem abrir ficha. NÃO é o veredito da §5 (esse exige a
   // amplitude da série e vive na ficha): é o rótulo da escala, curto por construção.
   const ESCALA = {
@@ -181,10 +183,8 @@
     number: { texto: 'nº', rotulo: 'contagem' },
   };
   function distintivo(ind) {
-    const u = ind.unit;
-    if (!u || !u.type) return null;
-    const base = ESCALA[u.type] ?? { texto: u.symbol || '?', rotulo: u.symbol || u.type };
-    return { ...base, simbolo: u.symbol || '' };
+    if (!ind?.escala) return null;
+    return ESCALA[ind.escala] ?? { texto: '?', rotulo: ind.escala };
   }
 
   function abrirFicha(ind) {
@@ -410,9 +410,7 @@
         <span
           class="shrink-0 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none text-slate-600 md:hidden dark:bg-slate-700 dark:text-slate-200"
           aria-label="Escala: {distintivo(ind).rotulo}"
-          title="Escala: {distintivo(ind).rotulo}{distintivo(ind).simbolo
-            ? ` (${distintivo(ind).simbolo})`
-            : ''}"
+          title="Escala: {distintivo(ind).rotulo}"
           >{distintivo(ind).texto}</span
         >
       {/if}

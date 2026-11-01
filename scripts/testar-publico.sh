@@ -3,7 +3,7 @@ set -euo pipefail
 falha=0
 # O app emite app.js E app.css (o CSS escopado dos componentes Svelte). Faltar o CSS
 # é a falha SILENCIOSA que o site publica hoje — ver a medição 3 do brief.
-for f in dist/indicators.json dist/assets/js/app/app.js dist/assets/js/app/app.css; do
+for f in dist/assets/js/app/app.js dist/assets/js/app/app.css; do
   [ -f "$f" ] || { echo "publico: falta $f" >&2; falha=1; }
 done
 [ "$falha" -eq 0 ] || exit 1
@@ -14,11 +14,13 @@ for t in 'js/app/app.js' 'js/app/app.css' 'id="app"'; do
   grep -q "$t" dist/index.html || { echo "publico: / não inclui \"$t\"" >&2; falha=1; }
 done
 [ "$falha" -eq 0 ] || exit 1
-# O app NÃO embute mais URL de dado: as séries vêm do `datafile` do `indicators.json` (runtime) e
-# os governos são importados no bundle (2026-11-01). A guarda antiga procurava a URL do Pages no
-# `app.js` para provar que o artefato era de PRODUÇÃO — esse sinal deixou de existir, junto com o
-# `define.__BASE_DADOS__`. Não reintroduza um grep que não pode falhar: se um dia o bundle voltar
-# a embutir uma base de dado, a guarda certa é a URL que ele embutir.
+# O CATÁLOGO e os GOVERNOS são embutidos no bundle (2026-11-01); as SÉRIES vêm da base
+# `__BASE_DADOS__`, que em PRODUÇÃO é o Pages do repo `dados`. Um artefato de dev (base `/dados`)
+# publicado deixaria o gráfico vazio em silêncio — o `fetch` falharia e o app mostraria erro, mas
+# ninguém veria isso no CI. A URL do Pages no bundle é o que prova o ramo de produção.
+grep -q 'https://brasilemnumeros.github.io/dados' dist/assets/js/app/app.js \
+  || { echo "publico: app.js não aponta para o Pages (artefato de dev?)" >&2; falha=1; }
+[ "$falha" -eq 0 ] || exit 1
 # O AVISO SOBRE OS DADOS NA HOME (2026-11-01). A `/` não usa o rodapé do site, então o link
 # para os Termos vive na barra inferior do app. Sem esta guarda, uma refatoração da barra
 # apaga o único caminho do visitante do gráfico para a isenção — e nada falha em voz alta.

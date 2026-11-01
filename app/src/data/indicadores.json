@@ -1,0 +1,152 @@
+{
+  "schema": 1,
+  "indicators": [
+    {
+      "id": "selic-meta-acum-12m",
+      "name": "Taxa Selic Meta (%)",
+      "group": "monetary",
+      "arquivo": "selic/selic-meta-acum-12m.json",
+      "escala": "percentage",
+      "chartType": "line",
+      "description": "Taxa básica de juros da economia brasileira definida pelo Banco Central, acumulada nos últimos 12 meses"
+    },
+    {
+      "id": "selic-over-acum-12m",
+      "name": "Taxa Selic Over (%)",
+      "group": "monetary",
+      "arquivo": "selic/selic-over-acum-12m.json",
+      "escala": "percentage",
+      "chartType": "line",
+      "description": "Taxa de juros efetiva do mercado, acumulada nos últimos 12 meses"
+    },
+    {
+      "id": "ipca-acum-12m",
+      "name": "IPCA (%)",
+      "group": "inflation",
+      "arquivo": "ipca/ipca-acum-12m.json",
+      "escala": "percentage",
+      "chartType": "line",
+      "description": "Variação acumulada do Índice de Preços ao Consumidor Amplo (IPCA) em 12 meses"
+    },
+    {
+      "id": "igpm-acum-12m",
+      "name": "IGP-M (%)",
+      "group": "inflation",
+      "arquivo": "igp-m/igpm-acum-12m.json",
+      "escala": "percentage",
+      "chartType": "line",
+      "description": "Variação acumulada do Índice Geral de Preços do Mercado (IGP-M) em 12 meses"
+    },
+    {
+      "id": "pib-real-anual",
+      "name": "PIB Real (%)",
+      "group": "growth",
+      "arquivo": "pib/pib-real-anual.json",
+      "escala": "percentage",
+      "chartType": "bar",
+      "description": "Variação do Produto Interno Bruto (PIB) em termos reais, desconsiderando a inflação."
+    },
+    {
+      "id": "mvgr-nominal",
+      "name": "MVG-R Nominal (R$)",
+      "group": "real-estate",
+      "arquivo": "mvgr/mvgr-nominal.json",
+      "escala": "currency",
+      "chartType": "line",
+      "description": "Mediana dos Valores de Garantia de Imóveis Residenciais Financiados (MVG-R) em Reais (R$)"
+    },
+    {
+      "id": "mvgr-real",
+      "name": "MVG-R Real (R$)",
+      "group": "real-estate",
+      "arquivo": "mvgr/mvgr-real.json",
+      "escala": "currency",
+      "chartType": "line",
+      "description": "Mediana dos Valores de Garantia de Imóveis Residenciais Financiados (MVG-R) em Reais, descontada a inflação (IPCA)"
+    },
+    {
+      "id": "caged-total-mensal",
+      "name": "Estoque de Empregos Formais",
+      "group": "labor",
+      "arquivo": "caged/caged-total-mensal.json",
+      "escala": "number",
+      "chartType": "line",
+      "description": "Número total de empregos formais no Brasil, conforme dados do CAGED (Cadastro Geral de Empregados e Desempregados)"
+    },
+    {
+      "id": "populacao-total-anual",
+      "name": "População Total",
+      "group": "demographics",
+      "arquivo": "populacao/populacao-total-anual.json",
+      "escala": "number",
+      "chartType": "line",
+      "description": "Número total da população brasileira conforme dados do IBGE"
+    },
+    {
+      "id": "populacao-variacao-anual",
+      "name": "População Variação (%)",
+      "group": "demographics",
+      "arquivo": "populacao/populacao-variacao-anual.json",
+      "escala": "percentage",
+      "chartType": "bar",
+      "description": "Variação anual da população brasileira conforme dados do IBGE"
+    },
+    {
+      "id": "homicidios-anual",
+      "name": "Homicídios",
+      "group": "public-safety",
+      "arquivo": "homicidios/homicidios-anual.json",
+      "escala": "number",
+      "chartType": "line",
+      "description": "Número total de homicídios no Brasil por 100 mil habitantes"
+    },
+    {
+      "id": "homicidios-armas-fogo-anual",
+      "name": "Homicídios por Armas de Fogo",
+      "group": "public-safety",
+      "arquivo": "homicidios/homicidios-armas-fogo-anual.json",
+      "escala": "number",
+      "chartType": "line",
+      "description": "Número de homicídios por armas de fogo no Brasil por 100 mil habitantes"
+    },
+    {
+      "id": "proporcao-homicidios-armas-fogo-anual",
+      "name": "Proporção de Homicídios por Armas de Fogo (%)",
+      "group": "public-safety",
+      "arquivo": "homicidios/proporcao-homicidios-armas-fogo-anual.json",
+      "escala": "percentage",
+      "chartType": "bar",
+      "description": "Proporção de homicídios cometidos por armas de fogo em relação ao total de homicídios no Brasil"
+    }
+  ],
+  "groups": {
+    "monetary": {
+      "name": "🏦 Política Monetária",
+      "description": "Indicadores relacionados à política monetária do Banco Central"
+    },
+    "inflation": {
+      "name": "📈 Inflação",
+      "description": "Indicadores de variação de preços na economia"
+    },
+    "growth": {
+      "name": "📊 Crescimento Econômico",
+      "description": "Indicadores de crescimento e atividade econômica"
+    },
+    "real-estate": {
+      "name": "🏠 Mercado Imobiliário",
+      "description": "Indicadores do mercado imobiliário"
+    },
+    "labor": {
+      "name": "💼 Mercado de Trabalho",
+      "description": "Indicadores relacionados ao mercado de trabalho e emprego"
+    },
+    "demographics": {
+      "name": "👥 Demografia",
+      "description": "Indicadores relacionados à população e demografia"
+    },
+    "public-safety": {
+      "name": "🚨 Segurança Pública",
+      "description": "Indicadores relacionados à segurança pública e criminalidade"
+    }
+  }
+}

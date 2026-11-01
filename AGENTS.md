@@ -15,8 +15,9 @@ migração (ADR 0002).
 - Dados **não** vivem aqui: as séries vêm do repo irmão `dados/` (e o contrato).
   **Governos vivem aqui** (2026-11-01): `app/src/data/governos/`, embutidos no bundle.
   Local: `../dados/`; no CI: `./dados/`, apontado por `DADOS_DIR`.
-- Catálogo de indicadores: `indicators.json` na raiz (13 indicadores); é copiado
-  para `public/` no build. **Não** editar a cópia.
+- Catálogo de indicadores: `app/src/data/indicadores.json` (13 indicadores), **embutido no
+  bundle** desde 2026-11-01. Não existe mais `/indicators.json` publicado nem cópia em
+  `public/`.
 - Conteúdo editorial: `src/content/posts/*.md` (10 posts).
 
 ## Mapa rápido
@@ -33,7 +34,7 @@ migração (ADR 0002).
 | `src/lib/` | helpers puros (feed, categorias, posts, trecho, smartify) | feed/listagem |
 | `app/src/` | app Svelte/Vite da home | UI e lógica do gráfico |
 | `app/src/domain/` | regras puras (`scales`, `color`, `format`, `mandates`, `schema`) | lógica testável sem DOM |
-| `app/src/data/` | catálogo, fetch das séries, validação, presets; **governos** em `governos/` | contrato de dados |
+| `app/src/data/` | catálogo embutido (`indicadores.json`), fetch das séries, validação, presets; **governos** em `governos/` | contrato de dados |
 | `app/src/stores/` | estado (`catalog`, `series`, `viewport`, `axes`, `mandate`) | fonte da verdade do app |
 | `app/src/chart/` | adapter, pontos, faixas, minimapa (Lightweight Charts) | desenho do gráfico |
 | `app/e2e/` | Playwright (10 specs + `apoio.js`) | comportamento/geometria no navegador |
@@ -50,7 +51,7 @@ migração (ADR 0002).
 | Comando | O que faz |
 |---|---|
 | `npm run build` | cadeia completa: `build:app` → `preparar-publico` → Astro → `verificar` |
-| `npm run dev` | build do app + `preparar-publico` + `astro dev` (serve o dado local pelo middleware) |
+| `npm run dev` | build do app + `preparar-publico` + `astro dev` (com `DADOS_LOCAL=1`, serve o dado local) |
 | `npm run css` | regenera `assets/css/main.dist.css` (Tailwind CLI) — **necessário para o dev/E2E do app** |
 | `npm run canario` | confere a classe-canário no CSS de `dist/` (exige build) |
 | `npm run test:analytics` | gate de consentimento/DNT contra `dist/` (exige build) |
@@ -88,7 +89,7 @@ disso.
 1. **`app/`** (Vite/Svelte) emite `public/assets/js/app/app.js` e `app.css` com
    **nome fixo** (sem manifest). O `outDir` precisa ficar dentro de `public/`,
    senão o artefato existe no disco e nunca chega ao `dist/`.
-2. **`preparar-publico`** copia `indicators.json` e `NOTICE` para `public/` e
+2. **`preparar-publico`** copia o `NOTICE` para `public/` e
    falha se o artefato do app estiver ausente (sem isso a `/` sobe vazia).
 3. **`astro build`** gera `dist/` com `build.format: 'file'`, `trailingSlash:
    'never'` e assets em `dist/assets/`.
@@ -120,10 +121,11 @@ quando o defeito aparecer — e provar isso.
 - Entrada: `?series=` válido vence tudo; chave presente sem id válido cai em
   `EstadoInicial`; sem a chave entra o **preset do dia** (calculado em
   `America/Sao_Paulo`). `permalink-init.js` roda antes de qualquer escrita de URL.
-- Dados: catálogo em `indicators.json`; séries no repo `dados/`; governos em
+- Dados: catálogo embutido em `app/src/data/indicadores.json` (o registro guarda o caminho
+  `familia/arquivo.json`; a URL sai de `__BASE_DADOS__`); séries no repo `dados/`; governos em
   `app/src/data/governos/` (versionados aqui, **importados** no bundle — não há
   `fetch`). Em dev, o middleware `app/vite-plugins/dados-locais.js` serve
-  `/dados/**` para as séries; em produção o bundle aponta para
+  `/dados/**` para as séries; em produção a base aponta para
   `https://brasilemnumeros.github.io/dados`.
 - **Eixo x (2026-10-29):** sempre do início do FHC I (`1995-01-01`) ao **dia de
   hoje**, independentemente das séries carregadas — âncoras mensais invisíveis em
@@ -224,13 +226,20 @@ migração; não os use como validação principal.
   aviso. Não reintroduza a entrada no `.gitignore`.
 - **Caminho de dado errado não falha.** O middleware responde HTML e o app
   “carrega” vazio. Confira `Content-Type`/dado, não só status 200.
-- **`npm run build` não estraga mais o `npm run dev` (2026-11-01).** O `app.js` não
-  embute base de dado nenhuma: as séries vêm do `datafile` do `indicators.json` em
-  runtime (o middleware de dev reescreve a cópia servida) e os governos são
-  importados no bundle. Por isso o artefato de dev e o de produção são o mesmo —
-  não é mais preciso restaurar o artefato de dev depois de buildar. A lição de 2026-10-29 continua válida para *qualquer* dado
-  embutido no bundle: um artefato que lia o dado publicado fez a faixa da Dilma II
-  “voltar a sobrepor” a do Temer, com o código certo.
+- **`npm run build` estraga o `npm run dev` que já está no ar.** Os dois escrevem o
+  MESMO `public/assets/js/app/app.js`, com bases de dado diferentes: o `dev` embute
+  `/dados` (middleware local, via `DADOS_LOCAL=1`), o `build` embute a URL do Pages.
+  Se você buildar em produção enquanto o servidor de dev do usuário estiver aberto, a
+  página dele passa a ler o dado **publicado** — inclusive dado velho — e o sintoma é
+  um defeito que “não existe no código”. O `dist/` já está pronto, então restaure o
+  artefato de dev depois: `DADOS_LOCAL=1 npm run build:app && npm run preparar-publico`.
+  Não precisa reiniciar o servidor de ninguém; basta recarregar a página.
+  Diagnóstico rápido de qual base o artefato em disco carrega:
+  `grep -c 'brasilemnumeros.github.io/dados' public/assets/js/app/app.js`
+  — `0` é dev, `1` é produção. Foi assim que a faixa da Dilma II “voltou a sobrepor” a
+  do Temer: o código estava certo, o artefato lia o dado publicado.
+- **O catálogo e os governos são embutidos (2026-11-01):** `app/src/data/indicadores.json`
+  e `app/src/data/governos/` entram no bundle; só as SÉRIES vêm por URL.
 - **Números de teste e status em `docs/plans/` envelhecem** (contagens, “nada
   publicado”). A verdade é o código + `docs/specs/` + `docs/adr/`.
 

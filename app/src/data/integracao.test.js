@@ -16,16 +16,16 @@ import { validateSeries } from './validate.js';
 
 // `sitio/app/src/data/` → sobe 4 níveis → raiz do workspace → `dados/`.
 const RAIZ_DADOS = fileURLToPath(new URL('../../../../dados', import.meta.url));
-// `sitio/app/src/data/` → sobe 3 níveis → raiz do `sitio/` → `indicators.json`.
-const REGISTRO = fileURLToPath(new URL('../../../indicators.json', import.meta.url));
+// O catálogo vive ao lado deste teste desde 2026-11-01 (era `sitio/indicators.json`).
+const REGISTRO = fileURLToPath(new URL('./indicadores.json', import.meta.url));
 
 /** O registro do site: quais arquivos são SÉRIES publicadas. */
 function indicadoresRegistrados() {
   const { indicators } = JSON.parse(readFileSync(REGISTRO, 'utf8'));
   return indicators.map((ind) => {
-    // ".../dados/<familia>/<arquivo>.json" → { familia, arquivo }
-    const m = /\/([^/]+)\/([^/]+\.json)$/.exec(ind.datafile);
-    if (!m) throw new Error(`datafile inesperado no registro: ${ind.datafile}`);
+    // "<familia>/<arquivo>.json" → { familia, arquivo }
+    const m = /^([^/]+)\/([^/]+\.json)$/.exec(ind.arquivo);
+    if (!m) throw new Error(`arquivo inesperado no registro: ${ind.arquivo}`);
     return { id: ind.id, familia: m[1], arquivo: m[2] };
   });
 }
@@ -69,5 +69,16 @@ describe('o contrato publicado em dados/ é o que o app valida (§6)', () => {
     const noDisco = new Set(arquivosDeSerie().map((a) => `${a.familia}/${a.arquivo}`));
     const noRegistro = new Set(indicadoresRegistrados().map((i) => `${i.familia}/${i.arquivo}`));
     expect([...noDisco].sort()).toEqual([...noRegistro].sort());
+  });
+
+  it('a escala que o catálogo declara é a MESMA unidade da série (um dono por campo)', () => {
+    const { indicators } = JSON.parse(readFileSync(REGISTRO, 'utf8'));
+    for (const ind of indicators) {
+      const caminho = join(RAIZ_DADOS, ind.arquivo);
+      const serie = JSON.parse(readFileSync(caminho, 'utf8'));
+      // Antes de 2026-11-01 o catálogo repetia `unit` inteiro — e divergia em 8 de 13.
+      expect(ind.escala, `${ind.id}: escala do catálogo × unit.type da série`).toBe(serie.unit.type);
+      expect(ind, `${ind.id}: catálogo não deve duplicar a unidade`).not.toHaveProperty('unit');
+    }
   });
 });

@@ -99,6 +99,28 @@ o comentário em `scripts/testar-publico.sh` registra isso.
 - `AGENTS.md`: a seção "`governos/` (schema diferente)" sai; entra uma linha dizendo que o
   registro de mandatos mora no repo `sitio` (`app/src/data/governos/`) para quem procurar.
 
+## Segunda rodada (2026-11-01): catálogo
+
+Aprovado pelo usuário no mesmo dia, depois da migração dos governos:
+
+- **Nome e lugar:** `indicators.json` → `app/src/data/indicadores.json`, **importado no
+  bundle** (como os governos). Some o `fetch`, a cópia do `preparar-publico` e a rota do
+  middleware; a URL pública `/indicators.json` deixa de existir.
+- **Um dono por campo.** A série é dona de `unit`/`granularity`/`source`; o catálogo é dono
+  de `name`, `group`, `description`, `chartType`, `arquivo` e `escala`. Saem do catálogo
+  `granularity` (ninguém lia), `yAxisTitle` e `yAxisMax` (ninguém lia) e o objeto `unit`
+  (8 de 13 já divergiam da série). Fica `escala` (`percentage|currency|number`): é só o que
+  o distintivo da busca precisa antes de a série carregar, e um teste compara com
+  `serie.unit.type`.
+- **`datafile` → `arquivo` (relativo).** O catálogo guarda `selic/selic-meta-acum-12m.json`;
+  a URL é composta na leitura com `__BASE_DADOS__` (volta ao `vite.config.js`). Em memória a
+  entrada continua com `datafile` = URL, então stores e componentes não mudam.
+- **Consequência aceita:** o bundle volta a diferir entre dev (`/dados`, `DADOS_LOCAL=1`) e
+  produção (Pages). Por isso a guarda do `testar-publico.sh` que checa a URL do Pages no
+  `app.js` volta a valer.
+- **Limite do ACESSO PÚBLICO:** o catálogo não é mais inspecionável por URL. Se um dia for
+  preciso, a opção 2 (arquivo em `public/data/`) fica registrada como alternativa.
+
 ## Verificação
 
 - `npm run build`

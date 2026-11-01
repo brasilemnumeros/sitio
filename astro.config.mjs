@@ -12,7 +12,6 @@ import { dadosLocais } from './app/vite-plugins/dados-locais.js';
 // `DADOS_DIR` cobre o layout do CI, onde o repo `dados` cai em `./dados/` (mesma
 // convenção do `app/vite.config.js`).
 const DADOS_LOCAIS = fileURLToPath(new URL(process.env.DADOS_DIR ?? '../dados/', import.meta.url));
-const CATALOGO = fileURLToPath(new URL('./indicators.json', import.meta.url));
 
 export default defineConfig({
   site: 'https://www.brasilemnumeros.ong.br',
@@ -33,5 +32,5 @@ export default defineConfig({
   // `main.dist.css` do Tailwind CLI — só o app precisa dele (medição 4).
   // `__BASE_DADOS__` NÃO entra aqui: o site só inclui o `app.js` já construído, e
   // nele o valor de produção já está inline (medição 7).
-  vite: { plugins: [tailwindcss(), dadosLocais({ dadosDir: DADOS_LOCAIS, catalogo: CATALOGO })] },
+  vite: { plugins: [tailwindcss(), dadosLocais({ dadosDir: DADOS_LOCAIS })] },
 });

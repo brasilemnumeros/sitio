@@ -4,9 +4,9 @@ import { test, expect, abrirGavetaConfig } from './apoio.js';
  * O PERMALINK do app (`?series=`) pelo CAMINHO DO PRODUTO — não pelo harness.
  *
  * Hoje 12 links dos posts usam `?series=<ids>`; sem esta fatia a migração entraria
- * com REGRESSÃO (o app novo ignoraria a query). Aqui o dado vem do catálogo REAL servido
- * em dev (o middleware reescreve o `datafile` para `/dados/...`), e as séries são
- * restauradas UMA A UMA, como o produto faz — semear a store pelo console criaria outro
+ * com REGRESSÃO (o app novo ignoraria a query). Aqui o dado vem do catálogo REAL embutido
+ * (as séries são buscadas na base `/dados/...`, servida pelo middleware em dev), e as séries
+ * são restauradas UMA A UMA, como o produto faz — semear a store pelo console criaria outro
  * nó no grafo de módulos e o app não veria o estado (AGENTS.md).
  *
  * O `page` de `apoio.js` já falha o teste se algum `console.error`/exceção escapar.

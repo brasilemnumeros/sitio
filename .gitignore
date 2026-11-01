@@ -14,10 +14,8 @@ assets/css/main.dist.css
 
 # Artefato de build do app (fatia 00) — src/ NÃO é ignorado (§10.3).
 # Desde a fatia 05 o app sai DENTRO do publicDir (`../public/assets/js/app`),
-# logo do `astro build` o encontra; `public/indicators.json` é a cópia do
-# catálogo feita por `scripts/preparar-publico.sh`.
+# logo do `astro build` o encontra.
 public/assets/js/app/
-public/indicators.json
 public/NOTICE
 assets/js/app/
 app/.vite

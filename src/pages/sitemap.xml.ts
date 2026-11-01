@@ -22,6 +22,7 @@ const FIXAS = [
   '/sobre.html',
   '/termos-de-uso.html',
   '/politica-de-privacidade.html',
+  '/correcoes.html',
   ...ORDEM_CATEGORIAS.map((categoria) => `/categorias/${categoria}.html`),
 ];
 

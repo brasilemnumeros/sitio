@@ -131,6 +131,17 @@
           <dd class="text-right text-slate-700 dark:text-slate-200">{estado.series.source}</dd>
         </div>
       </dl>
+
+      <!-- AVISO DE PROVENIÊNCIA (2026-11-01). Fica na ficha porque é aqui que a pessoa examina
+           um número antes de usá-lo: diz que o dado é de terceiro e que pode ter sido revisado
+           na origem depois da extração. Sem isto, o único lugar que falava em revisão era o 5.2
+           dos Termos — que quem olha o gráfico nunca abre. Texto curto de propósito: a ficha é
+           uma coluna de 288px. -->
+      <p class="mt-2 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+        Reproduzido de fonte pública; pode ter sido revisado na origem depois da extração.
+        Confira no órgão produtor antes de usar — os dados não têm garantia de exatidão
+        (<a href="/termos-de-uso.html" class="underline hover:text-slate-300">Termos</a>).
+      </p>
     {/if}
 
     <!-- O botão é CHAVE DE DUAS POSIÇÕES (2026-11-01, a pedido do usuário): o estado "está no

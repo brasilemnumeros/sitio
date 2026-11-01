@@ -6,7 +6,7 @@
 set -euo pipefail
 falha=0
 for f in index.html 404.html blog.html sobre.html links.html termos-de-uso.html \
-         politica-de-privacidade.html categorias/analises.html \
+         politica-de-privacidade.html correcoes.html categorias/analises.html \
          categorias/indicadores.html categorias/noticias.html \
          noticias/2025/07/27/hoje-nasce-o-brasil-em-numeros.html; do
   arq="dist/$f"

@@ -17,7 +17,7 @@ Pense na Selic como a taxa de juros base da economia brasileira. Definida pelo B
 
 #### Como a Selic impacta sua vida?
 
-Quando a Selic sobe 📈: O Banco Central está "esfriando" a economia para combater a inflação. O crédito fica mais caro, desestimulando o consumo e os financiamentos. Por outro lado, investir em renda fixa (como Tesouro Selic) se torna mais atraente.
+Quando a Selic sobe 📈: O Banco Central está "esfriando" a economia para combater a inflação. O crédito fica mais caro, desestimulando o consumo e os financiamentos. Por outro lado, a renda fixa (como o Tesouro Selic) tende a ficar comparativamente mais atrativa.
 
 Quando a Selic cai 📉: O objetivo é "aquecer" a economia. O crédito fica mais barato, o que incentiva o consumo, a compra de imóveis, carros e os investimentos das empresas em expansão e novos projetos.
 

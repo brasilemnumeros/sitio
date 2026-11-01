@@ -11,7 +11,7 @@ Para quem acompanha o mercado imobiliário brasileiro, seja para comprar, vender
 
 Mas será que os imóveis realmente "explodiram" de valor, tornando-se inatingíveis para muitos? Ou estamos sendo vítimas de uma ilusão causada pela inflação, que distorce nossa percepção sobre o preço das coisas?
 
-Uma análise crítica de dois indicadores — o MVG-R nominal e o MVG-R real (descontado do IPCA) — revela a verdade por trás desses números. E a história que eles contam é vital para qualquer cidadão que deseja compreender o valor real de um dos maiores investimentos da vida: a casa própria.
+Uma análise crítica de dois indicadores — o MVG-R nominal e o MVG-R real (descontado do IPCA) — ajuda a ler o que está por trás desses números. E a história que eles contam é vital para qualquer cidadão que deseja compreender o valor real de um dos maiores investimentos da vida: a casa própria.
 
 ### A Ilusão do Preço na Etiqueta
 
@@ -57,7 +57,7 @@ Este segundo gráfico é a ferramenta correta para qualquer um que deseja compre
 
 ### Conclusão: O Que os Preços Reais Revelam
 
-A análise comparativa deixa duas lições claras para quem está de olho no mercado imobiliário, seja para comprar, vender ou apenas entender o valor do seu bem:
+A análise comparativa sugere duas leituras possíveis para quem acompanha o mercado imobiliário — e não é recomendação de compra ou de venda:
 
 - **O Preço Nominal é Ruído, o Preço Real é o Sinal:** Para qualquer análise séria sobre a valorização de um imóvel ou sobre a existência de uma "bolha", olhar apenas para o preço nominal é enganoso. O que realmente importa é o valor real, que mostra o poder de compra e o crescimento efetivo do seu patrimônio.
 

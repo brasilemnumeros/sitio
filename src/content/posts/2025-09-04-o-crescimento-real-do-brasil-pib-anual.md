@@ -16,7 +16,7 @@ Para entender o crescimento de um país, precisamos separar o que é aumento de 
 
 - **PIB Nominal:** Imagine que ele é o faturamento total da economia, calculado com os preços do ano corrente. O problema? Ele é "contaminado" pela inflação. Se o país produz exatamente a mesma quantidade de bens, mas os preços sobem 10%, o PIB Nominal também vai subir 10%, criando uma falsa impressão de crescimento.
 
-- **PIB Real:** Este é o indicador que realmente nos diz a verdade. Ele "limpa" o efeito da inflação, ajustando todos os valores como se os preços não tivessem mudado. O PIB Real mede o crescimento do **volume físico** da produção. É ele que mostra se, de fato, produzimos mais carros, colhemos mais soja e oferecemos mais serviços.
+- **PIB Real:** Este é o indicador que mostra o crescimento sem o efeito da inflação. Ele "limpa" esse efeito, ajustando todos os valores como se os preços não tivessem mudado. O PIB Real mede o crescimento do **volume físico** da produção. É ele que mostra se, de fato, produzimos mais carros, colhemos mais soja e oferecemos mais serviços.
 
 Por ser a medida pura do crescimento, **o PIB Real é o indicador mais importante para avaliar o desempenho econômico**, и é por isso que focamos nele em nosso site.
 

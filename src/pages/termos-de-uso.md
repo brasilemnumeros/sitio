@@ -6,7 +6,7 @@ description: Uma plataforma dedicada a fornecer dados e informações sobre o Br
 
 # Termos de Uso
 
-<small>_Última atualização: 27 de julho de 2025_</small>
+<small>_Última atualização: 1 de novembro de 2026_</small>
 
 Estes Termos de Uso regem o acesso e a utilização do conteúdo e dos serviços oferecidos no site www.brasilemnumeros.ong.br (doravante denominado "Site").
 
@@ -22,11 +22,11 @@ O site "Brasil em Números" é uma plataforma de caráter informativo e educativ
 
 ### 3. Fonte e Metodologia dos Dados
 
-3.1. Fontes: Os dados apresentados no Site são compilados a partir de fontes públicas e consideradas confiáveis, tais como institutos de pesquisa, órgãos governamentais e outras entidades de reconhecida competência.
+3.1. Fontes: Os dados apresentados no Site são **reproduzidos** de fontes públicas produzidas por terceiros — entre elas o Instituto Brasileiro de Geografia e Estatística (IBGE), o Banco Central do Brasil (BCB), o Instituto de Pesquisa Econômica Aplicada (Ipea), a Fundação Getulio Vargas (FGV) e o Ministério do Trabalho e Emprego (MTE). O Site não é o produtor desses dados, não os audita na origem e não os endossa: a indicação da fonte serve para que o Usuário possa conferir o número no órgão responsável.
 
-3.2. Transparência: Todo o processo de coleta, consolidação e tratamento dos dados é documentado e disponibilizado publicamente em nosso repositório no _GitHub_. Os materiais, em formato de _Jupyter Notebooks_, permitem que qualquer Usuário possa consultar, reproduzir e auditar a metodologia empregada.
+3.2. Transparência: O código do Site e o contrato dos dados são públicos, em nosso repositório no _GitHub_, e a ficha de cada indicador traz a unidade, a granularidade, o período coberto e a fonte primária. Essa documentação está em evolução: quando o processo de consolidação de uma série ainda não estiver descrito em detalhe, vale a fonte primária indicada na ficha.
 
-3.3. Correções e Dúvidas: Encorajamos a comunidade a revisar nossos dados e metodologias. Dúvidas, sugestões de correção ou questionamentos podem ser submetidos através das ferramentas da própria plataforma _GitHub_, promovendo um ambiente de colaboração e transparência.
+3.3. Correções e Dúvidas: Encorajamos a comunidade a revisar nossos dados e metodologias. Um erro apontado é tratado pelo procedimento descrito em [Correções e erratas](/correcoes.html), com prazo de resposta e registro público das correções feitas. Apontamentos são recebidos pelas ferramentas do _GitHub_ (issues), o canal público indicado naquela página.
 
 ### 4. Propriedade Intelectual e Uso do Conteúdo
 
@@ -36,11 +36,11 @@ O site "Brasil em Números" é uma plataforma de caráter informativo e educativ
 
 ### 5. Isenção de Responsabilidade
 
-5.1. Natureza Informativa: O conteúdo disponibilizado no "Brasil em Números" tem finalidade estritamente informativa. As análises e visualizações de dados representam interpretações dos dados públicos coletados e não devem ser consideradas como aconselhamento financeiro, jurídico, político ou de qualquer outra natureza.
+5.1. Natureza Informativa: O conteúdo disponibilizado no "Brasil em Números" tem finalidade estritamente informativa e educativa. As análises e visualizações representam interpretações dos dados públicos coletados e **não constituem aconselhamento financeiro, de investimento, jurídico, médico, político, eleitoral ou de qualquer outra natureza**, nem recomendação de compra, venda ou contratação de qualquer produto.
 
-5.2. Precisão dos Dados: Embora a equipe do "Brasil em Números" se esforce para garantir a precisão e a atualização das informações apresentadas, não podemos garantir a infalibilidade dos dados. As fontes originais podem conter erros ou passar por revisões não acompanhadas em tempo real pelo Site. Portanto, o Site não se responsabiliza por imprecisões, omissões ou eventuais erros nos dados.
+5.2. Isenção de garantia sobre os dados: O Site **reproduz** dados produzidos por terceiros e **não oferece garantia de exatidão, integridade, atualidade ou adequação a qualquer finalidade**. As séries podem ser revisadas, retificadas ou descontinuadas pelos órgãos de origem sem aviso, e a versão publicada aqui pode estar defasada em relação à fonte. O Site pode conter erros de extração, consolidação, arredondamento, conversão de unidades ou de datação. **Antes de tomar qualquer decisão ou de reproduzir um número, confira-o na fonte primária indicada na ficha do indicador.** O uso dos dados é por conta e risco do Usuário.
 
-5.3. Responsabilidade do Usuário: O Usuário é inteiramente responsável pelo uso, interpretação e reprodução de qualquer informação obtida no Site. A equipe do "Brasil em Números" e suas entidades mantenedoras isentam-se de toda e qualquer responsabilidade por perdas, danos (diretos ou indiretos) ou prejuízos de qualquer natureza que possam surgir do uso das informações aqui contidas ou da confiança depositada nelas. A tomada de qualquer decisão com base nos dados e análises do Site é de exclusiva responsabilidade do Usuário.
+5.3. Responsabilidade do Usuário: O Usuário é inteiramente responsável pelo uso, interpretação e reprodução de qualquer informação obtida no Site. Tão logo um erro seja confirmado, o Site o corrige e registra a correção em [Correções e erratas](/correcoes.html); a isenção desta cláusula não cobre a recusa de corrigir erro apontado e confirmado na fonte. A equipe do "Brasil em Números" e suas entidades mantenedoras isentam-se de toda e qualquer responsabilidade por perdas, danos (diretos ou indiretos) ou prejuízos de qualquer natureza que possam surgir do uso das informações aqui contidas ou da confiança depositada nelas. A tomada de qualquer decisão com base nos dados e análises do Site é de exclusiva responsabilidade do Usuário.
 
 5.4. Análises e Interpretações: As visualizações que correlacionam indicadores com períodos governamentais são um exercício de análise de dados e não implicam em juízo de valor ou causalidade direta. O Usuário deve utilizar seu senso crítico para interpretar as informações, levando em conta a complexidade dos fatores que influenciam os indicadores socioeconômicos.
 

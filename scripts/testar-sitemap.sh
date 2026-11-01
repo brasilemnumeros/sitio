@@ -37,8 +37,10 @@ for u in "${esperadas[@]}"; do
 done
 
 urls=$(grep -c '<loc>' "$S" || true)
-# 19 = 20 páginas do dist/ menos o 404 (medido no publicado).
-[ "$urls" -eq 19 ] || { echo "sitemap: $urls urls, esperado 19" >&2; exit 1; }
+# 20 = 21 páginas do dist/ menos o 404. Era 19 até 2026-11-01, quando entrou
+# `/correcoes.html` (política de errata). O número é FIXO de propósito: ele é o
+# alarme de "página publicada que não entrou no sitemap".
+[ "$urls" -eq 20 ] || { echo "sitemap: $urls urls, esperado 20" >&2; exit 1; }
 
 # (1b) Todo `<lastmod>` casa `YYYY-MM-DDTHH:MM:SS+00:00` E só aparece em post:
 # cada `<url>` é uma linha; se o `<loc>` é uma página fixa (derivada acima) NÃO

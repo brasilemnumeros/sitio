@@ -35,7 +35,7 @@ Contudo, o que se seguiu foi uma reversão igualmente drástica. De 2017 para 20
 
 Avaliar o impacto direto de mandatos presidenciais sobre a criminalidade é uma tarefa complexa, pois a segurança pública é, constitucionalmente, uma responsabilidade primária dos estados. No entanto, o governo federal detém ferramentas cruciais, como o controle de armas, o gerenciamento de fronteiras e o financiamento de políticas.
 
-**A Era FHC (1995-2002): O Início da Escalada**
+**A Era FHC (1995-2002): a alta dos homicídios**
 O período inicial da série mostra uma taxa de homicídios já elevada e em crescimento, em um contexto de consolidação de grandes facções criminosas urbanas.
 
 **Governos Lula e Dilma (2003-2016): O Estatuto e o Investimento**
@@ -44,7 +44,7 @@ O início do governo Lula foi marcado por uma política federal de grande reperc
   * **Visão Pró-Estatuto:** Estudos de instituições como o Ipea (Instituto de Pesquisa Econômica Aplicada) defendem que o estatuto foi crucial para frear o ritmo de crescimento das mortes por armas de fogo. Argumenta-se que, sem ele, a escalada teria sido muito mais severa.
   * **Visão Crítica:** Outras análises apontam que o estatuto foi ineficaz, pois não impediu o acesso de criminosos a armas ilegais, enquanto desarmou o cidadão. Críticos apontam que o número absoluto de homicídios continuou a crescer mesmo após sua implementação.
 
-Paralelamente, os governos do PT buscaram ampliar o investimento federal em segurança, criando a Força Nacional de Segurança Pública (2004) e programas de prevenção. O período terminou, contudo, com a explosão da violência que levou ao pico de 2017.
+Paralelamente, os governos do PT buscaram ampliar o investimento federal em segurança, criando a Força Nacional de Segurança Pública (2004) e programas de prevenção. O período terminou, contudo, em trajetória de alta — que só encontraria o pico em 2017.
 
 **A Queda (2018-Presente): Governos Temer, Bolsonaro e Lula**
 É aqui que a análise se torna mais complexa e que a queda acentuada nos homicídios se manifesta.
@@ -52,7 +52,7 @@ Paralelamente, os governos do PT buscaram ampliar o investimento federal em segu
 1.  **O Fator Estrutural (Governo Temer):** Muitos especialistas não atribuem o início da queda a uma ação específica do governo seguinte, mas sim à criação do **Sistema Único de Segurança Pública (SUSP)**, sancionado em 2018. O SUSP visava, pela primeira vez, integrar e coordenar os esforços entre polícias estaduais, federais e municipais, facilitando o repasse de fundos.
 2.  **A Queda sob Bolsonaro (2019-2022):** O governo Bolsonaro (2019-2022) coincidiu com a maior parte da queda nos índices, e o governo frequentemente reivindicou o sucesso como resultado de suas políticas. No entanto, a análise de especialistas é dividida:
       * **Argumentos Contrários ao Governo:** Críticos argumentam que a queda ocorreu *apesar* da política federal. A principal ação do governo Bolsonaro foi na direção oposta ao Estatuto do Desarmamento, flexibilizando drasticamente o acesso a armas de fogo. Para os defensores da tese do Ipea (de que mais armas geram mais crimes), essa política deveria ter aumentado a violência, não diminuído.
-      * **As Causas Reais (Segundo Especialistas):** A maioria dos especialistas atribui a queda a fatores alheios à política de armas do governo federal:
+      * **Causas apontadas na literatura:** boa parte dos estudos sobre o tema atribui a queda a fatores alheios à política de armas do governo federal:
           * **Arrefecimento da Guerra de Facções:** O principal fator. A guerra que causou o pico de 2017 perdeu intensidade, com a consolidação de territórios por uma facção hegemônica ou o estabelecimento de "tréguas".
           * **Políticas Estaduais:** A profissionalização da gestão da segurança em estados-chave (como o Ceará, que teve reduções expressivas) e a adoção de programas de policiamento inteligente.
           * **Implementação do SUSP:** A maturação do sistema criado em 2018, permitindo melhor coordenação e financiamento.

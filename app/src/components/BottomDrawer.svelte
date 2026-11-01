@@ -232,6 +232,21 @@
       <span class="shrink-0 tabular-nums">{resumo}</span>
     </button>
 
+    <!-- AVISO SOBRE OS DADOS (2026-11-01) — o gráfico é o produto, e até aqui a `/` não tinha
+         NENHUMA menção a termos ou a erro de dado: o `Home.astro` não carrega rodapé e a barra
+         superior é marca + busca + janela. Este link é a única superfície do aviso na home; ele
+         é curto de propósito (a barra tem 36px) e leva ao texto completo nos Termos de Uso, que
+         dizem que os dados são reproduzidos de fonte pública, sem garantia de exatidão.
+         No desktop o rótulo aparece; no celular sobra só "Termos", que cabe nos 32px da barra.
+         Fora do `<button>` da alça: link dentro de botão não é clicável nem anunciado direito. -->
+    <a
+      href="/termos-de-uso.html"
+      title="Dados reproduzidos de fontes públicas, sujeitos a revisão e sem garantia de exatidão"
+      class="flex shrink-0 items-center gap-1 px-2 text-[11px] text-slate-400 no-underline hover:bg-slate-800 hover:text-slate-200"
+    >
+      <span class="hidden md:inline">Dados públicos · </span>Termos
+    </a>
+
     <!-- O "×": o caminho de fechar que NÃO depende de teclado (no celular o arrasto e o véu
          também fecham, mas nenhum dos dois é descobrível sozinho). Só existe ABERTA — fechada,
          a barra é só a alça. -->

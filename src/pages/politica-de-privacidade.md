@@ -18,9 +18,10 @@ O site Brasil em Números (www.brasilemnumeros.ong.br) leva a sua privacidade a 
 
 Nós não solicitamos, coletamos ou armazenamos diretamente dados de identificação pessoal como nome, e-mail, CPF, telefone ou endereço dos nossos visitantes. Nosso site tem um caráter puramente informativo e não possui áreas de cadastro ou login.
 
-No entanto, para viabilizar a análise de desempenho e melhorar a experiência em nosso site, utilizamos a ferramenta Google Analytics. Esta ferramenta coleta, de forma automática, dados de navegação não sensíveis através de cookies. Os dados coletados incluem:
+No entanto, para viabilizar a análise de desempenho e melhorar a experiência em nosso site, utilizamos a ferramenta Google Analytics — e ela **só é carregada depois que você aprova o uso de cookies**, nunca antes e nunca quando o seu navegador envia o sinal _Do Not Track_. Sem consentimento, nenhuma requisição é feita ao Google. Esta ferramenta coleta, de forma automática, dados de navegação não sensíveis através de cookies. Os dados coletados incluem:
 
-- Endereço IP (de forma anonimizada pelo Google Analytics);
+- Endereço IP (processado pelo Google Analytics para estimar a localização aproximada; não é
+  armazenado nem consultado por nós);
 - Dados de geolocalização genéricos (como país e cidade);
 - Tipo de navegador e sistema operacional utilizado;
 - Páginas visitadas, tempo de permanência e interações com o conteúdo;
@@ -45,7 +46,9 @@ Como Gerenciar Cookies: Você pode, a qualquer momento, bloquear ou recusar o us
 
 ### 5. Compartilhamento de Dados com Terceiros
 
-Para a prestação do serviço de análise, os dados de navegação coletados são processados e armazenados pelo Google, em seus servidores seguros. Este compartilhamento é uma necessidade técnica para o funcionamento da ferramenta. Recomendamos que você também leia a Política de Privacidade do Google.
+Para a prestação do serviço de análise, os dados de navegação coletados são processados e armazenados pelo Google. Isso inclui **transferência internacional de dados**: o Google pode tratar essas informações fora do Brasil, em seus próprios servidores, sob a política de privacidade dele. A transferência é necessária para o funcionamento da ferramenta e é feita com base no seu consentimento (LGPD, art. 7º, I, e art. 33). Recomendamos a leitura da Política de Privacidade do Google.
+
+Você pode **revogar o consentimento a qualquer momento**, recusando os cookies na faixa exibida no site ou limpando os dados do site no navegador — a partir daí o script deixa de ser carregado.
 
 Fora essa situação, não compartilhamos quaisquer dados com outras organizações.
 
@@ -57,7 +60,9 @@ A LGPD garante a você, como titular dos dados, uma série de direitos. Mesmo co
 - O acesso aos dados que possuímos sobre sua navegação;
 - A anonimização, bloqueio ou eliminação de dados desnecessários.
 
-Para exercer seus direitos ou tirar dúvidas sobre o tratamento dos seus dados, você pode abrir uma discussão em nosso repositório público no [GitHub](https://github.com/brasilemnumeros). Não mantemos um canal de e-mail dedicado a esse fim.
+Para exercer esses direitos ou tirar dúvidas sobre o tratamento dos seus dados, use o repositório público no [GitHub](https://github.com/brasilemnumeros). O encarregado pelo tratamento de dados (LGPD, art. 41) é o mantenedor do projeto, e o contato se dá por esse mesmo canal público — não mantemos um e-mail dedicado a esse fim.
+
+**Base legal:** consentimento (LGPD, art. 7º, I) para os cookies analíticos. Sem ele, nenhum dado de navegação é coletado por terceiros.
 
 ### 7. Segurança dos Dados
 

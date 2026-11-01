@@ -14,25 +14,28 @@ const GOVERNOS = {
     { id: 'lula-1', titular: 'Lula', inicio: '2003-01-01', fim: '2005-12-31', emCurso: false },
   ],
 };
-const okGovernos = async () => ({ ok: true, status: 200, json: async () => GOVERNOS });
 
 it('carrega ordenado (em curso por último) e começa SEM seleção', async () => {
-  await carregarMandatos({ fetchImpl: okGovernos });
+  carregarMandatos({ dados: GOVERNOS });
   const { mandatos, selecionado } = get(mandateStore);
   expect(mandatos.map((m) => m.id)).toEqual(['lula-1', 'bolsonaro', 'lula-3']);
   expect(selecionado).toBeNull();
 });
 
-it('governos fora do ar NÃO derrubam o app — o store só fica vazio', async () => {
-  // O mandato é CONTEXTO: o eixo do tempo não depende dele (§9.3, espírito).
-  await carregarMandatos({ fetchImpl: async () => { throw new Error('rede'); } });
-  expect(get(mandateStore)).toEqual({ mandatos: [], selecionado: null });
-  await carregarMandatos({ fetchImpl: async () => ({ ok: false, status: 500, json: async () => ({}) }) });
-  expect(get(mandateStore)).toEqual({ mandatos: [], selecionado: null });
+it('o registro REAL embutido tem 9 mandatos, sem sobreposição e sem cor de partido', () => {
+  carregarMandatos();
+  const { mandatos } = get(mandateStore);
+  expect(mandatos).toHaveLength(9);
+  for (let i = 1; i < mandatos.length; i++) {
+    const anterior = mandatos[i - 1];
+    if (anterior.fim === null) continue;
+    expect(mandatos[i].inicio > anterior.fim).toBe(true);
+  }
+  for (const m of mandatos) expect(m).not.toHaveProperty('cor');
 });
 
 it('seleciona e limpa', async () => {
-  await carregarMandatos({ fetchImpl: okGovernos });
+  carregarMandatos({ dados: GOVERNOS });
   selecionarMandato('bolsonaro');
   expect(mandatoSelecionado().id).toBe('bolsonaro');
   limparSelecao();
@@ -66,7 +69,7 @@ it('R27 — não importa series.js, verificado NO FONTE e não por proxy', async
 // declarando a autoria da janela, outro não). Aqui se prova o CONTRATO que os dois herdam.
 it('aplicarMandato escolhe o governo E leva a janela para o período dele', async () => {
   const { viewportStore } = await import('./viewport.js');
-  await carregarMandatos({ fetchImpl: okGovernos });
+  carregarMandatos({ dados: GOVERNOS });
   definirJanela({ from: '1990-01-01', to: '1990-12-31' });
   expect(aplicarMandato('bolsonaro')).toBe(true);
   expect(get(mandateStore).selecionado).toBe('bolsonaro');
@@ -75,7 +78,7 @@ it('aplicarMandato escolhe o governo E leva a janela para o período dele', asyn
 
 it('aplicarMandato no MESMO governo desliga o filtro (o "clicar de novo" do trilho)', async () => {
   const { viewportStore } = await import('./viewport.js');
-  await carregarMandatos({ fetchImpl: okGovernos });
+  carregarMandatos({ dados: GOVERNOS });
   aplicarMandato('lula-1');
   expect(aplicarMandato('lula-1')).toBe(false);
   expect(get(mandateStore).selecionado).toBeNull();
@@ -84,13 +87,13 @@ it('aplicarMandato no MESMO governo desliga o filtro (o "clicar de novo" do tril
 
 it('aplicarMandato com o mandato EM CURSO termina na data máxima do dado', async () => {
   const { viewportStore } = await import('./viewport.js');
-  await carregarMandatos({ fetchImpl: okGovernos });
+  carregarMandatos({ dados: GOVERNOS });
   aplicarMandato('lula-3', '2025-10-01');
   expect(get(viewportStore)).toEqual({ from: '2023-01-01', to: '2025-10-01' });
 });
 
 it('aplicarMandato com id desconhecido limpa (nada de "selecionado" órfão)', async () => {
-  await carregarMandatos({ fetchImpl: okGovernos });
+  carregarMandatos({ dados: GOVERNOS });
   selecionarMandato('bolsonaro');
   expect(aplicarMandato('nao-existe')).toBe(false);
   expect(get(mandateStore).selecionado).toBeNull();
@@ -100,7 +103,7 @@ it('aplicarMandato declara a AUTORIA da janela (§8.1) — o fit automático par
   const { aoEscolherJanela } = await import('./viewport.js');
   const avisos = [];
   const cancelar = aoEscolherJanela((v) => avisos.push(v));
-  await carregarMandatos({ fetchImpl: okGovernos });
+  carregarMandatos({ dados: GOVERNOS });
   aplicarMandato('bolsonaro');
   aplicarMandato('bolsonaro'); // o "Todos": NÃO é janela escolhida
   cancelar();

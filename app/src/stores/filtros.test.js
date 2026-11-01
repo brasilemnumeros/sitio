@@ -32,25 +32,16 @@ it('a janela COMPLETA (o eco do fitContent) não é filtro — a folga de 1 ano 
 
 it('mandato escolhido é filtro, mesmo com a janela completa', () => {
   carregarMandatos({
-    fetchImpl: async () => ({
-      ok: true,
-      json: async () => ({
-        mandatos: [{ id: 'lula-1', rotulo: 'Lula I', partido: 'PT', inicio: '2003-01-01', fim: '2006-12-31' }],
-      }),
-    }),
+    dados: {
+      mandatos: [{ id: 'lula-1', rotulo: 'Lula I', partido: 'PT', inicio: '2003-01-01', fim: '2006-12-31' }],
+    },
   });
-  return new Promise((resolve) => {
-    // `carregarMandatos` é assíncrona: espera a store refletir a lista antes de selecionar.
-    setTimeout(() => {
-      selecionarMandato('lula-1');
-      expect(get(mandateStore).selecionado).toBe('lula-1');
-      expect(get(filtroAtivo)).toBe(true);
-      resetarFiltros();
-      // o reset solta o mandato E volta a janela ao intervalo completo
-      expect(get(mandateStore).selecionado).toBeNull();
-      expect(get(viewportStore)).toEqual({ from: null, to: null });
-      expect(get(filtroAtivo)).toBe(false);
-      resolve();
-    }, 0);
-  });
+  selecionarMandato('lula-1');
+  expect(get(mandateStore).selecionado).toBe('lula-1');
+  expect(get(filtroAtivo)).toBe(true);
+  resetarFiltros();
+  // o reset solta o mandato E volta a janela ao intervalo completo
+  expect(get(mandateStore).selecionado).toBeNull();
+  expect(get(viewportStore)).toEqual({ from: null, to: null });
+  expect(get(filtroAtivo)).toBe(false);
 });

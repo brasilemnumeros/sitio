@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "esfera": "federal",
+  "entidade": { "codigo": "BR", "nome": "Brasil" },
+  "cargo": "presidente",
+  "mandatos": [
+    {
+      "id": "federal-1995-fhc",
+      "titular": "Fernando Henrique Cardoso",
+      "rotulo": "FHC I",
+      "partido": "PSDB",
+      "tipo": "eleito",
+      "inicio": "1995-01-01",
+      "fim": "1998-12-31"
+    },
+    {
+      "id": "federal-1999-fhc",
+      "titular": "Fernando Henrique Cardoso",
+      "rotulo": "FHC II",
+      "partido": "PSDB",
+      "tipo": "eleito",
+      "inicio": "1999-01-01",
+      "fim": "2002-12-31"
+    },
+    {
+      "id": "federal-2003-lula",
+      "titular": "Luiz Inácio Lula da Silva",
+      "rotulo": "Lula I",
+      "partido": "PT",
+      "tipo": "eleito",
+      "inicio": "2003-01-01",
+      "fim": "2006-12-31"
+    },
+    {
+      "id": "federal-2007-lula",
+      "titular": "Luiz Inácio Lula da Silva",
+      "rotulo": "Lula II",
+      "partido": "PT",
+      "tipo": "eleito",
+      "inicio": "2007-01-01",
+      "fim": "2010-12-31"
+    },
+    {
+      "id": "federal-2011-dilma",
+      "titular": "Dilma Vana Rousseff",
+      "rotulo": "Dilma I",
+      "partido": "PT",
+      "tipo": "eleito",
+      "inicio": "2011-01-01",
+      "fim": "2014-12-31"
+    },
+    {
+      "id": "federal-2015-dilma",
+      "titular": "Dilma Vana Rousseff",
+      "rotulo": "Dilma II",
+      "partido": "PT",
+      "tipo": "eleito",
+      "inicio": "2015-01-01",
+      "fim": "2016-05-11",
+      "mandatoDe": { "inicio": "2015-01-01", "fim": "2018-12-31" }
+    },
+    {
+      "id": "federal-2016-temer",
+      "titular": "Michel Miguel Elias Temer Lulia",
+      "rotulo": "Temer",
+      "partido": "MDB",
+      "tipo": "sucessor",
+      "inicio": "2016-05-12",
+      "fim": "2018-12-31",
+      "mandatoDe": { "inicio": "2015-01-01", "fim": "2018-12-31" }
+    },
+    {
+      "id": "federal-2019-bolsonaro",
+      "titular": "Jair Messias Bolsonaro",
+      "rotulo": "Bolsonaro",
+      "partido": "PL",
+      "tipo": "eleito",
+      "inicio": "2019-01-01",
+      "fim": "2022-12-31"
+    },
+    {
+      "id": "federal-2023-lula",
+      "titular": "Luiz Inácio Lula da Silva",
+      "rotulo": "Lula III",
+      "partido": "PT",
+      "tipo": "eleito",
+      "inicio": "2023-01-01",
+      "fim": null,
+      "emCurso": true
+    }
+  ]
+}

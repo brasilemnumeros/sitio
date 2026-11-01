@@ -5,7 +5,10 @@ import { fileURLToPath } from 'node:url';
 import { COBERTURA, deltaNoMandato, pontosEsperados } from './mandates.js';
 
 const raiz = fileURLToPath(new URL('../../../../', import.meta.url)); // = brasilemnumeros/
-const governos = JSON.parse(readFileSync(join(raiz, 'dados/governos/federal.json'), 'utf8'));
+// Os governos passaram a ser dado versionado no próprio `sitio` (2026-11-01), dentro do app.
+const governos = JSON.parse(
+  readFileSync(fileURLToPath(new URL('../data/governos/federal.json', import.meta.url)), 'utf8')
+);
 const MANDATOS = governos.mandatos.filter((m) => m.rotulo !== 'FHC I'); // 8 colunas da §7.3
 
 const GRANULARIDADE = {

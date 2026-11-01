@@ -25,24 +25,13 @@ const CATALOGO = fileURLToPath(new URL('../indicators.json', import.meta.url));
 const CSS_DO_SITE = fileURLToPath(new URL('../assets/css/main.dist.css', import.meta.url));
 
 
-export default defineConfig(({ command }) => ({
-  // O app busca o DADO em dois lugares: as séries vêm do `datafile` do catálogo, e os
-  // governos (o trilho de mandatos) de uma URL aqui. Em **dev** ambos apontam para o repo
-  // `dados/` local — servido pelo middleware acima; em **produção**, para o Pages do repo
-  // `dados`. Isto é o que faz "local serve dado local" sem mexer no app.
-  define: {
-    // ⚠ O `dev` do SITE (`astro dev`) roda `build:app` em modo BUILD — e por isso caía no ramo de
-    // PRODUÇÃO, buscando os governos na URL publicada. Medido em 2026-10-19: `federal.json`
-    // publicado responde **404** (item 1 do deploy pendente), o `catch` de `carregarMandatos`
-    // engole a falha (§9.3) e o resultado é o gráfico e o minimapa SEM FAIXA NENHUMA — parece
-    // minimapa vazio, é dado faltando. `DADOS_LOCAL=1` (posto pelo script `dev` do `sitio`) faz o
-    // mesmo que o `vite dev` do app: local serve dado local.
-    __BASE_DADOS__: JSON.stringify(
-      command === 'serve' || process.env.DADOS_LOCAL === '1'
-        ? '/dados'
-        : 'https://brasilemnumeros.github.io/dados'
-    ),
-  },
+export default defineConfig(() => ({
+  // Em **dev** o dado das SÉRIES aponta para o repo `dados/` local (o `datafile` do catálogo é
+  // reescrito pelo middleware acima); em produção, para o Pages do repo `dados`. Os GOVERNOS não
+  // passam mais por URL: são dado versionado no próprio `sitio` (`app/src/data/governos/`) e
+  // entram no bundle (2026-11-01). Antes havia aqui um `define.__BASE_DADOS__` cujo único
+  // consumidor era o `fetch` dos governos — e que, no `astro dev` (que builda em modo BUILD),
+  // fazia o app buscar a URL publicada e ficar SEM FAIXA em silêncio quando ela dava 404.
   plugins: [
     // O middleware de dado local, compartilhado com o site. Só o APP passa o `css`:
     // `app/index.html` linka `../assets/css/main.dist.css` e é este ramo que o serve

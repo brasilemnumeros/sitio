@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "esferas": [
+    {
+      "id": "federal",
+      "nome": "Federal",
+      "cargo": "presidente",
+      "entidades": [{ "codigo": "BR", "nome": "Brasil", "arquivo": "federal.json" }]
+    },
+    {
+      "id": "estadual",
+      "nome": "Estadual",
+      "cargo": "governador",
+      "entidades": []
+    },
+    {
+      "id": "municipal",
+      "nome": "Municipal",
+      "cargo": "prefeito",
+      "entidades": []
+    }
+  ]
+}

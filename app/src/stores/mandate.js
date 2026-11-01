@@ -1,27 +1,20 @@
 import { writable, get } from 'svelte/store';
 import { ordenarMandatos, janelaDoMandato } from '../domain/mandates.js';
 import { definirJanela, resetarJanela } from './viewport.js';
+import federal from '../data/governos/federal.json';
 
-// `__BASE_DADOS__` é trocado em tempo de build pelo `vite.config.js`: em dev aponta para o
-// repo `dados/` local (servido pelo middleware), em produção para o Pages. Antes isto era uma
-// URL publicada **fixa** — o que fazia o trilho de mandatos buscar da rede mesmo em dev.
-const URL_GOVERNOS = `${__BASE_DADOS__}/governos/federal.json`;
+// Os governos são dado versionado AQUI (2026-11-01, antes viviam no repo `dados` e vinham por
+// `fetch`). Entrar no bundle troca o 404 silencioso por erro de build: se o arquivo sumir, o
+// bundle não existe — em vez de o gráfico e o minimapa ficarem sem faixa sem avisar (§9.3).
 const inicial = { mandatos: [], selecionado: null };
 
 const store = writable(inicial);
 export const mandateStore = { subscribe: store.subscribe };
 
-/** O mandato é CONTEXTO, não dado do gráfico: se os governos não vierem, o app ainda mostra
- * as séries — por isso a falha é engolida e o store fica vazio em vez de propagar (§9.3). */
-export async function carregarMandatos({ url = URL_GOVERNOS, fetchImpl = fetch } = {}) {
-  try {
-    const r = await fetchImpl(url);
-    if (!r.ok) throw new Error(`HTTP ${r.status} ao buscar governos`);
-    const dados = await r.json();
-    store.set({ mandatos: ordenarMandatos(dados.mandatos ?? []), selecionado: null });
-  } catch {
-    store.set({ ...inicial });
-  }
+/** Carrega o registro embutido. Síncrona e com `dados` injetável: os testes passam fixture e
+ * não precisam de rede; `dados` é o único ponto de troca. */
+export function carregarMandatos({ dados = federal } = {}) {
+  store.set({ mandatos: ordenarMandatos(dados.mandatos ?? []), selecionado: null });
 }
 
 export function selecionarMandato(id) {

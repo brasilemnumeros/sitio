@@ -37,7 +37,7 @@
     for (const item of itens) {
       if (item.status !== 'ok' || !Array.isArray(item.series?.dados)) continue;
       for (const { data } of item.series.dados) {
-        if (min === null || date < min) min = date;
+        if (min === null || data < min) min = data;
       }
     }
     return min;

@@ -80,7 +80,7 @@
       popover: {
         title: 'Artigos e análises',
         description:
-          'Cada análise parte de um indicador e vai além do gráfico: compara com outra série, situa o período e discute os limites da leitura.',
+          'Confira também nossos artigos: cada análise parte de um indicador e vai além do gráfico — compara com outra série, situa o período e discute os limites da leitura.',
         side: 'bottom',
       },
     },

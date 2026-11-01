@@ -80,7 +80,7 @@
       popover: {
         title: 'Artigos e análises',
         description:
-          'Cada indicador tem um texto explicando de onde vem o número e o que ele mede. Vale conferir antes de citar.',
+          'Cada análise parte de um indicador e vai além do gráfico: compara com outra série, situa o período e discute os limites da leitura.',
         side: 'bottom',
       },
     },

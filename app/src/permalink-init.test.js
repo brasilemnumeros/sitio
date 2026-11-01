@@ -40,14 +40,13 @@ const resposta = (body) => ({ ok: true, status: 200, json: async () => body });
 function fixture(idsDoCatalogo) {
   catalogStore.set({
     status: 'ready',
-    groups: { g: { name: 'G', description: '' } },
-    indicators: idsDoCatalogo.map((id) => ({
+    grupos: { g: { nome: 'G' } },
+    indicadores: idsDoCatalogo.map((id) => ({
       id,
-      name: `Ind ${id}`,
-      group: 'g',
+      nome: `Ind ${id}`,
+      grupo: 'g',
       arquivo: `g/${id}.json`,
       datafile: `data:${id}`,
-      chartType: 'line',
       escala: 'percentual',
     })),
     error: null,
@@ -75,7 +74,7 @@ function fixture(idsDoCatalogo) {
 beforeEach(() => {
   limparSeries();
   clearSeriesCache();
-  catalogStore.set({ status: 'idle', groups: {}, indicators: [], error: null });
+  catalogStore.set({ status: 'idle', grupos: {}, indicadores: [], error: null });
 });
 
 // Cada `iniciarPermalink` deixa uma assinatura viva; sem desfazê-la, a assinatura de um

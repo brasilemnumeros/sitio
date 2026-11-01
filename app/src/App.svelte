@@ -129,7 +129,7 @@
     const falhas = itens.filter((i) => i.status === 'erro' && i.error);
     if (falhas.length === 0) return null;
     if (falhas.length === 1) return falhas[0].error;
-    return falhas.map((i) => `${i.name}: ${i.error}`).join('\n');
+    return falhas.map((i) => `${i.nome}: ${i.error}`).join('\n');
   });
 
   // §9.1 — o atalho de primeiro uso. Os IDs vivem no `indicadores.json`; o par "Selic × IPCA" é
@@ -137,9 +137,9 @@
   const EXEMPLO_IDS = ['selic-meta-acum-12m', 'ipca-acum-12m'];
 
   function pedirExemplo() {
-    const { indicators } = $catalogStore;
+    const { indicadores } = $catalogStore;
     for (const id of EXEMPLO_IDS) {
-      const entry = indicators.find((i) => i.id === id);
+      const entry = indicadores.find((i) => i.id === id);
       if (entry) adicionarSerie(entry);
     }
   }

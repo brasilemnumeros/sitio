@@ -96,9 +96,9 @@
       Escolha um indicador para ver a ficha.
     </p>
   {:else}
-    <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{indicador.name}</h3>
-    {#if indicador.description}
-      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{indicador.description}</p>
+    <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">{indicador.nome}</h3>
+    {#if indicador.descricao}
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{indicador.descricao}</p>
     {/if}
 
     {#if estado.status === 'carregando'}

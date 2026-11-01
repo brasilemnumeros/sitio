@@ -15,9 +15,10 @@ migração (ADR 0002).
 - Dados **não** vivem aqui: as séries vêm do repo irmão `dados/` (e o contrato).
   **Governos vivem aqui** (2026-11-01): `app/src/data/governos/`, embutidos no bundle.
   Local: `../dados/`; no CI: `./dados/`, apontado por `DADOS_DIR`.
-- Catálogo de indicadores: `app/src/data/indicadores.json` (13 indicadores), **embutido no
-  bundle** desde 2026-11-01. Não existe mais `/indicators.json` publicado nem cópia em
-  `public/`.
+- Catálogo de indicadores: `app/src/data/indicadores.json` (13 indicadores, chaves em
+  português: `versao`, `indicadores`, `grupos`, `nome`, `grupo`, `descricao`, `escala`,
+  `arquivo`), **embutido no bundle** desde 2026-11-01. Não existe mais `/indicators.json`
+  publicado nem cópia em `public/`.
 - Conteúdo editorial: `src/content/posts/*.md` (10 posts).
 
 ## Mapa rápido

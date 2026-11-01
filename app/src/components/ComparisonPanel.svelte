@@ -78,7 +78,7 @@
                     style="background:{item.cor}"
                     aria-hidden="true"
                   ></span>
-                  <span class="text-slate-700 dark:text-slate-200">{item.name}</span>
+                  <span class="text-slate-700 dark:text-slate-200">{item.nome}</span>
                 </span>
               </th>
 

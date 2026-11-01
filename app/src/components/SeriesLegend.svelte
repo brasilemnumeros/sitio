@@ -37,10 +37,10 @@
           type="color"
           class="amostra h-3.5 w-3.5 shrink-0 cursor-pointer"
           value={item.cor}
-          aria-label="Cor da série {item.name}"
+          aria-label="Cor da série {item.nome}"
           oninput={(e) => definirCor(item.id, e.currentTarget.value)}
         />
-        <span class="text-slate-700 dark:text-slate-200">{item.name}</span>
+        <span class="text-slate-700 dark:text-slate-200">{item.nome}</span>
       </label>
 
       {#if item.corPessoal}
@@ -67,7 +67,7 @@
       <button
         type="button"
         class="text-xs text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-        aria-label="Remover {item.name} do gráfico"
+        aria-label="Remover {item.nome} do gráfico"
         title="Remover do gráfico"
         onclick={() => removerSerie(item.id)}
       >

@@ -90,7 +90,7 @@
           <span class="flex min-w-0 items-center gap-1.5">
             <span class="h-2 w-2 shrink-0 rounded-full" style="background:{item.cor}" aria-hidden="true"
             ></span>
-            <span class="truncate text-slate-300">{item.name}</span>
+            <span class="truncate text-slate-300">{item.nome}</span>
           </span>
           <span class="shrink-0 tabular-nums text-slate-100" title={textoExato(item)}
             >{textoDoValor(item)}</span

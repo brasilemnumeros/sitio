@@ -53,7 +53,7 @@
               class="inline-block h-3 w-3 shrink-0 rounded-full bg-red-400 dark:bg-red-500"
               aria-hidden="true"
             ></span>
-            <span class="font-medium">{item.name}</span>
+            <span class="font-medium">{item.nome}</span>
             <span class="text-xs opacity-75">falhou ao carregar</span>
             <button
               type="button"
@@ -65,7 +65,7 @@
             <button
               type="button"
               class="rounded border border-red-300 px-2 py-0.5 text-xs font-medium hover:bg-red-100 dark:border-red-700 dark:hover:bg-red-900"
-              aria-label="Remover {item.name}"
+              aria-label="Remover {item.nome}"
               onclick={() => removerSerie(item.id)}
             >
               Remover
@@ -82,10 +82,10 @@
               type="color"
               class="amostra h-4 w-4 shrink-0 cursor-pointer"
               value={item.cor}
-              aria-label="Cor da série {item.name}"
+              aria-label="Cor da série {item.nome}"
               oninput={(e) => definirCor(item.id, e.currentTarget.value)}
             />
-            <span class="font-medium">{item.name}</span>
+            <span class="font-medium">{item.nome}</span>
 
             {#if item.status === 'carregando'}
               <!-- §9.2 — o progresso é POR SÉRIE, não um indicador global: as séries
@@ -93,7 +93,7 @@
               <span
                 class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400"
                 role="status"
-                aria-label="Carregando {item.name}"
+                aria-label="Carregando {item.nome}"
               >
                 <span
                   class="inline-block h-2 w-2 animate-pulse rounded-full bg-current"
@@ -107,7 +107,7 @@
               <button
                 type="button"
                 class="text-xs text-slate-500 underline hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100"
-                aria-label="Restaurar a cor padrão de {item.name}"
+                aria-label="Restaurar a cor padrão de {item.nome}"
                 onclick={() => restaurarCor(item.id)}
               >
                 restaurar padrão
@@ -117,7 +117,7 @@
             <button
               type="button"
               class="shrink-0 rounded-full px-1 text-base leading-none text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-              aria-label="Remover {item.name}"
+              aria-label="Remover {item.nome}"
               onclick={() => removerSerie(item.id)}
             >
               ×
@@ -132,7 +132,7 @@
       <div class="flex flex-col gap-1" role="status">
         {#each avisos as { item, aviso, contra } (item.id)}
           <p class="text-xs text-amber-700 dark:text-amber-400">
-            A cor de «{item.name}» fica a ΔE_ok {formatarDistancia(aviso.distancia)} da cor de «{contra?.name
+            A cor de «{item.nome}» fica a ΔE_ok {formatarDistancia(aviso.distancia)} da cor de «{contra?.nome
             }» — perto demais para distinguir. A série continua no gráfico; o aviso não bloqueia.
           </p>
         {/each}

@@ -23,8 +23,8 @@ const REGISTRO = fileURLToPath(new URL('./indicadores.json', import.meta.url));
 
 /** O registro do site: quais arquivos são SÉRIES publicadas. */
 function indicadoresRegistrados() {
-  const { indicators } = JSON.parse(readFileSync(REGISTRO, 'utf8'));
-  return indicators.map((ind) => {
+  const { indicadores } = JSON.parse(readFileSync(REGISTRO, 'utf8'));
+  return indicadores.map((ind) => {
     // "<familia>/<arquivo>.json" → { familia, arquivo }
     const m = /^([^/]+)\/([^/]+\.json)$/.exec(ind.arquivo);
     if (!m) throw new Error(`arquivo inesperado no registro: ${ind.arquivo}`);
@@ -74,8 +74,8 @@ describe('o contrato publicado em dados/ é o que o app valida (§6)', () => {
   });
 
   it('a escala que o catálogo declara é a MESMA unidade da série (um dono por campo)', () => {
-    const { indicators } = JSON.parse(readFileSync(REGISTRO, 'utf8'));
-    for (const ind of indicators) {
+    const { indicadores } = JSON.parse(readFileSync(REGISTRO, 'utf8'));
+    for (const ind of indicadores) {
       const caminho = join(RAIZ_SERIES, ind.arquivo);
       const serie = JSON.parse(readFileSync(caminho, 'utf8'));
       // Antes de 2026-11-01 o catálogo repetia `unit` inteiro — e divergia em 8 de 13.

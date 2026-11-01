@@ -27,7 +27,7 @@
   {/if}
   {#each itens as item (item.id)}
     <li class="flex flex-wrap items-center gap-2 text-sm">
-      <span class="min-w-0 flex-1 truncate text-slate-700 dark:text-slate-200">{item.name}</span>
+      <span class="min-w-0 flex-1 truncate text-slate-700 dark:text-slate-200">{item.nome}</span>
 
       <!-- Mesmo nome acessível de sempre: o rótulo é o eixo ATUAL (`esq.`/`dir.`) e o clique
            alterna. A store diz o lado; o componente não decide nada (§8.1). -->

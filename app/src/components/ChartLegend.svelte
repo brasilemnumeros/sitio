@@ -45,7 +45,7 @@
         aria-hidden="true"
       ></span>
       <span class="min-w-0 truncate {item.oculta ? 'text-slate-500' : 'text-slate-200'}"
-        >{item.name}</span
+        >{item.nome}</span
       >
 
       <!-- Esconder/mostrar. Os dois controles existem nos DOIS layouts. O alvo é o ícone com
@@ -59,7 +59,7 @@
       <button
         type="button"
         aria-pressed={item.oculta}
-        aria-label={item.oculta ? `Mostrar ${item.name}` : `Esconder ${item.name}`}
+        aria-label={item.oculta ? `Mostrar ${item.nome}` : `Esconder ${item.nome}`}
         class="shrink-0 p-1 text-slate-400 hover:text-slate-100"
         onclick={() => alternarVisibilidade(item.id)}
       >
@@ -87,7 +87,7 @@
 
       <button
         type="button"
-        aria-label="Remover {item.name} do gráfico"
+        aria-label="Remover {item.nome} do gráfico"
         class="shrink-0 p-1 text-slate-400 hover:text-red-300"
         onclick={() => removerSerie(item.id)}
       >

@@ -13,8 +13,8 @@ commit, não interpretação.
 tradução: `unidade`, `granularidade`, `fonte`, `dados`, `data`, `valor`.
 
 Não confundir com o **catálogo** (`sitio/app/src/data/indicadores.json`): o catálogo é
-apresentação (nome, grupo, descrição, tipo de gráfico, escala, caminho do arquivo). O arquivo da
-série descreve **o dado**.
+apresentação (`nome`, `grupo`, `descricao`, `escala`, `arquivo`) e também está em português. O
+arquivo da série descreve **o dado**; unidade, granularidade e fonte não se repetem no catálogo.
 
 ## Onde o arquivo mora
 

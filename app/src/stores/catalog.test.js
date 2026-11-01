@@ -3,15 +3,15 @@ import { get } from 'svelte/store';
 import { catalogStore, carregarCatalogo, buscarIndicadores } from './catalog.js';
 
 const CATALOGO = {
-  schema: 1,
-  groups: { monetary: { name: '🏦 Política Monetária' }, inflation: { name: '📈 Inflação' } },
-  indicators: [
-    { id: 'selic-meta-acum-12m', name: 'Taxa Selic Meta (%)', group: 'monetary', arquivo: 'selic/selic-meta-acum-12m.json', escala: 'percentual', chartType: 'line' },
-    { id: 'ipca-acum-12m', name: 'IPCA (%)', group: 'inflation', arquivo: 'ipca/ipca-acum-12m.json', escala: 'percentual', chartType: 'line' },
+  versao: 1,
+  grupos: { monetario: { nome: '🏦 Política Monetária' }, inflacao: { nome: '📈 Inflação' } },
+  indicadores: [
+    { id: 'selic-meta-acum-12m', nome: 'Taxa Selic Meta (%)', grupo: 'monetario', arquivo: 'selic/selic-meta-acum-12m.json', escala: 'percentual' },
+    { id: 'ipca-acum-12m', nome: 'IPCA (%)', grupo: 'inflacao', arquivo: 'ipca/ipca-acum-12m.json', escala: 'percentual' },
   ],
 };
 
-beforeEach(() => catalogStore.set({ status: 'idle', groups: {}, indicators: [], error: null }));
+beforeEach(() => catalogStore.set({ status: 'idle', grupos: {}, indicadores: [], error: null }));
 
 describe('catalogStore', () => {
   it('começa em idle', () => {
@@ -21,7 +21,7 @@ describe('catalogStore', () => {
   it('carrega o catálogo embutido e vira ready', () => {
     carregarCatalogo({ dados: CATALOGO });
     expect(get(catalogStore).status).toBe('ready');
-    expect(get(catalogStore).indicators).toHaveLength(2);
+    expect(get(catalogStore).indicadores).toHaveLength(2);
   });
 
   it('não recarrega o que já está pronto (idempotente)', () => {

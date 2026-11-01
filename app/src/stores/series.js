@@ -5,7 +5,7 @@ import { PALETA_PADRAO } from '../domain/color.js';
 /** O teto vem da PALETA, não do layout (§1): sem ciclo, não há 11ª cor. */
 export const LIMITE_SERIES = 10;
 
-/** @typedef {{id:string, name:string, unidade:object, cor:string,
+/** @typedef {{id:string, nome:string, unidade:object, cor:string,
  *             status:'carregando'|'ok'|'erro', series:object|null, error:string|null,
  *             oculta:boolean}} Item */
 
@@ -36,7 +36,7 @@ function reindexarCores(itens) {
  *  `adicionarSerie` e `substituirSeries` para que os dois caminhos criem itens idênticos. */
 const paraItem = (entry) => ({
   id: entry.id,
-  name: entry.name,
+  nome: entry.nome,
   url: entry.datafile,
   unidade: entry.unidade ?? null,
   cor: null,

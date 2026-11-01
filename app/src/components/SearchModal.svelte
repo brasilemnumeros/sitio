@@ -99,14 +99,14 @@
     }
     abrirFicha(lista[focoIndicador]);
   }
-  let grupos = $derived(Object.entries($catalogStore.groups));
+  let grupos = $derived(Object.entries($catalogStore.grupos));
   let grupoAtivo = $derived(grupos[focoGrupo]?.[0] ?? null);
 
-  // `$catalogStore.indicators` é lido de propósito: registra a dependência reativa para a
+  // `$catalogStore.indicadores` é lido de propósito: registra a dependência reativa para a
   // lista se recompor quando o catálogo termina de carregar (o `buscarIndicadores` lê a
   // store por dentro, o que não basta para o rastreio de runes).
   let lista = $derived.by(() => {
-    void $catalogStore.indicators;
+    void $catalogStore.indicadores;
     return buscando ? buscarIndicadores(termo) : indicadoresDoGrupo(grupoAtivo);
   });
 
@@ -114,7 +114,7 @@
   // mostrar a contagem: cabe em 320px (medido) e dá o tamanho do grupo sem abrir.
   let contagens = $derived.by(() => {
     const m = {};
-    for (const i of $catalogStore.indicators) m[i.group] = (m[i.group] ?? 0) + 1;
+    for (const i of $catalogStore.indicadores) m[i.grupo] = (m[i.grupo] ?? 0) + 1;
     return m;
   });
 
@@ -122,14 +122,14 @@
   // sequência de linhas (cabeçalho ou item) para o cabeçalho poder ser `sticky` direto no
   // contêiner de rolagem. `idx` é o índice do item na sequência — é o que o teclado foca.
   let mobileLinhas = $derived.by(() => {
-    void $catalogStore.indicators;
+    void $catalogStore.indicadores;
     const saida = [];
     let idx = 0;
     const ids = filtroMobile ? [filtroMobile] : grupos.map(([id]) => id);
     for (const gid of ids) {
       const itens = indicadoresDoGrupo(gid);
       if (itens.length === 0) continue;
-      saida.push({ tipo: 'cabecalho', gid, nome: $catalogStore.groups[gid]?.name ?? gid });
+      saida.push({ tipo: 'cabecalho', gid, nome: $catalogStore.grupos[gid]?.nome ?? gid });
       for (const ind of itens) saida.push({ tipo: 'item', ind, idx: idx++ });
     }
     return saida;
@@ -397,7 +397,7 @@
       onkeydown={aoTeclado}
       class={classeLinha(ativo)}
     >
-      <span class="min-w-0 flex-1 truncate">{ind.name}</span>
+      <span class="min-w-0 flex-1 truncate">{ind.nome}</span>
       {#if jaNoGrafico(ind.id)}
         <!-- Só INFORMAÇÃO, sem cara de controle (2026-11-01): devolve o sinal que o checkbox
              dava, sem o checkbox. O estado acionável vive no botão da ficha. -->
@@ -418,7 +418,7 @@
     <button
       type="button"
       class="shrink-0 rounded-full border border-slate-300 px-2 py-0.5 text-xs text-slate-600 md:hidden dark:border-slate-600 dark:text-slate-300"
-      aria-label="Ver a ficha de {ind.name}"
+      aria-label="Ver a ficha de {ind.nome}"
       onclick={() => abrirFicha(ind)}
       onkeydown={aoTeclado}>i</button
     >
@@ -502,7 +502,7 @@
                 onkeydown={aoTeclado}
                 class={classeLinha(colunaAtiva === 1 && focoGrupo === i)}
               >
-                {g.name}
+                {g.nome}
               </button>
             </li>
           {/each}
@@ -549,7 +549,7 @@
                   onkeydown={aoTeclado}
                   class={chipClasse(filtroMobile === id)}
                 >
-                  {g.name}
+                  {g.nome}
                   <span
                     class="ml-1.5 rounded-full bg-black/10 px-1.5 text-[10px] leading-4 tabular-nums dark:bg-white/15"
                     aria-label="{contagens[id] ?? 0} indicadores"

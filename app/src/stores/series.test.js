@@ -3,6 +3,7 @@ import { get } from 'svelte/store';
 import {
   LIMITE_SERIES, seriesStore, dataMaximaStore, adicionarSerie, removerSerie, tentarNovamente,
   atingiuLimite, motivoDoLimite, corDe, definirCor, restaurarCor, limparSeries, substituirSeries,
+  alternarVisibilidade,
 } from './series.js';
 import { clearSeriesCache } from '../data/series.js';
 import { PALETA_PADRAO } from '../domain/color.js';
@@ -167,4 +168,15 @@ describe('substituirSeries — preset troca o conjunto numa escrita atômica', (
     const itens = get(seriesStore).itens;
     expect(itens.map((i) => i.id)).toEqual(['a']); // 'z' foi embora junto
   });
+});
+
+// ─── ESCONDER (2026-10-31) ─── o par do remover: a série continua no estado, só não é desenhada.
+it('alternarVisibilidade esconde e reexibe sem apagar o item', async () => {
+  await adicionarSerie(entrada('escondida'), { fetchImpl: okSerie('escondida') });
+  expect(get(seriesStore).itens[0].oculta).toBe(false);
+  alternarVisibilidade('escondida');
+  expect(get(seriesStore).itens).toHaveLength(1);
+  expect(get(seriesStore).itens[0].oculta).toBe(true);
+  alternarVisibilidade('escondida');
+  expect(get(seriesStore).itens[0].oculta).toBe(false);
 });

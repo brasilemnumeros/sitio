@@ -32,6 +32,11 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
    *  o mesmo mandato muda de lugar conforme o indicador carregado (ver `domain/horizonte`).
    *  Fica FORA de `porId`: não é série do usuário, não entra na legenda nem no eixo. */
   let serieDoHorizonte = null;
+  /** Ids das séries que estão OCULTAS agora. Serve para aplicar `autoscaleInfoProvider` só na
+   *  TRANSIÇÃO: reaplicar em toda sincronização mexia no autoescalonamento a cada atualização e
+   *  deslocava a plotagem no meio de um arrasto (medido em 2026-11-01: dois specs de arrasto do
+   *  minimapa ficaram intermitentes). */
+  const ocultas = new Set();
 
   // 🔴 `setVisibleRange` e `fitContent` LANÇAM num gráfico sem NENHUMA barra. Medido em
   // 2026-10-15 (sonda no navegador, os dois builds): `setData([])` e depois `setVisibleRange`
@@ -137,7 +142,7 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
     const janelaAntes = usuarioAssumiu ? chart.timeScale().getVisibleRange() : null;
     const vivos = new Set(itens.map((i) => i.id));
     for (const [id, serie] of porId) {
-      if (!vivos.has(id)) { chart.removeSeries(serie); porId.delete(id); }
+      if (!vivos.has(id)) { chart.removeSeries(serie); porId.delete(id); ocultas.delete(id); }
     }
     // O horizonte é do EIXO, não da série: as âncoras valem mesmo com zero série carregada.
     const ancoras = ancorasDoHorizonte(dataEmSaoPaulo());
@@ -159,6 +164,11 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
     serieDoHorizonte.setData(ancoras.map((iso) => ({ time: emSegundos(iso), value: 0 })));
     for (const item of itens) {
       const eixo = atribuicao[item.id] === 'left' ? 'left' : 'right';
+      // `oculta` (2026-10-31) é estado de TELA: a série continua na store, mas não é desenhada.
+      // `autoscaleInfoProvider: () => null` é o que a tira do autoescalonamento — sem isto uma
+      // linha oculta continuaria esticando o eixo (mesma técnica da âncora do horizonte).
+      const oculta = item.oculta === true;
+      const escalaDaOculta = oculta ? () => null : undefined;
       let serie = porId.get(item.id);
       if (!serie) {
         serie = chart.addSeries(LineSeries, {
@@ -170,12 +180,19 @@ export function criarAdapter(container, { aoMudarJanela } = {}) {
           lastValueVisible: true,
           priceLineVisible: false,
           lineWidth: 2,
+          visible: !oculta,
           priceScaleId: eixo,        // ← §5: o lado que o `axesStore` mandou (padrão é 'right')
         });
         porId.set(item.id, serie);
       } else {
-        // O eixo pode ter mudado (recalcularEixos/moverParaEixo): reaplicar SEMPRE.
-        serie.applyOptions({ color: item.cor, priceScaleId: eixo });
+        // O eixo pode ter mudado (recalcularEixos/moverParaEixo) e a visibilidade também
+        // (olho da legenda): reaplicar SEMPRE.
+        serie.applyOptions({ color: item.cor, priceScaleId: eixo, visible: !oculta });
+      }
+      // Só na TRANSIÇÃO de visibilidade (ver `ocultas` acima).
+      if (oculta !== ocultas.has(item.id)) {
+        serie.applyOptions({ autoscaleInfoProvider: escalaDaOculta });
+        if (oculta) ocultas.add(item.id); else ocultas.delete(item.id);
       }
       serie.setData(paraPontosDaBiblioteca(item.series?.data ?? []));
     }

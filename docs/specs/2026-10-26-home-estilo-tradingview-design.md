@@ -29,7 +29,7 @@ recolhidos).
 | Filtros de tempo | `TimeFilters.svelte` | Escreve em `viewport`; limpa seleção de mandato |
 | Chip de mandato | `HomeToolbar.svelte` (`mandate-chip`) | Escreve em `mandate` e `viewport`. O trilho da gaveta inferior (`MandateRail`) saiu em 2026-10-30 |
 | Comparação | `ComparisonPanel.svelte` | Matriz larga: linha por série, coluna por governo |
-| Legenda | `SeriesLegend.svelte` | Identificação textual + troca de cor + eixo |
+| Legenda | `SeriesLegend.svelte` (gaveta) + `ChartLegend.svelte` (gráfico) | No gráfico: cor + nome + olho (esconder) + "×" (remover). Na gaveta: troca de cor, restaurar e aviso de cor parecida |
 | Busca | `SearchModal.svelte` + `Ficha.svelte` | Modal com cascata, ficha e fontes |
 | Permalink | `permalink-init.js` | Lê `?series=` uma vez na entrada; escreve com `replaceState` |
 
@@ -164,6 +164,9 @@ Uma **vista única rolável**, sem abas, com três seções nesta ordem:
 1. `SeriesChips` — status por série (carregando/erro), "tentar de novo" e aviso do teto de
    10 séries. Continua com `data-bloco="chips"`; sai da página, não do produto.
 2. `SeriesLegend` — identificação textual, avisos de colisão de cor e de escala, cor e remoção.
+   Desde 2026-10-31 a LEITURA e o controle rápido (esconder/remover) também estão na legenda
+   dentro do gráfico (`ChartLegend`); aqui fica a EDIÇÃO do objeto — cor, "restaurar" e o aviso
+   de cor parecida. Dois lugares, papéis distintos (decisão explícita, não duplicação).
 3. Eixos — atribuição `left`/`right` (`axesStore` + `moverParaEixo`) e o aviso de escala.
 
 Botão "+ Série" abre a busca. O gatilho do trilho é a **engrenagem** ("Configurações do

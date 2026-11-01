@@ -77,7 +77,15 @@ export function posicaoNaGrade(tempos, iso) {
  * hachura no mandato em curso, que vai até HOJE (o eixo também termina em hoje — emenda de
  * 2026-10-29 da §7.3.5; antes cortava no último dado).
  */
-export function criarPrimitivaDeFaixas(mandatos, { aoClicar, ultimoDadoPorSerie, temposDoDado, fimDoMandatoEmCurso } = {}) {
+/**
+ * @param {object} [opcoes]
+ * @param {boolean} [opcoes.rotulos=true]  Desenhar o rótulo de cada faixa ("Lula I · PT") no topo
+ *   do pane. As DUAS superfícies usam esta primitiva — o gráfico grande e o minimapa — e a
+ *   política é por superfície: o minimapa precisa do rótulo para ser legível (as faixas ali têm
+ *   ~1/3 da largura), e o gráfico grande só precisa dele quando o topo não está ocupado por outra
+ *   coisa (ver a experimentação de 2026-10-31, com a legenda das séries no canto).
+ */
+export function criarPrimitivaDeFaixas(mandatos, { aoClicar, ultimoDadoPorSerie, temposDoDado, fimDoMandatoEmCurso, rotulos = true } = {}) {
   let chart = null;
   let pedirAtualizacao = null;
   let selecionado = null;
@@ -163,7 +171,7 @@ export function criarPrimitivaDeFaixas(mandatos, { aoClicar, ultimoDadoPorSerie,
           // horizonte completo (1,36 ano × ~32px/ano) e, sem rótulo, o fundo pintado lia como
           // "período vago" entre a Dilma I e o Temer. O `clip` abaixo contém o texto que não
           // couber; o rótulo completo continua no chip e na matriz.
-          if (largura > 40 * r) {
+          if (rotulos && largura > 40 * r) {
             context.save();
             context.beginPath();
             context.rect(x1, 0, largura, bitmapSize.height);

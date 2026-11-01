@@ -49,6 +49,53 @@ test('exemplo pronto: dois chips, duas linhas na legenda e o gráfico monta', as
 });
 
 /**
+ * A LEGENDA DENTRO DO GRÁFICO (2026-10-31, a pedido do usuário) — bolinha da cor + nome na
+ * leitura, e os dois controles do TradingView: olho (esconder) e "×" (remover).
+ *
+ * Esconder é estado de TELA, não remoção: a linha sai do desenho, o item continua na store (e
+ * na legenda, com o nome apagado), e o olho volta a mostrar. É o par do "×" — e é o que separa
+ * "não quero ver agora" de "não quero mais esta série".
+ */
+test('a legenda do gráfico mostra cor e nome, esconde e remove a série', async ({ page }) => {
+  await abrirVazio(page);
+  await carregarExemplo(page);
+
+  const legenda = page.getByTestId('legenda-grafico');
+  const linhas = legenda.getByRole('listitem');
+  await expect(linhas).toHaveCount(2);
+  await expect(legenda).toContainText(/selic/i);
+  await expect(legenda).toContainText(/ipca/i);
+
+  const ocultaNaStore = (id) =>
+    page.evaluate(async (id) => {
+      const { seriesStore } = await import('/src/stores/series.js');
+      let itens = [];
+      seriesStore.subscribe((s) => (itens = s.itens))();
+      return itens.find((i) => i.id === id)?.oculta;
+    }, id);
+
+  // esconder: a linha continua na legenda, o olho vira "mostrar" e o estado é o da store
+  const olho = legenda.getByRole('button', { name: /^Esconder .*[Ss]elic/ });
+  await olho.click();
+  await expect(legenda.getByRole('button', { name: /^Mostrar .*[Ss]elic/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(linhas).toHaveCount(2);
+  expect(await ocultaNaStore('selic-meta-acum-12m')).toBe(true);
+
+  // mostrar de novo: volta ao desenho sem recarregar nada
+  await legenda.getByRole('button', { name: /^Mostrar .*[Ss]elic/ }).click();
+  expect(await ocultaNaStore('selic-meta-acum-12m')).toBe(false);
+
+  // remover: sai da legenda do gráfico E da gaveta (é o mesmo item da store)
+  await legenda.getByRole('button', { name: /^Remover .*[Ss]elic/ }).click();
+  await expect(linhas).toHaveCount(1);
+  await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(1);
+  await page.screenshot({ path: 'e2e/.artefatos/legenda-grafico.png', fullPage: true });
+});
+
+/**
  * §5 (decisão de 2026-10-30) — A FAIXA DA ESQUERDA SÓ EXISTE COM SÉRIE NELA.
  *
  * Com o eixo-base na direita, deixar a escala esquerda sempre visível (como era antes) custava

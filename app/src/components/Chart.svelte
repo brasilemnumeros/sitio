@@ -3,6 +3,7 @@
   import { get } from 'svelte/store';
   import { criarAdapter } from '../chart/adapter.js';
   import { criarNavigator } from '../chart/navigator.js';
+  import ChartLegend from './ChartLegend.svelte';
   import { seriesStore, dataMaximaStore } from '../stores/series.js';
   import { axesStore, recalcularEixos } from '../stores/axes.js';
   import { mandateStore, carregarMandatos, aplicarMandato } from '../stores/mandate.js';
@@ -10,6 +11,9 @@
 
   let container;
   let containerMini;
+  /** Largura REAL da escala de preço da esquerda, em px (0 quando ela não é desenhada).
+   *  A legenda do gráfico usa isto para não cobrir os rótulos dela no caso de DOIS eixos. */
+  let margemEsquerda = $state(0);
 
   onMount(() => {
     // adapter → store: o callback EXPLÍCITO (§8.1). O gráfico não é dono do estado.
@@ -79,8 +83,13 @@
     // reservam faixas nas pontas, e sem isto a cortina e as faixas do minimapa não caem sob as
     // do gráfico acima. O sinal é a geometria do adapter — não um número fixo, que mentiria
     // assim que um rótulo mudasse de largura. Detalhe e números em `navigator.alinharCom`.
-    adapter.aoMudarPlotagem(() => navigator.alinharCom(adapter.largurasDasEscalas));
-    navigator.alinharCom(adapter.largurasDasEscalas);
+    const sincronizarPlotagem = () => {
+      const larguras = adapter.largurasDasEscalas();
+      margemEsquerda = Math.round(larguras.esquerda ?? 0);
+      navigator.alinharCom(() => larguras);
+    };
+    adapter.aoMudarPlotagem(sincronizarPlotagem);
+    sincronizarPlotagem();
 
     // O mandato é contexto: se os governos não vierem, o gráfico segue (§9.3).
     carregarMandatos();
@@ -94,6 +103,11 @@
 </script>
 
 <div class="flex min-h-0 flex-1 flex-col gap-2">
-  <div bind:this={container} class="min-h-0 flex-1" data-testid="grafico"></div>
+  <!-- `relative` é da LEGENDA: ela é `absolute` no canto superior esquerdo, dentro do gráfico
+       (o padrão do TradingView). O `data-testid="grafico"` fica no div da lib — a geometria dos
+       testes mede ele, e a legenda é filha absoluta (não entra na caixa). -->
+  <div bind:this={container} class="relative min-h-0 flex-1" data-testid="grafico">
+    <ChartLegend deslocamento={margemEsquerda} />
+  </div>
   <div bind:this={containerMini} class="h-10 md:h-12 shrink-0" data-testid="minimapa"></div>
 </div>

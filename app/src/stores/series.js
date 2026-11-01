@@ -6,7 +6,8 @@ import { PALETA_PADRAO } from '../domain/color.js';
 export const LIMITE_SERIES = 10;
 
 /** @typedef {{id:string, name:string, unit:object, cor:string,
- *             status:'carregando'|'ok'|'erro', series:object|null, error:string|null}} Item */
+ *             status:'carregando'|'ok'|'erro', series:object|null, error:string|null,
+ *             oculta:boolean}} Item */
 
 export const seriesStore = writable({ itens: [] });
 
@@ -43,6 +44,10 @@ const paraItem = (entry) => ({
   status: 'carregando',
   series: null,
   error: null,
+  // `oculta` é ESTADO DE TELA (2026-10-31): a série continua carregada, na legenda, na
+  // matriz de comparação e na atribuição de eixo — só não é DESENHADA. Por isso mora no
+  // item, e não numa lista de exceções: quem remove é `removerSerie`, que apaga o item.
+  oculta: false,
 });
 
 /** A unidade vem da SÉRIE, não do catálogo (§6) — o catálogo só a tem durante a transição.
@@ -95,6 +100,17 @@ export async function substituirSeries(entries, { fetchImpl } = {}) {
 
 export function removerSerie(id) {
   escrever((itens) => reindexarCores(itens.filter((i) => i.id !== id)));
+}
+
+/**
+ * ESCONDER / MOSTRAR (2026-10-31, a pedido do usuário) — o par do "remover" na legenda do
+ * gráfico, como no TradingView. Esconder NÃO apaga: a série segue na legenda (com o olho
+ * fechado), na matriz de comparação, na atribuição de eixo e no teto de 10. Só o DESENHO sai
+ * (o adapter lê `oculta`), e o autoescalonamento a ignora — senão uma linha oculta continuaria
+ * esticando o eixo.
+ */
+export function alternarVisibilidade(id) {
+  escrever((itens) => itens.map((i) => (i.id === id ? { ...i, oculta: !i.oculta } : i)));
 }
 
 export async function tentarNovamente(id, { fetchImpl } = {}) {

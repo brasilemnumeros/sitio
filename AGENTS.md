@@ -12,8 +12,9 @@ migração (ADR 0002).
 
 - Domínio publicado: `https://www.brasilemnumeros.ong.br` (CNAME em `public/`).
 - Deploy: push em `main` → GitHub Actions → GitHub Pages.
-- Dados **não** vivem aqui: vêm do repo irmão `dados/` (séries, governos,
-  contrato). Local: `../dados/`; no CI: `./dados/`, apontado por `DADOS_DIR`.
+- Dados **não** vivem aqui: as séries vêm do repo irmão `dados/` (e o contrato).
+  **Governos vivem aqui** (2026-11-01): `app/src/data/governos/`, embutidos no bundle.
+  Local: `../dados/`; no CI: `./dados/`, apontado por `DADOS_DIR`.
 - Catálogo de indicadores: `indicators.json` na raiz (13 indicadores); é copiado
   para `public/` no build. **Não** editar a cópia.
 - Conteúdo editorial: `src/content/posts/*.md` (10 posts).
@@ -32,7 +33,7 @@ migração (ADR 0002).
 | `src/lib/` | helpers puros (feed, categorias, posts, trecho, smartify) | feed/listagem |
 | `app/src/` | app Svelte/Vite da home | UI e lógica do gráfico |
 | `app/src/domain/` | regras puras (`scales`, `color`, `format`, `mandates`, `schema`) | lógica testável sem DOM |
-| `app/src/data/` | catálogo, fetch das séries, validação, presets | contrato de dados |
+| `app/src/data/` | catálogo, fetch das séries, validação, presets; **governos** em `governos/` | contrato de dados |
 | `app/src/stores/` | estado (`catalog`, `series`, `viewport`, `axes`, `mandate`) | fonte da verdade do app |
 | `app/src/chart/` | adapter, pontos, faixas, minimapa (Lightweight Charts) | desenho do gráfico |
 | `app/e2e/` | Playwright (10 specs + `apoio.js`) | comportamento/geometria no navegador |
@@ -119,9 +120,11 @@ quando o defeito aparecer — e provar isso.
 - Entrada: `?series=` válido vence tudo; chave presente sem id válido cai em
   `EstadoInicial`; sem a chave entra o **preset do dia** (calculado em
   `America/Sao_Paulo`). `permalink-init.js` roda antes de qualquer escrita de URL.
-- Dados: catálogo em `indicators.json`; séries e governos no repo `dados/`. Em
-  dev, o middleware `app/vite-plugins/dados-locais.js` serve `/dados/**`; em
-  produção o bundle aponta para `https://brasilemnumeros.github.io/dados`.
+- Dados: catálogo em `indicators.json`; séries no repo `dados/`; governos em
+  `app/src/data/governos/` (versionados aqui, **importados** no bundle — não há
+  `fetch`). Em dev, o middleware `app/vite-plugins/dados-locais.js` serve
+  `/dados/**` para as séries; em produção o bundle aponta para
+  `https://brasilemnumeros.github.io/dados`.
 - **Eixo x (2026-10-29):** sempre do início do FHC I (`1995-01-01`) ao **dia de
   hoje**, independentemente das séries carregadas — âncoras mensais invisíveis em
   `app/src/domain/horizonte.js`. O "Tudo" enquadra esse horizonte; não voltar a
@@ -151,7 +154,8 @@ nova e aval do usuário.
   Lightweight Charts) e o site não autora componente Svelte (`@astrojs/svelte`
   **não** entra). Lógica de série, escala, cor ou eixo **não** migra para template
   do Astro. O gráfico é espelho dos stores; o domínio é puro e testável. Governos
-  são dado versionado (`dados/governos/`), **sem cor de partido** — identificação
+  são dado versionado **aqui** (`app/src/data/governos/`, emenda de 2026-11-01;
+  antes ficavam no `dados`), **sem cor de partido** — identificação
   por sigla + logo. Atribuição Apache-2.0 do TradingView é obrigação legal
   (`NOTICE` publicado + link visível + `testar-atribuicao.sh`). Custo zero de
   hospedagem/dados é invariante.

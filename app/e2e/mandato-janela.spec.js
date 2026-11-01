@@ -21,7 +21,7 @@ async function janela(page) {
 
 const anoDe = (iso) => Number(String(iso).slice(0, 4));
 
-/** Os ids vêm de `dados/governos/federal.json` (dado versionado, não do catálogo). */
+/** Os ids vêm de `app/src/data/governos/federal.json` (dado versionado no sitio). */
 const LULA_I = 'federal-2003-lula';
 const LULA_II = 'federal-2007-lula';
 const LULA_III = 'federal-2023-lula';

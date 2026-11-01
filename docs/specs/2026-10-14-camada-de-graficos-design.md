@@ -393,6 +393,10 @@ Períodos de governo viram dado versionado, não constante em código. Elimina a
 
 Um **índice** e um **arquivo por entidade**:
 
+> **Nota (2026-11-01):** os arquivos saíram do repo `dados` e moram no `sitio`, em
+> `app/src/data/governos/`, embutidos no bundle do app (emenda da D5 na ADR 0001). Os
+> caminhos abaixo são os originais desta spec; o schema e o modelo seguem valendo.
+
 ```
 dados/governos/index.json          → o que existe: esferas, entidades, contagens
 dados/governos/federal.json

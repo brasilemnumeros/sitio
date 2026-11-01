@@ -57,7 +57,8 @@ jobs:
       - name: CSS do site (Tailwind CLI, da raiz de sitio/)
         run: npm ci && npx -y @tailwindcss/cli -i ./src/styles/main.css -o ./assets/css/main.dist.css
 
-      # O E2E precisa do repo `dados/` para servir as séries e os governos. Ele é um repo
+      # O E2E precisa do repo `dados/` para servir as SÉRIES (os governos passaram a ser dado
+      # versionado no próprio `sitio`, em 2026-11-01). Ele é um repo
       # SEPARADO, então o checkout padrão não o traz. O `path: dados` o põe na raiz do
       # workspace — que de `app/` é `../dados/` (é o valor que o `DADOS_DIR` recebe abaixo).
       # ⚠️ `ref: ${github.ref_name}`: numa branch de feature o repo `dados` não tem essa branch

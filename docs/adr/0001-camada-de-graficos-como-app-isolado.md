@@ -1,7 +1,7 @@
 # ADR 0001 — Reconstruir a camada de gráficos como app isolado
 
-- **Status:** Aceita (emendada em 2026-10-14 — ver D7; emendada em 2026-10-30 — ver a emenda do trilho de mandatos, na Decisão)
-- **Data:** 2026-10-13 · **Emendas:** 2026-10-14, 2026-10-30
+- **Status:** Aceita (emendada em 2026-10-14 — ver D7; emendada em 2026-10-30 — ver a emenda do trilho de mandatos, na Decisão; emendada em 2026-11-01 — ver a emenda de localização dos governos, na D5)
+- **Data:** 2026-10-13 · **Emendas:** 2026-10-14, 2026-10-30, 2026-11-01
 - **Projeto:** Brasil em Números (`www.brasilemnumeros.ong.br`)
 - **Repositórios:** `sitio` (camada de apresentação) e, a partir da emenda de 2026-10-14, `dados` (contrato das séries — ver D7)
 
@@ -89,6 +89,8 @@ Perguntas feitas e respondidas ao longo da sessão (o espaço de busca considera
 **Emenda de 2026-10-14 (escopo municipal):** o modelo **suporta** municipal — o caminho de arquivo e o índice já o comportam — mas o dado **não será populado** nesta rodada. Popular 5.570 entidades é projeto de dados por si só; a fonte candidata é o TSE.
 
 **Emenda de 2026-10-30 (o trilho de mandatos saiu da UI):** o componente `MandateRail` — a faixa de seleção de uma caixa por governo — foi **removido** da gaveta inferior, a pedido do usuário. Ele não era regra: era um **terceiro** caminho até `mandateStore` + `aplicarMandato`, ao lado do chip da barra superior (2026-10-28) e da faixa do minimapa, e vivia numa gaveta que nasce recolhida. A escolha de mandato fica com o **chip** (desktop) e o **minimapa** (os dois layouts); a gaveta inferior passa a ser **leitura** (a matriz de comparação), com o "×" de fechar na própria barra de 36px e **um único título** na tela. O que a D5 e a emenda de cor acima decidem **continua valendo**: identificação por **texto** (`Lula III · PT`), nunca por cor de partido. O `app/e2e/trilho.spec.js` foi renomeado para `app/e2e/mandato-janela.spec.js`; as provas de "mesmo estado" que liam o `aria-pressed` do trilho leem a `mandateStore`.
+
+**Emenda de 2026-11-01 (os governos saíram do repo `dados` e entraram no bundle):** o registro de mandatos passa a ser dado versionado **no `sitio`** — `app/src/data/governos/federal.json` e `index.json` — e é **importado** pelo app em tempo de build, não buscado por URL. O motivo é o acoplamento sem contrapartida: o repo `dados` não usa `governos/` para nada (nem notebook, nem conversor, nem validação), e o `sitio` era seu único consumidor. Embutir troca um 404 silencioso (o `catch` de `carregarMandatos` deixava gráfico e minimapa **sem faixa**) por **erro de build**. Some com isso o `define.__BASE_DADOS__` do `vite.config.js`, cujo único consumidor era esse `fetch`. O resto da D5 **continua valendo**: índice + um arquivo por entidade, esferas, exercício efetivo, `mandatoDe`, `emCurso`, e **nenhuma cor de partido** (sigla + logo). A ordem de publicação é parte da emenda: o `sitio` precisa estar publicado antes de o `dados` remover a cópia antiga, porque o site no ar ainda a lia.
 
 **D6 — Custo zero é invariante.** A hospedagem segue estática e gratuita; nenhuma decisão desta ADR introduz custo recorrente.
 

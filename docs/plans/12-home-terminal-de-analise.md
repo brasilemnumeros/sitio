@@ -1,5 +1,13 @@
 # Home como terminal de análise — plano de implementação
 
+> ⚠️ **DEFASADO em 2026-11-01 — não use este plano como verdade.** O `MandateRail` que ele manda
+> construir **saiu da UI** em 2026-10-30 (decisão do usuário): a escolha de mandato vive no chip da
+> barra superior e na faixa do minimapa, e a gaveta inferior é só a matriz de comparação — com o
+> "×" de fechar na barra de 36px, sem `h2` próprio e com altura de conteúdo. Outras medidas também
+> mudaram (topo 44px, trilho 44px, barra inferior 36px; eixo Y à direita, com a escala da esquerda
+> só quando há série nela). A verdade está em `docs/specs/2026-10-26-home-estilo-tradingview-design.md`,
+> na emenda de 2026-10-30 da `docs/adr/0001` e no `AGENTS.md`. Este arquivo fica como HISTÓRICO.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Transformar a home num terminal de análise de altura fixa (`100dvh`): gráfico preenchendo o viewport, gavetas de séries/legenda/eixos (direita) e mandatos/comparação (inferior) fechadas por padrão, abrindo com um preset do dia determinístico.

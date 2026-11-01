@@ -28,9 +28,12 @@ const GRANULARIDADE = {
 };
 
 function serieReal(id) {
-  for (const fam of readdirSync(join(raiz, 'dados'), { withFileTypes: true })) {
+  // As séries moraram em `dados/<família>/` até 2026-11-01, quando o refactor as moveu para
+  // `dados/indicadores/<família>/` (commit 2f367b). Este helper lê o disco direto, então o
+  // caminho tem de acompanhar — senão o teste morre com "série não encontrada".
+  for (const fam of readdirSync(join(raiz, 'dados', 'indicadores'), { withFileTypes: true })) {
     if (!fam.isDirectory()) continue;
-    const dir = join(raiz, 'dados', fam.name);
+    const dir = join(raiz, 'dados', 'indicadores', fam.name);
     for (const f of readdirSync(dir).filter((n) => n.endsWith('.json'))) {
       if (f.replace(/\.json$/, '') !== id) continue;
       const bruto = JSON.parse(readFileSync(join(dir, f), 'utf8'));

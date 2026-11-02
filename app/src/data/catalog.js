@@ -1,5 +1,4 @@
 import { SchemaError } from './validate.js';
-import bruto from './indicadores.json';
 
 /** As três CLASSES DE ESCALA do distintivo da busca (§12.1). A unidade completa (símbolo,
  *  casas, idioma) é dona da SÉRIE — aqui fica só o que a lista precisa antes do dado chegar. */
@@ -64,7 +63,33 @@ export function validateCatalog(raw, { base = __BASE_DADOS__ } = {}) {
   return { grupos, indicadores };
 }
 
-/** O catálogo do site, embutido no bundle. Não há `fetch`: o arquivo ausente quebra o build. */
-export function catalogoEmbutido() {
-  return validateCatalog(bruto);
+/** O catálogo do site mora no repo `dados/`, ao lado das séries: `${base}/catalogo.json`. */
+export function urlDoCatalogo(base = __BASE_DADOS__) {
+  return `${base.replace(/\/+$/, '')}/catalogo.json`;
+}
+
+/** O diretório do catálogo é a BASE do `validateCatalog`: é contra ela que os `datafile`
+ *  são resolvidos. Derivar da URL (em vez de usar `__BASE_DADOS__`) mantém a injeção do
+ *  `url` nos testes honesta — o dado e a base não podem vir de lugares diferentes. */
+const baseDaUrl = (url) => url.replace(/\/+$/, '').replace(/\/[^/]*$/, '');
+
+/**
+ * Busca o catálogo na base de dados e devolve a lista validada.
+ *
+ * Nenhum fallback: rede caída, HTTP de erro, corpo que não é JSON e catálogo fora do contrato
+ * sobem como `Error` com a mensagem do que houve. Um "catálogo vazio" silencioso deixaria a
+ * home sem indicadores e sem dizer por quê (§9).
+ */
+export async function buscarCatalogo({ url = urlDoCatalogo(), fetchImpl = fetch } = {}) {
+  let resposta;
+  try {
+    resposta = await fetchImpl(url);
+  } catch (cause) {
+    throw new Error('falha de rede ao buscar o catálogo', { cause });
+  }
+  if (!resposta.ok) throw new Error(`HTTP ${resposta.status} ao buscar o catálogo`);
+  // `json()` fica FORA do try acima de propósito: um `SyntaxError` do parser (o middleware
+  // respondendo HTML, por exemplo) já diz o que houve e não deve virar "falha de rede".
+  const bruto = await resposta.json();
+  return validateCatalog(bruto, { base: baseDaUrl(url) });
 }

@@ -1,34 +1,36 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { validateCatalog, catalogoEmbutido } from './catalog.js';
+import { validateCatalog, urlDoCatalogo, buscarCatalogo } from './catalog.js';
 
 const catalogoMinimo = {
   versao: 1,
   grupos: { monetario: { nome: '🏦 Política Monetária' } },
   indicadores: [
     {
-      id: 'selic-meta',
+      id: 'selic-meta-acum-12m',
       nome: 'Taxa Selic Meta (%)',
       grupo: 'monetario',
-      arquivo: 'selic/selic-meta.json',
+      arquivo: 'selic/selic-meta-acum-12m.json',
       escala: 'percentual',
       descricao: 'Taxa básica de juros',
     },
   ],
 };
 
+const resposta = (body) => ({ ok: true, status: 200, json: async () => body });
+
 describe('validateCatalog', () => {
   it('aceita um catálogo bem-formado e resolve o arquivo contra a base de dados', () => {
     const c = validateCatalog(catalogoMinimo, { base: 'https://exemplo/dados' });
     expect(c.indicadores[0]).toEqual({
-      id: 'selic-meta',
+      id: 'selic-meta-acum-12m',
       nome: 'Taxa Selic Meta (%)',
       grupo: 'monetario',
-      arquivo: 'selic/selic-meta.json',
+      arquivo: 'selic/selic-meta-acum-12m.json',
       escala: 'percentual',
       descricao: 'Taxa básica de juros',
-      datafile: 'https://exemplo/dados/selic/selic-meta.json',
+      datafile: 'https://exemplo/dados/selic/selic-meta-acum-12m.json',
     });
   });
 
@@ -85,11 +87,61 @@ describe('validateCatalog', () => {
   });
 });
 
-describe('catalogoEmbutido', () => {
-  it('o catálogo REAL do app valida (13 indicadores, 7 grupos)', () => {
-    const c = catalogoEmbutido();
-    expect(c.indicadores).toHaveLength(13);
-    expect(Object.keys(c.grupos)).toHaveLength(7);
-    for (const ind of c.indicadores) expect(ind.datafile).toMatch(/\/indicadores\/[^/]+\/[^/]+\.json$/);
+describe('urlDoCatalogo', () => {
+  it('monta a URL a partir da base, sem barra dupla', () => {
+    expect(urlDoCatalogo('https://x/dados/indicadores/')).toBe('https://x/dados/indicadores/catalogo.json');
+  });
+
+  it('base sem barra no fim não perde o separador', () => {
+    expect(urlDoCatalogo('/dados/indicadores')).toBe('/dados/indicadores/catalogo.json');
+  });
+});
+
+describe('buscarCatalogo', () => {
+  it('busca, valida e resolve o datafile contra a base', async () => {
+    const fetchImpl = vi.fn(async () => resposta(catalogoMinimo));
+    const c = await buscarCatalogo({
+      url: 'https://x/dados/indicadores/catalogo.json',
+      fetchImpl,
+    });
+    expect(c.indicadores[0].datafile).toBe(
+      'https://x/dados/indicadores/selic/selic-meta-acum-12m.json',
+    );
+    // A URL pedida é exatamente a que veio por parâmetro (o default sai de `urlDoCatalogo`).
+    expect(fetchImpl).toHaveBeenCalledWith('https://x/dados/indicadores/catalogo.json');
+  });
+
+  it('HTTP de erro vira mensagem com o status', async () => {
+    const fetchImpl = vi.fn(async () => ({ ok: false, status: 404 }));
+    await expect(buscarCatalogo({ url: 'u', fetchImpl })).rejects.toThrow(/HTTP 404/);
+  });
+
+  it('falha de rede vira mensagem própria e preserva a causa', async () => {
+    const causa = new TypeError('fetch failed');
+    const fetchImpl = vi.fn(async () => {
+      throw causa;
+    });
+    const erro = await buscarCatalogo({ url: 'u', fetchImpl }).catch((e) => e);
+    expect(erro.message).toBe('falha de rede ao buscar o catálogo');
+    expect(erro.cause).toBe(causa);
+  });
+
+  it('corpo que não é JSON não vira lista vazia', async () => {
+    // O middleware/dev server pode responder HTML com status 200; engolir isso como "catálogo
+    // vazio" deixaria a home sem indicadores e sem dizer por quê (§9).
+    const fetchImpl = vi.fn(async () => ({
+      ok: true,
+      json: async () => {
+        throw new SyntaxError('Unexpected token <');
+      },
+    }));
+    await expect(buscarCatalogo({ url: 'u', fetchImpl })).rejects.toThrow(/Unexpected token/);
+  });
+
+  it('catálogo inválido vindo da rede reprova com a mensagem do validador', async () => {
+    const fetchImpl = vi.fn(async () => resposta({ ...catalogoMinimo, versao: 2 }));
+    await expect(
+      buscarCatalogo({ url: 'https://x/dados/indicadores/catalogo.json', fetchImpl }),
+    ).rejects.toThrow(/versao/);
   });
 });

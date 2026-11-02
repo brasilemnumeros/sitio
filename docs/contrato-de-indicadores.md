@@ -105,11 +105,10 @@ dados/indicadores/<familia>/<id>.json
 
 - **C8 — dados.** Lista **não vazia**. Cada item tem exatamente `data` e `valor`.
 - **C8.1 — sem campos extras.** Campo desconhecido no ponto ou na raiz (fora de `idioma`) é
-  erro. Em particular, **`rate` não faz parte do contrato** (era a convivência do formato
-  antigo).
+  erro.
 - **C9 — data.** Texto `YYYY-MM-DD`, dígitos ASCII, data de calendário válida.
-  - A convenção de dia é **uma por série** (hoje: dia 01; `homicidios-armas-fogo-anual` usa
-    dia 15) e não muda sem revisão de dados: mudar o dia gera diff falso em toda a série.
+  - A convenção de dia é **uma por série** (hoje: dia 01 em todas) e não muda sem revisão de
+    dados: mudar o dia gera diff falso em toda a série.
   - A data é o **início** do período de referência.
 - **C10 — valor.** Número finito (`int` ou `float`, nunca booleano, nunca `null`, nunca texto).
 - **C11 — um ponto por período.** Não há dois pontos no mesmo período, onde período é `data`

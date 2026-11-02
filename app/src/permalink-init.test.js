@@ -3,7 +3,7 @@ import { get } from 'svelte/store';
 import { seriesStore, adicionarSerie, limparSeries, definirCor, motivoDoLimite } from './stores/series.js';
 import { catalogStore, recarregarCatalogo } from './stores/catalog.js';
 import { clearSeriesCache } from './data/series.js';
-import { iniciarPermalink, retomarPermalink } from './permalink-init.js';
+import { iniciarPermalink, retomarPermalink, CHAVE_SERIES_DO_APP, seriesForamEscritasPeloApp } from './permalink-init.js';
 import { escreverSearch } from './permalink.js';
 import { PRESETS, presetDoDia, dataEmSaoPaulo } from './data/presets.js';
 
@@ -15,8 +15,13 @@ import { PRESETS, presetDoDia, dataEmSaoPaulo } from './data/presets.js';
  */
 function janelaFalsa(search = '') {
   const location = { search, pathname: '/', hash: '' };
+  const dados = new Map();
   return {
     location,
+    sessionStorage: {
+      getItem: (chave) => (dados.has(chave) ? dados.get(chave) : null),
+      setItem: (chave, valor) => dados.set(chave, String(valor)),
+    },
     history: {
       replaceState: vi.fn((_estado, _titulo, url) => {
         const [caminho, resto = ''] = String(url).split('?');
@@ -142,8 +147,23 @@ describe('iniciarPermalink', () => {
     expect(win.history.replaceState).toHaveBeenCalledTimes(1);
   });
 
-  it('preset de 2 ids também escreve a URL uma única vez (com vírgula codificada)', async () => {
-    // Data congelada num preset de DOIS ids (`atividade`): o caso que a rotação de hoje não
+  it('marca que o preset foi escrito pelo app (o tour sobrevive ao reload do consentimento)', async () => {
+    const win = janelaFalsa('');
+    parar = await iniciarPermalink({
+      window: win,
+      fetchImpl: fixture(PRESETS.flatMap((p) => p.indicadores)),
+      agora: new Date('2026-10-27T12:00:00Z'),
+    });
+    expect(win.sessionStorage.getItem(CHAVE_SERIES_DO_APP)).toBe('1');
+  });
+
+  it('NÃO marca quando a URL já veio com series (link compartilhado)', async () => {
+    const win = janelaFalsa('?series=selic');
+    parar = await iniciarPermalink({ window: win, fetchImpl: fixture(['selic']) });
+    expect(win.sessionStorage.getItem(CHAVE_SERIES_DO_APP)).toBeNull();
+  });
+
+  it('preset de 2 ids também escreve a URL uma única vez (com vírgula codificada)', async () => {    // Data congelada num preset de DOIS ids (`atividade`): o caso que a rotação de hoje não
     // exercita. Se a URL fosse montada com `join(',')`, este teste acusaria a diferença.
     const win = janelaFalsa('');
     const agora = new Date('2026-10-26T12:00:00Z');
@@ -329,5 +349,26 @@ describe('retomarPermalink (catálogo volta depois do erro)', () => {
     expect(get(seriesStore).itens).toEqual([]);
     expect(win.location.search).toBe('?series=selic,ipca');
     expect(win.history.replaceState).not.toHaveBeenCalled();
+  });
+});
+
+describe('seriesForamEscritasPeloApp', () => {
+  it('lê o marcador gravado pelo app', () => {
+    expect(seriesForamEscritasPeloApp({ getItem: () => '1' })).toBe(true);
+  });
+
+  it('é falso sem marcador', () => {
+    expect(seriesForamEscritasPeloApp({ getItem: () => null })).toBe(false);
+  });
+
+  it('não quebra quando o storage lança (modo privado)', () => {
+    expect(
+      seriesForamEscritasPeloApp({
+        getItem: () => {
+          throw new Error('SecurityError');
+        },
+      }),
+    ).toBe(false);
+    expect(seriesForamEscritasPeloApp(undefined)).toBe(false);
   });
 });

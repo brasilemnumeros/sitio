@@ -118,6 +118,13 @@ quando o defeito aparecer — e provar isso.
   geometria: mudar exige atualizar os dois **depois** do aval do usuário.
 - `App.svelte` é dona do estado das gavetas e da prioridade do `Esc`
   (busca → direita → inferior). Os componentes não duplicam esse estado.
+- **O tour não abre com a faixa de consentimento na tela** (2026-11-01): o overlay do `driver.js`
+  é `z-index: 10000` e a faixa é `z-50`, então o tour deixava "Aprovar"/"Recusar" inalcançáveis —
+  medido com `elementFromPoint`. Consentimento primeiro, onboarding depois
+  (`deveMostrarTour({ consentimentoPendente })`). O botão "Ver o tour" do trilho continua livre.
+  Como o "Aprovar" recarrega, o `permalink-init` grava `sessionStorage['series-do-app']` ao escrever
+  o preset, e o `main.js` só trata `?series=` como link compartilhado quando o marcador não existe;
+  sem isso o reload fazia o preset parecer link de terceiro e o tour nunca abria.
 - **Os stores são a fonte da verdade** (`viewport`, `mandate`, `axes`, `series`,
   `catalog`). O gráfico é espelho: `app/src/chart/` assina stores, nunca o
   contrário. Não chamar a lib do gráfico de um componente de UI.
@@ -273,6 +280,11 @@ migração; não os use como validação principal.
 - `src/config.js` (`GA4_ID`) é a única fonte do ID. Não duplicar o valor.
 - Gate coberto por `scripts/testar-analytics.mjs` (`npm run test:analytics`),
   que roda contra `dist/` de produção com Playwright.
+- **Em dev a faixa de consentimento não existia** (o gate era só `import.meta.env.PROD`), então
+  ela só era visível através de um build completo. Desde 2026-11-01 os gates são **dois**:
+  `ANALYTICS_LOCAL=1 npm run dev` mostra a faixa e o fluxo do cookie **sem** carregar o `gtag`
+  (nada sai para o Google); sem o flag, dev não renderiza nem faixa nem script. O script do
+  Google continua sendo renderizado **só** em produção.
 
 ### Regras ao instrumentar eventos
 

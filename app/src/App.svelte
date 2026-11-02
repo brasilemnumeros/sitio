@@ -120,6 +120,12 @@
         largura: window.innerWidth,
         urlTemSeries: entrouComSeries,
         jaVisto,
+        // A faixa de consentimento é do SITE (`CookieConsent.astro`); o app só a reconhece por
+        // este id. No dev do app (Vite puro) ela não existe — lá o tour segue sem obstáculo.
+        consentimentoPendente: (() => {
+          const faixa = document.getElementById('cookie-notice');
+          return !!faixa && faixa.getBoundingClientRect().height > 0;
+        })(),
       });
       if (!deve) return;
 

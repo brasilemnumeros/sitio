@@ -23,6 +23,14 @@ describe('deveMostrarTour', () => {
   it('não mostra quando a URL trouxe séries', () => {
     expect(deveMostrarTour({ ...base, urlTemSeries: true })).toBe(false);
   });
+
+  it('não mostra com a faixa de consentimento na tela', () => {
+    expect(deveMostrarTour({ ...base, consentimentoPendente: true })).toBe(false);
+  });
+
+  it('mostra depois do consentimento resolvido', () => {
+    expect(deveMostrarTour({ ...base, consentimentoPendente: false })).toBe(true);
+  });
 });
 
 describe('filtrarPassos', () => {

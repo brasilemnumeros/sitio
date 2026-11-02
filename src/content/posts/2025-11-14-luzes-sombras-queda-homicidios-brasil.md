@@ -17,11 +17,11 @@ Com esses novos dados, podemos traçar uma narrativa complexa da segurança púb
 
 ### O Comportamento da Curva: Pico e Queda
 
-Nossos dados analisados mostram que a **Taxa de Homicídios a cada 100 mil habitantes**, que flutuava em um patamar elevado, iniciou uma escalada preocupante na década de 2010, culminando no **pico histórico de 31,59 em 2017**.
+Nossos dados analisados mostram que a **Taxa de Homicídios a cada 100 mil habitantes**, que flutuava em um patamar elevado, iniciou uma escalada preocupante na década de 2010, culminando no **pico histórico de 31,72 em 2017**.
 
-Em paralelo, a **Taxa de Homicídios por Armas de Fogo a cada 100 mil habitantes** atingiu seu ápice no mesmo ano (22,88), representando a maior proporção da série histórica: **72,4% de todas as mortes violentas**. Isso significa que quase três em cada quatro homicídios em 2017 foram cometidos com o uso de armas de fogo.
+Em paralelo, a **Taxa de Homicídios por Armas de Fogo a cada 100 mil habitantes** atingiu seu ápice no mesmo ano (22,98), representando a maior proporção da série histórica: **72,4% de todas as mortes violentas**. Isso significa que quase três em cada quatro homicídios em 2017 foram cometidos com o uso de armas de fogo.
 
-<a href="/assets/img/homicidios.webp" target="_blank" rel="noopener noreferrer"><img src="/assets/img/homicidios.webp" alt="GRÁFICO: Homicídios (100k hab.) / Homicídios por Armas de Fogo (100k hab.) / Proporção de Homicídios por Armas de Fogo (100k hab) (1995-2025)" /></a>
+<a href="/assets/img/homicidios.webp" target="_blank" rel="noopener noreferrer"><img src="/assets/img/homicidios.webp" alt="GRÁFICO: Homicídios (100k hab.) / Homicídios por Armas de Fogo (100k hab.) / Proporção de Homicídios por Armas de Fogo (%) (1995-2023)" /></a>
 
 <p class="text-center">
 <a href="https://www.brasilemnumeros.ong.br/?series=homicidios-anual,homicidios-armas-fogo-anual,proporcao-homicidios-armas-fogo-anual" class="text-blue-600 hover:text-blue-400 underline" target="_blank" rel="noopener noreferrer">Acesse o gráfico comparativo aqui!</a>
@@ -29,7 +29,7 @@ Em paralelo, a **Taxa de Homicídios por Armas de Fogo a cada 100 mil habitantes
 
 Este pico não foi um evento isolado. Especialistas em segurança pública frequentemente o atribuem a um intenso conflito entre facções criminosas que se espalhou pelo país, notadamente nas regiões Norte e Nordeste, após o rompimento de uma trégua nacional.
 
-Contudo, o que se seguiu foi uma reversão igualmente drástica. De 2017 para 2023, a taxa de homicídios gerais despencou **32,8%**, atingindo **21,22**, o menor índice de toda a série histórica analisada. A questão central é: o que mudou?
+Contudo, o que se seguiu foi uma reversão igualmente drástica. De 2017 para 2024, a taxa de homicídios gerais despencou **36,8%**, atingindo **20,04** — o menor índice de toda a série. A questão central é: o que mudou?
 
 ### O Papel das Políticas Federais: Um Debate Aberto
 
@@ -56,7 +56,7 @@ Paralelamente, os governos do PT buscaram ampliar o investimento federal em segu
           * **Arrefecimento da Guerra de Facções:** O principal fator. A guerra que causou o pico de 2017 perdeu intensidade, com a consolidação de territórios por uma facção hegemônica ou o estabelecimento de "tréguas".
           * **Políticas Estaduais:** A profissionalização da gestão da segurança em estados-chave (como o Ceará, que teve reduções expressivas) e a adoção de programas de policiamento inteligente.
           * **Implementação do SUSP:** A maturação do sistema criado em 2018, permitindo melhor coordenação e financiamento.
-3.  **A Continuidade da Queda (Governo Lula, 2023-Presente):** A queda continuou em 2023, atingindo o mínimo da série histórica. O atual governo federal busca reverter as políticas de flexibilização de armas do governo anterior e focar em ações de combate ao crime organizado e financiamento do SUSP, alegando que esta é a estratégia correta para manter a tendência de queda.
+3.  **A Continuidade da Queda (Governo Lula, 2023-Presente):** A queda continuou: 21,52 em 2023 e 20,04 em 2024, o novo mínimo da série. O atual governo federal busca reverter as políticas de flexibilização de armas do governo anterior e focar em ações de combate ao crime organizado e financiamento do SUSP, alegando que esta é a estratégia correta para manter a tendência de queda.
 
 ### Conclusão: Uma Análise Necessária
 

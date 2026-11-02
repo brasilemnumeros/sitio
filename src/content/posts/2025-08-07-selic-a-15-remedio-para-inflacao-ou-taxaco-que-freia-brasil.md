@@ -12,13 +12,13 @@ Em julho de 2025, um número domina as manchetes e as conversas sobre economia: 
 
 Antes de tudo, é crucial diferenciar os dois "sabores" da Selic:
 
-[![Selic Meta vs Selic Over](/assets/img/selic-meta-vs-selic-over.webp)](/assets/img/selic-meta-vs-selic-over.webp)
-
 <p style="text-align: center; font-size: 0.85em; font-style: italic; margin-top: 0.5em;">
-  <a href="https://www.brasilemnumeros.ong.br/?series=selic-meta-acum-12m%2Cselic-over-acum-12m" class="text-blue-600 hover:text-blue-800 underline">Ver gráfico Selic Meta vs Selic Over</a>
+  <a href="https://www.brasilemnumeros.ong.br/?series=selic-meta-acum-12m%2Cselic-over-acum-12m" class="text-blue-600 hover:text-blue-800 underline">Ver gráfico: Selic Meta e Selic Over acumuladas em 12 meses</a>
 </p>
 
-- **Selic Meta:** É o alvo, a taxa oficial que o Comitê de Política Monetária (Copom) do Banco Central define a cada 45 dias. Atualmente, a meta é 15%.
+> **Atenção à unidade do gráfico.** As duas séries do site mostram a taxa **acumulada nos 12 meses** até cada mês — 12,72% para a meta e 12,55% para o over em julho de 2025; 14,54% e 14,24% em outubro de 2026. Os **15%** deste texto são o **nível** da meta definido pelo Copom, que é outra medida: quando a meta fica constante por 12 meses, as duas coincidem; quando o Copom corta ou sobe, o acumulado leva um ano para acompanhar.
+
+- **Selic Meta:** É o alvo, a taxa oficial que o Comitê de Política Monetária (Copom) do Banco Central define a cada 45 dias. No fechamento deste artigo (julho de 2025), a meta era 15% ao ano.
 - **Selic Over (ou Efetiva):** É a taxa que realmente acontece no dia a dia, nas operações de empréstimo de curtíssimo prazo entre os bancos, que usam títulos públicos como garantia. Ela costuma ficar um pouquinho abaixo da meta. É nesta taxa que o famoso CDI se espelha.
 
 Em resumo: o Copom mira na Meta, mas é a Over que reflete a prática do mercado.

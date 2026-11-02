@@ -43,7 +43,17 @@ de um projeto independente, não uma obrigação contratual.
 
 | Data | Indicador | Período | O que estava errado | Correção |
 |---|---|---|---|---|
-| — | — | — | Nenhuma errata registrada até 1 de novembro de 2026 | — |
+| 2026-11-01 | `igpm-acum-12m` | toda a série | O acumulado em 12 meses era a **soma** das taxas mensais, que subestima o resultado | Passa a **compor** as taxas da própria fonte; 331 dos 349 valores mudaram (dez/2002: 22,92% → 25,31%) |
+| 2026-11-01 | `selic-meta-acum-12m` | toda a série | Publicava a **média da meta no mês** (o nível), não o acumulado em 12 meses | Passa a acumular; out/2025: 15,00% → 13,82%; a série começa em mar/2000 |
+| 2026-11-01 | `selic-over-acum-12m` | out/2025 | O último ponto incluía um mês ainda em aberto | 12,77% → 13,71% |
+| 2026-11-01 | `mvgr-real` | out/2005 em diante | A variação do IPCA era aplicada **duas vezes** em out/2005 e out/2015 | Até +4,8% no fim da série; base (mar/2004) passou a constar no nome |
+| 2026-11-01 | `mvgr-nominal` | 2005-2025 | Série nunca regerada após as revisões do SCR | 125 dos 257 valores corrigidos (até 3,17%) |
+| 2026-11-01 | `caged-total-mensal` | toda a série | Base desatualizada: o MTE revisou o estoque | Todos os valores ~+1,3 milhão; série vai até ago/2026 |
+| 2026-11-01 | `populacao-total-anual`, `populacao-variacao-anual` | toda a série | A série vinha de **interpolação do IPEADATA**, não do IBGE, e indicava queda de população em 2021-2022 | Passa às Projeções 2024 do IBGE: 2021 +0,45% e 2022 +0,36% (não há queda) |
+| 2026-11-01 | `homicidios-anual`, `homicidios-armas-fogo-anual` | toda a série | O denominador trocava de população (vintage) ao longo da série | Denominador único; taxas mudaram até 0,78 por 100 mil |
+| 2026-11-01 | `proporcao-homicidios-armas-fogo-anual` | 2019 | Era a razão entre as duas **taxas**, não entre as contagens | 67,76% → 66,38% |
+| 2026-11-01 | `homicidios-armas-fogo-anual` | todas as datas | O carimbo vinha no dia 15 da API, isolado das demais séries | Passa ao dia 01 |
+| 2026-11-01 | `pib-real-anual` | 2024 | Valor desatualizado na fonte | 3,40% → 3,42% |
 
 ## O que este site não promete
 

@@ -17,10 +17,10 @@ const URL = process.env.URL || 'http://localhost:5173/';
 const OUT = process.env.OUT || '/private/var/folders/vt/47pfx6zs7v12gfgqcdk1mb300000gn/T/opencode';
 const PALETA = ['#6351ca', '#00fddc', '#d25200', '#9d99ed', '#ffd000', '#8d5375', '#ff8b75', '#b47699', '#a5c4ff', '#cea2ba'];
 
-const MISTO = ['selic-meta-acum-12m', 'mvgr-nominal', 'ipca-acum-12m', 'populacao-total-anual', 'igpm-acum-12m', 'caged-total-mensal', 'pib-real-anual', 'mvgr-real', 'homicidios-anual', 'selic-over-acum-12m'];
-const SO_PCT = ['selic-meta-acum-12m', 'ipca-acum-12m', 'igpm-acum-12m', 'pib-real-anual', 'selic-over-acum-12m', 'populacao-variacao-anual', 'proporcao-homicidios-armas-fogo-anual'];
+const MISTO = ['selic-meta', 'mvgr-nominal', 'ipca-acum-12m', 'populacao-total-anual', 'igpm-acum-12m', 'caged-total-mensal', 'pib-real-anual', 'mvgr-real', 'homicidios-anual', 'selic-over-acum-12m'];
+const SO_PCT = ['selic-meta', 'ipca-acum-12m', 'igpm-acum-12m', 'pib-real-anual', 'selic-over-acum-12m', 'populacao-variacao-anual', 'proporcao-homicidios-armas-fogo-anual'];
 // pior caso realista: últimos valores reais (medidos nos JSONs) todos baixos e próximos no MESMO eixo
-const PIOR = ['selic-meta-acum-12m', 'selic-over-acum-12m', 'ipca-acum-12m', 'pib-real-anual', 'igpm-acum-12m', 'populacao-variacao-anual', 'homicidios-anual', 'proporcao-homicidios-armas-fogo-anual', 'mvgr-real', 'caged-total-mensal'];
+const PIOR = ['selic-meta', 'selic-over-acum-12m', 'ipca-acum-12m', 'pib-real-anual', 'igpm-acum-12m', 'populacao-variacao-anual', 'homicidios-anual', 'proporcao-homicidios-armas-fogo-anual', 'mvgr-real', 'caged-total-mensal'];
 
 const CENARIOS = [
   ...[2, 3, 5, 10].map((n) => ({ nome: `A${n} misto`, ids: MISTO.slice(0, n) })),

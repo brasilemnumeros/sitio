@@ -78,6 +78,82 @@ test('clique fora fecha a modal (o overlay é um <button>, R31)', async ({ page 
 });
 
 /**
+ * §9 — OS ESTADOS DO CATÁLOGO (2026-11-01). O catálogo passou a vir por HTTP, então existe uma
+ * janela em que a home está de pé e NÃO há lista nenhuma. Antes destes, a busca abria com a
+ * cascata vazia (zero grupos, "Escolha um grupo.") e o convite "Selic × IPCA" do estado inicial
+ * ficava inerte: nada dizia por quê (§9 — o vazio sempre diz por quê).
+ */
+
+test('mostra spinner enquanto o catálogo carrega', async ({ page }) => {
+  // 3s (e não 1,5s): o relógio começa no MOUNT, não no `goto`, então o intervalo que sobra para
+  // clicar e afirmar encolhe em runner lento. O teste não espera o atraso — ele libera a rota e
+  // segue; o que importa é o spinner estar na tela quando a busca abre.
+  await page.route('**/catalogo.json', async (route) => {
+    await new Promise((r) => setTimeout(r, 3000));
+    await route.continue();
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Buscar indicador…' }).first().click();
+  // ⚠ `role="status"` NÃO tem nome acessível derivado do conteúdo (medido: o `getByRole` com
+  //    `name` casa 0 elementos), então a asserção é ROLE + TEXTO, dentro do diálogo: é o que um
+  //    leitor de tela anuncia. O `page` inteiro casaria também o esqueleto da home.
+  const modal = page.getByRole('dialog', { name: 'Buscar indicadores' });
+  await expect(modal.getByRole('status')).toContainText(/Carregando indicadores/);
+  // o campo de busca nasce junto: a pessoa pode digitar enquanto a lista não chegou
+  await expect(page.getByRole('searchbox')).toBeVisible();
+});
+
+/**
+ * O catálogo INVÁLIDO, servido com 200 — e não 500, de propósito.
+ *
+ * 🔴 Medido em 2026-11-01: qualquer 4xx/5xx faz o Chromium logar
+ * `Failed to load resource: … 500` como `console.error`, e a fixture de `apoio.js` reprova o
+ * teste com razão (o guarda é contra erro silencioso). É a MESMA escolha que `casca.spec.js`
+ * documenta para a série corrompida. O caminho `HTTP <status>` da mensagem já tem prova na
+ * unidade (`src/data/catalog.test.js`); aqui o alvo é a TELA: mensagem crua do validador e
+ * recuperação pelo "Tentar de novo".
+ */
+const catálogoForaDoContrato = (route) =>
+  route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: '{"versao":2,"grupos":{},"indicadores":[]}',
+  });
+
+test('erro ao carregar o catálogo é visível e tem "Tentar de novo"', async ({ page }) => {
+  await page.route('**/catalogo.json', catálogoForaDoContrato);
+  await page.goto('/');
+  // a mensagem é a CRUA do validador (§9): o contrato é `versao: 1`, não "erro desconhecido"
+  await expect(page.getByRole('alert')).toContainText(/versao 2; esperado 1/);
+
+  // e a recuperação: sem a rota quebrada, o retry passa por `loading` e chega em `ready`
+  await page.unroute('**/catalogo.json');
+  await page.getByRole('button', { name: 'Tentar de novo' }).click();
+  await expect(page.getByRole('alert')).toBeHidden();
+  // o catálogo voltou de verdade: o convite do estado inicial resolve o par por ID
+  await expect(page.getByRole('button', { name: 'Selic × IPCA' })).toBeVisible();
+});
+
+test('o mesmo erro aparece DENTRO da busca, e o retry de lá carrega a lista', async ({ page }) => {
+  await page.route('**/catalogo.json', catálogoForaDoContrato);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Buscar indicador…' }).first().click();
+  const modal = page.getByRole('dialog', { name: 'Buscar indicadores' });
+  // sem catálogo a cascata não existe: a modal diz o que houve em vez de abrir vazia
+  await expect(modal.getByRole('alert')).toContainText('Não foi possível carregar a lista');
+  await expect(modal.getByRole('alert')).toContainText(/versao 2; esperado 1/);
+
+  await page.unroute('**/catalogo.json');
+  await modal.getByRole('button', { name: 'Tentar de novo' }).click();
+  await expect(modal.getByRole('alert')).toBeHidden();
+  // a lista chegou à modal: digitar volta a encontrar indicador
+  await page.getByRole('searchbox').fill('IPCA');
+  await expect(
+    page.getByRole('list', { name: 'Resultados da busca' }).getByRole('listitem').first(),
+  ).toBeVisible();
+});
+
+/**
  * TECLADO (§12.1) — 2026-11-01: as setas têm de ACENDER o item que movem, e ⏎ abre a ficha dele.
  *
  * 🔴 A regressão que este teste existe para pegar: `emMobile()` decidia pelo `display` do próprio

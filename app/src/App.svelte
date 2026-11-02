@@ -1,6 +1,6 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
-  import { catalogStore, carregarCatalogo } from './stores/catalog.js';
+  import { catalogStore, carregarCatalogo, recarregarCatalogo } from './stores/catalog.js';
   import { seriesStore, adicionarSerie, tentarNovamente } from './stores/series.js';
   import { carregarMandatos } from './stores/mandate.js';
   import Chart from './components/Chart.svelte';
@@ -13,6 +13,7 @@
   import BottomDrawer from './components/BottomDrawer.svelte';
   import Tour from './components/Tour.svelte';
   import { deveMostrarTour, CHAVE_TOUR } from './domain/tour.js';
+  import { EXEMPLO_IDS } from './data/exemplo.js';
   // 🔴 Só se importa o que JÁ EXISTE. Um import de arquivo inexistente QUEBRA O BUILD.
   // Os controles das gavetas vivem no seu lugar fixo, não numa pilha de blocos: a de
   // configurações (chips, legenda e eixos) veio na T7 e mora à ESQUERDA desde 2026-11-01;
@@ -54,6 +55,17 @@
     const q = params.toString();
     history.replaceState(null, '', `${location.pathname}${q ? `?${q}` : ''}${location.hash}`);
   });
+
+  /**
+   * §9 (2026-11-01) — os TRÊS estados do CATÁLOGO, que passou a vir por HTTP. Eles vêm ANTES
+   * dos estados das séries na área do gráfico: sem lista não há série para escolher, e o convite
+   * "Selic × IPCA" — que resolve os dois ids NO catálogo — ficaria INERTE na tela (§9.1).
+   *
+   * `ready` é o único que devolve a decisão para `itens`; `idle`/`loading` são a espera
+   * (`Esqueleto`) e `error` é o erro total da LISTA, com a mensagem crua do fetch e o retry.
+   */
+  let catalogoPronto = $derived($catalogStore.status === 'ready');
+  let catalogoFalhou = $derived($catalogStore.status === 'error');
 
   // §9.3 — erro TOTAL é quando NADA carregou; com uma série de pé, é degradação PARCIAL e o
   // chip de erro cuida dela. Estes dois ramos leem só o `status` dos itens (§8).
@@ -132,10 +144,9 @@
     return falhas.map((i) => `${i.nome}: ${i.error}`).join('\n');
   });
 
-  // §9.1 — o atalho de primeiro uso. Os IDs vivem no `indicadores.json`; o par "Selic × IPCA" é
+  // §9.1 — o atalho de primeiro uso. Os IDs moram em `data/exemplo.js` (quem confere a
+  // existência deles no catálogo precisa do MESMO literal); o par "Selic × IPCA" é
   // RESOLVIDO no catálogo carregado NA HORA DE ADICIONAR — nada de hardcodar nome nem URL aqui.
-  const EXEMPLO_IDS = ['selic-meta-acum-12m', 'ipca-acum-12m'];
-
   function pedirExemplo() {
     const { indicadores } = $catalogStore;
     for (const id of EXEMPLO_IDS) {
@@ -237,7 +248,20 @@
         inert={configAberta || fundoAberto}
         class="relative flex min-h-0 flex-1 flex-col overflow-y-auto"
       >
-        {#if itens.length === 0}
+        {#if catalogoFalhou}
+          <!-- §9 — erro total do CATÁLOGO: sem a lista não há o que escolher, e o vazio diz por
+               quê (a mensagem crua do fetch, não "erro desconhecido"). O retry refaz só esta
+               passada; as séries de pé (se houver) não são tocadas. -->
+          <ErroTotal
+            titulo="Não foi possível carregar a lista de indicadores"
+            motivo={$catalogStore.error}
+            aoTentarNovamente={recarregarCatalogo}
+          />
+        {:else if !catalogoPronto}
+          <!-- §9.2 — o catálogo ainda está vindo (`idle` de primeira pintura ou `loading`): a
+               FORMA do conteúdo, para a moldura não pular quando ele chega. -->
+          <Esqueleto />
+        {:else if itens.length === 0}
           <EstadoInicial aoPedirExemplo={pedirExemplo} />
         {:else if todosEmErro}
           <!-- §9.3 — erro TOTAL: nada carregou. Sem marcador próprio (R29) — é um ramo a mais. -->

@@ -15,7 +15,12 @@
   // §8 — nada de estado global: o dado vem TODO das stores (`catalogStore`, `seriesStore`),
   // e aqui só vive estado de UI efêmero (o termo digitado e o foco por teclado). O
   // componente não conhece a Lightweight Charts nem mexe em `window`.
-  import { catalogStore, indicadoresDoGrupo, buscarIndicadores } from '../stores/catalog.js';
+  import {
+    catalogStore,
+    indicadoresDoGrupo,
+    buscarIndicadores,
+    recarregarCatalogo,
+  } from '../stores/catalog.js';
   import {
     seriesStore,
     adicionarSerie,
@@ -24,6 +29,7 @@
     LIMITE_SERIES,
   } from '../stores/series.js';
   import Ficha from './Ficha.svelte';
+  import ErroTotal from './ErroTotal.svelte';
 
   /** Prop única: chamada ao fechar por ESC ou clique fora (§1.1). */
   let { aoFechar } = $props();
@@ -469,7 +475,36 @@
     {/if}
 
     <div class="flex min-h-0 flex-1">
-      {#if buscando}
+      {#if $catalogStore.status === 'error'}
+        <!-- §9 (2026-11-01) — sem catálogo não há lista: antes disto a cascata abria VAZIA
+             ("Escolha um grupo.", zero grupos) e nada dizia por quê. O motivo é a mensagem
+             crua do fetch, e o "Tentar de novo" só existe AQUI — ao lado de uma lista já
+             carregada ele zeraria o catálogo em uso. -->
+        <div class="min-h-0 flex-1 overflow-y-auto p-4">
+          <ErroTotal
+            titulo="Não foi possível carregar a lista"
+            motivo={$catalogStore.error}
+            aoTentarNovamente={recarregarCatalogo}
+          />
+        </div>
+      {:else if $catalogStore.status !== 'ready'}
+        <!-- §9.2 — o catálogo ainda está vindo: a modal nasce, digita-se, mas a lista não
+             existe ainda. O spinner é decorativo (`aria-hidden`); quem fala é o `role="status"`.
+             ⚠ `role="status"` não tem nome acessível derivado do conteúdo (medido em 2026-11-01:
+             `getByRole('status', { name })` casa 0 elementos), então o teste o acha pela ROLE
+             dentro do diálogo e confere o TEXTO. -->
+        <div
+          data-coluna="carregando"
+          class="flex min-h-0 flex-1 items-center justify-center gap-2 p-6 text-sm text-slate-500 dark:text-slate-400"
+          aria-busy="true"
+        >
+          <span
+            class="size-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600 dark:border-slate-600 dark:border-t-slate-300"
+            aria-hidden="true"
+          ></span>
+          <span role="status">Carregando indicadores…</span>
+        </div>
+      {:else if buscando}
         <!-- digitação: a cascata vira uma lista só, cobrindo as três colunas (§1.1) -->
         <ul
           data-coluna="resultados"

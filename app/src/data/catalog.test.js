@@ -78,9 +78,19 @@ describe('validateCatalog', () => {
     // O contrato da série é quem manda nesses campos; repetir aqui foi o que fez a unidade
     // divergir em 8 de 13 registros antes de 2026-11-01. `chartType` não é lido por ninguém.
     // Lê o catálogo PUBLICADO (repo `dados/`) desde 2026-11-01 — é ele que o app consome.
-    const bruto = JSON.parse(
-      readFileSync(join(raizDados(), 'indicadores', 'catalogo.json'), 'utf8'),
-    );
+    const caminho = join(raizDados(), 'indicadores', 'catalogo.json');
+    let bruto;
+    try {
+      bruto = JSON.parse(readFileSync(caminho, 'utf8'));
+    } catch (erro) {
+      // Sem o repo `dados` no disco o ENOENT cru não diz o que fazer. Este teste depende dele
+      // (repo irmão no local, `DADOS_DIR` no CI): a mensagem tem de apontar os dois.
+      throw new Error(
+        `não foi possível ler o catálogo publicado em ${caminho}: ${erro.message}. ` +
+          'Defina DADOS_DIR (repo dados) ou mantenha o repo `dados` como irmão do `sitio`.',
+        { cause: erro },
+      );
+    }
     for (const ind of bruto.indicadores) {
       expect(ind, ind.id).not.toHaveProperty('chartType');
       expect(ind, ind.id).not.toHaveProperty('unidade');

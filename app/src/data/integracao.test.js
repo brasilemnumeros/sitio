@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateSeries } from './validate.js';
+import { validateCatalog } from './catalog.js';
 import { PRESETS } from './presets.js';
 import { EXEMPLO_IDS } from './exemplo.js';
 import { raizDados } from './raiz-dados.js';
@@ -52,6 +53,10 @@ function arquivosDeSerie() {
 /**
  * Os ids que o SITE conhece pelos posts publicados: os `?series=a,b` (e `&series=`) dos links.
  *
+ * Ancorado no delimitador de query de propósito: um `\bseries=` solto casaria `data-series=`
+ * ou `chart-series=` num trecho de HTML colado no post, e o "id" inventado reprovaria o build
+ * por um motivo que não é o dado.
+ *
  * Decodifica ANTES de partir por vírgula: o post da Selic escreve `series=selic-meta%2C…`, e
  * partir o texto cru transformaria `selic-meta%2Cselic-over-acum-12m` num id inexistente.
  */
@@ -59,7 +64,7 @@ function idsDosPosts() {
   const out = [];
   for (const nome of readdirSync(POSTS).filter((n) => n.endsWith('.md'))) {
     const texto = readFileSync(join(POSTS, nome), 'utf8');
-    for (const [, bruto] of texto.matchAll(/\bseries=([^"'&#\s)<>\]]+)/g)) {
+    for (const [, bruto] of texto.matchAll(/[?&]series=([^"'&#\s)<>\]]+)/g)) {
       let valor;
       try {
         valor = decodeURIComponent(bruto);
@@ -76,6 +81,17 @@ function idsDosPosts() {
 }
 
 describe('o contrato publicado em dados/ é o que o app valida (§6)', () => {
+  it('o catálogo publicado passa em validateCatalog (o porteiro do runtime)', () => {
+    // `validateCatalog` só era exercitado contra fixture: um `grupo` inexistente, um `arquivo`
+    // absoluto ou um `escala` fora das três classes no catálogo REAL só apareceria em runtime,
+    // na tela de erro. A mensagem do SchemaError já nomeia o registro e o campo — `toThrow`
+    // a mostra inteira quando reprova.
+    expect(
+      () => validateCatalog(catalogo(), { base: RAIZ_SERIES }),
+      'o catálogo publicado não passa no validador que o app roda',
+    ).not.toThrow();
+  });
+
   it('toda série publicada passa em validateSeries, com id == nome do arquivo', () => {
     const arquivos = arquivosDeSerie();
     // A contagem vem do disco (o `toHaveLength(13)` saiu em 2026-11-01), mas zero séries

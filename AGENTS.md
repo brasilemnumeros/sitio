@@ -26,7 +26,7 @@ migração (ADR 0002).
 | Caminho | O que é | Quando importa |
 |---|---|---|
 | `src/pages/` | rotas Astro (`index`, `blog`, posts, categorias, `links`, políticas, 404, `feed.xml.ts`, `sitemap.xml.ts`) | mudou URL, HTML publicado ou SEO |
-| `src/layouts/Base.astro` | casca das páginas do site (nav, footer, feedback, toast, tema) | qualquer página que **não** é a home |
+| `src/layouts/Base.astro` | casca das páginas do site (nav, footer, feedback, tema) | qualquer página que **não** é a home |
 | `src/layouts/Home.astro` | casca exclusiva da `/` (sem nav/footer do site; `<html class="dark">` fixo) | home, atribuição do TradingView, analytics |
 | `src/components/` | `Meta.astro`, `Nav.astro`, `Footer.astro`, `Analytics.astro`, `CookieConsent.astro`, listagens | shell e SEO |
 | `src/config.js` | `GA4_ID` e metadados do site (fonte única) | analytics/título/descrição |

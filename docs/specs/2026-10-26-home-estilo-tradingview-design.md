@@ -2,6 +2,8 @@
 
 - Data: 2026-10-26
 - Estado: aprovado (2026-10-27)
+- Nota (2026-11-01): o toast de artigos foi removido do site; as citações a ele aqui descrevem
+  o estado de 2026-10-26, não o produto atual.
 - Escopo: apenas a home (`/`). Blog, posts, categorias, links, políticas e 404 não mudam.
 - Mockups: `.superpowers/brainstorm/` (local, fora do repo)
 

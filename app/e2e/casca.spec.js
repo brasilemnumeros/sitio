@@ -139,19 +139,18 @@ test('o dado local carrega: o catálogo traz os 7 grupos', async ({ page }, test
  * componente do app (nem um erro de mount/hidratação) pode renderizar a casca do site
  * — nem o `nav` do topo, nem o rodapé (a barra inferior do app é um
  * `<footer data-testid="barra-inferior">` e fica EXCLUÍDA da proibição), nem o botão
- * de feedback (`#feedback-btn`), nem o toast de convite para artigos (`#toast-artigos`).
+ * de feedback (`#feedback-btn`).
  *
  * A outra metade — a casca no HTML da `/` publicada (`Home.astro` vs `Base.astro`) —
  * o navegador deste harness não vê; quem guarda é o BUILD, por
  * `scripts/testar-home.sh` (na cadeia do `verificar`), que grepa o `dist/index.html`.
  */
-test('no app não há casca do site: sem nav, footer, feedback nem toast', async ({ page }) => {
+test('no app não há casca do site: sem nav, footer nem feedback', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('nav')).toHaveCount(0);
   // A barra inferior do app é um `<footer>`; o que não pode existir é o rodapé do site.
   await expect(page.locator('footer:not([data-testid="barra-inferior"])')).toHaveCount(0);
   await expect(page.locator('#feedback-btn')).toHaveCount(0);
-  await expect(page.locator('#toast-artigos')).toHaveCount(0);
 });
 
 /**

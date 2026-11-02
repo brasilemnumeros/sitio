@@ -37,8 +37,8 @@ const feed = new URL('/feed.xml', Astro.site).href;
         target="_blank"
       >
         {/* `is:raw`: sem ele o Astro normaliza o `<path … />` para
-            `<path …></path>`, divergindo do HTML do site antigo — mesma razão do
-            bloco do toast em `Base.astro`. */}
+            `<path …></path>`, divergindo do HTML do site antigo — o markup
+            interno tem de sair verbatim. */}
         <Fragment is:raw>
         <svg class="h-5 w-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
           <path d="M3.429 2.571c9.143 0 16.571 7.429 16.571 16.571h-3.714c0-7.143-5.714-12.857-12.857-12.857v-3.714zM3.429 9.714c5.143 0 9.286 4.143 9.286 9.286h-3.714c0-3.071-2.5-5.571-5.571-5.571v-3.714zM6.857 16.571c0 1.571-1.286 2.857-2.857 2.857s-2.857-1.286-2.857-2.857 1.286-2.857 2.857-2.857 2.857 1.286 2.857 2.857z"/>

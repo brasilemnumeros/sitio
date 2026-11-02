@@ -37,6 +37,7 @@
     font-size:24px; color:var(--fraco);
   }
   .rodape .fonte { max-width:760px; }
+  .rodape .credito { font-size:18px; color:#6b7280; margin-top:2px; }
   .rodape .url { color:var(--secundario); font-weight:600; white-space:nowrap; }
   .pagina { position:absolute; right:56px; top:56px; font-size:24px; color:var(--fraco); }
 </style>
@@ -55,7 +56,7 @@
 
   const rodape = `
     <div class="rodape">
-      <div class="fonte">${fonte} · último dado: ${data}</div>
+      <div class="fonte">${fonte} · último dado: ${data}${p.get('credito') ? '<div class="credito">Lightweight Charts (Apache-2.0)</div>' : ''}</div>
       <div class="url">brasilemnumeros.ong.br</div>
     </div>`;
   const pagina = (n && total) ? `<div class="pagina">${n}/${total}</div>` : '';

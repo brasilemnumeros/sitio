@@ -37,12 +37,21 @@ export function validateCatalog(raw, { base = __BASE_DADOS__ } = {}) {
   if (!Array.isArray(raw.indicadores)) {
     throw new SchemaError('catálogo sem a lista "indicadores"');
   }
+  // `id` é chave do `{#each ... (ind.id)}` da busca e `arquivo` é a chave do fetch da série:
+  // repetido, o Svelte lança `each_key_duplicate` e a lista inteira sai do ar. O CI do `dados`
+  // confere o mesmo (K8); aqui a mensagem precisa nomear o valor para dizer o que corrigir.
+  const ids = new Set();
+  const arquivos = new Set();
   const indicadores = raw.indicadores.map((ind, i) => {
     const where = `indicadores[${i}]`;
     if (ind === null || typeof ind !== 'object' || Array.isArray(ind)) {
       throw new SchemaError(`${where} não é objeto`);
     }
     if (typeof ind.id !== 'string' || ind.id === '') throw new SchemaError(`${where}.id ausente`);
+    if (ids.has(ind.id)) {
+      throw new SchemaError(`${where}: id ${JSON.stringify(ind.id)} repetido`);
+    }
+    ids.add(ind.id);
     if (typeof ind.nome !== 'string' || ind.nome === '') throw new SchemaError(`${where}.nome ausente`);
     if (!Object.hasOwn(grupos, ind.grupo)) {
       throw new SchemaError(`${where} (${ind.id}): grupo "${ind.grupo}" não existe em "grupos"`);
@@ -52,6 +61,10 @@ export function validateCatalog(raw, { base = __BASE_DADOS__ } = {}) {
         `${where} (${ind.id}): arquivo deve ser caminho relativo "familia/arquivo.json", veio ${JSON.stringify(ind.arquivo)}`
       );
     }
+    if (arquivos.has(ind.arquivo)) {
+      throw new SchemaError(`${where} (${ind.id}): arquivo ${JSON.stringify(ind.arquivo)} repetido`);
+    }
+    arquivos.add(ind.arquivo);
     if (!ESCALAS.has(ind.escala)) {
       throw new SchemaError(`${where}.escala deve ser percentual|moeda|numero, veio ${JSON.stringify(ind.escala)}`);
     }

@@ -50,6 +50,34 @@ test('exemplo pronto: dois chips, duas linhas na legenda e o gráfico monta', as
 });
 
 /**
+ * CATÁLOGO VAZIO: o atalho não pode ser um convite inerte.
+ *
+ * Com o catálogo `ready` mas sem nenhum indicador, `pedirExemplo` não encontrava os ids de
+ * `EXEMPLO_IDS` e o clique não fazia nada — exatamente a tela que a §9.1 eliminou. A resposta é
+ * desabilitar o botão com o motivo visível. A rota é interceptada no próprio dev server: o app
+ * pede `${__BASE_DADOS__}/catalogo.json` (`/dados/indicadores/catalogo.json`).
+ */
+test('catálogo sem os indicadores do exemplo: atalho desabilitado com motivo', async ({ page }) => {
+  await page.route('**/dados/indicadores/catalogo.json', (rota) =>
+    rota.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ versao: 1, grupos: {}, indicadores: [] }),
+    }),
+  );
+
+  await page.goto('/?series=nao-existe');
+  const inicial = page.locator('[data-bloco="inicial"]');
+  await expect(inicial).toBeVisible();
+
+  const atalho = inicial.getByRole('button', { name: 'Selic × IPCA' });
+  await expect(atalho).toBeDisabled();
+  await expect(inicial.locator('[data-motivo="exemplo-indisponivel"]')).toContainText(
+    /não publica os indicadores do exemplo/i,
+  );
+});
+
+/**
  * A LEGENDA DENTRO DO GRÁFICO (2026-10-31, a pedido do usuário) — bolinha da cor + nome na
  * leitura, e os dois controles do TradingView: olho (esconder) e "×" (remover).
  *

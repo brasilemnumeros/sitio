@@ -74,6 +74,25 @@ describe('validateCatalog', () => {
     expect(() => validateCatalog({ ...catalogoMinimo, versao: 2 })).toThrow(/versao/);
   });
 
+  it('recusa id repetido, nomeando o valor', () => {
+    // O `id` é chave do `{#each ... (ind.id)}` do SearchModal: repetido, o Svelte lança
+    // `each_key_duplicate` e a busca inteira quebra — o único defeito "válido" que derruba a UI.
+    const entrada = catalogoMinimo.indicadores[0];
+    const duplicado = { ...catalogoMinimo, indicadores: [entrada, { ...entrada }] };
+    expect(() => validateCatalog(duplicado)).toThrow(/id "selic-meta-acum-12m" repetido/);
+  });
+
+  it('recusa arquivo repetido, nomeando o valor', () => {
+    const entrada = catalogoMinimo.indicadores[0];
+    const duplicado = {
+      ...catalogoMinimo,
+      indicadores: [entrada, { ...entrada, id: 'outro-id' }],
+    };
+    expect(() => validateCatalog(duplicado)).toThrow(
+      /arquivo "selic\/selic-meta-acum-12m\.json" repetido/,
+    );
+  });
+
   it('PROÍBE o que é dono da série: unidade, granularidade e tipo de gráfico não entram', () => {
     // O contrato da série é quem manda nesses campos; repetir aqui foi o que fez a unidade
     // divergir em 8 de 13 registros antes de 2026-11-01. `chartType` não é lido por ninguém.

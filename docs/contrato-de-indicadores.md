@@ -5,7 +5,7 @@
 **Produtor:** repo `dados` (notebooks + `dados/scripts/validar.py`)
 
 Este documento é a **fonte de verdade** do formato dos arquivos de série (`C1…C14`) e do
-catálogo (`K1…K6`). Cada regra tem um código, citado nos validadores e nos testes que a
+catálogo (`K1…K8`). Cada regra tem um código, citado nos validadores e nos testes que a
 executam. Quando a prosa e o código divergirem, **este documento vale** — e a divergência é
 defeito a corrigir no mesmo commit, não interpretação.
 
@@ -177,11 +177,11 @@ publicado.
 | `grupos` | raiz | mapa `id` → `{ "nome" }`; a ordem de declaração é a ordem de navegação da busca |
 | `indicadores` | raiz | lista das entradas |
 | `id` | entrada | chave pública (`?series=`); igual ao nome do arquivo e ao `id` da série (K3) |
-| `nome` | entrada | rótulo da lista, da legenda e da ficha, exibido antes do dado (não vazio) |
+| `nome` | entrada | rótulo da lista, da legenda e da ficha, exibido antes do dado (não vazio — K7) |
 | `grupo` | entrada | `id` de um grupo de `grupos` (K5) |
 | `escala` | entrada | `percentual` \| `moeda` \| `numero`; o distintivo da lista, derivado de `unidade.tipo` da série (K4) |
-| `descricao` | entrada | uma frase sobre o dado, no topo da ficha antes de carregar (opcional na leitura; presente em todas as entradas) |
-| `arquivo` | entrada | caminho `familia/arquivo.json` dentro de `indicadores/`, existente no disco (K1) |
+| `descricao` | entrada | uma frase sobre o dado, no topo da ficha antes de carregar (não vazia — K7) |
+| `arquivo` | entrada | caminho `familia/arquivo.json` dentro de `indicadores/`, existente no disco e único (K1, K8) |
 
 ### Regra de corte
 
@@ -192,7 +192,7 @@ série.** Descrevem o número: `unidade` (tipo, símbolo, casas, idioma), `eixo`
 A única duplicata estrutural é `escala` ↔ `unidade.tipo`: o catálogo repete a **classe** para
 pintar o distintivo sem baixar as séries, e por isso ela é **conferida**, não deduzida (K4).
 
-### K1…K6 — o catálogo contra o disco
+### K1…K8 — o catálogo contra o disco
 
 `python3 scripts/validar.py` sem argumentos confere as séries (`C1…C14`) **e** o catálogo. Com
 caminhos avulsos o catálogo fica de fora: conferir a raiz a partir de um recorte produziria K2
@@ -206,15 +206,19 @@ falso.
 | **K4** | `escala` diverge de `unidade.tipo` da série |
 | **K5** | `grupos` ausente ou não é objeto; `grupo` da entrada não existe nele |
 | **K6** | `versao` não é o inteiro `1` — versão desconhecida reprova antes de interpretar o resto |
+| **K7** | `nome` ou `descricao` ausente, não-string ou vazia — o `validateCatalog` rejeita o catálogo inteiro sem `nome` |
+| **K8** | `id` ou `arquivo` repetido entre entradas — no navegador a chave duplicada derruba a busca |
 
-O `validar.py` não confere o **conteúdo** de `nome`/`descricao`: entrada sem `nome` passa no
-Python e só reprova no `validateCatalog` do app (erro na tela); `descricao` ausente ou vazia
-apenas omite o texto da ficha.
+O `validar.py` confere o conteúdo de `nome`/`descricao` (K7): sem isso, uma entrada sem `nome`
+passava no CI do `dados` e só reprovava no `validateCatalog` do app, tirando a lista do ar para
+todo mundo. `id` e `arquivo` são chaves de índice no runtime — repetidos, o `{#each}` da busca
+lança `each_key_duplicate`; por isso são conferidos aqui também (K8), e não só no app.
 
 O mesmo par roda no hook `.githooks/pre-commit` (em quem o instalou) e no CI
 (`.github/workflows/validar.yml`, em todo pull request e no push para `main`). No `sitio`,
 `validateCatalog` (`app/src/data/catalog.js`) é o porteiro do **runtime**: exige `versao: 1`,
-`id` e `nome` não vazios, `grupo` existente, `arquivo` casando o formato e `escala` na lista.
+`id` e `nome` não vazios, `grupo` existente, `arquivo` casando o formato, `escala` na lista e
+nem `id` nem `arquivo` repetidos.
 Violação vira `status: 'error'` com a mensagem crua na tela — nunca lista vazia. O teste
 `app/src/data/integracao.test.js` repete a conferência cruzada contra o disco antes do deploy.
 
@@ -235,14 +239,14 @@ Os dois conjuntos de regras são provados por **mecanismos diferentes**:
 - **Séries (`C1…C14`) — corpus:** `dados/tests/contrato/` — pares de arquivo + veredito esperado
   (válido/inválido, com o código da regra violada). É a fonte executável: `validar.py` (Python) e
   `validate.test.js` (JS) têm de concordar com **todos** os casos.
-- **Catálogo (`K1…K6`) — fixtures de diretório:** `dados/tests/test_validar.py` monta uma raiz
+- **Catálogo (`K1…K8`) — fixtures de diretório:** `dados/tests/test_validar.py` monta uma raiz
   temporária (`tmp_path`) com o catálogo e a série que ele deveria descrever, estraga uma peça
   por teste e cobra o código da regra. **Não há caso `K` no corpus**, e um arquivo de corpus não
   serviria: `validar.py` com caminhos avulsos não confere o catálogo (conferir a raiz a partir de
   um recorte produziria K2 falso) — o catálogo só é validado na raiz, sem argumentos.
 - **Dado real:** os 13 arquivos de `dados/indicadores/` passam em `python3 scripts/validar.py`
   e em `npm --prefix app test` (o teste de integração lê o repo `dados`).
-- **Catálogo × série:** `validar.py` confere o catálogo contra o disco com `K1…K6` (seção
+- **Catálogo × série:** `validar.py` confere o catálogo contra o disco com `K1…K8` (seção
   "Catálogo × série"), e o teste de integração do `sitio` repete a conferência cruzada — o
   catálogo não duplica unidade nem medida.
 

@@ -13,7 +13,7 @@
   import BottomDrawer from './components/BottomDrawer.svelte';
   import Tour from './components/Tour.svelte';
   import { deveMostrarTour, CHAVE_TOUR } from './domain/tour.js';
-  import { EXEMPLO_IDS } from './data/exemplo.js';
+  import { EXEMPLO_IDS, exemploDisponivel } from './data/exemplo.js';
   import { retomarPermalink } from './permalink-init.js';
   // 🔴 Só se importa o que JÁ EXISTE. Um import de arquivo inexistente QUEBRA O BUILD.
   // Os controles das gavetas vivem no seu lugar fixo, não numa pilha de blocos: a de
@@ -156,6 +156,10 @@
     }
   }
 
+  /** Catálogo `ready` sem os ids do exemplo: o atalho não tem o que adicionar e a tela não pode
+   *  oferecer um clique inerte. `EstadoInicial` desabilita o botão e diz o motivo. */
+  let atalhoExemplo = $derived(exemploDisponivel($catalogStore.indicadores));
+
   /** O "tentar de novo" do erro total: refaz o fetch de CADA série (uma a uma, como no add). */
   function tentarTodas() {
     for (const item of itens) tentarNovamente(item.id);
@@ -277,7 +281,7 @@
                FORMA do conteúdo, para a moldura não pular quando ele chega. -->
           <Esqueleto />
         {:else if itens.length === 0}
-          <EstadoInicial aoPedirExemplo={pedirExemplo} />
+          <EstadoInicial aoPedirExemplo={pedirExemplo} disponivel={atalhoExemplo} />
         {:else if todosEmErro}
           <!-- §9.3 — erro TOTAL: nada carregou. Sem marcador próprio (R29) — é um ramo a mais. -->
           <ErroTotal

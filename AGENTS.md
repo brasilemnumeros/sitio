@@ -42,7 +42,7 @@ migração (ADR 0002).
 | `app/e2e/` | Playwright (10 specs + `apoio.js`) | comportamento/geometria no navegador |
 | `scripts/` | guardas do build publicado | `npm run build` falhar em voz alta |
 | `docs/specs/` | desenhos aprovados (o que o produto deve ser) | ler antes de mudar produto |
-| `docs/contrato-de-indicadores.md` | **contrato normativo** das séries (`versao: 1`, `C1…C14`) e do catálogo (`K1…K6`) | qualquer mudança em `validate.js`, `catalog.js`, no corpus ou nos dados |
+| `docs/contrato-de-indicadores.md` | **contrato normativo** das séries (`versao: 1`, `C1…C14`) e do catálogo (`K1…K8`) | qualquer mudança em `validate.js`, `catalog.js`, no corpus ou nos dados |
 | `docs/adr/0001-...app-isolado.md` | ADR 0001: app de gráficos isolado, Svelte + Lightweight Charts, contrato de dados | antes de mexer na fronteira do app ou nos dados |
 | `docs/adr/0002-...astro.md` | ADR 0002: migração Jekyll → Astro, contrato de URL, feed/sitemap | antes de mexer em build, rotas ou deploy |
 | `docs/plans/` | planos por fatia — **histórico**, pode estar defasado | referência, não verdade |
@@ -135,7 +135,7 @@ quando o defeito aparecer — e provar isso.
   `granularidade`, `fonte` e `dados` com `{data, valor}` — chaves e valores em português, sem
   `rate`, ordem ascendente, um ponto por período. O corpus em `dados/tests/contrato/` é rodado pelos DOIS validadores
   (`validate.js` e `validar.py`); mudar o contrato é mudar doc + corpus + os dois validadores
-  no mesmo conjunto de commits. O **catálogo** tem o contrato próprio, `K1…K6`, conferido pelo
+  no mesmo conjunto de commits. O **catálogo** tem o contrato próprio, `K1…K8`, conferido pelo
   `validar.py` contra o disco (seção "Catálogo × série" do mesmo documento).
 - **Eixo x (2026-10-29):** sempre do início do FHC I (`1995-01-01`) ao **dia de
   hoje**, independentemente das séries carregadas — âncoras mensais invisíveis em

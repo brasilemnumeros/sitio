@@ -5,8 +5,8 @@
 **Produtor:** repo `dados` (notebooks + `dados/scripts/validar.py`)
 
 Este documento é a **fonte de verdade** do formato dos arquivos de série (`C1…C14`) e do
-catálogo (`K1…K6`). Cada regra tem um código, citado nos validadores e no corpus de
-conformidade. Quando a prosa e o código divergirem, **este documento vale** — e a divergência é
+catálogo (`K1…K6`). Cada regra tem um código, citado nos validadores e nos testes que a
+executam. Quando a prosa e o código divergirem, **este documento vale** — e a divergência é
 defeito a corrigir no mesmo commit, não interpretação.
 
 **Chaves e valores são em português.** O arquivo é lido e publicado nessa forma, sem camada de
@@ -142,10 +142,12 @@ dados/indicadores/catalogo.json
 ```
 
 Irmão das pastas de família, **não** dentro delas: `validar.py` trata `indicadores/*/*.json`
-como série, e `indicadores/catalogo.json` não casa com esse padrão. Publicado em
-`https://brasilemnumeros.github.io/dados/indicadores/catalogo.json`; em dev o middleware
-`app/vite-plugins/dados-locais.js` serve `/dados/indicadores/catalogo.json` do repo irmão. Não
-há cópia no `sitio` nem no bundle do app: o catálogo que o produto usa é o que está publicado.
+como série, e `indicadores/catalogo.json` não casa com esse padrão. O endereço canônico é
+`https://brasilemnumeros.github.io/dados/indicadores/catalogo.json` — ele só responde depois que
+a migração do repo `dados` (o layout com `indicadores/`) for publicada no Pages. Em dev o
+middleware `app/vite-plugins/dados-locais.js` serve `/dados/indicadores/catalogo.json` do repo
+irmão. Não há cópia no `sitio` nem no bundle do app: o catálogo que o produto usa é o que está
+publicado.
 
 ### Forma
 
@@ -153,7 +155,8 @@ há cópia no `sitio` nem no bundle do app: o catálogo que o produto usa é o q
 {
   "versao": 1,
   "grupos": {
-    "monetario": { "nome": "🏦 Política Monetária" }
+    "monetario": { "nome": "🏦 Política Monetária" },
+    "inflacao": { "nome": "📈 Inflação" }
   },
   "indicadores": [
     {
@@ -227,9 +230,16 @@ Pages). Renomear `id` **não** é mudança de apresentação: quebra link `?seri
 
 ## Conformidade
 
-- **Corpus:** `dados/tests/contrato/` — pares de arquivo + veredito esperado (válido/inválido,
-  com o código da regra violada). É a fonte executável: `validar.py` (Python) e
+Os dois conjuntos de regras são provados por **mecanismos diferentes**:
+
+- **Séries (`C1…C14`) — corpus:** `dados/tests/contrato/` — pares de arquivo + veredito esperado
+  (válido/inválido, com o código da regra violada). É a fonte executável: `validar.py` (Python) e
   `validate.test.js` (JS) têm de concordar com **todos** os casos.
+- **Catálogo (`K1…K6`) — fixtures de diretório:** `dados/tests/test_validar.py` monta uma raiz
+  temporária (`tmp_path`) com o catálogo e a série que ele deveria descrever, estraga uma peça
+  por teste e cobra o código da regra. **Não há caso `K` no corpus**, e um arquivo de corpus não
+  serviria: `validar.py` com caminhos avulsos não confere o catálogo (conferir a raiz a partir de
+  um recorte produziria K2 falso) — o catálogo só é validado na raiz, sem argumentos.
 - **Dado real:** os 13 arquivos de `dados/indicadores/` passam em `python3 scripts/validar.py`
   e em `npm --prefix app test` (o teste de integração lê o repo `dados`).
 - **Catálogo × série:** `validar.py` confere o catálogo contra o disco com `K1…K6` (seção

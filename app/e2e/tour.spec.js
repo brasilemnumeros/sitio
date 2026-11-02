@@ -4,7 +4,7 @@ import { test, expect } from './apoio.js';
 // só olhasse o caso "opção ligada" passaria antes da implementação, porque a chave ainda não
 // existia para ninguém — os dois lados juntos é que provam a opção.
 test('por padrão a fixture semeia a chave do tour', async ({ page }) => {
-  await page.goto('/?series=selic-meta-acum-12m');
+  await page.goto('/?series=selic-meta');
   expect(await page.evaluate(() => localStorage.getItem('tour-visto'))).toBe('1');
 });
 
@@ -12,7 +12,7 @@ test.describe('opção tourNaPrimeiraVisita', () => {
   test.use({ tourNaPrimeiraVisita: true });
 
   test('ligada, a semente não é gravada', async ({ page }) => {
-    await page.goto('/?series=selic-meta-acum-12m');
+    await page.goto('/?series=selic-meta');
     expect(await page.evaluate(() => localStorage.getItem('tour-visto'))).toBeNull();
   });
 });
@@ -37,7 +37,7 @@ test.describe('tour', () => {
     // celular (não aparecer) é o teste próprio da Task 4.
     test.skip((page.viewportSize()?.width ?? 0) < 1024, 'o "?" não existe abaixo de 1024px');
 
-    await page.goto('/?series=selic-meta-acum-12m');
+    await page.goto('/?series=selic-meta');
     await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(1);
 
     await page.getByTestId('botao-tour').click();
@@ -53,7 +53,7 @@ test.describe('tour', () => {
   test('o roteiro tem os sete passos e chega ao fim', async ({ page }) => {
     test.skip((page.viewportSize()?.width ?? 0) < 1024, 'o tour não roda abaixo de 1024px');
 
-    await page.goto('/?series=selic-meta-acum-12m,ipca-acum-12m');
+    await page.goto('/?series=selic-meta,ipca-acum-12m');
     await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(2);
     await page.getByTestId('botao-tour').click();
 
@@ -82,7 +82,7 @@ test.describe('tour', () => {
   test('fechar devolve o foco ao "?"', async ({ page }) => {
     test.skip((page.viewportSize()?.width ?? 0) < 1024, 'o tour não roda abaixo de 1024px');
 
-    await page.goto('/?series=selic-meta-acum-12m');
+    await page.goto('/?series=selic-meta');
     await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(1);
     await page.getByTestId('botao-tour').click();
     await page.getByRole('button', { name: 'Próximo' }).click();
@@ -97,7 +97,7 @@ test.describe('tour', () => {
   test('fechar e reabrir pelo "?" funciona', async ({ page }) => {
     test.skip((page.viewportSize()?.width ?? 0) < 1024, 'o tour não roda abaixo de 1024px');
 
-    await page.goto('/?series=selic-meta-acum-12m');
+    await page.goto('/?series=selic-meta');
     await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(1);
 
     await page.getByTestId('botao-tour').click();
@@ -116,7 +116,7 @@ test.describe('tour', () => {
   test('Esc com a gaveta aberta fecha o tour, não a gaveta', async ({ page }) => {
     test.skip((page.viewportSize()?.width ?? 0) < 1024, 'o tour não roda abaixo de 1024px');
 
-    await page.goto('/?series=selic-meta-acum-12m');
+    await page.goto('/?series=selic-meta');
     await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(1);
     await page.getByRole('button', { name: 'Configurações do gráfico' }).click();
     await expect(page.getByTestId('gaveta-config')).toBeVisible();
@@ -173,7 +173,7 @@ test.describe('primeira visita', () => {
   });
 
   test('link compartilhado não abre o tour', async ({ page }) => {
-    await page.goto('/?series=selic-meta-acum-12m,ipca-acum-12m');
+    await page.goto('/?series=selic-meta,ipca-acum-12m');
     await esperarDecisao(page);
     await expect(page.locator(POPOVER)).toHaveCount(0);
     expect(await page.evaluate(() => localStorage.getItem('tour-visto'))).toBeNull();

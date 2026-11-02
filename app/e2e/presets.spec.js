@@ -44,7 +44,7 @@ test('/ abre com o preset do dia (não vazia)', async ({ page }) => {
  * itens entram uma vez só, e recarregar não soma de novo.
  */
 test('?series= vence o preset e não duplica', async ({ page }) => {
-  await page.goto('/?series=selic-meta-acum-12m');
+  await page.goto('/?series=selic-meta');
   await abrirGavetaConfig(page);
   await expect(page.locator('[data-bloco="chips"] li')).toHaveCount(1);
   await expect(page.getByTestId('preset-chip')).toHaveText('Personalizado');

@@ -190,13 +190,16 @@ test('a home ocupa o viewport e não rola', async ({ page }) => {
   // 2 · erro total com IDs REAIS e dado corrompido — 200 com JSON sem forma (`data` fora de
   //     lista), NÃO 500: a falha fica no `item.error` e o console do navegador fica limpo
   //     (a fixture de `apoio.js` falha o teste com qualquer error.logado).
-  await page.route('**/dados/**', (route) =>
+  //     ⚠ SÓ as SÉRIES: desde 2026-11-01 o catálogo também vem por HTTP, de
+  //     `/dados/indicadores/catalogo.json`. Um `**/dados/**` largo derrubaria o CATÁLOGO e o
+  //     teste passaria medindo outro erro (o da lista, não o total das séries).
+  await page.route('**/dados/indicadores/*/*.json', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: '{"data":"não é uma lista"}' }),
   );
   // janela CURTA de propósito: com 900px o erro cabe solto e o estouro não aparece — o
   // guardião precisa exercitar o caso em que o conteúdo é maior que a área do gráfico.
   await page.setViewportSize({ width: 480, height: 160 });
-  await page.goto('/?series=selic-meta-acum-12m,ipca-acum-12m');
+  await page.goto('/?series=selic-meta,ipca-acum-12m');
   await expect(page.getByRole('alert')).toBeVisible();
   const botaoTentar = page.getByRole('button', { name: 'Tentar de novo' });
   await expect(botaoTentar).toBeVisible();
@@ -210,7 +213,7 @@ test('a home ocupa o viewport e não rola', async ({ page }) => {
     altura: window.innerHeight,
   }));
   expect(medidaErro.scroll).toBeLessThanOrEqual(medidaErro.altura + 1);
-  await page.unroute('**/dados/**');
+  await page.unroute('**/dados/indicadores/*/*.json');
 });
 
 /**
@@ -265,7 +268,7 @@ test('fechada e aberta, o trilho mostra a engrenagem e o limpar, sem atalhos de 
   // SEIS séries de propósito: com uma só o conteúdo da gaveta cabe na caixa e não há o que
   // rolar — `scrollTop` ficaria 0 por não existir rolagem, e o teste passaria sem provar nada.
   await page.goto(
-    '/?series=selic-meta-acum-12m,ipca-acum-12m,igpm-acum-12m,mvgr-nominal,mvgr-real,homicidios-anual',
+    '/?series=selic-meta,ipca-acum-12m,igpm-acum-12m,mvgr-nominal,mvgr-real,homicidios-anual',
   );
   await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(6);
   // Dentro da gaveta as seções têm título (h3), não botão: o nome "Cores"/"Eixos" como BOTÃO
@@ -408,10 +411,12 @@ test('abrir e fechar a gaveta não mexe na janela de tempo nem no mandato', asyn
  */
 test('com série em erro, o gatilho da gaveta avisa com ponto de atenção', async ({ page }) => {
   // 200 com JSON sem forma — a falha fica no `item.error` e o console segue limpo (`apoio.js`).
-  await page.route('**/dados/**', (route) =>
+  // ⚠ SÓ as SÉRIES (ver o spec do erro total): um `**/dados/**` largo mataria o CATÁLOGO, e
+  // sem catálogo não há série nenhuma para ficar em erro.
+  await page.route('**/dados/indicadores/*/*.json', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: '{"data":"não é uma lista"}' }),
   );
-  await page.goto('/?series=selic-meta-acum-12m,ipca-acum-12m');
+  await page.goto('/?series=selic-meta,ipca-acum-12m');
   const gatilho = page.getByRole('button', { name: 'Configurações do gráfico' });
   await expect(gatilho).toHaveAttribute('aria-label', /há séries com erro/);
   const ponto = gatilho.locator('span[aria-hidden="true"]').last();
@@ -421,7 +426,7 @@ test('com série em erro, o gatilho da gaveta avisa com ponto de atenção', asy
   await expect(ponto).toHaveClass(/bg-red-500/);
   await expect(ponto).not.toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   await expect(page.getByTestId('gaveta-config')).toBeHidden();
-  await page.unroute('**/dados/**');
+  await page.unroute('**/dados/indicadores/*/*.json');
 });
 
 /**

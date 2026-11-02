@@ -12,7 +12,7 @@ import { test, expect, abrirGavetaConfig } from './apoio.js';
  * O `page` de `apoio.js` já falha o teste se algum `console.error`/exceção escapar.
  */
 
-const SELIC = 'selic-meta-acum-12m';
+const SELIC = 'selic-meta';
 const IPCA = 'ipca-acum-12m';
 
 const chips = (page) => page.locator('[data-bloco="chips"] li');

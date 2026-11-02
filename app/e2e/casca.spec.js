@@ -195,7 +195,7 @@ test('a home ocupa o viewport e não rola', async ({ page }) => {
   // janela CURTA de propósito: com 900px o erro cabe solto e o estouro não aparece — o
   // guardião precisa exercitar o caso em que o conteúdo é maior que a área do gráfico.
   await page.setViewportSize({ width: 480, height: 160 });
-  await page.goto('/?series=selic-meta-acum-12m,ipca-acum-12m');
+  await page.goto('/?series=selic-meta,ipca-acum-12m');
   await expect(page.getByRole('alert')).toBeVisible();
   const botaoTentar = page.getByRole('button', { name: 'Tentar de novo' });
   await expect(botaoTentar).toBeVisible();
@@ -264,7 +264,7 @@ test('fechada e aberta, o trilho mostra a engrenagem e o limpar, sem atalhos de 
   // SEIS séries de propósito: com uma só o conteúdo da gaveta cabe na caixa e não há o que
   // rolar — `scrollTop` ficaria 0 por não existir rolagem, e o teste passaria sem provar nada.
   await page.goto(
-    '/?series=selic-meta-acum-12m,ipca-acum-12m,igpm-acum-12m,mvgr-nominal,mvgr-real,homicidios-anual',
+    '/?series=selic-meta,ipca-acum-12m,igpm-acum-12m,mvgr-nominal,mvgr-real,homicidios-anual',
   );
   await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(6);
   // Dentro da gaveta as seções têm título (h3), não botão: o nome "Cores"/"Eixos" como BOTÃO
@@ -410,7 +410,7 @@ test('com série em erro, o gatilho da gaveta avisa com ponto de atenção', asy
   await page.route('**/dados/**', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: '{"data":"não é uma lista"}' }),
   );
-  await page.goto('/?series=selic-meta-acum-12m,ipca-acum-12m');
+  await page.goto('/?series=selic-meta,ipca-acum-12m');
   const gatilho = page.getByRole('button', { name: 'Configurações do gráfico' });
   await expect(gatilho).toHaveAttribute('aria-label', /há séries com erro/);
   const ponto = gatilho.locator('span[aria-hidden="true"]').last();

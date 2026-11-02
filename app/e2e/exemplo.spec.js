@@ -83,11 +83,11 @@ test('a legenda do gráfico mostra cor e nome, esconde e remove a série', async
     'true',
   );
   await expect(linhas).toHaveCount(2);
-  expect(await ocultaNaStore('selic-meta-acum-12m')).toBe(true);
+  expect(await ocultaNaStore('selic-meta')).toBe(true);
 
   // mostrar de novo: volta ao desenho sem recarregar nada
   await legenda.getByRole('button', { name: /^Mostrar .*[Ss]elic/ }).click();
-  expect(await ocultaNaStore('selic-meta-acum-12m')).toBe(false);
+  expect(await ocultaNaStore('selic-meta')).toBe(false);
 
   // remover: sai da legenda do gráfico E da gaveta (é o mesmo item da store)
   await legenda.getByRole('button', { name: /^Remover .*[Ss]elic/ }).click();
@@ -141,7 +141,7 @@ test('a escala da esquerda não reserva faixa sem série — e aparece quando um
 test('série de amplitude incompatível vai sozinha para a esquerda, sem aviso em lugar nenhum', async ({
   page,
 }) => {
-  await page.goto('/?series=selic-meta-acum-12m,populacao-total-anual');
+  await page.goto('/?series=selic-meta,populacao-total-anual');
   await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(2);
 
   // 1) a escala da esquerda passa a reservar faixa (a leitura é o `marginLeft` do minimapa)

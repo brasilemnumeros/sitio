@@ -32,7 +32,7 @@ const janela = (page) =>
  * cair ANTES do primeiro dado — a lib assenta a borda esquerda no primeiro ponto, e o teste
  * falharia por motivo que não é o dele. Os quatro cobrem 1995→2025.
  */
-const SERIES = 'selic-meta-acum-12m,ipca-acum-12m,mvgr-nominal,caged-total-mensal';
+const SERIES = 'selic-meta,ipca-acum-12m,mvgr-nominal,caged-total-mensal';
 
 /** O chip traz o rótulo do mandato em cena; sem mandato, ele diz o que abre. */
 test('o chip de mandato fica na barra superior e nasce sem mandato', async ({ page }, testInfo) => {

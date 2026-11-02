@@ -82,3 +82,47 @@ test('adicionar série pela UI atualiza a URL — o link é copiável (replaceSt
     .poll(() => new URL(page.url()).searchParams.get('series'))
     .toBe(`${SELIC},${IPCA}`);
 });
+
+/**
+ * O "TENTAR DE NOVO" NÃO PODE PERDER O LINK (fix round 1, 2026-11-01).
+ *
+ * Com o catálogo quebrado na entrada, `iniciarPermalink` sai cedo: nada de `?series=` aplicado e
+ * nada de assinatura store→URL. Sem uma retomada, o retry do catálogo devolvia a lista e deixava
+ * o gráfico VAZIO com a URL ainda pedindo as séries — quem clicou em "Tentar de novo" esperava
+ * justamente ver o próprio link de volta.
+ *
+ * ⚠ 200 fora do contrato, não 500: qualquer 4xx/5xx põe o Chromium para logar
+ * `Failed to load resource` e a fixture de `apoio.js` reprova (ver `busca.spec.js`).
+ */
+test('catálogo quebrado na entrada: "Tentar de novo" restaura o ?series= do link', async ({
+  page,
+}) => {
+  await page.route('**/catalogo.json', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: '{"versao":2,"grupos":{},"indicadores":[]}',
+    }),
+  );
+  await page.goto(`/?series=${SELIC},${IPCA}`);
+
+  // erro na tela E o link intacto: sem catálogo nada é resolvido nem reescrito
+  await expect(page.getByRole('alert')).toBeVisible();
+  expect(new URL(page.url()).searchParams.get('series')).toBe(`${SELIC},${IPCA}`);
+
+  // o catálogo volta a responder e a pessoa tenta de novo
+  await page.unroute('**/catalogo.json');
+  await page.getByRole('button', { name: 'Tentar de novo' }).click();
+
+  // as DUAS séries do link entraram (a ordem é a da query, como no boot)
+  await abrirGavetaConfig(page);
+  const linhas = page.getByTestId('legenda-series').locator('li');
+  await expect(linhas).toHaveCount(2);
+  await expect(linhas.first()).toContainText(/selic/i);
+  await expect(linhas.nth(1)).toContainText(/ipca/i);
+
+  // e a assinatura store→URL existe depois da retomada: o link segue sendo o do usuário
+  await expect
+    .poll(() => new URL(page.url()).searchParams.get('series'))
+    .toBe(`${SELIC},${IPCA}`);
+});

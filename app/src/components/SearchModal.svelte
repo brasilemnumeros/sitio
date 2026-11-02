@@ -15,12 +15,7 @@
   // §8 — nada de estado global: o dado vem TODO das stores (`catalogStore`, `seriesStore`),
   // e aqui só vive estado de UI efêmero (o termo digitado e o foco por teclado). O
   // componente não conhece a Lightweight Charts nem mexe em `window`.
-  import {
-    catalogStore,
-    indicadoresDoGrupo,
-    buscarIndicadores,
-    recarregarCatalogo,
-  } from '../stores/catalog.js';
+  import { catalogStore, indicadoresDoGrupo, buscarIndicadores } from '../stores/catalog.js';
   import {
     seriesStore,
     adicionarSerie,
@@ -31,8 +26,10 @@
   import Ficha from './Ficha.svelte';
   import ErroTotal from './ErroTotal.svelte';
 
-  /** Prop única: chamada ao fechar por ESC ou clique fora (§1.1). */
-  let { aoFechar } = $props();
+  /** `aoFechar` — chamada ao fechar por ESC ou clique fora (§1.1). `aoTentarCatalogo` — o
+   *  "Tentar de novo" do catálogo, que vive na `App` (é ela que retoma o permalink depois do
+   *  sucesso); o componente só repassa para o `ErroTotal`. */
+  let { aoFechar, aoTentarCatalogo } = $props();
 
   let termo = $state('');
   let focoColuna = $state(1); // 1 = grupos · 2 = indicadores
@@ -484,7 +481,7 @@
           <ErroTotal
             titulo="Não foi possível carregar a lista"
             motivo={$catalogStore.error}
-            aoTentarNovamente={recarregarCatalogo}
+            aoTentarNovamente={aoTentarCatalogo}
           />
         </div>
       {:else if $catalogStore.status !== 'ready'}

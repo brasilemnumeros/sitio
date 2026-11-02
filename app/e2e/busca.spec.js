@@ -84,22 +84,37 @@ test('clique fora fecha a modal (o overlay é um <button>, R31)', async ({ page 
  * ficava inerte: nada dizia por quê (§9 — o vazio sempre diz por quê).
  */
 
-test('mostra spinner enquanto o catálogo carrega', async ({ page }) => {
-  // 3s (e não 1,5s): o relógio começa no MOUNT, não no `goto`, então o intervalo que sobra para
-  // clicar e afirmar encolhe em runner lento. O teste não espera o atraso — ele libera a rota e
-  // segue; o que importa é o spinner estar na tela quando a busca abre.
+test('mostra spinner enquanto o catálogo carrega — e ele some quando a lista chega', async ({
+  page,
+}) => {
+  // A rota fica PRESA até o teste liberar: sem janela de tempo (um `setTimeout` fixo vira flake
+  // em runner lento, porque o relógio começa no mount, não no `goto`).
+  let liberar;
+  const catalogoPreso = new Promise((resolve) => (liberar = resolve));
   await page.route('**/catalogo.json', async (route) => {
-    await new Promise((r) => setTimeout(r, 3000));
+    await catalogoPreso;
     await route.continue();
   });
+
   await page.goto('/');
   await page.getByRole('button', { name: 'Buscar indicador…' }).first().click();
   // ⚠ `role="status"` NÃO tem nome acessível derivado do conteúdo (medido: o `getByRole` com
   //    `name` casa 0 elementos), então a asserção é ROLE + TEXTO, dentro do diálogo: é o que um
   //    leitor de tela anuncia. O `page` inteiro casaria também o esqueleto da home.
   const modal = page.getByRole('dialog', { name: 'Buscar indicadores' });
-  await expect(modal.getByRole('status')).toContainText(/Carregando indicadores/);
+  const status = modal.getByRole('status');
+  await expect(status).toContainText(/Carregando indicadores/);
   // o campo de busca nasce junto: a pessoa pode digitar enquanto a lista não chegou
+  await expect(page.getByRole('searchbox')).toBeVisible();
+
+  // O spinner GIRA de verdade — a classe `animate-spin` no DOM sem regra no CSS seria um
+  // círculo parado, e nenhum teste pegaria (o CSS é um arquivo à parte, ver `casca.spec.js`).
+  const giro = modal.locator('[data-coluna="carregando"] span[aria-hidden="true"]');
+  await expect(giro).toHaveCSS('animation-name', 'spin');
+
+  // libera o catálogo: o spinner SAI e a cascata assume (é a transição que interessa)
+  liberar();
+  await expect(status).toHaveCount(0);
   await expect(page.getByRole('searchbox')).toBeVisible();
 });
 
@@ -130,8 +145,10 @@ test('erro ao carregar o catálogo é visível e tem "Tentar de novo"', async ({
   await page.unroute('**/catalogo.json');
   await page.getByRole('button', { name: 'Tentar de novo' }).click();
   await expect(page.getByRole('alert')).toBeHidden();
-  // o catálogo voltou de verdade: o convite do estado inicial resolve o par por ID
-  await expect(page.getByRole('button', { name: 'Selic × IPCA' })).toBeVisible();
+  // Sem `?series=` na URL, a regra de sempre vale no retry: o PRESET DO DIA entra (o gráfico
+  // monta). É a prova de que a retomada do permalink rodou e não escreveu a URL vazia.
+  await expect(page.getByTestId('grafico')).toBeVisible();
+  await expect.poll(() => new URL(page.url()).searchParams.get('series')).not.toBeNull();
 });
 
 test('o mesmo erro aparece DENTRO da busca, e o retry de lá carrega a lista', async ({ page }) => {

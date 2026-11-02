@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { get } from 'svelte/store';
 import { seriesStore, adicionarSerie, limparSeries, definirCor, motivoDoLimite } from './stores/series.js';
-import { catalogStore } from './stores/catalog.js';
+import { catalogStore, recarregarCatalogo } from './stores/catalog.js';
 import { clearSeriesCache } from './data/series.js';
-import { iniciarPermalink } from './permalink-init.js';
+import { iniciarPermalink, retomarPermalink } from './permalink-init.js';
 import { escreverSearch } from './permalink.js';
 import { PRESETS, presetDoDia, dataEmSaoPaulo } from './data/presets.js';
 
@@ -31,6 +31,19 @@ function janelaFalsa(search = '') {
 
 const resposta = (body) => ({ ok: true, status: 200, json: async () => body });
 
+/** A série que o validador aceita — usada tanto pelo `fixture` (catalogStore semeada) quanto
+ *  pelo fetch de quem passa pelo `buscarCatalogo` de verdade. */
+const corpoDaSerie = (id) => ({
+  versao: 1,
+  id,
+  unidade: { tipo: 'percentual', simbolo: '%', casas: 2 },
+  eixo: 'percentual',
+  medida: 'nivel',
+  granularidade: 'mensal',
+  fonte: 'fonte',
+  dados: [{ data: '2020-01-01', valor: 1 }],
+});
+
 /**
  * Fixa o CATÁLOGO na store e devolve o `fetchImpl` de FIXTURE, com URL `data:` para as séries
  * (evita ter de limpar `app/public/`, AGENTS.md). O catálogo vem da rede desde 2026-11-01, mas
@@ -54,16 +67,7 @@ function fixture(idsDoCatalogo) {
   return async (url) => {
     if (url.startsWith('data:')) {
       const id = url.slice('data:'.length);
-      return resposta({
-        versao: 1,
-        id,
-        unidade: { tipo: 'percentual', simbolo: '%', casas: 2 },
-        eixo: 'percentual',
-        medida: 'nivel',
-        granularidade: 'mensal',
-        fonte: 'fonte',
-        dados: [{ data: '2020-01-01', valor: 1 }],
-      });
+      return resposta(corpoDaSerie(id));
     }
     throw new Error(`url inesperada no fixture: ${url}`);
   };
@@ -236,5 +240,94 @@ describe('iniciarPermalink', () => {
     await new Promise((r) => setTimeout(r, 0));
 
     expect(win.history.replaceState.mock.calls.length).toBe(antes);
+  });
+});
+
+/**
+ * O CATÁLOGO QUE VOLTA (fix round 1, 2026-11-01).
+ *
+ * Com o catálogo quebrado na entrada, `iniciarPermalink` sai cedo: não aplica o `?series=` nem
+ * assina `seriesStore` (assinar escreveria a URL VAZIA por cima do link do usuário). Só que o
+ * "Tentar de novo" da tela devolve o catálogo e, sem uma retomada, o gráfico ficava vazio com a
+ * URL ainda pedindo as séries. `retomarPermalink()` é a MESMA passada do boot, chamável depois.
+ */
+describe('retomarPermalink (catálogo volta depois do erro)', () => {
+  /** Catálogo VÁLIDO para o `validateCatalog` real: é ele que resolve `datafile` contra a base. */
+  const catalogoBruto = (ids) => ({
+    versao: 1,
+    grupos: { g: { nome: 'G' } },
+    indicadores: ids.map((id) => ({
+      id,
+      nome: `Ind ${id}`,
+      grupo: 'g',
+      arquivo: `g/${id}.json`,
+      escala: 'percentual',
+    })),
+  });
+
+  /** `fetch` de fixture: o catálogo REJEITA até `liberarCatalogo()`, e as séries respondem pelo
+   *  caminho REAL (`buscarCatalogo` → `validateCatalog` → `datafile` → `adicionarSerie`). */
+  function fetchComCatalogoInstavel(ids) {
+    let foraDoAr = true;
+    const fetchImpl = async (url) => {
+      const alvo = String(url);
+      if (alvo.endsWith('/catalogo.json')) {
+        if (foraDoAr) throw new Error('rede fora do ar');
+        return resposta(catalogoBruto(ids));
+      }
+      if (alvo.startsWith('data:')) return resposta(corpoDaSerie(alvo.slice('data:'.length)));
+      const id = ids.find((i) => alvo.endsWith(`/g/${i}.json`));
+      if (id) return resposta(corpoDaSerie(id));
+      throw new Error(`url inesperada no fixture: ${alvo}`);
+    };
+    return { fetchImpl, liberarCatalogo: () => (foraDoAr = false) };
+  }
+
+  it('catálogo rejeitado na entrada → nada aplicado; a retomada aplica o ?series= e assina a URL', async () => {
+    const ids = ['selic', 'ipca'];
+    const win = janelaFalsa('?series=selic,ipca');
+    const { fetchImpl, liberarCatalogo } = fetchComCatalogoInstavel(ids);
+
+    parar = await iniciarPermalink({ window: win, fetchImpl });
+
+    // 1 · catálogo quebrado: NENHUMA série, link intacto, nenhuma escrita na URL
+    expect(get(catalogStore).status).toBe('error');
+    expect(get(seriesStore).itens).toEqual([]);
+    expect(win.location.search).toBe('?series=selic,ipca');
+    expect(win.history.replaceState).not.toHaveBeenCalled();
+
+    // 2 · o catálogo volta; é isto que o "Tentar de novo" da `App` faz — recarrega e retoma
+    liberarCatalogo();
+    await recarregarCatalogo({ fetchImpl });
+    expect(get(catalogStore).status).toBe('ready');
+    parar = await retomarPermalink({ window: win, fetchImpl });
+
+    // as duas séries do link entraram OK, na ordem da query
+    expect(get(seriesStore).itens.map((i) => i.id)).toEqual(['selic', 'ipca']);
+    expect(get(seriesStore).itens.every((i) => i.status === 'ok')).toBe(true);
+    // e a URL continua com os MESMOS ids (o serializador real a normaliza, como no boot)
+    expect(new URLSearchParams(win.location.search).get('series')).toBe('selic,ipca');
+
+    // 3 · a assinatura store→URL passou a existir: uma série nova entra no link
+    await adicionarSerie({ id: 'igpm', nome: 'Ind igpm', datafile: 'data:igpm' }, { fetchImpl });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(new URLSearchParams(win.location.search).get('series')).toBe('selic,ipca,igpm');
+  });
+
+  it('retomada SEM catálogo (retry que falhou) não escreve nada na URL', async () => {
+    const win = janelaFalsa('?series=selic,ipca');
+    const { fetchImpl } = fetchComCatalogoInstavel(['selic', 'ipca']);
+
+    // Catálogo quebrado e NENHUMA retomada bem-sucedida: a passada saiu cedo.
+    parar = await iniciarPermalink({ window: win, fetchImpl });
+    expect(get(catalogStore).status).toBe('error');
+
+    // O handler do retry chama a retomada só quando o status vira `ready`; aqui o catálogo
+    // continua fora do ar e a função precisa ser inofensiva (nada de assinar/escrever).
+    parar = await retomarPermalink({ window: win, fetchImpl });
+
+    expect(get(seriesStore).itens).toEqual([]);
+    expect(win.location.search).toBe('?series=selic,ipca');
+    expect(win.history.replaceState).not.toHaveBeenCalled();
   });
 });

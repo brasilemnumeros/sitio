@@ -14,6 +14,7 @@
   import Tour from './components/Tour.svelte';
   import { deveMostrarTour, CHAVE_TOUR } from './domain/tour.js';
   import { EXEMPLO_IDS } from './data/exemplo.js';
+  import { retomarPermalink } from './permalink-init.js';
   // 🔴 Só se importa o que JÁ EXISTE. Um import de arquivo inexistente QUEBRA O BUILD.
   // Os controles das gavetas vivem no seu lugar fixo, não numa pilha de blocos: a de
   // configurações (chips, legenda e eixos) veio na T7 e mora à ESQUERDA desde 2026-11-01;
@@ -160,6 +161,20 @@
     for (const item of itens) tentarNovamente(item.id);
   }
 
+  /**
+   * O "Tentar de novo" do CATÁLOGO — o mesmo handler na home e na busca.
+   *
+   * Refaz o fetch e, quando ele volta, RETOMA o permalink: com o catálogo quebrado no boot,
+   * `iniciarPermalink` saiu antes de aplicar `?series=` e de assinar a URL, então sem isto o
+   * retry devolveria a lista e deixaria o gráfico VAZIO com o link ainda pedindo as séries —
+   * quem clicou justamente queria o próprio link de volta. Retry que FALHA não escreve nada
+   * (`retomarPermalink` sai cedo se o catálogo não estiver `ready`).
+   */
+  async function tentarCatalogoNovamente() {
+    await recarregarCatalogo();
+    if ($catalogStore.status === 'ready') await retomarPermalink();
+  }
+
   onMount(() => {
     carregarCatalogo();
     carregarMandatos();
@@ -255,7 +270,7 @@
           <ErroTotal
             titulo="Não foi possível carregar a lista de indicadores"
             motivo={$catalogStore.error}
-            aoTentarNovamente={recarregarCatalogo}
+            aoTentarNovamente={tentarCatalogoNovamente}
           />
         {:else if !catalogoPronto}
           <!-- §9.2 — o catálogo ainda está vindo (`idle` de primeira pintura ou `loading`): a
@@ -297,7 +312,10 @@
   {#if buscaAberta}
     <!-- A modal traz o próprio overlay (é um <button>, não um <div> — R31) e fecha por ESC
          ou clique fora, chamando `aoFechar`. -->
-    <SearchModal aoFechar={() => (buscaAberta = false)} />
+    <SearchModal
+      aoFechar={() => (buscaAberta = false)}
+      aoTentarCatalogo={tentarCatalogoNovamente}
+    />
   {/if}
 </main>
 

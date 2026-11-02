@@ -46,6 +46,8 @@ migração (ADR 0002).
 | `docs/adr/0001-...app-isolado.md` | ADR 0001: app de gráficos isolado, Svelte + Lightweight Charts, contrato de dados | antes de mexer na fronteira do app ou nos dados |
 | `docs/adr/0002-...astro.md` | ADR 0002: migração Jekyll → Astro, contrato de URL, feed/sitemap | antes de mexer em build, rotas ou deploy |
 | `docs/plans/` | planos por fatia — **histórico**, pode estar defasado | referência, não verdade |
+| `docs/marketing/` | desenhos e planos de divulgação (Instagram, imprensa) | copy social, campanhas, calendário |
+| `.opencode/skills/` | skills de marketing instaladas (terceiros, MIT) | pauta, copy, imagem, PR |
 | `.agents/product-marketing.md` | contexto de produto: público, personas, posicionamento, voz, objeções e conversão | copy, textos de interface, decisões de produto |
 | `public/assets/js/app/` | artefato do app (`app.js`, `app.css`) — gerado, gitignored | **nunca** editar à mão |
 

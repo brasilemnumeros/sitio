@@ -1,7 +1,7 @@
 # Product Marketing Context
 
-**Document version:** v3
-**Last updated:** 2026-10-28
+**Document version:** v4
+**Last updated:** 2026-11-02
 
 > Nota: rascunho V1 gerado a partir do próprio repositório (sobre.md, \_config.yml,
 > `dados/indicadores/catalogo.json`, posts, termos-de-uso, privacidade e a spec da camada de gráficos).
@@ -24,11 +24,12 @@
 
 **Decision-makers:** — (público direto, sem compra envolvida).
 
-**Público prioritário (foco atual): jornalista / criador de conteúdo.** É quem mais se beneficia do que o produto tem de único — fonte citável, link compartilhável e gráfico pronto para reusar. As demais personas são secundárias até segunda ordem.
+**Público prioritário (foco atual): cidadão / eleitor.** É quem o projeto existe para servir: entender o Brasil com dado, sem jargão e sem narrativa pronta, e poder checar por conta própria o que aconteceu com um indicador. O **jornalista / criador de conteúdo é amplificador**: não é o alvo da mensagem, é quem leva o gráfico a mais gente quando cita ou usa como fonte. Professor e analista/pesquisador seguem como públicos secundários.
 
-**Primary use case:** Entender e citar o comportamento de um indicador brasileiro ao longo do tempo, com contexto de quais governos estavam no poder — sem precisar garimpar fontes primárias dispersas nem confiar em gráfico sem procedência.
+**Primary use case:** Entender o comportamento de um indicador brasileiro ao longo do tempo, com o contexto de quais governos estavam no poder — sem precisar garimpar fontes primárias dispersas nem confiar em gráfico sem procedência. Para o amplificador (jornalista/criador), o mesmo caso de uso termina em citar ou reusar o gráfico com fonte e link.
 
 **Jobs to be done:**
+- "Quero entender o que aconteceu com X no Brasil sem depender de quem está me contando a história" (cidadão/eleitor).
 - "Quero mostrar/explicar um dado do Brasil de forma visual e confiável" (professor, jornalista, criador de conteúdo).
 - "Quero comparar dois indicadores — ou dois períodos de governo — em um mesmo gráfico" (analista, estudante, curioso engajado).
 - "Quero auditar de onde veio esse número antes de acreditar nele" (cético, pesquisador).
@@ -42,10 +43,10 @@
 ## Personas
 | Persona | Cares about | Challenge | Value we promise |
 |---------|-------------|-----------|------------------|
-| **Jornalista / criador de conteúdo (primário)** | Fonte citável e rápida de reusar | Reunir série, checar fonte e montar gráfico consome tempo | Gráfico pronto + fonte clara + link compartilhável |
-| Cidadão engajado | Entender a economia e a política sem jargão | Dados espalhados, difíceis de comparar, mídia polarizada | Um lugar só, visual e neutro, com contexto histórico |
-| Professor / educador | Material didático atual e confiável | Encontrar dado acessível e explicado para não-especialistas | Indicador visual com texto explicativo que acompanha |
-| Analista / pesquisador | Auditabilidade e método | Não confiar em número sem procedência | Metodologia aberta em notebooks, reproduzível no GitHub |
+| **Cidadão / eleitor (principal)** | Entender a economia e a política sem jargão, e não ser enganado por número sem fonte | Dados espalhados, difíceis de comparar, mídia polarizada | Um lugar só, visual e neutro, com contexto histórico e a fonte à mão |
+| **Jornalista / criador de conteúdo (amplificador)** | Fonte citável e rápida de reusar | Reunir série, checar fonte e montar gráfico consome tempo | Gráfico pronto + fonte clara + link compartilhável |
+| **Professor / educador (secundário)** | Material didático atual e confiável | Encontrar dado acessível e explicado para não-especialistas | Indicador visual com texto explicativo que acompanha |
+| **Analista / pesquisador (secundário)** | Auditabilidade e método | Não confiar em número sem procedência | Metodologia aberta em notebooks, reproduzível no GitHub |
 
 ## Problems & Pain Points
 **Core problem:** A informação pública existe, mas está **dispersa, complexa e em fontes primárias** (BCB, IBGE, órgãos de segurança) que pouca gente consegue ou sabe interpretar. Quem tenta entender o Brasil hoje depende de gráficos de terceiros, muitas vezes sem fonte ou com enquadramento enviesado.
@@ -178,6 +179,7 @@ Não se aplica — o projeto não roda anúncios pagos.
 
 ## Changelog
 *Mais recentes no topo. Uma linha por revisão: o que mudou e por quê.*
+- v4 (2026-11-02) — Público prioritário passou a ser **cidadão/eleitor**; jornalista/criador de conteúdo virou **amplificador** (não o alvo). Arquivo movido para `.agents/product-marketing.md` para ser lido pelas skills de marketing. Motivo: plano de divulgação.
 - v3 (2026-10-28) — Atualizado o estado técnico: site Astro 7 (Jekyll saiu), app Svelte 5 com build próprio, home como terminal de análise; permalink implementado, então a conversão deixou de estar bloqueada.
 - v2 (2026-10-17) — Definida a conversão: compartilhar o gráfico (copiar link); registrado o bloqueio de que o permalink ainda não existe no app. Origem: plano de tagueamento.
 - v1 (2026-10-17) — Contexto inicial, rascunhado a partir do repositório e revisado com o usuário (público prioritário: jornalista/criador; portais oficiais como fonte e concorrente; financiamento próprio sem patrocínio; sem falas de usuário ainda).

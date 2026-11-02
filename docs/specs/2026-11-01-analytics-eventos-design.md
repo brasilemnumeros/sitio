@@ -355,5 +355,5 @@ Ordem sugerida: P0 de consentimento (7.4) → módulo do site (7.1) → app (7.2
 analytics) → 7.6 por último, porque é o que toca os guardas do build.
 
 Fora do código, e dependendo de uma pessoa: §10 (Admin) e a atualização de
-`docs/produto/contexto-de-produto.md` se ele voltar a citar analytics.
+`.agents/product-marketing.md` se ele voltar a citar analytics.
 

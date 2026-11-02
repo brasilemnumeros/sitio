@@ -7,7 +7,7 @@
   que continua valendo: a conversão é o compartilhamento, os pontos de chamada ficam nas stores,
   e o `theme_changed` tem valor quase nulo.
 - **Ferramenta:** GA4 `G-N4CFQ7CL1S` via `gtag` (sem GTM)
-- **Público primário:** jornalista / criador de conteúdo (ver `docs/produto/contexto-de-produto.md`)
+- **Público primário:** jornalista / criador de conteúdo (ver `.agents/product-marketing.md`)
 - **Contexto no repo:** o app novo é o `/` desde a virada (10/T3–T4, 2026-10-17)
 
 ---

@@ -46,7 +46,7 @@ migração (ADR 0002).
 | `docs/adr/0001-...app-isolado.md` | ADR 0001: app de gráficos isolado, Svelte + Lightweight Charts, contrato de dados | antes de mexer na fronteira do app ou nos dados |
 | `docs/adr/0002-...astro.md` | ADR 0002: migração Jekyll → Astro, contrato de URL, feed/sitemap | antes de mexer em build, rotas ou deploy |
 | `docs/plans/` | planos por fatia — **histórico**, pode estar defasado | referência, não verdade |
-| `docs/produto/contexto-de-produto.md` | contexto de produto: público, personas, posicionamento, voz, objeções e conversão | copy, textos de interface, decisões de produto |
+| `.agents/product-marketing.md` | contexto de produto: público, personas, posicionamento, voz, objeções e conversão | copy, textos de interface, decisões de produto |
 | `public/assets/js/app/` | artefato do app (`app.js`, `app.css`) — gerado, gitignored | **nunca** editar à mão |
 
 ## Comandos
@@ -194,8 +194,9 @@ nova e aval do usuário.
 
 ## Contexto de produto e voz
 
-- O contexto de produto vive em `docs/produto/contexto-de-produto.md` (v3, 2026-10-28):
-  público prioritário (jornalista/criador de conteúdo), personas, diferenciais
+- O contexto de produto vive em `.agents/product-marketing.md` (v4, 2026-11-02):
+  público prioritário (**cidadão/eleitor**; jornalista/criador de conteúdo como
+  **amplificador**), personas, diferenciais
   (método aberto, contexto de governo, apartidarismo), objeções, glossário,
   palavras a evitar e a conversão do produto (**compartilhar o gráfico**).
 - Leia antes de escrever **copy, títulos, CTAs ou textos de interface**. A voz é:

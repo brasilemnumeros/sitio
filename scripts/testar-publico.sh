@@ -16,10 +16,13 @@ done
 [ "$falha" -eq 0 ] || exit 1
 # Os GOVERNOS são embutidos no bundle (2026-11-01); o CATÁLOGO e as SÉRIES vêm da base
 # `__BASE_DADOS__`, que em PRODUÇÃO é o Pages do repo `dados`. Um artefato de dev (base `/dados`)
-# publicado deixaria o gráfico vazio em silêncio — o `fetch` falharia e o app mostraria erro, mas
-# ninguém veria isso no CI. A URL do Pages no bundle é o que prova o ramo de produção.
+# publicado não fica calado NA TELA — o `fetch` erra e o app mostra o erro. O silêncio é AQUI:
+# nenhum teste pegaria a base errada, e a home subiria sem lista. A URL do Pages no bundle é o
+# que prova o ramo de produção; e o caminho do catálogo prova que ele é buscado (e não embutido).
 grep -q 'https://brasilemnumeros.github.io/dados/indicadores' dist/assets/js/app/app.js \
   || { echo "publico: app.js não aponta para o Pages (artefato de dev?)" >&2; falha=1; }
+grep -q '/catalogo.json' dist/assets/js/app/app.js \
+  || { echo "publico: app.js não busca /catalogo.json (catálogo sumiu do cliente?)" >&2; falha=1; }
 [ "$falha" -eq 0 ] || exit 1
 # O AVISO SOBRE OS DADOS NA HOME (2026-11-01). A `/` não usa o rodapé do site, então o link
 # para os Termos vive na barra inferior do app. Sem esta guarda, uma refatoração da barra

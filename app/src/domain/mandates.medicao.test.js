@@ -3,7 +3,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { COBERTURA, deltaNoMandato, pontosEsperados } from './mandates.js';
-import { raizDados } from '../data/raiz-dados.js';
+import { raizDados } from '../../test-utils/raiz-dados.js';
 
 // Onde mora o repo `dados/` (repo irmão no local, o `dados/` do workspace no CI, via
 // `DADOS_DIR`): a regra fica em `raizDados()` porque três testes leem o disco e um

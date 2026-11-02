@@ -77,12 +77,12 @@ Assim, um grupo novo também não exige edição no sitio.
   },
   "indicadores": [
     {
-      "id": "selic-meta-acum-12m",
+      "id": "selic-meta",
       "nome": "Taxa Selic Meta (%)",
       "grupo": "monetario",
       "escala": "percentual",
       "descricao": "Taxa básica de juros da economia brasileira definida pelo Banco Central, acumulada nos últimos 12 meses",
-      "arquivo": "selic/selic-meta-acum-12m.json"
+      "arquivo": "selic/selic-meta.json"
     }
   ]
 }

@@ -65,8 +65,12 @@
    * `ready` é o único que devolve a decisão para `itens`; `idle`/`loading` são a espera
    * (`Esqueleto`) e `error` é o erro total da LISTA, com a mensagem crua do fetch e o retry.
    */
-  let catalogoPronto = $derived($catalogStore.status === 'ready');
-  let catalogoFalhou = $derived($catalogStore.status === 'error');
+  let catalogoPronto = $derived(
+    $catalogStore.status === 'ready' || $catalogStore.indicadores.length > 0,
+  );
+  let catalogoFalhou = $derived(
+    $catalogStore.status === 'error' && $catalogStore.indicadores.length === 0,
+  );
 
   // §9.3 — erro TOTAL é quando NADA carregou; com uma série de pé, é degradação PARCIAL e o
   // chip de erro cuida dela. Estes dois ramos leem só o `status` dos itens (§8).

@@ -87,8 +87,10 @@ test('com série carregando o shell ainda não existe; ele aparece quando o dado
 }) => {
   await abrirVazio(page);
 
-  // segura TODO /dados/** por 2,5s — janela de sobra para afirmar o estado de carregamento.
-  await page.route('**/dados/**', async (route) => {
+  // segura as SÉRIES por 2,5s — janela de sobra para afirmar o estado de carregamento.
+  // Só as séries: o catálogo também vem por HTTP desde 2026-11-01, e um `**/dados/**` largo
+  // o derrubaria aqui, medindo o estado errado.
+  await page.route('**/dados/indicadores/*/*.json', async (route) => {
     await new Promise((r) => setTimeout(r, 2500));
     await route.continue();
   });
@@ -112,7 +114,7 @@ test('com série carregando o shell ainda não existe; ele aparece quando o dado
   await expect(filtros.getByRole('button', { name: 'Janela de 5 anos' })).toBeEnabled();
   await expect(page.locator('[data-bloco="comparacao"]')).toHaveCount(1);
 
-  await page.unroute('**/dados/**');
+  await page.unroute('**/dados/indicadores/*/*.json');
 });
 
 test('o dado local carrega: o catálogo traz os 7 grupos', async ({ page }, testInfo) => {

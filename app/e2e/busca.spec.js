@@ -96,7 +96,7 @@ test('mostra spinner enquanto o catálogo carrega — e ele some quando a lista 
     await route.continue();
   });
 
-  await page.goto('/');
+  await abrirApp(page);
   await page.getByRole('button', { name: 'Buscar indicador…' }).first().click();
   // ⚠ `role="status"` NÃO tem nome acessível derivado do conteúdo (medido: o `getByRole` com
   //    `name` casa 0 elementos), então a asserção é ROLE + TEXTO, dentro do diálogo: é o que um
@@ -137,7 +137,7 @@ const catálogoForaDoContrato = (route) =>
 
 test('erro ao carregar o catálogo é visível e tem "Tentar de novo"', async ({ page }) => {
   await page.route('**/catalogo.json', catálogoForaDoContrato);
-  await page.goto('/');
+  await abrirApp(page);
   // a mensagem é a CRUA do validador (§9): o contrato é `versao: 1`, não "erro desconhecido"
   await expect(page.getByRole('alert')).toContainText(/versao 2; esperado 1/);
 
@@ -153,7 +153,7 @@ test('erro ao carregar o catálogo é visível e tem "Tentar de novo"', async ({
 
 test('o mesmo erro aparece DENTRO da busca, e o retry de lá carrega a lista', async ({ page }) => {
   await page.route('**/catalogo.json', catálogoForaDoContrato);
-  await page.goto('/');
+  await abrirApp(page);
   await page.getByRole('button', { name: 'Buscar indicador…' }).first().click();
   const modal = page.getByRole('dialog', { name: 'Buscar indicadores' });
   // sem catálogo a cascata não existe: a modal diz o que houve em vez de abrir vazia

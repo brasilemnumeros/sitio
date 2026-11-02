@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { SchemaError, validateSeries, validateUnit } from './validate.js';
-import { raizDados } from './raiz-dados.js';
+import { raizDados } from '../../test-utils/raiz-dados.js';
 
 // Pontos reais medidos (dados/indicadores/selic/selic-meta.json, 2026-10-14).
 const serieValida = {

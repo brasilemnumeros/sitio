@@ -4,7 +4,7 @@
 **Last updated:** 2026-10-28
 
 > Nota: rascunho V1 gerado a partir do próprio repositório (sobre.md, \_config.yml,
-> indicators.json, posts, termos-de-uso, privacidade e a spec da camada de gráficos).
+> `dados/indicadores/catalogo.json`, posts, termos-de-uso, privacidade e a spec da camada de gráficos).
 > Campos marcados **⚠ a confirmar** são inferência, não fato lido no código. Corrija
 > ou apague o que estiver errado.
 
@@ -147,7 +147,7 @@
 ## Proof Points
 **Metrics:**
 - ~30 anos de recorte temporal (definido nos Termos).
-- 13 indicadores em 7 grupos (indicators.json, 2026-10-17).
+- 13 indicadores em 7 grupos (`dados/indicadores/catalogo.json`, 2026-11-01).
 - Metodologia pública em notebooks Jupyter.
 
 **Customers:** — (sem clientes; público aberto).

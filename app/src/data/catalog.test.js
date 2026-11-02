@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { validateCatalog, urlDoCatalogo, buscarCatalogo } from './catalog.js';
-import { raizDados } from './raiz-dados.js';
+import { raizDados } from '../../test-utils/raiz-dados.js';
 
 const catalogoMinimo = {
   versao: 1,
@@ -166,7 +166,12 @@ describe('buscarCatalogo', () => {
         throw new SyntaxError('Unexpected token <');
       },
     }));
-    await expect(buscarCatalogo({ url: 'u', fetchImpl })).rejects.toThrow(/Unexpected token/);
+    const erro = await buscarCatalogo({ url: 'https://x/dados/indicadores/catalogo.json', fetchImpl }).catch((e) => e);
+    // A mensagem diz o que houve (HTML servido com 200) em vez de vazar o `SyntaxError` em
+    // inglês para a tela; o erro do parser fica em `cause`, para depurar.
+    expect(erro.message).toMatch(/não é JSON/);
+    expect(erro.message).toMatch(/catalogo\.json/);
+    expect(erro.cause).toBeInstanceOf(SyntaxError);
   });
 
   it('catálogo inválido vindo da rede reprova com a mensagem do validador', async () => {
@@ -174,5 +179,34 @@ describe('buscarCatalogo', () => {
     await expect(
       buscarCatalogo({ url: 'https://x/dados/indicadores/catalogo.json', fetchImpl }),
     ).rejects.toThrow(/versao/);
+  });
+});
+
+describe('as guardas que o runtime acrescenta ao contrato', () => {
+  it('recusa id que diverge do nome do arquivo (C2 conferido também aqui)', () => {
+    const ruim = {
+      ...catalogoMinimo,
+      indicadores: [{ ...catalogoMinimo.indicadores[0], id: 'selic-meta' }],
+    };
+    expect(() => validateCatalog(ruim)).toThrow(/id diverge do arquivo/);
+  });
+
+  it('recusa URL de catálogo que não termina em /catalogo.json', async () => {
+    const fetchImpl = vi.fn(async () => resposta(catalogoMinimo));
+    // Uma base com barra final faria o último segmento sumir e todo `datafile` apontar um
+    // nível acima, em silêncio — melhor falhar aqui.
+    await expect(
+      buscarCatalogo({ url: 'https://x/dados/indicadores/', fetchImpl }),
+    ).rejects.toThrow(/deve terminar em \/catalogo\.json/);
+  });
+
+  it('a mensagem de HTTP de erro diz qual URL falhou', async () => {
+    const fetchImpl = vi.fn(async () => ({ ok: false, status: 404 }));
+    const erro = await buscarCatalogo({
+      url: 'https://x/dados/indicadores/catalogo.json',
+      fetchImpl,
+    }).catch((e) => e);
+    expect(erro.message).toMatch(/HTTP 404/);
+    expect(erro.message).toMatch(/https:\/\/x\/dados\/indicadores\/catalogo\.json/);
   });
 });

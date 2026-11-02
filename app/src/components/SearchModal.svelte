@@ -472,11 +472,11 @@
     {/if}
 
     <div class="flex min-h-0 flex-1">
-      {#if $catalogStore.status === 'error'}
+      {#if $catalogStore.status === 'error' && $catalogStore.indicadores.length === 0}
         <!-- §9 (2026-11-01) — sem catálogo não há lista: antes disto a cascata abria VAZIA
              ("Escolha um grupo.", zero grupos) e nada dizia por quê. O motivo é a mensagem
-             crua do fetch, e o "Tentar de novo" só existe AQUI — ao lado de uma lista já
-             carregada ele zeraria o catálogo em uso. -->
+             crua do fetch. Uma falha de RECARREGAMENTO com lista já carregada não cai aqui:
+             a lista vale mais que o aviso, e o estado continua `error` na store. -->
         <div class="min-h-0 flex-1 overflow-y-auto p-4">
           <ErroTotal
             titulo="Não foi possível carregar a lista"
@@ -484,7 +484,7 @@
             aoTentarNovamente={aoTentarCatalogo}
           />
         </div>
-      {:else if $catalogStore.status !== 'ready'}
+      {:else if $catalogStore.status !== 'ready' && $catalogStore.indicadores.length === 0}
         <!-- §9.2 — o catálogo ainda está vindo: a modal nasce, digita-se, mas a lista não
              existe ainda. O spinner é decorativo (`aria-hidden`); quem fala é o `role="status"`.
              ⚠ `role="status"` não tem nome acessível derivado do conteúdo (medido em 2026-11-01:

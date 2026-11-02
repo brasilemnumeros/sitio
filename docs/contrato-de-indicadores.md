@@ -2,7 +2,7 @@
 
 **Versão:** 1 (única) · **Vigente desde:** 2026-11-01
 **Consumidor:** app da home (`sitio/app/src/data/validate.js` para a série, `catalog.js` para o catálogo)
-**Produtor:** repo `dados` (notebooks + `dados/scripts/validar.py`)
+**Produtor:** repo `dados` — os notebooks escrevem as séries e `dados/scripts/validar.py` confere; o catálogo (`indicadores/catalogo.json`) é editado à mão, no mesmo PR
 
 Este documento é a **fonte de verdade** do formato dos arquivos de série (`C1…C14`) e do
 catálogo (`K1…K8`). Cada regra tem um código, citado nos validadores e nos testes que a
@@ -244,7 +244,7 @@ Os dois conjuntos de regras são provados por **mecanismos diferentes**:
   por teste e cobra o código da regra. **Não há caso `K` no corpus**, e um arquivo de corpus não
   serviria: `validar.py` com caminhos avulsos não confere o catálogo (conferir a raiz a partir de
   um recorte produziria K2 falso) — o catálogo só é validado na raiz, sem argumentos.
-- **Dado real:** os 13 arquivos de `dados/indicadores/` passam em `python3 scripts/validar.py`
+- **Dado real:** os 13 arquivos de série de `dados/indicadores/` passam em `python3 scripts/validar.py`
   e em `npm --prefix app test` (o teste de integração lê o repo `dados`).
 - **Catálogo × série:** `validar.py` confere o catálogo contra o disco com `K1…K8` (seção
   "Catálogo × série"), e o teste de integração do `sitio` repete a conferência cruzada — o
@@ -255,7 +255,7 @@ Os dois conjuntos de regras são provados por **mecanismos diferentes**:
 - Existe **uma** versão do formato da série: `versao: 1`. Não há convivência entre versões — o
   projeto não carrega compatibilidade retroativa (decisão de 2026-11-01). O catálogo tem a
   `versao` própria (`1`, K6), independente da série; ver "Compatibilidade".
-- Mudança de forma ou de semântica **migra os 13 arquivos** no mesmo conjunto de commits, com
+- Mudança de forma ou de semântica **migra os 13 arquivos de série** no mesmo conjunto de commits, com
   os dois validadores, o corpus e este documento. Se um dia houver uma geração nova do
   formato, ela substitui a atual: `versao: 2` só existe se `1` deixar de existir.
 - O app entende a `versao` que declara em `validate.js` (`SCHEMA_VERSION`); arquivo com outro

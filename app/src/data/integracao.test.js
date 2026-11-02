@@ -6,7 +6,7 @@ import { validateSeries } from './validate.js';
 import { validateCatalog } from './catalog.js';
 import { PRESETS } from './presets.js';
 import { EXEMPLO_IDS } from './exemplo.js';
-import { raizDados } from './raiz-dados.js';
+import { raizDados } from '../../test-utils/raiz-dados.js';
 
 /**
  * Teste de INTEGRAÇÃO — roda contra o dado PUBLICADO no repo `dados/`, não contra fixture.
@@ -55,7 +55,8 @@ function arquivosDeSerie() {
  *
  * Ancorado no delimitador de query de propósito: um `\bseries=` solto casaria `data-series=`
  * ou `chart-series=` num trecho de HTML colado no post, e o "id" inventado reprovaria o build
- * por um motivo que não é o dado.
+ * por um motivo que não é o dado. `&amp;series=` entra junto: é o escape legal de `&` dentro
+ * de `href`, e hoje nenhum post usa — sem a alternativa, o link passaria despercebido.
  *
  * Decodifica ANTES de partir por vírgula: o post da Selic escreve `series=selic-meta%2C…`, e
  * partir o texto cru transformaria `selic-meta%2Cselic-over-acum-12m` num id inexistente.
@@ -64,7 +65,7 @@ function idsDosPosts() {
   const out = [];
   for (const nome of readdirSync(POSTS).filter((n) => n.endsWith('.md'))) {
     const texto = readFileSync(join(POSTS, nome), 'utf8');
-    for (const [, bruto] of texto.matchAll(/[?&]series=([^"'&#\s)<>\]]+)/g)) {
+    for (const [, bruto] of texto.matchAll(/(?:[?&]|&amp;)series=([^"'&#\s)<>\]]+)/g)) {
       let valor;
       try {
         valor = decodeURIComponent(bruto);

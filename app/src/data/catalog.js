@@ -65,6 +65,15 @@ export function validateCatalog(raw, { base = __BASE_DADOS__ } = {}) {
       throw new SchemaError(`${where} (${ind.id}): arquivo ${JSON.stringify(ind.arquivo)} repetido`);
     }
     arquivos.add(ind.arquivo);
+    // O contrato C2 garante `id` == nome do arquivo; aqui o porteiro do runtime confere o mesmo
+    // par, para que um catálogo editado à mão com o id trocado não chegue à tela. O `validar.py`
+    // (K3) também confere, do lado do `dados` — este é o que sobrevive a uma publicação errada.
+    const semExtensao = ind.arquivo.replace(/\.json$/, '').split('/').pop();
+    if (ind.id !== semExtensao) {
+      throw new SchemaError(
+        `${where} (${ind.id}): id diverge do arquivo ${JSON.stringify(ind.arquivo)} (esperado "${semExtensao}")`
+      );
+    }
     if (!ESCALAS.has(ind.escala)) {
       throw new SchemaError(`${where}.escala deve ser percentual|moeda|numero, veio ${JSON.stringify(ind.escala)}`);
     }
@@ -83,8 +92,18 @@ export function urlDoCatalogo(base = __BASE_DADOS__) {
 
 /** O diretório do catálogo é a BASE do `validateCatalog`: é contra ela que os `datafile`
  *  são resolvidos. Derivar da URL (em vez de usar `__BASE_DADOS__`) mantém a injeção do
- *  `url` nos testes honesta — o dado e a base não podem vir de lugares diferentes. */
-const baseDaUrl = (url) => url.replace(/\/+$/, '').replace(/\/[^/]*$/, '');
+ *  `url` nos testes honesta — o dado e a base não podem vir de lugares diferentes.
+ *
+ *  A URL tem de TERMINAR no arquivo: uma base com barra final (`…/indicadores/`) faria o
+ *  último segmento sumir e resolvedor apontasse um nível acima, em silêncio — todo `datafile`
+ *  errado, e o erro só apareceria quando alguém adicionasse a série. */
+const SUFIXO_CATALOGO = '/catalogo.json';
+const baseDaUrl = (url) => {
+  if (!url.endsWith(SUFIXO_CATALOGO)) {
+    throw new Error(`url do catálogo deve terminar em ${SUFIXO_CATALOGO}, veio ${url}`);
+  }
+  return url.slice(0, -SUFIXO_CATALOGO.length).replace(/\/+$/, '');
+};
 
 /**
  * Busca o catálogo na base de dados e devolve a lista validada.
@@ -100,9 +119,15 @@ export async function buscarCatalogo({ url = urlDoCatalogo(), fetchImpl = fetch 
   } catch (cause) {
     throw new Error('falha de rede ao buscar o catálogo', { cause });
   }
-  if (!resposta.ok) throw new Error(`HTTP ${resposta.status} ao buscar o catálogo`);
-  // `json()` fica FORA do try acima de propósito: um `SyntaxError` do parser (o middleware
-  // respondendo HTML, por exemplo) já diz o que houve e não deve virar "falha de rede".
-  const bruto = await resposta.json();
+  if (!resposta.ok) throw new Error(`HTTP ${resposta.status} ao buscar o catálogo em ${url}`);
+  // `json()` fica FORA do try acima de propósito: um corpo que não é JSON (o middleware
+  // respondendo HTML, um proxy com página de erro) é um defeito DIFERENTE de "a rede caiu", e a
+  // mensagem precisa dizer isso a quem lê a tela. O `SyntaxError` do parser vai em `cause`.
+  let bruto;
+  try {
+    bruto = await resposta.json();
+  } catch (cause) {
+    throw new Error(`o catálogo em ${url} não é JSON`, { cause });
+  }
   return validateCatalog(bruto, { base: baseDaUrl(url) });
 }

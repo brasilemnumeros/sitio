@@ -151,7 +151,7 @@ test.describe('primeira visita', () => {
   test('com o dado lento, o tour espera e abre com os seis passos', async ({ page }) => {
     test.skip((page.viewportSize()?.width ?? 0) < 1024, 'o tour não roda abaixo de 1024px');
 
-    await page.route('**/dados/**', async (route) => {
+    await page.route('**/dados/indicadores/*/*.json', async (route) => {
       await new Promise((r) => setTimeout(r, 1500));
       await route.continue();
     });

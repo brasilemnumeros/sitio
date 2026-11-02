@@ -102,3 +102,46 @@ describe('catalogStore', () => {
     expect(get(catalogStore).indicadores).toHaveLength(2);
   });
 });
+
+describe('carregarCatalogo em voo', () => {
+  it('a segunda chamada ESPERA a primeira em vez de resolver na hora', async () => {
+    let liberar;
+    const fetchImpl = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          liberar = () => resolve(resposta(CATALOGO));
+        }),
+    );
+
+    const primeira = carregarCatalogo({ url: URL, fetchImpl });
+    const segunda = carregarCatalogo({ url: URL, fetchImpl });
+
+    let segundaResolveu = false;
+    segunda.then(() => (segundaResolveu = true));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(segundaResolveu, 'a segunda não pode resolver antes do catálogo').toBe(false);
+
+    liberar();
+    await Promise.all([primeira, segunda]);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(get(catalogStore).status).toBe('ready');
+  });
+});
+
+describe('recarregarCatalogo preserva a lista que já estava em uso', () => {
+  it('falha no recarregamento mantém os indicadores anteriores', async () => {
+    await carregarCatalogo({ dados: CATALOGO });
+    expect(get(catalogStore).indicadores).toHaveLength(2);
+
+    await recarregarCatalogo({
+      url: URL,
+      fetchImpl: async () => ({ ok: false, status: 500 }),
+    });
+
+    const estado = get(catalogStore);
+    expect(estado.status).toBe('error');
+    expect(estado.error).toMatch(/HTTP 500/);
+    // A lista sobrevive: um "atualizar" malsucedido não pode deixar a pessoa sem o que já tinha.
+    expect(estado.indicadores).toHaveLength(2);
+  });
+});

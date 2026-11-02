@@ -126,6 +126,13 @@ describe('urlDoCatalogo', () => {
   it('base sem barra no fim não perde o separador', () => {
     expect(urlDoCatalogo('/dados/indicadores')).toBe('/dados/indicadores/catalogo.json');
   });
+
+  it('sem argumento usa o define `__BASE_DADOS__` — é o caminho de produção', () => {
+    // No vitest o `define` resolve a base de dev (`/dados/indicadores`); o que este teste trava
+    // é o ACRÉSCIMO do arquivo sobre a base, que é o único pedaço que o app monta sozinho.
+    expect(urlDoCatalogo()).toBe(`${__BASE_DADOS__.replace(/\/+$/, '')}/catalogo.json`);
+    expect(urlDoCatalogo()).toMatch(/\/catalogo\.json$/);
+  });
 });
 
 describe('buscarCatalogo', () => {

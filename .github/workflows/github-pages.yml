@@ -60,7 +60,12 @@ jobs:
           path: dados
 
       # Falhar rápido: as contas que erram calado são testadas antes de gastar o build (§10.7)
+      # `DADOS_DIR` é o que faz os testes que leem o disco (integração, corpus do contrato,
+      # medição dos mandatos) acharem o checkout acima: o vitest roda com cwd em `app/`, então
+      # `../dados/` é `<workspace>/dados`. Sem isso eles caem no repo irmão do layout local.
       - name: Testes do app
+        env:
+          DADOS_DIR: ../dados/
         run: npm ci --prefix app && npm test --prefix app
 
       - name: Build do app (Vite, saída de nome fixo)

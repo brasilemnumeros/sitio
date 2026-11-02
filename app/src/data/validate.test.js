@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { SchemaError, validateSeries, validateUnit } from './validate.js';
+import { raizDados } from './raiz-dados.js';
 
 // Pontos reais medidos (dados/indicadores/selic/selic-meta.json, 2026-10-14).
 const serieValida = {
@@ -118,7 +118,8 @@ describe('validateUnit', () => {
  * roda os MESMOS arquivos: é assim que os dois deixam de divergir.
  */
 describe('corpus de conformidade (dados/tests/contrato)', () => {
-  const raiz = fileURLToPath(new URL('../../../../dados/tests/contrato', import.meta.url));
+  // A raiz vem de `raizDados()` (`DADOS_DIR` no CI), nunca de um `../../../../dados` fixo.
+  const raiz = join(raizDados(), 'tests', 'contrato');
   const ler = (dir) =>
     readdirSync(join(raiz, dir))
       .filter((n) => n.endsWith('.json'))

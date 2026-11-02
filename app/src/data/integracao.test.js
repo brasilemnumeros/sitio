@@ -3,6 +3,9 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateSeries } from './validate.js';
+import { PRESETS } from './presets.js';
+import { EXEMPLO_IDS } from './exemplo.js';
+import { raizDados } from './raiz-dados.js';
 
 /**
  * Teste de INTEGRAÇÃO — roda contra o dado PUBLICADO no repo `dados/`, não contra fixture.
@@ -11,36 +14,34 @@ import { validateSeries } from './validate.js';
  * contrato. É a diferença que deixou 4 séries com mês repetido passarem por 121 testes
  * verdes (as fixtures eram nossas, o dado publicado não).
  *
- * Lê do disco, sem rede (§6).
+ * Lê do disco, sem rede (§6). A raiz vem de `raizDados()` (`DADOS_DIR` no CI) desde
+ * 2026-11-01: com o `../../../../dados` fixo o Actions lia `<workspace>/dados` — um
+ * diretório que não existe — e esta camada nunca rodou lá.
+ *
+ * Desde a mesma data o catálogo mora no repo `dados/`, ao lado das séries: ele deixou de
+ * ser uma cópia que envelhecia aqui e virou o que este teste confere.
  */
 
-// `sitio/app/src/data/` → sobe 4 níveis → raiz do workspace → `dados/`.
-const RAIZ_DADOS = fileURLToPath(new URL('../../../../dados', import.meta.url));
-// As séries moram em `dados/indicadores/<familia>/<arquivo>.json` desde 2026-11-01.
+const RAIZ_DADOS = raizDados();
 const RAIZ_SERIES = join(RAIZ_DADOS, 'indicadores');
-// O catálogo vive ao lado deste teste desde 2026-11-01 (era `sitio/indicators.json`).
-const REGISTRO = fileURLToPath(new URL('./indicadores.json', import.meta.url));
+const CATALOGO = join(RAIZ_SERIES, 'catalogo.json');
+const POSTS = fileURLToPath(new URL('../../../src/content/posts/', import.meta.url));
 
-/** O registro do site: quais arquivos são SÉRIES publicadas. */
-function indicadoresRegistrados() {
-  const { indicadores } = JSON.parse(readFileSync(REGISTRO, 'utf8'));
-  return indicadores.map((ind) => {
-    // "<familia>/<arquivo>.json" → { familia, arquivo }
-    const m = /^([^/]+)\/([^/]+\.json)$/.exec(ind.arquivo);
-    if (!m) throw new Error(`arquivo inesperado no registro: ${ind.arquivo}`);
-    return { id: ind.id, familia: m[1], arquivo: m[2] };
-  });
+function catalogo() {
+  return JSON.parse(readFileSync(CATALOGO, 'utf8'));
 }
 
 /**
- * As séries reais em `dados/`. `governos/` NÃO entra: é o registro de mandatos (schema
- * próprio, chaves `mandatos`/`esferas`), não uma série — daí 15 JSONs virarem 13 séries.
+ * Toda série publicada em `dados/indicadores/<familia>/*.json`.
+ *
+ * Varre TODAS as famílias (antes só as que o catálogo citava, o que escondia justamente a
+ * família órfã que a conferência abaixo existe para pegar). `catalogo.json` mora na raiz de
+ * `indicadores/`, não dentro de uma família, então o scan de diretórios não o alcança.
  */
 function arquivosDeSerie() {
-  const familias = new Set(indicadoresRegistrados().map((i) => i.familia));
   const out = [];
   for (const fam of readdirSync(RAIZ_SERIES, { withFileTypes: true })) {
-    if (!fam.isDirectory() || !familias.has(fam.name)) continue;
+    if (!fam.isDirectory()) continue;
     for (const arquivo of readdirSync(join(RAIZ_SERIES, fam.name)).filter((n) => n.endsWith('.json'))) {
       out.push({ familia: fam.name, arquivo, caminho: join(RAIZ_SERIES, fam.name, arquivo) });
     }
@@ -48,10 +49,38 @@ function arquivosDeSerie() {
   return out;
 }
 
+/**
+ * Os ids que o SITE conhece pelos posts publicados: os `?series=a,b` (e `&series=`) dos links.
+ *
+ * Decodifica ANTES de partir por vírgula: o post da Selic escreve `series=selic-meta%2C…`, e
+ * partir o texto cru transformaria `selic-meta%2Cselic-over-acum-12m` num id inexistente.
+ */
+function idsDosPosts() {
+  const out = [];
+  for (const nome of readdirSync(POSTS).filter((n) => n.endsWith('.md'))) {
+    const texto = readFileSync(join(POSTS, nome), 'utf8');
+    for (const [, bruto] of texto.matchAll(/\bseries=([^"'&#\s)<>\]]+)/g)) {
+      let valor;
+      try {
+        valor = decodeURIComponent(bruto);
+      } catch {
+        // `%` solto na URL vira URIError sem dizer de onde veio: nomeia o arquivo.
+        throw new Error(`post ${nome}: "series=${bruto}" não tem percent-encoding válido`);
+      }
+      for (const id of valor.split(',')) {
+        if (id.trim()) out.push({ id: id.trim(), origem: `post ${nome}` });
+      }
+    }
+  }
+  return out;
+}
+
 describe('o contrato publicado em dados/ é o que o app valida (§6)', () => {
-  it('os 13 arquivos reais passam em validateSeries, com id == nome do arquivo', () => {
+  it('toda série publicada passa em validateSeries, com id == nome do arquivo', () => {
     const arquivos = arquivosDeSerie();
-    expect(arquivos).toHaveLength(13);
+    // A contagem vem do disco (o `toHaveLength(13)` saiu em 2026-11-01), mas zero séries
+    // não pode passar: seria o teste verde que não testa nada.
+    expect(arquivos.length, `nenhuma série encontrada em ${RAIZ_SERIES}`).toBeGreaterThan(0);
     for (const { arquivo, caminho } of arquivos) {
       const id = arquivo.replace(/\.json$/, '');
       const serie = validateSeries(JSON.parse(readFileSync(caminho, 'utf8')), { expectedId: id });
@@ -67,20 +96,56 @@ describe('o contrato publicado em dados/ é o que o app valida (§6)', () => {
     }
   });
 
-  it('o registro do site e o dado em disco concordam: nenhuma série órfã ou faltando', () => {
+  it('o catálogo e o disco concordam: nenhuma série órfã ou declarada a menos', () => {
     const noDisco = new Set(arquivosDeSerie().map((a) => `${a.familia}/${a.arquivo}`));
-    const noRegistro = new Set(indicadoresRegistrados().map((i) => `${i.familia}/${i.arquivo}`));
-    expect([...noDisco].sort()).toEqual([...noRegistro].sort());
+    const noCatalogo = new Set(catalogo().indicadores.map((i) => i.arquivo));
+    // As duas direções separadas: o array vazio mostra QUAL arquivo está sobrando, e o
+    // `toEqual([])` reprova em voz alta (§9) em vez de esconder a diferença num diff de listas.
+    expect(
+      [...noCatalogo].filter((arquivo) => !noDisco.has(arquivo)),
+      'o catálogo declara arquivo que não existe em dados/indicadores',
+    ).toEqual([]);
+    expect(
+      [...noDisco].filter((arquivo) => !noCatalogo.has(arquivo)),
+      'há série em dados/indicadores sem entrada no catálogo',
+    ).toEqual([]);
   });
 
-  it('a escala que o catálogo declara é a MESMA unidade da série (um dono por campo)', () => {
-    const { indicadores } = JSON.parse(readFileSync(REGISTRO, 'utf8'));
-    for (const ind of indicadores) {
-      const caminho = join(RAIZ_SERIES, ind.arquivo);
-      const serie = JSON.parse(readFileSync(caminho, 'utf8'));
+  it('toda entrada do catálogo tem escala igual a unidade.tipo da série (K4)', () => {
+    for (const ind of catalogo().indicadores) {
+      const serie = JSON.parse(readFileSync(join(RAIZ_SERIES, ind.arquivo), 'utf8'));
       // Antes de 2026-11-01 o catálogo repetia `unit` inteiro — e divergia em 8 de 13.
-      expect(ind.escala, `${ind.id}: escala do catálogo × unidade.tipo da série`).toBe(serie.unidade.tipo);
+      expect(
+        ind.escala,
+        `${ind.id} (${ind.arquivo}): escala do catálogo × unidade.tipo da série`,
+      ).toBe(serie.unidade.tipo);
       expect(ind, `${ind.id}: catálogo não deve duplicar a unidade`).not.toHaveProperty('unidade');
     }
+  });
+
+  it('todo id que o site conhece existe no catálogo', () => {
+    // Sem esta conferência, renomear um id no `dados` vira falha silenciosa no sitio: preset
+    // com uma curva a menos, botão de exemplo inerte, link de post sem série. O catálogo
+    // embutido era essa guarda — ele saiu do bundle (2026-11-01) e o teste assumiu o papel.
+    const doSite = [
+      ...PRESETS.flatMap((preset) =>
+        preset.indicadores.map((id) => ({ id, origem: `preset "${preset.id}"` })),
+      ),
+      ...EXEMPLO_IDS.map((id) => ({ id, origem: 'exemplo (§9.1)' })),
+      ...idsDosPosts(),
+    ];
+    expect(doSite.length, 'nenhum id conhecido do site foi coletado').toBeGreaterThan(0);
+    // Os posts vêm de URL dentro de Markdown: se o extrator parar de casar, o teste ainda
+    // passaria com PRESETS e EXEMPLO_IDS — e perderia justamente a metade mais frágil.
+    expect(
+      doSite.some(({ origem }) => origem.startsWith('post ')),
+      'nenhum id extraído dos posts — o extrator de URL virou no-op',
+    ).toBe(true);
+
+    const publicados = new Set(catalogo().indicadores.map((i) => i.id));
+    const faltando = doSite
+      .filter(({ id }) => !publicados.has(id))
+      .map(({ id, origem }) => `${id} (${origem})`);
+    expect(faltando, 'ids citados pelo site que o catálogo não publica').toEqual([]);
   });
 });

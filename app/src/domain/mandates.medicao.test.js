@@ -3,8 +3,12 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { COBERTURA, deltaNoMandato, pontosEsperados } from './mandates.js';
+import { raizDados } from '../data/raiz-dados.js';
 
-const raiz = fileURLToPath(new URL('../../../../', import.meta.url)); // = brasilemnumeros/
+// Onde mora o repo `dados/` (repo irmão no local, o `dados/` do workspace no CI, via
+// `DADOS_DIR`): a regra fica em `raizDados()` porque três testes leem o disco e um
+// `../../../../dados` fixo não acerta os dois layouts.
+const RAIZ_DADOS = raizDados();
 // Os governos passaram a ser dado versionado no próprio `sitio` (2026-11-01), dentro do app.
 const governos = JSON.parse(
   readFileSync(fileURLToPath(new URL('../data/governos/federal.json', import.meta.url)), 'utf8')
@@ -31,9 +35,9 @@ function serieReal(id) {
   // As séries moraram em `dados/<família>/` até 2026-11-01, quando o refactor as moveu para
   // `dados/indicadores/<família>/` (commit 2f367b). Este helper lê o disco direto, então o
   // caminho tem de acompanhar — senão o teste morre com "série não encontrada".
-  for (const fam of readdirSync(join(raiz, 'dados', 'indicadores'), { withFileTypes: true })) {
+  for (const fam of readdirSync(join(RAIZ_DADOS, 'indicadores'), { withFileTypes: true })) {
     if (!fam.isDirectory()) continue;
-    const dir = join(raiz, 'dados', 'indicadores', fam.name);
+    const dir = join(RAIZ_DADOS, 'indicadores', fam.name);
     for (const f of readdirSync(dir).filter((n) => n.endsWith('.json'))) {
       if (f.replace(/\.json$/, '') !== id) continue;
       const bruto = JSON.parse(readFileSync(join(dir, f), 'utf8'));

@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { join } from 'node:path';
 import { validateCatalog, urlDoCatalogo, buscarCatalogo } from './catalog.js';
+import { raizDados } from './raiz-dados.js';
 
 const catalogoMinimo = {
   versao: 1,
@@ -76,8 +77,9 @@ describe('validateCatalog', () => {
   it('PROÍBE o que é dono da série: unidade, granularidade e tipo de gráfico não entram', () => {
     // O contrato da série é quem manda nesses campos; repetir aqui foi o que fez a unidade
     // divergir em 8 de 13 registros antes de 2026-11-01. `chartType` não é lido por ninguém.
+    // Lê o catálogo PUBLICADO (repo `dados/`) desde 2026-11-01 — é ele que o app consome.
     const bruto = JSON.parse(
-      readFileSync(fileURLToPath(new URL('./indicadores.json', import.meta.url)), 'utf8'),
+      readFileSync(join(raizDados(), 'indicadores', 'catalogo.json'), 'utf8'),
     );
     for (const ind of bruto.indicadores) {
       expect(ind, ind.id).not.toHaveProperty('chartType');

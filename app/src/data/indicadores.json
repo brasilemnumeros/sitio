@@ -39,7 +39,7 @@
       "grupo": "crescimento",
       "arquivo": "pib/pib-real-anual.json",
       "escala": "percentual",
-      "descricao": "Variação do Produto Interno Bruto (PIB) em termos reais, desconsiderando a inflação."
+      "descricao": "Variação anual do PIB em volume (PIB real), em relação ao ano anterior"
     },
     {
       "id": "mvgr-nominal",
@@ -63,7 +63,7 @@
       "grupo": "trabalho",
       "arquivo": "caged/caged-total-mensal.json",
       "escala": "numero",
-      "descricao": "Número total de empregos formais no Brasil, conforme dados do CAGED (Cadastro Geral de Empregados e Desempregados)"
+      "descricao": "Vínculos formais ativos no último dia do mês (estoque), segundo o Caged/Novo Caged"
     },
     {
       "id": "populacao-total-anual",
@@ -83,19 +83,19 @@
     },
     {
       "id": "homicidios-anual",
-      "nome": "Homicídios",
+      "nome": "Homicídios (por 100 mil)",
       "grupo": "seguranca-publica",
       "arquivo": "homicidios/homicidios-anual.json",
       "escala": "numero",
-      "descricao": "Número total de homicídios no Brasil por 100 mil habitantes"
+      "descricao": "Taxa de homicídios por 100 mil habitantes, calculada pelo site a partir das mortes registradas no SIM (compiladas pelo Atlas da Violência) e da população residente"
     },
     {
       "id": "homicidios-armas-fogo-anual",
-      "nome": "Homicídios por Armas de Fogo",
+      "nome": "Homicídios por Armas de Fogo (por 100 mil)",
       "grupo": "seguranca-publica",
       "arquivo": "homicidios/homicidios-armas-fogo-anual.json",
       "escala": "numero",
-      "descricao": "Número de homicídios por armas de fogo no Brasil por 100 mil habitantes"
+      "descricao": "Taxa de homicídios por armas de fogo por 100 mil habitantes, calculada pelo site a partir das mortes registradas no SIM (compiladas pelo Atlas da Violência) e da população residente"
     },
     {
       "id": "proporcao-homicidios-armas-fogo-anual",

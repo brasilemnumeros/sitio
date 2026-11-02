@@ -17,6 +17,13 @@ export default defineConfig({
   site: 'https://www.brasilemnumeros.ong.br',
   outDir: 'dist',
   publicDir: 'public',
+  // O post de população de 2025-10-26 mudou de slug: o título deixou de afirmar uma
+  // "queda populacional" que não existe na série oficial (era artefato de interpolação).
+  // A URL antiga fica redirecionada para não quebrar link nem perder o histórico.
+  redirects: {
+    '/indicadores/2025/10/26/ponto-de-inflexao-demografico-a-historia-por-tras-da-rara-queda-populacional-no-brasil':
+      '/indicadores/2025/10/26/desaceleracao-demografica-o-ritmo-de-crescimento-da-populacao-brasileira.html',
+  },
   // `assets: 'assets'` faz o CSS/JS gerado sair em `dist/assets/` (o default do
   // Astro é `_astro`); o resto do plano (fatias 01 e 05) lê `dist/assets/*.css`
   // e `dist/assets/js/...`. O `public/` é copiado para a mesma pasta.

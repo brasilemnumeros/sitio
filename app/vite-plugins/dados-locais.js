@@ -10,10 +10,10 @@
 // `SchemaError` (lendo HTML como JSON) em vez de 404. Nenhum teste pega (§10.7); só
 // a tela. Este plugin mata o silêncio com um 404 EM VOZ ALTA.
 //
-// **Local serve dado LOCAL** para as SÉRIES: em dev o app compõe a URL com
+// **Local serve dado LOCAL** para as SÉRIES e para o CATÁLOGO: em dev o app compõe a URL com
 // `__BASE_DADOS__ = '/dados/indicadores'` (ver `app/vite.config.js`) e este middleware serve o
-// repo irmão. O CATÁLOGO não passa por aqui desde 2026-11-01: ele é versionado no `sitio`
-// (`app/src/data/indicadores.json`) e entra no bundle.
+// repo irmão. Desde 2026-11-01 o catálogo também mora lá (`dados/indicadores/catalogo.json`) —
+// ele saiu do bundle do `sitio` e passou a ser buscado como as séries.
 //
 // 🔴 Os CAMINHOS são PASSADOS PELO CHAMADOR, nunca adivinhados aqui. Este módulo vive em
 // `app/vite-plugins/`, então um `../` relativo a ele apontaria para o lugar errado. E um

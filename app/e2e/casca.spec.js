@@ -117,13 +117,13 @@ test('com série carregando o shell ainda não existe; ele aparece quando o dado
 
 test('o dado local carrega: o catálogo traz os 7 grupos', async ({ page }, testInfo) => {
   await abrirApp(page);
-  // O catálogo é embutido no bundle desde 2026-11-01 (não há `/indicators.json`).
+  // O catálogo é buscado na base de dados desde 2026-11-01 (`/dados/indicadores/catalogo.json`).
   // Se ele não carregasse, a cascata da busca viria sem grupos.
   await page.getByRole('button', { name: 'Buscar indicador…' }).first().click();
   // O controle dos grupos tem DUAS realizações (§12.1): a coluna 1 da cascata (desktop, uma
   // lista) e a fileira de chips (celular, um `role="group"` — a coluna está `md:block`, logo
   // fora da árvore de acessibilidade no celular). A pergunta é a mesma — os 7 grupos do
-  // `indicators.json` chegaram —, só muda de onde se lê.
+  // catálogo chegaram —, só muda de onde se lê.
   if (testInfo.project.name === 'mobile') {
     // chips: "Todos" + um por grupo
     await expect(page.getByRole('group', { name: 'Grupos' }).getByRole('button')).toHaveCount(8);

@@ -4,13 +4,13 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { dadosLocais } from './vite-plugins/dados-locais.js';
 
 /**
- * Dev do APP: além do app em si, serve o DADO local (as séries em `/dados/**`) e o CSS do
- * site. O middleware é compartilhado com o site (o `astro.config.mjs` usa o mesmo módulo) — ver
- * `vite-plugins/dados-locais.js`, onde está o porquê detalhado (o fallback silencioso do Vite,
- * "local serve dado local"). O catálogo NÃO passa por aqui: é embutido no bundle.
+ * Dev do APP: além do app em si, serve o DADO local (`/dados/**`: séries e catálogo) e o CSS
+ * do site. O middleware é compartilhado com o site (o `astro.config.mjs` usa o mesmo módulo) —
+ * ver `vite-plugins/dados-locais.js`, onde está o porquê detalhado (o fallback silencioso do
+ * Vite, "local serve dado local").
  *
- * Os CAMINHOS são resolvidos AQUI (não no módulo): ele vive em `app/vite-plugins/`,
- * então um `../indicadores.json` relativo a ele seria `sitio/app/indicadores.json`.
+ * Os CAMINHOS são resolvidos AQUI (não no módulo): ele vive em `app/vite-plugins/`, então um
+ * caminho relativo escrito lá dentro apontaria para `app/`, não para a raiz do repo.
  * Um caminho errado NÃO falha — só nunca casa, e o dev server responde HTML.
  *
  * O Tailwind CLI é rebuildado à parte (o script `css` do `sitio/package.json`).
@@ -25,11 +25,12 @@ const CSS_DO_SITE = fileURLToPath(new URL('../assets/css/main.dist.css', import.
 
 
 export default defineConfig(({ command }) => ({
-  // O app busca as SÉRIES no repo `dados/`. O catálogo é embutido (`app/src/data/indicadores.json`)
-  // e não depende disto; ele guarda o caminho `familia/arquivo.json`, e a BASE vem daqui.
-  // Em **dev** a base é `/dados/indicadores` (o middleware acima serve o repo irmão); em
-  // **produção**, o Pages. `DADOS_LOCAL=1` (posto pelo script `dev` do `sitio`) existe porque
-  // o `astro dev` roda `build:app` em modo BUILD — sem ele, o dev do site leria o dado publicado.
+  // O app busca as SÉRIES **e o CATÁLOGO** no repo `dados/`. A BASE daqui monta as duas URLs:
+  // `${base}/<familia>/arquivo.json` (o caminho que a entrada do catálogo declara) e
+  // `${base}/catalogo.json`. Em **dev** a base é `/dados/indicadores` (o middleware acima serve
+  // o repo irmão); em **produção**, o Pages. `DADOS_LOCAL=1` (posto pelo script `dev` do
+  // `sitio`) existe porque o `astro dev` roda `build:app` em modo BUILD — sem ele, o dev do
+  // site leria o dado publicado.
   define: {
     __BASE_DADOS__: JSON.stringify(
       command === 'serve' || process.env.DADOS_LOCAL === '1'

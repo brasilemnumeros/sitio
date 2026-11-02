@@ -1,20 +1,21 @@
 # Contrato dos arquivos de indicadores
 
 **Versão:** 1 (única) · **Vigente desde:** 2026-11-01
-**Consumidor:** app da home (`sitio/app/src/data/validate.js`)
+**Consumidor:** app da home (`sitio/app/src/data/validate.js` para a série, `catalog.js` para o catálogo)
 **Produtor:** repo `dados` (notebooks + `dados/scripts/validar.py`)
 
-Este documento é a **fonte de verdade** do formato dos arquivos de série. Cada regra tem um
-código (`C1`, `C2`…) citado nos dois validadores e no corpus de conformidade. Quando a prosa e
-o código divergirem, **este documento vale** — e a divergência é defeito a corrigir no mesmo
-commit, não interpretação.
+Este documento é a **fonte de verdade** do formato dos arquivos de série (`C1…C14`) e do
+catálogo (`K1…K6`). Cada regra tem um código, citado nos validadores e no corpus de
+conformidade. Quando a prosa e o código divergirem, **este documento vale** — e a divergência é
+defeito a corrigir no mesmo commit, não interpretação.
 
 **Chaves e valores são em português.** O arquivo é lido e publicado nessa forma, sem camada de
 tradução: `unidade`, `granularidade`, `fonte`, `dados`, `data`, `valor`.
 
-Não confundir com o **catálogo** (`sitio/app/src/data/indicadores.json`): o catálogo é
-apresentação (`nome`, `grupo`, `descricao`, `escala`, `arquivo`) e também está em português. O
-arquivo da série descreve **o dado**; unidade, granularidade e fonte não se repetem no catálogo.
+Não confundir com o **catálogo** (`dados/indicadores/catalogo.json`): o catálogo é
+apresentação (`nome`, `grupo`, `descricao`, `escala`, `arquivo`), também em português, e mora
+ao lado das séries no repo `dados` — ver "Catálogo × série". O arquivo da série descreve **o
+dado**; unidade, granularidade e fonte não se repetem no catálogo.
 
 ## Onde o arquivo mora
 
@@ -128,6 +129,102 @@ dados/indicadores/<familia>/<id>.json
   contrato não exige período fechado nem exige que a série vá até "hoje"; **consumidor nenhum
   extrapola** além da última data.
 
+## Catálogo × série
+
+São **dois** arquivos com donos diferentes: o catálogo diz **como o indicador aparece**; a
+série diz **o que o número é**. O app lê os dois do mesmo host — o catálogo em
+`${__BASE_DADOS__}/catalogo.json`, a série no caminho que a entrada declara.
+
+### Onde mora
+
+```
+dados/indicadores/catalogo.json
+```
+
+Irmão das pastas de família, **não** dentro delas: `validar.py` trata `indicadores/*/*.json`
+como série, e `indicadores/catalogo.json` não casa com esse padrão. Publicado em
+`https://brasilemnumeros.github.io/dados/indicadores/catalogo.json`; em dev o middleware
+`app/vite-plugins/dados-locais.js` serve `/dados/indicadores/catalogo.json` do repo irmão. Não
+há cópia no `sitio` nem no bundle do app: o catálogo que o produto usa é o que está publicado.
+
+### Forma
+
+```json
+{
+  "versao": 1,
+  "grupos": {
+    "monetario": { "nome": "🏦 Política Monetária" }
+  },
+  "indicadores": [
+    {
+      "id": "ipca-acum-12m",
+      "nome": "IPCA (%)",
+      "grupo": "inflacao",
+      "escala": "percentual",
+      "descricao": "Variação acumulada do Índice de Preços ao Consumidor Amplo (IPCA) em 12 meses",
+      "arquivo": "ipca/ipca-acum-12m.json"
+    }
+  ]
+}
+```
+
+| chave | onde | o que é |
+|---|---|---|
+| `versao` | raiz | inteiro `1` (K6) |
+| `grupos` | raiz | mapa `id` → `{ "nome" }`; a ordem de declaração é a ordem de navegação da busca |
+| `indicadores` | raiz | lista das entradas |
+| `id` | entrada | chave pública (`?series=`); igual ao nome do arquivo e ao `id` da série (K3) |
+| `nome` | entrada | rótulo da lista, da legenda e da ficha, exibido antes do dado (não vazio) |
+| `grupo` | entrada | `id` de um grupo de `grupos` (K5) |
+| `escala` | entrada | `percentual` \| `moeda` \| `numero`; o distintivo da lista, derivado de `unidade.tipo` da série (K4) |
+| `descricao` | entrada | uma frase sobre o dado, no topo da ficha antes de carregar (opcional na leitura; presente em todas as entradas) |
+| `arquivo` | entrada | caminho `familia/arquivo.json` dentro de `indicadores/`, existente no disco (K1) |
+
+### Regra de corte
+
+**O que a tela mostra antes de o dado chegar mora no catálogo; o que descreve o número mora na
+série.** Descrevem o número: `unidade` (tipo, símbolo, casas, idioma), `eixo`, `medida`,
+`granularidade`, `fonte`, `urlFonte` e `dados`. Nenhum campo novo entra nos dois.
+
+A única duplicata estrutural é `escala` ↔ `unidade.tipo`: o catálogo repete a **classe** para
+pintar o distintivo sem baixar as séries, e por isso ela é **conferida**, não deduzida (K4).
+
+### K1…K6 — o catálogo contra o disco
+
+`python3 scripts/validar.py` sem argumentos confere as séries (`C1…C14`) **e** o catálogo. Com
+caminhos avulsos o catálogo fica de fora: conferir a raiz a partir de um recorte produziria K2
+falso.
+
+| regra | reprova quando |
+|---|---|
+| **K1** | `catalogo.json` ausente, ilegível, sem objeto na raiz ou sem a lista `indicadores`; entrada com `arquivo` fora do formato `familia/arquivo.json`, inexistente, ilegível ou sem objeto na raiz |
+| **K2** | uma série de `indicadores/*/*.json` não tem entrada no catálogo |
+| **K3** | a entrada não é objeto; `id` diverge do nome do arquivo ou do `id` da série |
+| **K4** | `escala` diverge de `unidade.tipo` da série |
+| **K5** | `grupos` ausente ou não é objeto; `grupo` da entrada não existe nele |
+| **K6** | `versao` não é o inteiro `1` — versão desconhecida reprova antes de interpretar o resto |
+
+O `validar.py` não confere o **conteúdo** de `nome`/`descricao`: entrada sem `nome` passa no
+Python e só reprova no `validateCatalog` do app (erro na tela); `descricao` ausente ou vazia
+apenas omite o texto da ficha.
+
+O mesmo par roda no hook `.githooks/pre-commit` (em quem o instalou) e no CI
+(`.github/workflows/validar.yml`, em todo pull request e no push para `main`). No `sitio`,
+`validateCatalog` (`app/src/data/catalog.js`) é o porteiro do **runtime**: exige `versao: 1`,
+`id` e `nome` não vazios, `grupo` existente, `arquivo` casando o formato e `escala` na lista.
+Violação vira `status: 'error'` com a mensagem crua na tela — nunca lista vazia. O teste
+`app/src/data/integracao.test.js` repete a conferência cruzada contra o disco antes do deploy.
+
+### Compatibilidade
+
+O catálogo é lido em runtime pelo app **que está no ar**, a partir de outro repositório: mudar
+`versao` (ou a forma de um campo que o app antigo lê) exige **deploy coordenado do `sitio`**.
+Versão que o app não declara é erro na tela, não leitura parcial — publicar o catálogo novo
+antes do sitio derruba a lista de quem está navegando. Mudar só `nome`, `descricao` ou `grupo`,
+ou acrescentar indicador, não exige deploy: aparece no próximo acesso, em até ~10 min (cache do
+Pages). Renomear `id` **não** é mudança de apresentação: quebra link `?series=` e os ids que o
+`sitio` conhece (presets, exemplo, posts), e o teste de integração de lá reprova.
+
 ## Conformidade
 
 - **Corpus:** `dados/tests/contrato/` — pares de arquivo + veredito esperado (válido/inválido,
@@ -135,13 +232,15 @@ dados/indicadores/<familia>/<id>.json
   `validate.test.js` (JS) têm de concordar com **todos** os casos.
 - **Dado real:** os 13 arquivos de `dados/indicadores/` passam em `python3 scripts/validar.py`
   e em `npm --prefix app test` (o teste de integração lê o repo `dados`).
-- **Catálogo × série:** o teste de integração confere que `escala` do catálogo é
-  `unidade.tipo` da série — o catálogo não duplica unidade nem medida.
+- **Catálogo × série:** `validar.py` confere o catálogo contra o disco com `K1…K6` (seção
+  "Catálogo × série"), e o teste de integração do `sitio` repete a conferência cruzada — o
+  catálogo não duplica unidade nem medida.
 
 ## Versão
 
-- Existe **uma** versão do formato: `versao: 1`. Não há convivência entre versões — o projeto
-  não carrega compatibilidade retroativa (decisão de 2026-11-01).
+- Existe **uma** versão do formato da série: `versao: 1`. Não há convivência entre versões — o
+  projeto não carrega compatibilidade retroativa (decisão de 2026-11-01). O catálogo tem a
+  `versao` própria (`1`, K6), independente da série; ver "Compatibilidade".
 - Mudança de forma ou de semântica **migra os 13 arquivos** no mesmo conjunto de commits, com
   os dois validadores, o corpus e este documento. Se um dia houver uma geração nova do
   formato, ela substitui a atual: `versao: 2` só existe se `1` deixar de existir.

@@ -15,10 +15,11 @@ migração (ADR 0002).
 - Dados **não** vivem aqui: as séries vêm do repo irmão `dados/` (e o contrato).
   **Governos vivem aqui** (2026-11-01): `app/src/data/governos/`, embutidos no bundle.
   Local: `../dados/`; no CI: `./dados/`, apontado por `DADOS_DIR`.
-- Catálogo de indicadores: `app/src/data/indicadores.json` (13 indicadores, chaves em
-  português: `versao`, `indicadores`, `grupos`, `nome`, `grupo`, `descricao`, `escala`,
-  `arquivo`), **embutido no bundle** desde 2026-11-01. Não existe mais `/indicators.json`
-  publicado nem cópia em `public/`.
+- Catálogo de indicadores: mora no repo `dados/`, em `indicadores/catalogo.json`, e o app o
+  busca em runtime (`${__BASE_DADOS__}/catalogo.json`) — **não** está no bundle. Chaves em
+  português (`versao`, `grupos`, `indicadores`, `nome`, `grupo`, `descricao`, `escala`,
+  `arquivo`); 13 indicadores hoje. Indicador novo = arquivo da série + entrada no catálogo, no
+  mesmo PR do `dados`.
 - Conteúdo editorial: `src/content/posts/*.md` (10 posts).
 
 ## Mapa rápido
@@ -35,13 +36,13 @@ migração (ADR 0002).
 | `src/lib/` | helpers puros (feed, categorias, posts, trecho, smartify) | feed/listagem |
 | `app/src/` | app Svelte/Vite da home | UI e lógica do gráfico |
 | `app/src/domain/` | regras puras (`scales`, `color`, `format`, `mandates`, `schema`) | lógica testável sem DOM |
-| `app/src/data/` | catálogo embutido (`indicadores.json`), fetch das séries, validação, presets; **governos** em `governos/` | contrato de dados |
+| `app/src/data/` | catálogo (`catalog.js`: fetch do catálogo + `validateCatalog`), fetch das séries, validação, presets; **governos** em `governos/` | contrato de dados |
 | `app/src/stores/` | estado (`catalog`, `series`, `viewport`, `axes`, `mandate`) | fonte da verdade do app |
 | `app/src/chart/` | adapter, pontos, faixas, minimapa (Lightweight Charts) | desenho do gráfico |
 | `app/e2e/` | Playwright (10 specs + `apoio.js`) | comportamento/geometria no navegador |
 | `scripts/` | guardas do build publicado | `npm run build` falhar em voz alta |
 | `docs/specs/` | desenhos aprovados (o que o produto deve ser) | ler antes de mudar produto |
-| `docs/contrato-de-indicadores.md` | **contrato normativo** dos arquivos de série (`versao: 1`) | qualquer mudança em `validate.js`, no corpus ou nos dados |
+| `docs/contrato-de-indicadores.md` | **contrato normativo** das séries (`versao: 1`, `C1…C14`) e do catálogo (`K1…K6`) | qualquer mudança em `validate.js`, `catalog.js`, no corpus ou nos dados |
 | `docs/adr/0001-...app-isolado.md` | ADR 0001: app de gráficos isolado, Svelte + Lightweight Charts, contrato de dados | antes de mexer na fronteira do app ou nos dados |
 | `docs/adr/0002-...astro.md` | ADR 0002: migração Jekyll → Astro, contrato de URL, feed/sitemap | antes de mexer em build, rotas ou deploy |
 | `docs/plans/` | planos por fatia — **histórico**, pode estar defasado | referência, não verdade |
@@ -123,18 +124,19 @@ quando o defeito aparecer — e provar isso.
 - Entrada: `?series=` válido vence tudo; chave presente sem id válido cai em
   `EstadoInicial`; sem a chave entra o **preset do dia** (calculado em
   `America/Sao_Paulo`). `permalink-init.js` roda antes de qualquer escrita de URL.
-- Dados: catálogo embutido em `app/src/data/indicadores.json` (o registro guarda o caminho
-  `familia/arquivo.json`; a URL sai de `__BASE_DADOS__`); séries em `dados/indicadores/`;
-  governos em `app/src/data/governos/` (versionados aqui, **importados** no bundle — não há
-  `fetch`). Em dev, o middleware `app/vite-plugins/dados-locais.js` serve
-  `/dados/**` para as séries; em produção a base aponta para
+- Dados: o **catálogo** é buscado em `${__BASE_DADOS__}/catalogo.json` (repo `dados`, validado
+  por `validateCatalog`; o registro guarda o caminho `familia/arquivo.json`); séries em
+  `dados/indicadores/`; governos em `app/src/data/governos/` (versionados aqui, **importados**
+  no bundle — não há `fetch`). Em dev, o middleware `app/vite-plugins/dados-locais.js` serve
+  `/dados/**` para as séries **e** o catálogo; em produção a base aponta para
   `https://brasilemnumeros.github.io/dados/indicadores`.
 - **Contrato das séries: `versao: 1` (versão única)** (`docs/contrato-de-indicadores.md`, regras `C1…C14`).
   Cada série traz `unidade`, `eixo` (comparabilidade declarada), `medida` (o que o número é),
   `granularidade`, `fonte` e `dados` com `{data, valor}` — chaves e valores em português, sem
   `rate`, ordem ascendente, um ponto por período. O corpus em `dados/tests/contrato/` é rodado pelos DOIS validadores
   (`validate.js` e `validar.py`); mudar o contrato é mudar doc + corpus + os dois validadores
-  no mesmo conjunto de commits.
+  no mesmo conjunto de commits. O **catálogo** tem o contrato próprio, `K1…K6`, conferido pelo
+  `validar.py` contra o disco (seção "Catálogo × série" do mesmo documento).
 - **Eixo x (2026-10-29):** sempre do início do FHC I (`1995-01-01`) ao **dia de
   hoje**, independentemente das séries carregadas — âncoras mensais invisíveis em
   `app/src/domain/horizonte.js`. O "Tudo" enquadra esse horizonte; não voltar a
@@ -246,8 +248,14 @@ migração; não os use como validação principal.
   `grep -c 'brasilemnumeros.github.io/dados' public/assets/js/app/app.js`
   — `0` é dev, `1` é produção. Foi assim que a faixa da Dilma II “voltou a sobrepor” a
   do Temer: o código estava certo, o artefato lia o dado publicado.
-- **O catálogo e os governos são embutidos (2026-11-01):** `app/src/data/indicadores.json`
-  e `app/src/data/governos/` entram no bundle; só as SÉRIES vêm por URL.
+- **O catálogo vem da base; os governos são embutidos:** desde 2026-11-01 o catálogo mora no
+  repo `dados` (`indicadores/catalogo.json`) e é buscado em runtime; só os **governos**
+  (`app/src/data/governos/`) entram no bundle.
+- **Catálogo que não carrega não é lista vazia — é erro na tela.** Falha de rede, HTTP de erro
+  e `SchemaError` viram `status: 'error'` com a mensagem crua e "tentar de novo" (busca e área
+  do gráfico); não existe fallback nem catálogo embutido de reserva. Lista vazia **sem** erro
+  só é legítima se o catálogo publicado tiver `indicadores: []`; qualquer outra suspeita (base
+  errada, artefato de dev, catálogo inconsistente) aparece como erro, não como silêncio.
 - **Números de teste e status em `docs/plans/` envelhecem** (contagens, “nada
   publicado”). A verdade é o código + `docs/specs/` + `docs/adr/`.
 

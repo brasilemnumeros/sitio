@@ -12,9 +12,8 @@
 #      conferimos que ele existe: um `dev`/`build` que esquecer o build do app
 #      serviria a `/` VAZIA, em silêncio.
 #
-# O catálogo NÃO é mais copiado: desde 2026-11-01 ele é versionado em
-# `app/src/data/indicadores.json` e entra no bundle (não existe `/indicators.json`
-# publicado).
+# O catálogo também vem da base de dados desde 2026-11-01 (`dados/indicadores/catalogo.json`,
+# buscado em runtime como as séries): nada dele é copiado para `public/`.
 set -euo pipefail
 
 raiz="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

@@ -14,7 +14,7 @@ for t in 'js/app/app.js' 'js/app/app.css' 'id="app"'; do
   grep -q "$t" dist/index.html || { echo "publico: / não inclui \"$t\"" >&2; falha=1; }
 done
 [ "$falha" -eq 0 ] || exit 1
-# O CATÁLOGO e os GOVERNOS são embutidos no bundle (2026-11-01); as SÉRIES vêm da base
+# Os GOVERNOS são embutidos no bundle (2026-11-01); o CATÁLOGO e as SÉRIES vêm da base
 # `__BASE_DADOS__`, que em PRODUÇÃO é o Pages do repo `dados`. Um artefato de dev (base `/dados`)
 # publicado deixaria o gráfico vazio em silêncio — o `fetch` falharia e o app mostraria erro, mas
 # ninguém veria isso no CI. A URL do Pages no bundle é o que prova o ramo de produção.

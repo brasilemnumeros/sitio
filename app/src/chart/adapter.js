@@ -181,7 +181,7 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
    * `atribuicao` vem do `axesStore` (fatia 05) — o ADAPTER não decide eixo, só obedece (§8.1). */
   function definirSeries(itens, atribuicao = {}) {
     // 🔴 `setData` de uma série cuja data ESTENDE o domínio de tempo MOVE a janela visível — a lib
-    //    a desloca (medido 2026-10-19: `selic-meta-acum-12m`, 320 barras, levou `2015-06→2025-06`
+    //    a desloca (medido 2026-10-19: `selic-meta`, 320 barras, levou `2015-06→2025-06`
     //    a `2020-08→2025-10`; re-setar a MESMA data não move). Se a janela é do usuário, uma
     //    atualização de DADO não pode movê-la: guardamos aqui e devolvemos no fim.
     const janelaAntes = usuarioAssumiu ? chart.timeScale().getVisibleRange() : null;

@@ -17,7 +17,7 @@ const preset = (id, nome, indicadores) =>
 // Os ids de indicador são os do catálogo (`indicadores.json`), sem inventar apelidos.
 /** @type {ReadonlyArray<Preset>} */
 export const PRESETS = Object.freeze([
-  preset('juros', 'Juros', ['selic-meta-acum-12m', 'selic-over-acum-12m']),
+  preset('juros', 'Juros', ['selic-meta', 'selic-over-acum-12m']),
   preset('inflacao', 'Inflação', ['ipca-acum-12m', 'igpm-acum-12m']),
   preset('habitacao', 'Habitação', ['mvgr-nominal', 'mvgr-real']),
   preset('violencia', 'Violência', ['homicidios-anual', 'homicidios-armas-fogo-anual']),

@@ -6,7 +6,7 @@ const CATALOGO = {
   versao: 1,
   grupos: { monetario: { nome: '🏦 Política Monetária' }, inflacao: { nome: '📈 Inflação' } },
   indicadores: [
-    { id: 'selic-meta-acum-12m', nome: 'Taxa Selic Meta (%)', grupo: 'monetario', arquivo: 'selic/selic-meta-acum-12m.json', escala: 'percentual' },
+    { id: 'selic-meta', nome: 'Taxa Selic Meta (%)', grupo: 'monetario', arquivo: 'selic/selic-meta.json', escala: 'percentual' },
     { id: 'ipca-acum-12m', nome: 'IPCA (%)', grupo: 'inflacao', arquivo: 'ipca/ipca-acum-12m.json', escala: 'percentual' },
   ],
 };
@@ -33,7 +33,7 @@ describe('catalogStore', () => {
 
   it('busca por digitação ignora caixa e acento', () => {
     carregarCatalogo({ dados: CATALOGO });
-    expect(buscarIndicadores('taxa selic').map((i) => i.id)).toEqual(['selic-meta-acum-12m']);
+    expect(buscarIndicadores('taxa selic').map((i) => i.id)).toEqual(['selic-meta']);
     expect(buscarIndicadores('ÍPCA').map((i) => i.id)).toEqual(['ipca-acum-12m']);
     expect(buscarIndicadores('')).toHaveLength(2);
   });

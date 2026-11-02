@@ -20,7 +20,7 @@ describe('seriesSpan', () => {
 describe('amplitudeRatio', () => {
   it('devolve a razão entre a maior e a menor amplitude', () => {
     // selic-meta (42,22) × igpm (39,97) = 1,056 — par mais compatível medido (§5)
-    const selic = serie('selic-meta-acum-12m', 2.0, 44.22);
+    const selic = serie('selic-meta', 2.0, 44.22);
     const igpm = serie('igpm-acum-12m', -7.97, 32.0);
     expect(amplitudeRatio(selic, igpm)).toBeCloseTo(1.056, 2);
   });
@@ -31,7 +31,7 @@ describe('amplitudeRatio', () => {
     // amplitudes — a diferença está na 4ª casa significativa. O teste trava o que as
     // fixtures desta suíte realmente produzem, não o número publicado.
     const pop = serie('populacao-total-anual', 154524335, 204861525);
-    const selic = serie('selic-meta-acum-12m', 2.0, 44.22);
+    const selic = serie('selic-meta', 2.0, 44.22);
     expect(amplitudeRatio(pop, selic)).toBeCloseTo(1192259, 0);
   });
 
@@ -53,7 +53,7 @@ describe('comparabilidade (§5)', () => {
 
   it('convive: razão ≤ 50 não gera aviso', () => {
     const igpm = serie('igpm-acum-12m', -7.97, 32.0);          // amplitude 39,97
-    const selic = serie('selic-meta-acum-12m', 2.0, 44.22);    // amplitude 42,22
+    const selic = serie('selic-meta', 2.0, 44.22);    // amplitude 42,22
     const v = comparabilidade(selic, [igpm]);
     expect(v.veredito).toBe('convive');
     expect(v.ratio).toBeCloseTo(1.056, 2);
@@ -66,7 +66,7 @@ describe('comparabilidade (§5)', () => {
     // **1.192.259×**, que cai do OUTRO lado do limiar de 1.000.000 e devolveria `'ilegivel'`
     // (R19). O par patológico tem os seus próprios testes na Tarefa 3.
     const mvgr = serie('mvgr-nominal', 42000, 264000);
-    const selic = serie('selic-meta-acum-12m', 2.0, 44.22);
+    const selic = serie('selic-meta', 2.0, 44.22);
     const v = comparabilidade(selic, [mvgr]);
     expect(v.veredito).toBe('avisa');
     expect(v.ratio).toBeGreaterThan(AMPLITUDE_LIMIT);
@@ -76,7 +76,7 @@ describe('comparabilidade (§5)', () => {
   it('reporta o PIOR caso entre várias existentes', () => {
     const igpm = serie('igpm-acum-12m', -7.97, 32.0);          // 39,97
     const pop = serie('populacao-total-anual', 154524335, 204861525);
-    const v = comparabilidade(serie('selic-meta-acum-12m', 2.0, 44.22), [igpm, pop]);
+    const v = comparabilidade(serie('selic-meta', 2.0, 44.22), [igpm, pop]);
     expect(v.contra.id).toBe('populacao-total-anual'); // 1.192.259 > 1,056
   });
 
@@ -133,7 +133,7 @@ describe('o caso patológico (§5, decidido por medição em 2026-10-14)', () =>
 
   it('caged × selic-meta (657.681×) ainda AVISA — não é patológico', () => {
     const caged = serie('caged-total-mensal', 20937049, 48704360);          // 27.767.311
-    const selic = serie('selic-meta-acum-12m', 2.0, 44.22);                 // 42,22
+    const selic = serie('selic-meta', 2.0, 44.22);                 // 42,22
     expect(comparabilidade(caged, [selic]).veredito).toBe('avisa');
   });
 });

@@ -119,7 +119,7 @@ export async function tentarNovamente(id, { fetchImpl } = {}) {
   escrever((itens) => itens.map((i) => (i.id === id ? { ...i, status: 'carregando', error: null } : i)));
   try {
     // A URL REAL, guardada ao adicionar. NÃO reconstruir a partir do id: o caminho publicado
-    // inclui a família (`dados/selic/selic-meta-acum-12m.json`), e uma URL adivinhada daria
+    // inclui a família (`dados/selic/selic-meta.json`), e uma URL adivinhada daria
     // 404 — numa ação cujo propósito é justamente RECUPERAR de uma falha.
     const series = await loadSeries(item.url, { expectedId: id, fetchImpl });
     // A unidade vem da SÉRIE, não do catálogo (§6) — igual ao caminho de `adicionarSerie`.

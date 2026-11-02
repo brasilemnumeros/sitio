@@ -13,12 +13,12 @@ Em julho de 2025, um número domina as manchetes e as conversas sobre economia: 
 Antes de tudo, é crucial diferenciar os dois "sabores" da Selic:
 
 <p style="text-align: center; font-size: 0.85em; font-style: italic; margin-top: 0.5em;">
-  <a href="https://www.brasilemnumeros.ong.br/?series=selic-meta-acum-12m%2Cselic-over-acum-12m" class="text-blue-600 hover:text-blue-800 underline">Ver gráfico: Selic Meta e Selic Over acumuladas em 12 meses</a>
+  <a href="https://www.brasilemnumeros.ong.br/?series=selic-meta%2Cselic-over-acum-12m" class="text-blue-600 hover:text-blue-800 underline">Ver gráfico: Selic Meta e Selic Over</a>
 </p>
 
-> **Atenção à unidade do gráfico.** As duas séries do site mostram a taxa **acumulada nos 12 meses** até cada mês — 12,72% para a meta e 12,55% para o over em julho de 2025; 14,54% e 14,24% em outubro de 2026. Os **15%** deste texto são o **nível** da meta definido pelo Copom, que é outra medida: quando a meta fica constante por 12 meses, as duas coincidem; quando o Copom corta ou sobe, o acumulado leva um ano para acompanhar.
+> **Atenção à unidade do gráfico.** As duas séries medem coisas diferentes: a **meta** aparece como **nível**, ao ano (15,00% em outubro de 2025) — é o número deste texto —, e o **over** aparece como taxa **acumulada nos 12 meses** até cada mês (13,71% em outubro de 2025). A meta é o alvo que o Copom define; o acumulado do over é o que de fato rendeu no período.
 
-- **Selic Meta:** É o alvo, a taxa oficial que o Comitê de Política Monetária (Copom) do Banco Central define a cada 45 dias. No fechamento deste artigo (julho de 2025), a meta era 15% ao ano.
+- **Selic Meta:** É o alvo, a taxa oficial que o Comitê de Política Monetária (Copom) do Banco Central define a cada 45 dias. No fechamento deste artigo (julho de 2025), a meta era 15% ao ano — e é isso que o gráfico da meta mostra.
 - **Selic Over (ou Efetiva):** É a taxa que realmente acontece no dia a dia, nas operações de empréstimo de curtíssimo prazo entre os bancos, que usam títulos públicos como garantia. Ela costuma ficar um pouquinho abaixo da meta. É nesta taxa que o famoso CDI se espelha.
 
 Em resumo: o Copom mira na Meta, mas é a Over que reflete a prática do mercado.

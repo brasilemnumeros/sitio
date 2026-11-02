@@ -55,7 +55,7 @@ describe('presetDosIds', () => {
 
   it('conjunto diferente, vazio ou com id a mais → null', () => {
     expect(presetDosIds([])).toBeNull();
-    expect(presetDosIds(['selic-meta-acum-12m'])).toBeNull();
+    expect(presetDosIds(['selic-meta'])).toBeNull();
     expect(presetDosIds([...PRESETS[0].indicadores, 'ipca-acum-12m'])).toBeNull();
   });
 });

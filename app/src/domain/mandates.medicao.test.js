@@ -23,7 +23,7 @@ const GRANULARIDADE = {
   'pib-real-anual': 'anual',
   'populacao-total-anual': 'anual',
   'populacao-variacao-anual': 'anual',
-  'selic-meta-acum-12m': 'mensal',
+  'selic-meta': 'mensal',
   'selic-over-acum-12m': 'mensal',
 };
 
@@ -71,8 +71,8 @@ const mandato = (rotulo) => MANDATOS.find((m) => m.rotulo === rotulo);
  *   duas de "sem cobertura" e as transforma em ponto único);
  *   `populacao` passa a começar em 2000 (FHC II: total 4 → 3, variação 4 → 2) e vai até 2026
  *   (Lula III 2 → 4, nas duas);
- *   `selic-meta` passa a começar em 2000-03, quando a janela de 12 meses fecha pela primeira vez
- *   (FHC II 46 → 34) e vai até 2026-10 (Lula III 34 → 46); `selic-over` ganha o mesmo fim.
+ *   `selic-meta` (que publicava um acumulado construído e voltou a ser nível, começando em
+ *   1999-03) vai até 2026-10 (Lula III 34 → 46); `selic-over` ganha o mesmo fim.
  *   Com isso o resumo da §7.3 vai a 4 → 2 células sem cobertura, 1 → 2 pontos únicos e
  *   18 → 20 células abaixo do esperado (as duas séries de população no FHC II, que agora
  *   começam em 2000/2001).
@@ -89,7 +89,7 @@ const ESPERADO = {
   'pib-real-anual': [4, 4, 4, 4, 2, 2, 4, 3],
   'populacao-total-anual': [3, 4, 4, 4, 2, 2, 4, 4],
   'populacao-variacao-anual': [2, 4, 4, 4, 2, 2, 4, 4],
-  'selic-meta-acum-12m': [34, 48, 48, 48, 17, 31, 48, 46],
+  'selic-meta': [46, 48, 48, 48, 17, 31, 48, 46],
   'selic-over-acum-12m': [48, 48, 48, 48, 17, 31, 48, 46],
 };
 
@@ -129,7 +129,7 @@ describe('medição da §7.3 sobre os dados reais', () => {
     expect(abaixo).toHaveLength(20);
     expect(abaixo.filter((c) => c.endsWith('|Temer'))).toHaveLength(13);
     expect(abaixo).toContain('mvgr-nominal|Lula I');
-    expect(abaixo).toContain('selic-meta-acum-12m|FHC II');
+    expect(abaixo).toContain('selic-meta|FHC II');
   });
 
   it('MVG-R no Lula I: o período real usado é 03/2004–12/2006', () => {

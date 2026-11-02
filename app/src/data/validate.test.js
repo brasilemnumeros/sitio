@@ -4,10 +4,10 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SchemaError, validateSeries, validateUnit } from './validate.js';
 
-// Pontos reais medidos (dados/indicadores/selic/selic-meta-acum-12m.json, 2026-10-14).
+// Pontos reais medidos (dados/indicadores/selic/selic-meta.json, 2026-10-14).
 const serieValida = {
   versao: 1,
-  id: 'selic-meta-acum-12m',
+  id: 'selic-meta',
   unidade: { tipo: 'percentual', simbolo: '%', casas: 2 },
   eixo: 'percentual',
   medida: 'acumulado-12m',
@@ -21,8 +21,8 @@ const serieValida = {
 
 describe('validateSeries', () => {
   it('aceita uma série canônica e normaliza os pontos', () => {
-    const s = validateSeries(serieValida, { expectedId: 'selic-meta-acum-12m' });
-    expect(s.id).toBe('selic-meta-acum-12m');
+    const s = validateSeries(serieValida, { expectedId: 'selic-meta' });
+    expect(s.id).toBe('selic-meta');
     expect(s.dados).toEqual([
       { data: '1999-03-01', valor: 44.22222222222222 },
       { data: '1999-04-01', valor: 36.85 },
@@ -59,12 +59,12 @@ describe('validateSeries', () => {
     expect(() => validateSeries({ ...serieValida, granularidade: 'semanal' })).toThrow(/C6/);
   });
 
-  it('recusa "rate": o ponto tem exatamente data e valor (C8.1)', () => {
-    const comRate = {
+  it('recusa campo extra no ponto: ele tem exatamente data e valor (C8.1)', () => {
+    const comExtra = {
       ...serieValida,
-      dados: [{ data: '1999-03-01', rate: 44.22, valor: 44.22 }],
+      dados: [{ data: '1999-03-01', valor: 44.22, unidade: 'x' }],
     };
-    expect(() => validateSeries(comRate)).toThrow(/C8\.1/);
+    expect(() => validateSeries(comExtra)).toThrow(/C8\.1/);
   });
 
   it('recusa período repetido (C11) e ordem não ascendente (C12)', () => {

@@ -44,7 +44,7 @@ de um projeto independente, não uma obrigação contratual.
 | Data | Indicador | Período | O que estava errado | Correção |
 |---|---|---|---|---|
 | 2026-11-01 | `igpm-acum-12m` | toda a série | O acumulado em 12 meses era a **soma** das taxas mensais, que subestima o resultado | Passa a **compor** as taxas da própria fonte; 331 dos 349 valores mudaram (dez/2002: 22,92% → 25,31%) |
-| 2026-11-01 | `selic-meta-acum-12m` | toda a série | Publicava a **média da meta no mês** (o nível), não o acumulado em 12 meses | Passa a acumular; out/2025: 15,00% → 13,82%; a série começa em mar/2000 |
+| 2026-11-01 | `selic-meta` (era `selic-meta-acum-12m`) | toda a série | Publicava a média da meta no mês sob o nome "acumulado em 12 meses"; a meta é anualizada, e acumulá-la é um construto | Volta a publicar o **nível** (out/2025 = 15,00% ao ano), com `id` novo; a URL antiga `?series=selic-meta-acum-12m` deixa de funcionar |
 | 2026-11-01 | `selic-over-acum-12m` | out/2025 | O último ponto incluía um mês ainda em aberto | 12,77% → 13,71% |
 | 2026-11-01 | `mvgr-real` | out/2005 em diante | A variação do IPCA era aplicada **duas vezes** em out/2005 e out/2015 | Até +4,8% no fim da série; base (mar/2004) passou a constar no nome |
 | 2026-11-01 | `mvgr-nominal` | 2005-2025 | Série nunca regerada após as revisões do SCR | 125 dos 257 valores corrigidos (até 3,17%) |

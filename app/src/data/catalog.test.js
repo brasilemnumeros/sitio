@@ -8,10 +8,10 @@ const catalogoMinimo = {
   grupos: { monetario: { nome: '🏦 Política Monetária' } },
   indicadores: [
     {
-      id: 'selic-meta-acum-12m',
+      id: 'selic-meta',
       nome: 'Taxa Selic Meta (%)',
       grupo: 'monetario',
-      arquivo: 'selic/selic-meta-acum-12m.json',
+      arquivo: 'selic/selic-meta.json',
       escala: 'percentual',
       descricao: 'Taxa básica de juros',
     },
@@ -22,13 +22,13 @@ describe('validateCatalog', () => {
   it('aceita um catálogo bem-formado e resolve o arquivo contra a base de dados', () => {
     const c = validateCatalog(catalogoMinimo, { base: 'https://exemplo/dados' });
     expect(c.indicadores[0]).toEqual({
-      id: 'selic-meta-acum-12m',
+      id: 'selic-meta',
       nome: 'Taxa Selic Meta (%)',
       grupo: 'monetario',
-      arquivo: 'selic/selic-meta-acum-12m.json',
+      arquivo: 'selic/selic-meta.json',
       escala: 'percentual',
       descricao: 'Taxa básica de juros',
-      datafile: 'https://exemplo/dados/selic/selic-meta-acum-12m.json',
+      datafile: 'https://exemplo/dados/selic/selic-meta.json',
     });
   });
 

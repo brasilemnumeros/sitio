@@ -9,9 +9,17 @@ export const CHAVE_TOUR = 'tour-visto';
 /**
  * O tour aparece uma vez por navegador, no desktop, e nunca quando a URL trouxe séries: quem
  * abriu um link compartilhado veio ver um gráfico, não fazer tour.
+ *
+ * `consentimentoPendente` (2026-11-01): com a faixa de consentimento na tela o tour NÃO abre.
+ * O overlay do driver.js é `z-index: 10000` e a faixa é `z-50`, então o tour cobria a faixa e
+ * "Aprovar"/"Recusar" ficavam inalcançáveis — medido em 2026-11-01 (`elementFromPoint` no botão
+ * devolvia o `path` do overlay; com o tour fechado devolvia o próprio botão). A ordem é
+ * consentimento primeiro, onboarding depois: ao aprovar, a página recarrega, a faixa sai e o
+ * tour entra. O botão "Ver o tour" do trilho continua funcionando a qualquer momento.
  */
-export function deveMostrarTour({ largura, urlTemSeries, jaVisto }) {
+export function deveMostrarTour({ largura, urlTemSeries, jaVisto, consentimentoPendente = false }) {
   if (jaVisto) return false;
+  if (consentimentoPendente) return false;
   if (largura < LARGURA_MINIMA) return false;
   if (urlTemSeries) return false;
   return true;

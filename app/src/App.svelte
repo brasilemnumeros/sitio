@@ -107,6 +107,12 @@
         largura: window.innerWidth,
         urlTemSeries: entrouComSeries,
         jaVisto,
+        // A faixa de consentimento é do SITE (`CookieConsent.astro`); o app só a reconhece por
+        // este id. No dev do app (Vite puro) ela não existe — lá o tour segue sem obstáculo.
+        consentimentoPendente: (() => {
+          const faixa = document.getElementById('cookie-notice');
+          return !!faixa && faixa.getBoundingClientRect().height > 0;
+        })(),
       });
       if (!deve) return;
 
@@ -134,7 +140,7 @@
 
   // §9.1 — o atalho de primeiro uso. Os IDs vivem no `indicadores.json`; o par "Selic × IPCA" é
   // RESOLVIDO no catálogo carregado NA HORA DE ADICIONAR — nada de hardcodar nome nem URL aqui.
-  const EXEMPLO_IDS = ['selic-meta-acum-12m', 'ipca-acum-12m'];
+  const EXEMPLO_IDS = ['selic-meta', 'ipca-acum-12m'];
 
   function pedirExemplo() {
     const { indicadores } = $catalogStore;

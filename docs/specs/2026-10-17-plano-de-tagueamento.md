@@ -1,7 +1,11 @@
 # Plano de tagueamento — GA4
 
 - **Data:** 2026-10-17
-- **Status:** proposta — **não implementado** (decisão de escopo do usuário: só o plano)
+- **Status:** **superado em 2026-11-01** por `2026-11-01-analytics-eventos-design.md`. Este
+  documento decidiu os nomes em português (venceu o `AGENTS.md`, que manda inglês), mandava enviar
+  `search_term` (o `AGENTS.md` proíbe texto digitado) e propõe `share` (nome reservado do GA4). O
+  que continua valendo: a conversão é o compartilhamento, os pontos de chamada ficam nas stores,
+  e o `theme_changed` tem valor quase nulo.
 - **Ferramenta:** GA4 `G-N4CFQ7CL1S` via `gtag` (sem GTM)
 - **Público primário:** jornalista / criador de conteúdo (ver `docs/produto/contexto-de-produto.md`)
 - **Contexto no repo:** o app novo é o `/` desde a virada (10/T3–T4, 2026-10-17)

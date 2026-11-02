@@ -34,7 +34,13 @@ if (!description) throw new Error(`${Astro.url.pathname}: página sem 'descripti
 // `/index.html` na raiz — mas o site publica a raiz como `/`.
 const caminho = Astro.url.pathname.replace(/\/index\.html$/, '/');
 const canonicalFinal = new URL(caminho, Astro.site).href;
-//
+
+// Gates SEPARADOS (2026-11-01): produção injeta o `gtag`; a faixa de consentimento aparece
+// também em dev com `ANALYTICS_LOCAL=1 npm run dev`, para ver e testar o fluxo sem carregar
+// nada do Google localmente. A mesma separação vive no `Base.astro`.
+const analyticsAtivo = import.meta.env.PROD && Boolean(GA4_ID);
+const consentimentoVisivel = analyticsAtivo || process.env.ANALYTICS_LOCAL === '1';
+
 // O CORPO é o terminal inteiro, sem rolagem da página: o slot carrega a div do app
 // (e é o app quem controla o layout da tela). O `h-dvh` trava o corpo na altura da
 // viewport e o `overflow-hidden` mata a rolagem do documento — a única rolagem é a
@@ -157,15 +163,13 @@ const canonicalFinal = new URL(caminho, Astro.site).href;
     </script>
 
     <!-- Analytics -->
-    {/* Gate de produção, IDÊNTICO ao do `Base.astro` (LGPD; AGENTS.md). Em
-        `astro dev` (`import.meta.env.PROD === false`) nem o banner de
-        consentimento nem o script do Google aparecem — a falha seria silenciosa
-        e de privacidade. Qualquer mudança aqui tem de ser espelhada no gate de lá. */}
-    {import.meta.env.PROD && GA4_ID && (
-      <>
-        <CookieConsent />
-        <Analytics />
-      </>
-    )}
+    {/* DOIS gates, de propósito. `analyticsAtivo` (produção) injeta o `gtag`; a faixa de
+        consentimento aparece também em dev com `ANALYTICS_LOCAL=1`, para dar para VER e
+        testar o fluxo (aprovar → cookie → recarregar) sem carregar nada do Google na
+        máquina de quem desenvolve. Em dev sem o flag, nenhum dos dois sai — e a falha é
+        silenciosa de propósito: um banner sem script mentiria sobre o que está medido.
+        Qualquer mudança aqui tem de ser espelhada no gate do `Base.astro`. */}
+    {consentimentoVisivel && <CookieConsent />}
+    {analyticsAtivo && <Analytics />}
   </body>
 </html>

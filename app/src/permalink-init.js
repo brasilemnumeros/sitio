@@ -15,6 +15,21 @@ import { presetDoDia, dataEmSaoPaulo } from './data/presets.js';
 /** Ids do preset do dia. Relógio injetável (`agora`) e dia de São Paulo, nunca o do navegador. */
 const presetIds = (agora) => presetDoDia(dataEmSaoPaulo(agora))?.indicadores ?? [];
 
+/**
+ * Marcador (sessionStorage) de que o `?series=` da URL foi escrito pelo próprio app — o preset
+ * do dia — e não veio de um link compartilhado. `main.js` o consulta para decidir o tour.
+ */
+export const CHAVE_SERIES_DO_APP = 'series-do-app';
+
+/** Lê o marcador com `storage` injetável (testável sem navegador). */
+export function seriesForamEscritasPeloApp(storage = globalThis.sessionStorage) {
+  try {
+    return storage?.getItem(CHAVE_SERIES_DO_APP) === '1';
+  } catch {
+    return false; // modo privado: sem marcador, vale o comportamento conservador (sem tour)
+  }
+}
+
 /** Espera o catálogo sair de `loading`/`idle` (aqui ele está sendo carregado pelo próprio init
  *  ou já foi disparado pelo `onMount` da `App`; os dois caminhos terminam em `ready`/`error`). */
 function esperarCatalogo() {
@@ -43,8 +58,7 @@ function esperarCatalogo() {
  * @param {{window?: Window, fetchImpl?: typeof fetch, agora?: Date}} [opcoes]
  * @returns {Promise<() => void>} o cancelamento da assinatura (útil para testes)
  */
-export async function iniciarPermalink({ window: win = window, fetchImpl, agora = new Date() } = {}) {
-  const searchAtual = () => (win.location.search || '').replace(/^\?/, '');
+export async function iniciarPermalink({ window: win = window, fetchImpl, agora = new Date() } = {}) {  const searchAtual = () => (win.location.search || '').replace(/^\?/, '');
   // A decisão "preset ou query" é tomada UMA vez, com os params já montados: o preset é
   // aplicado pelo laço abaixo (uma adicionarSerie por id), sem as emissões escreverem a URL.
   const params = new URLSearchParams(searchAtual());
@@ -77,6 +91,20 @@ export async function iniciarPermalink({ window: win = window, fetchImpl, agora 
   //
   // O preset entra na URL com UMA escrita explícita, aqui, e só depois a assinatura é
   // registrada — sem isto o laço de `adicionarSerie` faria uma escrita por série.
-  if (!params.has('series')) escreverUrl(get(seriesStore).itens);
+  /**
+   * Marcador de que o `?series=` desta URL foi escrito AQUI (preset do dia), não veio de link
+   * compartilhado. Sem ele, o `location.reload()` do consentimento transforma o preset em
+   * "entrou com link" e o tour nunca abre para quem acabou de aceitar (medido em 2026-11-01).
+   * `sessionStorage` porque a resposta vale para ESTA aba: um link compartilhado aberto em aba
+   * nova não herda o marcador e continua não recebendo tour.
+   */
+  if (!params.has('series')) {
+    escreverUrl(get(seriesStore).itens);
+    try {
+      win.sessionStorage.setItem(CHAVE_SERIES_DO_APP, '1');
+    } catch {
+      /* modo privado: sem marcador, o pior caso é o de antes (sem tour após o consentimento) */
+    }
+  }
   return seriesStore.subscribe((s) => escreverUrl(s.itens));
 }

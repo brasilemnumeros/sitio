@@ -58,7 +58,15 @@ if (!description) throw new Error(`${Astro.url.pathname}: página sem 'descripti
 // `/index.html` na raiz e `/blog.html` nas demais — mas o site publica a raiz
 // como `/` (semântica de `page.url` do site antigo) e as demais com `.html`.
 // Medido ao vivo: `/` → `…/`, `/blog` → `…/blog.html`.
+// Canonical calculado.
 const caminho = Astro.url.pathname.replace(/\/index\.html$/, '/');
+
+// Gates SEPARADOS (2026-11-01): produção injeta o `gtag`; a faixa de consentimento aparece
+// também em dev com `ANALYTICS_LOCAL=1 npm run dev`, para ver e testar o fluxo sem carregar
+// nada do Google localmente. A mesma separação vive no `Home.astro`.
+const analyticsAtivo = import.meta.env.PROD && Boolean(GA4_ID);
+const consentimentoVisivel = analyticsAtivo || process.env.ANALYTICS_LOCAL === '1';
+
 const canonicalFinal = canonical ?? new URL(caminho, Astro.site).href;
 
 const classesMain =
@@ -104,16 +112,10 @@ const classesMain =
     </a>
 
     <!-- Analytics -->
-    {/* Gate de produção (equivalente ao do site antigo). Em `astro dev`
-        (`import.meta.env.PROD === false`) nem o banner de
-        consentimento nem o script do Google aparecem — a falha seria silenciosa e de
-        privacidade (LGPD). Consentimento e analytics vêm juntos, como no
-        `default.html`. */}
-    {import.meta.env.PROD && GA4_ID && (
-      <>
-        <CookieConsent />
-        <Analytics />
-      </>
-    )}
+    {/* Os dois gates estão no topo do arquivo (`analyticsAtivo` / `consentimentoVisivel`),
+        porque são decisão de build, não de markup. Em produção saem os dois; em dev, só a
+        faixa, e só com `ANALYTICS_LOCAL=1`. Espelhado no `Home.astro`. */}
+    {consentimentoVisivel && <CookieConsent />}
+    {analyticsAtivo && <Analytics />}
   </body>
 </html>

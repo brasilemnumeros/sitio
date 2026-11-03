@@ -22,7 +22,9 @@ export const PRESETS = Object.freeze([
   preset('inflacao', 'Inflação', ['ipca-acum-12m', 'igpm-acum-12m']),
   preset('habitacao', 'Habitação', ['mvgr-nominal', 'mvgr-real']),
   preset('violencia', 'Violência', ['homicidios-anual', 'homicidios-armas-fogo-anual']),
-  preset('atividade', 'Atividade', ['pib-real-anual', 'populacao-variacao-anual']),
+  // O rótulo diz o que o gráfico desenha (PIB real × população). O id segue `atividade`:
+  // é ele que a rotação do dia e o permalink carregam, e renomeá-lo quebraria links salvos.
+  preset('atividade', 'PIB e população', ['pib-real-anual', 'populacao-variacao-anual']),
   preset('trabalho', 'Trabalho', ['caged-total-mensal']),
 ]);
 

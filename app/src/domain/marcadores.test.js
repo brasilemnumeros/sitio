@@ -21,7 +21,7 @@ describe('contarNoIntervalo', () => {
 });
 
 describe('deveMostrarMarcadores', () => {
-  /** Série anual de 1995 a 2025 — o caso "Atividade". */
+  /** Série anual de 1995 a 2025 — o caso do preset "PIB e população". */
   const anuais = Array.from({ length: 31 }, (_, i) => emSegundos(1995 + i));
   /** Série mensal de 1995 a 2025 — o caso "Selic" no horizonte inteiro. */
   const mensais = [];

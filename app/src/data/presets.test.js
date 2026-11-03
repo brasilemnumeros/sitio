@@ -30,6 +30,12 @@ describe('presetDoDia', () => {
     ]);
   });
 
+  it('o preset de PIB nomeia as duas séries que desenha', () => {
+    // "Atividade" não dizia o que o gráfico mostrava (PIB real × população). O id
+    // continua `atividade` — é ele que a rotação e o permalink usam —, só o rótulo mudou.
+    expect(PRESETS.find((p) => p.id === 'atividade').nome).toBe('PIB e população');
+  });
+
   it('é determinístico: a mesma data devolve o mesmo preset', () => {
     expect(presetDoDia('2026-10-27')).toBe(presetDoDia('2026-10-27'));
   });

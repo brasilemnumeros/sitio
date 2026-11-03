@@ -9,7 +9,7 @@ const JSON_VALIDO = {
   medida: 'acumulado-12m',
   granularidade: 'mensal',
   fonte: 'Banco Central do Brasil',
-  dados: [{ data: '1995-12-31', valor: 1.64 }],
+  dados: [{ data: '1995-12-01', valor: 1.64 }],
 };
 
 function respostaOk(body) {

@@ -157,10 +157,11 @@
   //    do seu tamanho de conteúdo, e no celular a linha empurrava o "i" para fora da caixa
   //    (medido em 2026-10-19: `scrollW 417` num `clientW 372` — a lista rolava na horizontal e
   //    o botão ficava fora do alcance). O `truncate` do nome, sozinho, não resolvia: quem
-  //    precisava poder encolher era o botão, não o texto dentro dele.
+  //    precisava poder encolher era o botão, não o texto dentro dele. O `truncate` do nome saiu
+  //    em 2026-11-03 (virou `line-clamp-2`, ver `linhaItem`); o `min-w-0` continua obrigatório.
   const classeLinha = (ativo) =>
     [
-      'flex w-full min-w-0 items-center gap-2 rounded px-3 py-2 text-left text-sm',
+      'flex w-full min-w-0 flex-wrap items-center gap-x-2 gap-y-1 rounded px-3 py-2 text-left text-sm',
       ativo
         ? 'bg-slate-100 text-slate-900 dark:bg-slate-700 dark:text-white'
         : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800',
@@ -400,7 +401,15 @@
       onkeydown={aoTeclado}
       class={classeLinha(ativo)}
     >
-      <span class="min-w-0 flex-1 truncate">{ind.nome}</span>
+      <!-- O nome NÃO é mais truncado (2026-11-03). A coluna muda de largura com a janela, e as
+           reticências cortavam justamente os nomes que mais precisam ser lidos ("Proporção de
+           Homicídios por Armas de Fogo (%)"). Duas linhas cobrem o maior nome do catálogo (48
+           caracteres) em qualquer largura; só um nome muito maior que isso perde o fim.
+           `min-w-48` é o gatilho do `flex-wrap` da linha: com o selo ao lado, um nome longo
+           precisaria de 3 linhas numa coluna estreita (a 768 de janela sobram 112px para o
+           texto). Abaixo de 48+selo a linha quebra — o selo desce para a própria linha e o
+           nome fica com a largura inteira. -->
+      <span class="min-w-48 flex-1 line-clamp-2">{ind.nome}</span>
       {#if jaNoGrafico(ind.id)}
         <!-- Só INFORMAÇÃO, sem cara de controle (2026-11-01): devolve o sinal que o checkbox
              dava, sem o checkbox. O estado acionável vive no botão da ficha. -->
@@ -443,7 +452,7 @@
     role="dialog"
     aria-modal="true"
     aria-label="Buscar indicadores"
-    class="absolute inset-x-0 top-16 mx-auto flex max-h-[85vh] w-[calc(100%-1rem)] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl md:w-[min(1000px,92vw)] dark:border-slate-700 dark:bg-slate-900"
+    class="absolute inset-x-0 top-16 mx-auto flex max-h-[85vh] w-[calc(100%-1rem)] flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-2xl md:w-[min(1000px,calc(100vw-1rem))] dark:border-slate-700 dark:bg-slate-900"
   >
     <!-- busca — fixa no topo das duas formas: no celular ela não rola junto com a lista (§12.1);
          no desktop, disponível sobre as três colunas (§1.1) -->
@@ -540,11 +549,18 @@
           {/each}
         </ul>
 
-        <!-- coluna 2 · indicadores do grupo, com caixa de seleção (§1.1); só no desktop -->
+        <!-- coluna 2 · indicadores do grupo (§1.1); só no desktop.
+             Ela é a coluna que ABSORVE a sobra da modal (2026-11-03): é a de conteúdo de largura
+             variável (nomes de até 48 caracteres), enquanto a ficha tem medida fixa de texto. Com
+             as três colunas fixas (224 + 288 + 288) numa modal de 1000 sobravam 199px mortos à
+             direita, e o nome mais longo ainda truncava em 247px.
+             Por isso ela também é a que CEDE primeiro quando a janela encolhe: o nome quebra em
+             duas linhas, a ficha cortada não tem conserto. Piso de 200px (a 768 de janela ela fica
+             com 238) — o piso antigo de 288 estourava a modal em 94px nessa largura. -->
         <ul
           data-coluna="2"
           aria-label="Indicadores do grupo"
-          class="hidden min-h-0 w-72 shrink-0 overflow-y-auto border-r border-slate-200 p-2 md:block dark:border-slate-700"
+          class="hidden min-h-0 overflow-y-auto border-r border-slate-200 p-2 md:block md:min-w-[12.5rem] md:flex-1 dark:border-slate-700"
         >
           {#if lista.length === 0}
             <li class="px-3 py-6 text-sm text-slate-500 dark:text-slate-400">

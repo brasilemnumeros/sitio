@@ -229,3 +229,46 @@ test('as setas andam nas categorias, → entra nos itens e a ficha acompanha', a
   await campo.press('ArrowLeft');
   await expect(botao(/📈 Inflação/)).toHaveClass(ACESO);
 });
+
+/**
+ * GEOMETRIA EM 768 (2026-11-03) — a cascata tem três colunas com piso e a modal mede `100vw - 1rem`.
+ *
+ * 🔴 A regressão que este teste existe para pegar: as colunas eram FIXAS em 224 + 288 + 288 = 800,
+ * e numa janela de 768px a modal mede 707 — a ficha era cortada em 94px pelo `overflow-hidden`
+ * (o botão "Adicionar ao gráfico" e a fonte apareciam pela metade). É a mesma classe de defeito da
+ * §12.1.1: invisível para os testes de comportamento, visível na LARGURA da tela.
+ */
+test('em 768 a ficha cabe inteira e a cascata não estoura a modal', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'a cascata de 3 colunas é do desktop');
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await abrirVazio(page);
+  await abrirBusca(page);
+
+  // abre a ficha pela linha — o nome longo é o que mais aperta a coluna do meio
+  await page.getByRole('button', { name: /Segurança Pública/ }).click();
+  await page
+    .getByRole('list', { name: 'Indicadores do grupo' })
+    .getByRole('button', { name: /Proporção de Homicídios/ })
+    .click();
+  await expect(page.locator('[data-bloco="ficha"]')).toContainText('Proporção de Homicídios');
+
+  const medida = await page.evaluate(() => {
+    const modal = document.querySelector('[role="dialog"]');
+    const ficha = document.querySelector('[data-bloco="ficha-folha"]');
+    const lista = document.querySelector('[data-coluna="2"]');
+    return {
+      // > 0 = a ficha passa da borda da modal; a borda de 1px da modal é a folga legítima
+      sobraDireita: Math.round(
+        modal.getBoundingClientRect().right - ficha.getBoundingClientRect().right,
+      ),
+      estouro: modal.scrollWidth - modal.clientWidth,
+      larguraLista: Math.round(lista.getBoundingClientRect().width),
+    };
+  });
+
+  expect(medida.sobraDireita, 'a ficha passa da borda da modal e é cortada').toBeGreaterThanOrEqual(
+    -1,
+  );
+  expect(medida.estouro, 'a cascata rola na horizontal dentro da modal').toBeLessThanOrEqual(1);
+  expect(medida.larguraLista, 'a coluna do meio não cabe mais').toBeGreaterThanOrEqual(200);
+});

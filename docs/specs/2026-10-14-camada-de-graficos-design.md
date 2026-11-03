@@ -895,6 +895,26 @@ Ordem sugerida de ataque:
    sobreviveu é este texto; as três posturas estão descritas na tabela acima com o motivo da
    rejeição de duas delas.
 
+   ### §1.1.1 — Medição de 2026-11-03: a largura morta da cascata e o nome cortado
+
+   Medido no app real, com a modal aberta. A cascata do desktop tinha as três colunas **fixas**
+   (224 + 288 + 288 = 800) dentro de uma modal que para em 1000px:
+
+   | defeito | medido | causa | correção |
+   |---|---|---|---|
+   | 199px mortos à direita da ficha | 800 de conteúdo em 1000 de modal | colunas fixas sem coluna elástica | a coluna 2 vira `flex-1` (piso 200px) e absorve a sobra |
+   | nome longo cortado | 247px para nomes de até 48 caracteres (360px com o selo "no gráfico") | `truncate` numa coluna de largura fixa | `line-clamp-2`: o nome quebra em duas linhas em vez de sumir |
+   | a 768 de janela a ficha era **cortada** em 94px | modal 707 contra 800 de colunas | mesmo motivo, na largura em que o `md` (768) entra | modal em `100vw - 1rem` (752) + coluna 2 elástica com piso 200 → cabem 224 + 238 + 288 |
+
+   **Quem cede é a coluna 2, não a ficha.** O conteúdo dela é o de largura variável (o nome), e
+   nome que quebra linha continua legível; ficha cortada, não. Consequência assumida: a 768, uma
+   linha com nome longo **e** o selo "no gráfico" precisa de 3 linhas para o texto — então a
+   linha quebra (`flex-wrap`) e o selo desce, em vez de espremer o nome em 112px.
+
+   A medida é guardada por `app/e2e/busca.spec.js` ("em 768 a ficha cabe inteira…"), que reprova
+   se a ficha voltar a passar da borda da modal. A saída do selo para a linha de baixo é visual,
+   sem guarda: quem a garante é o `flex-wrap`, e o número de linhas do nome não é asserção.
+
 2. ~~**Sobreposição dos rótulos na ponta das linhas**~~ — **FECHADO por medição em 2026-10-14.**
    ↳ A **reabertura de 2026-10-15** (os rótulos de último valor no **eixo**) foi **MEDIDA e
    FECHADA em 2026-10-19** — decisão no fim deste item: **opção 3, manter e conviver**.

@@ -19,6 +19,25 @@ async function janela(page) {
 
 const duracaoAnos = (j) => (Date.parse(j.to) - Date.parse(j.from)) / (365.25 * 86400000);
 
+/**
+ * A janela depois que o enquadramento automático assentou.
+ *
+ * O adapter agenda o `fitContent` num `setTimeout` de 150 ms (a rajada de carga precisa
+ * terminar antes), então ler a store mal a legenda aparece pega um estado intermediário — e o
+ * arrasto do teste vira a "prova" de uma mudança que era o fit chegando. Duas leituras iguais
+ * seguidas é o sinal de que parou.
+ */
+async function janelaEstavel(page) {
+  let anterior = null;
+  for (let i = 0; i < 40; i++) {
+    const atual = await janela(page);
+    if (anterior && atual && anterior.from === atual.from && anterior.to === atual.to) return atual;
+    anterior = atual;
+    await page.waitForTimeout(50);
+  }
+  throw new Error('a janela não estabilizou em 2 s');
+}
+
 async function arrastar(page, box, dx) {
   const cx = box.x + box.width * 0.5;
   const cy = box.y + box.height * 0.5;
@@ -40,7 +59,7 @@ test.describe('gestos do gráfico', () => {
     // A janela automática é o horizonte inteiro: é daqui que o arrasto tentava sair.
     await expect.poll(async () => (await janela(page)).from).toBe('1995-01-01');
 
-    const antes = await janela(page);
+    const antes = await janelaEstavel(page);
     const box = await page.getByTestId('grafico').boundingBox();
     await arrastar(page, box, 300);
 
@@ -56,7 +75,7 @@ test.describe('gestos do gráfico', () => {
     await page.getByRole('button', { name: 'Janela de 10 anos' }).click();
     await expect.poll(async () => duracaoAnos(await janela(page))).toBeCloseTo(10, 0);
 
-    const j0 = await janela(page);
+    const j0 = await janelaEstavel(page);
     const box = await page.getByTestId('grafico').boundingBox();
     await arrastar(page, box, 200);
     await expect.poll(async () => (await janela(page)).from).not.toBe(j0.from);

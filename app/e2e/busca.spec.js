@@ -69,6 +69,46 @@ test('abrir · filtrar · escolher · chip aparece · ESC fecha', async ({ page 
   await expect(chips.locator('li')).toHaveCount(1);
 });
 
+/**
+ * ABERTURA EM "TODOS" (2026-11-03, a pedido do usuário). Antes, a modal abria com a PRIMEIRA
+ * categoria acesa — o índice `focoGrupo` nascia em 0, então a escolha era acidente de índice — e a
+ * coluna do meio mostrava só os indicadores dela. Agora abre em "Todos", que é o que o celular já
+ * fazia (a fileira de chips), e a coluna do meio lista o catálogo inteiro.
+ */
+test('abre em "Todos", sem categoria acesa, com o catálogo inteiro na coluna do meio', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'desktop', 'a cascata de 3 colunas é do desktop');
+  await abrirVazio(page);
+  await abrirBusca(page);
+  const ACESO = /dark:bg-slate-700/;
+  const botao = (nome) => page.getByRole('button', { name: nome, exact: true });
+
+  // "Todos" é a PRIMEIRA linha da coluna 1 e é ela que está acesa
+  const grupos = page.getByRole('list', { name: 'Grupos' });
+  await expect(grupos.getByRole('listitem').first()).toContainText('Todos');
+  await expect(botao('Todos')).toHaveClass(ACESO);
+
+  // nenhuma categoria nasce acesa: a seleção é da pessoa, não do índice zero
+  const categorias = grupos.getByRole('button').filter({ hasNotText: 'Todos' });
+  const n = await categorias.count();
+  expect(n).toBe(7);
+  for (let i = 0; i < n; i++) await expect(categorias.nth(i)).not.toHaveClass(ACESO);
+
+  // a coluna do meio lista o catálogo inteiro — um indicador do primeiro grupo e um do último
+  const lista = page.locator('ul[data-coluna="2"]');
+  await expect(lista).toHaveAttribute('aria-label', 'Todos os indicadores');
+  await expect(lista).toContainText('Taxa Selic Meta (%)');
+  await expect(lista).toContainText('Proporção de Homicídios por Armas de Fogo (%)');
+  await expect(lista).not.toContainText('Escolha um grupo');
+
+  // e escolher uma categoria continua filtrando (o resto do comportamento não mudou)
+  await botao(/📈 Inflação/).click();
+  await expect(lista).toHaveAttribute('aria-label', 'Indicadores do grupo');
+  await expect(lista).not.toContainText('Taxa Selic Meta (%)');
+  await expect(lista).toContainText('IPCA (%)');
+});
+
 test('busca sem resultado diz por quê (§9 — nada vazio em silêncio)', async ({ page }) => {
   await abrirApp(page);
   await abrirBusca(page);
@@ -202,7 +242,10 @@ test('as setas andam nas categorias, → entra nos itens e a ficha acompanha', a
   const ACESO = /dark:bg-slate-700/;
   const botao = (nome) => page.getByRole('button', { name: nome, exact: true });
 
+  // a modal abre em "Todos" (2026-11-03), então a primeira categoria NÃO nasce acesa.
+  await expect(botao('Todos')).toHaveClass(ACESO);
   // ␣↓ anda nas CATEGORIAS (não entra nos itens) e a ficha continua vazia.
+  await campo.press('ArrowDown');
   await expect(botao(/🏦 Política Monetária/)).toHaveClass(ACESO);
   await campo.press('ArrowDown');
   await expect(botao(/📈 Inflação/)).toHaveClass(ACESO);

@@ -99,9 +99,16 @@ Duas obrigações de layout continuam valendo, e são o que faz 10 caber sem vir
 
 | coluna | conteúdo |
 |---|---|
-| 1 | grupos/categorias (os 7 do `indicators.json`: política monetária, inflação, crescimento, imobiliário, trabalho, demografia, segurança pública) |
-| 2 | indicadores do grupo escolhido, com caixa de seleção |
+| 1 | **"Todos"** + grupos/categorias (os 7 do catálogo: política monetária, inflação, crescimento, imobiliário, trabalho, demografia, segurança pública) |
+| 2 | indicadores do grupo escolhido — em **"Todos"**, o catálogo inteiro |
 | 3 | **ficha** do indicador: unidade, granularidade, período coberto, número de pontos, fonte, e o **aviso de compatibilidade de escala** com o que já está no gráfico |
+
+**Emenda 2026-11-03 — a modal abre em "Todos".** Antes, `focoGrupo` nascia em `0` e a primeira
+categoria vinha acesa por acidente de índice: quem abria a busca via a lista de uma categoria que
+não escolheu, e o resto do catálogo ficava escondido atrás de um clique. "Todos" é uma opção a
+mais na coluna 1 (não é grupo do catálogo), lista o catálogo inteiro na coluna 2 e alinha o
+desktop ao celular, que já abria em "Todos" pela fileira de chips. Escolher uma categoria continua
+filtrando; nada mais mudou.
 
 A **busca por digitação está disponível em todas as três** — filtra e colapsa a cascata numa lista. Isso é o que torna os três cliques do pior caso aceitáveis: a cascata é para **navegar** quem não sabe o que quer; a digitação é para **achar** quem já sabe.
 

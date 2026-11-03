@@ -130,8 +130,9 @@ test('o dado local carrega: o catálogo traz os 7 grupos', async ({ page }, test
     // chips: "Todos" + um por grupo
     await expect(page.getByRole('group', { name: 'Grupos' }).getByRole('button')).toHaveCount(8);
   } else {
+    // coluna 1: "Todos" + um por grupo (o "Todos" entrou em 2026-11-03, na abertura da modal)
     const grupos = page.getByRole('list', { name: 'Grupos' });
-    await expect(grupos.getByRole('listitem')).toHaveCount(7);
+    await expect(grupos.getByRole('listitem')).toHaveCount(8);
   }
 });
 

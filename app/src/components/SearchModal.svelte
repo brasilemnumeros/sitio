@@ -103,14 +103,27 @@
     abrirFicha(lista[focoIndicador]);
   }
   let grupos = $derived(Object.entries($catalogStore.grupos));
-  let grupoAtivo = $derived(grupos[focoGrupo]?.[0] ?? null);
+  /**
+   * "Todos" vem primeiro e ACESO na abertura (2026-11-03, a pedido do usuário). Antes, o foco
+   * nascia no índice 0 — então a modal abria com a primeira categoria escolhida por acidente de
+   * índice, e a coluna do meio escondia o resto do catálogo. O celular já abria em "Todos" (a
+   * fileira de chips); agora as duas formas começam no mesmo lugar.
+   * `id: null` é o mesmo valor que o filtro do celular usa para "Todos" — não inventamos um id.
+   */
+  let opcoesGrupo = $derived([
+    { id: null, nome: 'Todos' },
+    ...grupos.map(([id, g]) => ({ id, nome: g.nome })),
+  ]);
+  let grupoAtivo = $derived(opcoesGrupo[focoGrupo]?.id ?? null);
 
   // `$catalogStore.indicadores` é lido de propósito: registra a dependência reativa para a
   // lista se recompor quando o catálogo termina de carregar (o `buscarIndicadores` lê a
   // store por dentro, o que não basta para o rastreio de runes).
   let lista = $derived.by(() => {
     void $catalogStore.indicadores;
-    return buscando ? buscarIndicadores(termo) : indicadoresDoGrupo(grupoAtivo);
+    if (buscando) return buscarIndicadores(termo);
+    // Sem grupo (o "Todos") a lista é o catálogo inteiro, na ordem do catálogo.
+    return grupoAtivo ? indicadoresDoGrupo(grupoAtivo) : $catalogStore.indicadores;
   });
 
   // §12.1 — a contagem por grupo nos chips vem do catálogo inteiro (já carregado). Decidido
@@ -315,12 +328,13 @@
           focoColuna = 2;
           moverIndicador(dir);
         } else {
-          focoGrupo = prender(focoGrupo + dir, grupos.length);
+          // `opcoesGrupo`, não `grupos`: o "Todos" ocupa o índice 0 da coluna 1.
+          focoGrupo = prender(focoGrupo + dir, opcoesGrupo.length);
           focoIndicador = 0;
           indicadorAceso = false;
         }
       } else if (focoColuna === 1 && !buscando) {
-        focoGrupo = prender(focoGrupo + dir, grupos.length);
+        focoGrupo = prender(focoGrupo + dir, opcoesGrupo.length);
         focoIndicador = 0;
         indicadorAceso = false;
       } else {
@@ -527,13 +541,14 @@
           {/each}
         </ul>
       {:else}
-        <!-- coluna 1 · grupos — os 7 do catálogo (§1.1); só no desktop -->
+        <!-- coluna 1 · grupos — "Todos" + os 7 do catálogo (§1.1); só no desktop. A abertura é em
+             "Todos" (2026-11-03), então nenhuma categoria nasce escolhida sem a pessoa pedir. -->
         <ul
           data-coluna="1"
           aria-label="Grupos"
           class="hidden min-h-0 w-56 shrink-0 overflow-y-auto border-r border-slate-200 p-2 md:block dark:border-slate-700"
         >
-          {#each grupos as [id, g], i (id)}
+          {#each opcoesGrupo as g, i (g.id ?? 'todos')}
             <li>
               <button
                 type="button"
@@ -559,12 +574,14 @@
              com 238) — o piso antigo de 288 estourava a modal em 94px nessa largura. -->
         <ul
           data-coluna="2"
-          aria-label="Indicadores do grupo"
+          aria-label={grupoAtivo ? 'Indicadores do grupo' : 'Todos os indicadores'}
           class="hidden min-h-0 overflow-y-auto border-r border-slate-200 p-2 md:block md:min-w-[12.5rem] md:flex-1 dark:border-slate-700"
         >
           {#if lista.length === 0}
+            <!-- Com "Todos" a lista só fica vazia se o catálogo estiver vazio: o vazio diz qual
+                 dos dois casos é (§9). -->
             <li class="px-3 py-6 text-sm text-slate-500 dark:text-slate-400">
-              Escolha um grupo.
+              {grupoAtivo ? 'Nenhum indicador neste grupo.' : 'Nenhum indicador no catálogo.'}
             </li>
           {/if}
           {#each lista as ind, i (ind.id)}

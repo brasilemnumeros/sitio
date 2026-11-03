@@ -80,12 +80,18 @@ const mandato = (rotulo) => MANDATOS.find((m) => m.rotulo === rotulo);
  *   Com isso o resumo da §7.3 vai a 4 → 2 células sem cobertura, 1 → 2 pontos únicos e
  *   18 → 20 células abaixo do esperado (as duas séries de população no FHC II, que agora
  *   começam em 2000/2001).
+ *
+ * - **Armas de fogo com o bloco 2014–2024 (2026-11-03):** a série 31 do Ipea parava em 2013 e
+ *   o complemento do Atlas 2026 trouxe 2014–2024. Armas e proporção passam a cobrir 2024, então
+ *   a última coluna (Lula III) vai de 1 para 2 pontos e as duas séries deixam de ser "ponto
+ *   único": o resumo vai de 2 para **0** pontos únicos e de 100 para 102 células com cobertura
+ *   suficiente. As 2 sem cobertura (MVG-R nominal e real no FHC I) não mudam.
  */
 const ESPERADO = {
   'caged-total-mensal': [48, 48, 48, 48, 17, 31, 48, 44],
   'homicidios-anual': [4, 4, 4, 4, 2, 2, 4, 2],
-  'homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 1],
-  'proporcao-homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 1],
+  'homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 2],
+  'proporcao-homicidios-armas-fogo-anual': [4, 4, 4, 4, 2, 2, 4, 2],
   'igpm-acum-12m': [48, 48, 48, 48, 17, 31, 48, 46],
   'ipca-acum-12m': [48, 48, 48, 48, 17, 31, 48, 45],
   'mvgr-nominal': [0, 34, 48, 48, 17, 31, 48, 44],
@@ -107,7 +113,7 @@ describe('medição da §7.3 sobre os dados reais', () => {
     expect(obtido).toEqual(ESPERADO);
   });
 
-  it('resume a medição: 104 células, 2 sem cobertura, 2 pontos únicos', () => {
+  it('resume a medição: 104 células, 2 sem cobertura, nenhum ponto único', () => {
     const estados = [];
     for (const id of Object.keys(ESPERADO)) {
       const s = serieReal(id);
@@ -115,8 +121,8 @@ describe('medição da §7.3 sobre os dados reais', () => {
     }
     expect(estados).toHaveLength(104);
     expect(estados.filter((e) => e === COBERTURA.SEM)).toHaveLength(2);
-    expect(estados.filter((e) => e === COBERTURA.PONTO_UNICO)).toHaveLength(2);
-    expect(estados.filter((e) => e !== COBERTURA.SEM && e !== COBERTURA.PONTO_UNICO)).toHaveLength(100);
+    expect(estados.filter((e) => e === COBERTURA.PONTO_UNICO)).toHaveLength(0);
+    expect(estados.filter((e) => e !== COBERTURA.SEM && e !== COBERTURA.PONTO_UNICO)).toHaveLength(102);
   });
 
   it('reproduz as 20 células "abaixo do esperado" da §7.3, com o mandato fechado', () => {

@@ -66,6 +66,7 @@ function fixture(idsDoCatalogo) {
       arquivo: `g/${id}.json`,
       datafile: `data:${id}`,
       escala: 'percentual',
+      urlNotebook: `https://github.com/brasilemnumeros/dados/blob/main/indicadores/g/${id}.ipynb`,
     })),
     error: null,
   });
@@ -282,6 +283,7 @@ describe('retomarPermalink (catálogo volta depois do erro)', () => {
       grupo: 'g',
       arquivo: `g/${id}.json`,
       escala: 'percentual',
+      urlNotebook: `https://github.com/brasilemnumeros/dados/blob/main/indicadores/g/${id}.ipynb`,
     })),
   });
 

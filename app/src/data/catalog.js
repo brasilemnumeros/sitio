@@ -14,6 +14,7 @@ const ARQUIVO = /^[a-z0-9-]+\/[a-z0-9-]+\.json$/;
  * @property {string} arquivo   caminho relativo em `dados/` (fonte)
  * @property {string} datafile  URL resolvida contra a base (é o que stores e componentes usam)
  * @property {'percentual'|'moeda'|'numero'} escala
+ * @property {string} urlNotebook  URL do notebook que gera a série (o link de auditoria da ficha)
  */
 
 /**
@@ -76,6 +77,14 @@ export function validateCatalog(raw, { base = __BASE_DADOS__ } = {}) {
     }
     if (!ESCALAS.has(ind.escala)) {
       throw new SchemaError(`${where}.escala deve ser percentual|moeda|numero, veio ${JSON.stringify(ind.escala)}`);
+    }
+    // K9 — o link de auditoria da ficha vem do catálogo, não do bundle. O porteiro do runtime
+    // confere o mínimo (https e não vazio); a URL canônica e a existência do `.ipynb` no disco
+    // são conferidas pelo `validar.py`, que tem o repo inteiro à mão.
+    if (typeof ind.urlNotebook !== 'string' || !/^https:\/\/\S+$/.test(ind.urlNotebook)) {
+      throw new SchemaError(
+        `${where} (${ind.id}): urlNotebook deve ser uma URL https, veio ${JSON.stringify(ind.urlNotebook)}`
+      );
     }
     // PRESERVA o resto do registro (R16 emendado): `descricao` e afins são curadoria de
     // APRESENTAÇÃO e pertencem ao catálogo (§6) — descartá-los em silêncio seria perda

@@ -5,7 +5,7 @@
 **Produtor:** repo `dados` — os notebooks escrevem as séries e `dados/scripts/validar.py` confere; o catálogo (`indicadores/catalogo.json`) é editado à mão, no mesmo PR
 
 Este documento é a **fonte de verdade** do formato dos arquivos de série (`C1…C15`) e do
-catálogo (`K1…K8`). Cada regra de rejeição tem um código, citado nos validadores e nos testes
+catálogo (`K1…K9`). Cada regra de rejeição tem um código, citado nos validadores e nos testes
 que a executam; as de aceitação (`C13`/`C14`) têm caso válido ou permissão explícita. Quando a
 prosa e o código divergirem, **este documento vale** — e a divergência é defeito a corrigir no
 mesmo commit, não interpretação.
@@ -14,9 +14,9 @@ mesmo commit, não interpretação.
 tradução: `unidade`, `granularidade`, `fonte`, `dados`, `data`, `valor`.
 
 Não confundir com o **catálogo** (`dados/indicadores/catalogo.json`): o catálogo é
-apresentação (`nome`, `grupo`, `descricao`, `escala`, `arquivo`), também em português, e mora
-ao lado das séries no repo `dados` — ver "Catálogo × série". O arquivo da série descreve **o
-dado**; unidade, granularidade e fonte não se repetem no catálogo.
+apresentação (`nome`, `grupo`, `descricao`, `escala`, `arquivo`, `urlNotebook`), também em
+português, e mora ao lado das séries no repo `dados` — ver "Catálogo × série". O arquivo da série
+descreve **o dado**; unidade, granularidade e fonte não se repetem no catálogo.
 
 ## Onde o arquivo mora
 
@@ -182,7 +182,8 @@ publicado.
       "grupo": "inflacao",
       "escala": "percentual",
       "descricao": "Variação acumulada do Índice de Preços ao Consumidor Amplo (IPCA) em 12 meses",
-      "arquivo": "ipca/ipca-acum-12m.json"
+      "arquivo": "ipca/ipca-acum-12m.json",
+      "urlNotebook": "https://github.com/brasilemnumeros/dados/blob/main/indicadores/ipca/IPCA.ipynb"
     }
   ]
 }
@@ -199,6 +200,7 @@ publicado.
 | `escala` | entrada | `percentual` \| `moeda` \| `numero`; o distintivo da lista, derivado de `unidade.tipo` da série (K4) |
 | `descricao` | entrada | uma frase sobre o dado, no topo da ficha antes de carregar (não vazia — K7) |
 | `arquivo` | entrada | caminho `familia/arquivo.json` dentro de `indicadores/`, existente no disco e único (K1, K8) |
+| `urlNotebook` | entrada | URL `https://` do notebook que gera a série, sob `https://github.com/brasilemnumeros/dados/blob/main/indicadores/` (K9); é o link de auditoria da ficha |
 
 ### Regra de corte
 
@@ -206,10 +208,15 @@ publicado.
 série.** Descrevem o número: `unidade` (tipo, símbolo, casas, idioma), `eixo`, `medida`,
 `granularidade`, `fonte`, `urlFonte` e `dados`. Nenhum campo novo entra nos dois.
 
+A exceção declarada é `urlNotebook`: é proveniência, mas mora no catálogo porque a ficha precisa
+do link de auditoria mesmo quando a série falha ao carregar — e porque o pedido do produto é que
+o endereço venha do catálogo, não do bundle do app. O notebook não é campo da série e não se
+repete nela.
+
 A única duplicata estrutural é `escala` ↔ `unidade.tipo`: o catálogo repete a **classe** para
 pintar o distintivo sem baixar as séries, e por isso ela é **conferida**, não deduzida (K4).
 
-### K1…K8 — o catálogo contra o disco
+### K1…K9 — o catálogo contra o disco
 
 `python3 scripts/validar.py` sem argumentos confere as séries (`C1…C15`) **e** o catálogo. Com
 caminhos avulsos o catálogo fica de fora: conferir a raiz a partir de um recorte produziria K2
@@ -225,17 +232,20 @@ falso.
 | **K6** | `versao` não é o inteiro `1` — versão desconhecida reprova antes de interpretar o resto |
 | **K7** | `nome` ou `descricao` ausente, não-string ou vazia — o `validateCatalog` rejeita o catálogo inteiro sem `nome` |
 | **K8** | `id` ou `arquivo` repetido entre entradas — no navegador a chave duplicada derruba a busca |
+| **K9** | `urlNotebook` ausente, não-string, fora do prefixo `https://github.com/brasilemnumeros/dados/blob/main/indicadores/` ou apontando para um `.ipynb` que não existe no disco |
 
 O `validar.py` confere o conteúdo de `nome`/`descricao` (K7): sem isso, uma entrada sem `nome`
 passava no CI do `dados` e só reprovava no `validateCatalog` do app, tirando a lista do ar para
 todo mundo. `id` e `arquivo` são chaves de índice no runtime — repetidos, o `{#each}` da busca
-lança `each_key_duplicate`; por isso são conferidos aqui também (K8), e não só no app.
+lança `each_key_duplicate`; por isso são conferidos aqui também (K8), e não só no app. `K9`
+confere o link de auditoria: forma, prefixo canônico e arquivo no disco (com `unquote`, para
+`População.ipynb`); sem isso, um typo de caminho só morreria no clique.
 
 O mesmo par roda no hook `.githooks/pre-commit` (em quem o instalou) e no CI
 (`.github/workflows/validar.yml`, em todo pull request e no push para `main`). No `sitio`,
 `validateCatalog` (`app/src/data/catalog.js`) é o porteiro do **runtime**: exige `versao: 1`,
-`id` e `nome` não vazios, `grupo` existente, `arquivo` casando o formato, `escala` na lista e
-nem `id` nem `arquivo` repetidos.
+`id` e `nome` não vazios, `grupo` existente, `arquivo` casando o formato, `escala` na lista,
+`urlNotebook` `https://` e nem `id` nem `arquivo` repetidos.
 Violação vira `status: 'error'` com a mensagem crua na tela — nunca lista vazia. O teste
 `app/src/data/integracao.test.js` repete a conferência cruzada contra o disco antes do deploy.
 
@@ -249,6 +259,10 @@ ou acrescentar indicador, não exige deploy: aparece no próximo acesso, em até
 Pages). Renomear `id` **não** é mudança de apresentação: quebra link `?series=` e os ids que o
 `sitio` conhece (presets, exemplo, posts), e o teste de integração de lá reprova.
 
+`urlNotebook` é campo novo e **obrigatório para o app novo**: publique o catálogo do `dados`
+**antes** do `sitio`. O app antigo ignora a chave desconhecida; o app novo exige o campo e, sem
+ele, mostra erro na tela (não esconde o link).
+
 ## Conformidade
 
 Os dois conjuntos de regras são provados por **mecanismos diferentes**:
@@ -260,14 +274,14 @@ Os dois conjuntos de regras são provados por **mecanismos diferentes**:
   tem caso inválido — o que se prova é que nenhum validador exige período fechado. É a fonte
   executável: `validar.py` (Python) e `validate.test.js` (JS) têm de concordar com **todos** os
   casos.
-- **Catálogo (`K1…K8`) — fixtures de diretório:** `dados/tests/test_validar.py` monta uma raiz
+- **Catálogo (`K1…K9`) — fixtures de diretório:** `dados/tests/test_validar.py` monta uma raiz
   temporária (`tmp_path`) com o catálogo e a série que ele deveria descrever, estraga uma peça
   por teste e cobra o código da regra. **Não há caso `K` no corpus**, e um arquivo de corpus não
   serviria: `validar.py` com caminhos avulsos não confere o catálogo (conferir a raiz a partir de
   um recorte produziria K2 falso) — o catálogo só é validado na raiz, sem argumentos.
 - **Dado real:** todos os arquivos de série de `dados/indicadores/` passam em `python3 scripts/validar.py`
   e em `npm --prefix app test` (o teste de integração lê o repo `dados`).
-- **Catálogo × série:** `validar.py` confere o catálogo contra o disco com `K1…K8` (seção
+- **Catálogo × série:** `validar.py` confere o catálogo contra o disco com `K1…K9` (seção
   "Catálogo × série"), e o teste de integração do `sitio` repete a conferência cruzada — o
   catálogo não duplica unidade nem medida.
 

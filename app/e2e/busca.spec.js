@@ -39,6 +39,14 @@ test('abrir · filtrar · escolher · chip aparece · ESC fecha', async ({ page 
   // a ficha mostra a atribuição da série (`fonte`, não `source`)
   await expect(ficha).toContainText('Fonte');
   await expect(ficha).toContainText('IBGE');
+
+  // o link de auditoria vem do catálogo (`urlNotebook`) e abre o notebook no GitHub, em nova aba
+  const notebook = ficha.getByRole('link', { name: /Ver o notebook que gera estes dados/ });
+  await expect(notebook).toHaveAttribute(
+    'href',
+    'https://github.com/brasilemnumeros/dados/blob/main/indicadores/ipca/IPCA.ipynb',
+  );
+  await expect(notebook).toHaveAttribute('target', '_blank');
   const adicionar = ficha.getByRole('button', { name: 'Adicionar' });
   await expect(adicionar).toBeVisible();
 

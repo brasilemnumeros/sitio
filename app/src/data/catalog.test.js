@@ -15,6 +15,7 @@ const catalogoMinimo = {
       arquivo: 'selic/selic-meta-acum-12m.json',
       escala: 'percentual',
       descricao: 'Taxa básica de juros',
+      urlNotebook: 'https://github.com/brasilemnumeros/dados/blob/main/indicadores/selic/Selic.ipynb',
     },
   ],
 };
@@ -32,7 +33,30 @@ describe('validateCatalog', () => {
       escala: 'percentual',
       descricao: 'Taxa básica de juros',
       datafile: 'https://exemplo/dados/selic/selic-meta-acum-12m.json',
+      urlNotebook:
+        'https://github.com/brasilemnumeros/dados/blob/main/indicadores/selic/Selic.ipynb',
     });
+  });
+
+  it('exige urlNotebook https — o link de auditoria não pode ficar mudo', () => {
+    const sem = {
+      ...catalogoMinimo,
+      indicadores: [{ ...catalogoMinimo.indicadores[0] }],
+    };
+    delete sem.indicadores[0].urlNotebook;
+    expect(() => validateCatalog(sem)).toThrow(/urlNotebook/);
+
+    const http = {
+      ...catalogoMinimo,
+      indicadores: [{ ...catalogoMinimo.indicadores[0], urlNotebook: 'http://x/Selic.ipynb' }],
+    };
+    expect(() => validateCatalog(http)).toThrow(/urlNotebook/);
+
+    const tipoErrado = {
+      ...catalogoMinimo,
+      indicadores: [{ ...catalogoMinimo.indicadores[0], urlNotebook: 42 }],
+    };
+    expect(() => validateCatalog(tipoErrado)).toThrow(/urlNotebook/);
   });
 
   it('recusa um indicador cujo grupo não existe em "grupos"', () => {

@@ -101,6 +101,21 @@
       <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">{indicador.descricao}</p>
     {/if}
 
+    <!-- LINK DE AUDITORIA (2026-11-03) — o endereço vem do catálogo (`urlNotebook`), não do
+         bundle; o `validar.py` (K9) garante que o notebook existe. Fica no topo, antes do bloco
+         de metadados, para continuar visível quando a série falha ao carregar: é justamente o
+         caminho para conferir o método do que não carregou. -->
+    <a
+      href={indicador.urlNotebook}
+      target="_blank"
+      rel="noopener noreferrer"
+      class="mt-2 inline-block text-xs text-sky-700 underline hover:text-sky-900 dark:text-sky-300 dark:hover:text-sky-100"
+    >
+      Ver o notebook que gera estes dados <span aria-hidden="true">↗</span><span class="sr-only">
+        (abre em nova aba)</span
+      >
+    </a>
+
     {#if estado.status === 'carregando'}
       <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">Carregando…</p>
     {:else if estado.status === 'erro'}

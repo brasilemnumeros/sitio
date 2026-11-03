@@ -11,8 +11,8 @@ const CATALOGO = {
   versao: 1,
   grupos: { monetario: { nome: '🏦 Política Monetária' }, inflacao: { nome: '📈 Inflação' } },
   indicadores: [
-    { id: 'selic-meta', nome: 'Taxa Selic Meta (%)', grupo: 'monetario', arquivo: 'selic/selic-meta.json', escala: 'percentual' },
-    { id: 'ipca-acum-12m', nome: 'IPCA (%)', grupo: 'inflacao', arquivo: 'ipca/ipca-acum-12m.json', escala: 'percentual' },
+    { id: 'selic-meta', nome: 'Taxa Selic Meta (%)', grupo: 'monetario', arquivo: 'selic/selic-meta.json', escala: 'percentual', urlNotebook: 'https://github.com/brasilemnumeros/dados/blob/main/indicadores/selic/Selic.ipynb' },
+    { id: 'ipca-acum-12m', nome: 'IPCA (%)', grupo: 'inflacao', arquivo: 'ipca/ipca-acum-12m.json', escala: 'percentual', urlNotebook: 'https://github.com/brasilemnumeros/dados/blob/main/indicadores/ipca/IPCA.ipynb' },
   ],
 };
 

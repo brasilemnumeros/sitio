@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { validateSeries } from './validate.js';
@@ -27,6 +27,9 @@ const RAIZ_DADOS = raizDados();
 const RAIZ_SERIES = join(RAIZ_DADOS, 'indicadores');
 const CATALOGO = join(RAIZ_SERIES, 'catalogo.json');
 const POSTS = fileURLToPath(new URL('../../../src/content/posts/', import.meta.url));
+/** Espelho do `PREFIXO_NOTEBOOK` do `validar.py` (K9): o link da ficha é conferido nos dois lados. */
+const PREFIXO_NOTEBOOK =
+  'https://github.com/brasilemnumeros/dados/blob/main/indicadores/';
 
 function catalogo() {
   return JSON.parse(readFileSync(CATALOGO, 'utf8'));
@@ -137,6 +140,23 @@ describe('o contrato publicado em dados/ é o que o app valida (§6)', () => {
         `${ind.id} (${ind.arquivo}): escala do catálogo × unidade.tipo da série`,
       ).toBe(serie.unidade.tipo);
       expect(ind, `${ind.id}: catálogo não deve duplicar a unidade`).not.toHaveProperty('unidade');
+    }
+  });
+
+  it('todo urlNotebook aponta para notebook existente em dados/indicadores (K9)', () => {
+    // O catálogo é lido em runtime de outro repo: um caminho de notebook com typo só apareceria
+    // no clique. O `validar.py` confere antes do merge; este teste repete a conferência contra o
+    // disco que o app consome, para o build do sitio também reprovar se o catálogo publicado
+    // estiver inconsistente.
+    for (const ind of catalogo().indicadores) {
+      expect(
+        ind.urlNotebook?.startsWith(PREFIXO_NOTEBOOK),
+        `${ind.id}: urlNotebook fora do prefixo canônico`,
+      ).toBe(true);
+      const relativo = decodeURIComponent(ind.urlNotebook.slice(PREFIXO_NOTEBOOK.length));
+      expect(existsSync(join(RAIZ_SERIES, relativo)), `${ind.id}: ${relativo} não existe`).toBe(
+        true,
+      );
     }
   });
 

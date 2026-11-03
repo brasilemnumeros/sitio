@@ -32,3 +32,10 @@ app/e2e/.artefatos/
 # Mockups do brainstorming (superpowers)
 .superpowers/
 .playwright-mcp/
+
+# Capturas dos posts de marketing (docs/marketing/posts/AAAA-MM/NN-NN.png). São
+# a tela capturada na hora de montar o post, com o dado do dia — versioná-las
+# envelhece o repo no dia seguinte (a primeira leva saiu com a Selic de 44%, que
+# a correção da média diária mudou para 42%). A fonte da arte é o permalink +
+# o template; a imagem se regenera na produção de cada post.
+docs/marketing/posts/

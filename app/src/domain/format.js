@@ -45,3 +45,26 @@ export function valorCompacto(valor, unidade) {
   if (unidade?.tipo === 'moeda') return `${simbolo} ${numero}`;
   return simbolo === '%' ? `${numero}${simbolo}` : `${numero} ${simbolo}`;
 }
+
+/**
+ * Rótulo de data do eixo do tempo sob o cursor (2026-11-03).
+ *
+ * Por que existe: a lib formata esse rótulo com o padrão dela (`dd MMM 'yy`) e com o mês em
+ * INGLÊS — a caixa do cursor dizia `jan/2013` e o eixo logo abaixo, `01 Jan '13`. O formato aqui
+ * é o MESMO (dia + mês curto + ano de dois dígitos), só com o mês em português. `timeFormatter`
+ * recebe o tempo ORIGINAL da série, que neste app é sempre segundos UTC (ver `chart/points.js`),
+ * por isso a leitura é toda em `getUTC*`: usar o fuso local deslocaria o dia.
+ *
+ * @param {number} segundos  tempo UNIX em segundos
+ * @returns {string} `01 jan '13`, ou `''` para entrada inválida
+ */
+const MESES_CURTOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+export function rotuloDaCruz(segundos) {
+  if (!Number.isFinite(segundos)) return '';
+  const d = new Date(segundos * 1000);
+  const dia = String(d.getUTCDate()).padStart(2, '0');
+  const mes = MESES_CURTOS[d.getUTCMonth()];
+  const ano = String(d.getUTCFullYear() % 100).padStart(2, '0');
+  return `${dia} ${mes} '${ano}`;
+}

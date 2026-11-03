@@ -91,3 +91,43 @@ ficava com 156px. Medido depois da mudança: **142px de eixos e 208px de gráfic
   Efeito colateral bem-vindo: o ponto decimal virou vírgula (antes a lib escrevia `320000.00`).
 - **Caixa do cursor** (`domain/format.js` → `valorCompacto`): mesma régua, e o valor EXATO vai no
   `title` de cada linha (`193 mi hab.` na tela, `192.989.569 hab. · 2011-01-01` no hover).
+
+## Emenda 2026-11-03 — o cursor gruda no ponto, e o ponto tem bolinha
+
+**Problema medido.** Numa série ANUAL (preset Atividade) a caixa ficava em `—` em quase todo o
+gráfico. O eixo x é esticado até hoje por âncoras **mensais** invisíveis (`domain/horizonte.js`),
+e a lib prendia a cruz à grade da união das séries — inclusive a invisível. Medido no dev server
+em 2026-11-03, varrendo a largura:
+
+```
+0,3 → jan/2005 → PIB 3,20% | População 1,12%
+0,4 → mai/2008 → — | —
+0,5 → set/2011 → — | —
+```
+
+**Decisões.**
+
+1. **Snap no ponto real** (`chart/adapter.js`): `crosshair.doNotSnapToHiddenSeriesIndices: true`.
+   A cruz passa a grudar no ponto mais próximo de uma série VISÍVEL, e a data que a caixa mostra
+   é a data de um ponto. Depois da mudança, a mesma varredura dá `jan/2005`, `jan/2008`,
+   `jan/2012`…
+2. **Ponto fora da janela → sem leitura** (`chart.clearCrosshairPosition()` + cursor `null`):
+   quando o ponto mais próximo está fora da janela visível (vão entre dois pontos anuais, por
+   exemplo), a cruz e a caixa somem — a lib sozinha deixava a cruz presa na borda, apontando um
+   valor que não está à vista.
+3. **Bolinha nos pontos de TODAS as séries visíveis, por densidade** (`domain/marcadores.js`,
+   `ESPACO_MINIMO_PX = 16`, raio 2,5px): liga quando o passo médio NA JANELA VISÍVEL cabe com
+   folga. Anual no horizonte inteiro mostra; mensal no horizonte inteiro não; a mesma mensal com
+   zoom de 1–5 anos mostra. Cada série decide sozinha — não há lista de indicadores "esparsos" —
+   e `applyOptions` só roda na transição liga/desliga, não a cada frame de arrasto.
+4. **Rótulo da cruz em pt-BR** (`domain/format.js` → `rotuloDaCruz`, via
+   `localization.timeFormatter`): o padrão da lib é `01 Jan '13` com o mês em inglês, ao lado de
+   uma caixa dizendo `jan/2013`.
+
+**O que NÃO mudou.** Continua sem valor "vigente" nem "mais próximo" por série: o número só
+aparece quando a série tem ponto NA DATA que a cruz aponta. Em conjuntos de granularidades
+misturadas, quem não tem ponto naquele ano continua com `—` — é a informação correta.
+
+**Guardas.** `domain/marcadores.test.js` (contagem por janela, limiar de 16px, zoom) e
+`e2e/cursor.spec.js` (série anual: o cabeçalho no meio do gráfico é sempre janeiro e não há
+traço; antes de 2001 a População continua com traço).

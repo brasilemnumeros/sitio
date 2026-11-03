@@ -2,6 +2,8 @@ import { createChart, LineSeries } from 'lightweight-charts';
 import { paraPontosDaBiblioteca, paraISO } from './points.js';
 import { criarPrimitivaDeFaixas, emSegundos } from './bands.js';
 import { ancorasDoHorizonte } from '../domain/horizonte.js';
+import { deveMostrarMarcadores } from '../domain/marcadores.js';
+import { rotuloDaCruz } from '../domain/format.js';
 import { dataEmSaoPaulo } from '../data/presets.js';
 
 const FUNDO = '#0e1117';
@@ -45,7 +47,9 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
     //    Abaixo de 100.000 o valor é exato: arredondar `9,62%` só esconderia dígito sem ganhar
     //    espaço nenhum.
     locale: 'pt-BR',
-    localization: { priceFormatter: rotuloDoEixo },
+    // `timeFormatter` é o rótulo da CRUZ no eixo do tempo (a lib não localiza o mês dele pelo
+    // `locale`): sem isto, a caixa do cursor dizia "jan/2013" e o eixo, "01 Jan '13".
+    localization: { priceFormatter: rotuloDoEixo, timeFormatter: rotuloDaCruz },
     layout: { background: { color: FUNDO }, textColor: '#c9d1d9' },
     grid: { vertLines: { color: 'rgba(255,255,255,0.04)' }, horzLines: { color: 'rgba(255,255,255,0.04)' } },
     // §5 — existem DOIS eixos, mas só a escala do lado que TEM série é desenhada. Antes as duas
@@ -56,6 +60,14 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
     leftPriceScale: { visible: false, borderVisible: false },
     rightPriceScale: { visible: true, borderColor: 'rgba(255,255,255,0.10)' },
     timeScale: { borderColor: 'rgba(255,255,255,0.10)' },
+    // 📌 O CURSOR GRUDA NO PONTO, NÃO NA GRADE DO EIXO (2026-11-03). As âncoras mensais do
+    //    horizonte existem para o eixo x ter calendário, mas entravam também na grade de snap da
+    //    lib: com série ANUAL o cursor reportava um mês qualquer (mai/2008, set/2011…) e a caixa
+    //    do cursor ficava em "—" até o ponteiro chegar perto de janeiro. Com esta opção a lib
+    //    ignora as séries invisíveis e prende a cruz ao ponto mais próximo de uma série VISÍVEL.
+    //    A regra do valor não muda: a caixa segue mostrando o valor só quando há ponto NA DATA —
+    //    o que muda é a data que a cruz aponta, que agora é sempre a de um ponto de verdade.
+    crosshair: { doNotSnapToHiddenSeriesIndices: true },
   });
   const porId = new Map();          // id -> ISeriesApi
   /** Série INVISÍVEL que só carrega as âncoras mensais do horizonte (1995 → hoje).
@@ -68,6 +80,12 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
    *  deslocava a plotagem no meio de um arrasto (medido em 2026-11-01: dois specs de arrasto do
    *  minimapa ficaram intermitentes). */
   const ocultas = new Set();
+  /** Tempos de cada série (segundos, crescentes) — a régua das bolinhas roda a cada mudança de
+   *  janela, e `serie.data()` devolveria uma cópia do array inteiro a cada arrasto. */
+  const temposPorSerie = new Map();
+  /** Estado ATUAL das bolinhas por id. `applyOptions` só na transição, pelo mesmo motivo de
+   *  `ocultas` acima: reaplicar opção a cada frame de arrasto mexe no desenho sem necessidade. */
+  const comMarcadores = new Map();
 
   // 🔴 `setVisibleRange` e `fitContent` LANÇAM num gráfico sem NENHUMA barra. Medido em
   // 2026-10-15 (sonda no navegador, os dois builds): `setData([])` e depois `setVisibleRange`
@@ -146,6 +164,9 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
   // convertê-los para data exigiria passar pelo array de dados. O de tempo já entrega
   // `{from, to}` em segundos — que é o que o store guarda.
   chart.timeScale().subscribeVisibleTimeRangeChange((range) => {
+    // As bolinhas dependem do ESPAÇAMENTO na janela: dar zoom numa série mensal as liga, e o
+    // caminho de volta as desliga (regra em `domain/marcadores`).
+    atualizarMarcadores(range);
     if (!range) return aoMudarJanela?.({ from: null, to: null });
     aoMudarJanela?.({ from: paraISO(range.from), to: paraISO(range.to) });
   });
@@ -155,13 +176,24 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
   // `pointer-events` próprio) → `null`, e a legenda apaga os valores. A direção continua
   // adapter → store (§8.1): quem desenha o número é a legenda, não o gráfico.
   chart.subscribeCrosshairMove((param) => {
+    const t = param?.time;
+    if (t == null) return aoMoverCursor?.(null, 0, 0);
+    // ⚠ Com o snap ligado, a lib escolhe o ponto mais próximo MESMO que ele esteja FORA da
+    //   janela (acontece quando a janela cai num vão entre dois pontos, ex.: anual com zoom de
+    //   poucos meses). Aí a cruz nem é desenhada, e uma caixa com número de uma data que não
+    //   está à vista é leitura sem referência — melhor não dizer nada.
+    const janela = chart.timeScale().getVisibleRange();
+    if (janela && (t < janela.from || t > janela.to)) {
+      // Nada visível para ler: some com a cruz E com a caixa. Sem o `clearCrosshairPosition` a
+      // lib deixa a cruz presa na borda (o ponto mais próximo está fora da janela) enquanto o
+      // ponteiro anda no meio — o que se lê como defeito, não como ausência de dado.
+      chart.clearCrosshairPosition();
+      aoMoverCursor?.(null, 0, 0);
+      return;
+    }
     // `point` é a posição do cursor DENTRO do pane, em px — a caixa flutuante (variante B) usa
     // para colar no ponto em vez de ficar parada num canto.
-    aoMoverCursor?.(
-      param?.time == null ? null : paraISO(param.time),
-      param?.point?.x ?? 0,
-      param?.point?.y ?? 0,
-    );
+    aoMoverCursor?.(paraISO(t), param?.point?.x ?? 0, param?.point?.y ?? 0);
   });
 
   /** Devolve a janela que o `setData`/`removeSeries` moveu. Vai no FRAME SEGUINTE: `setVisibleRange`
@@ -177,6 +209,32 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
     });
   }
 
+  /** Liga/desliga as bolinhas de cada série conforme o espaçamento NA JANELA VISÍVEL.
+   *  Regra pura em `domain/marcadores.js`; aqui só a ponte com a lib (ADR 0001).
+   *
+   *  `range` opcional: a assinatura de janela já entrega o intervalo novo, e pedi-lo de novo à
+   *  lib no meio do gesto pode devolver o anterior. `applyOptions` só quando o estado MUDA —
+   *  arrastar dispara isto a cada frame. */
+  function atualizarMarcadores(range = chart.timeScale().getVisibleRange()) {
+    if (!range || porId.size === 0) return;
+    const largura = chart.timeScale().width();
+    if (!Number.isFinite(largura) || largura <= 0) return;
+    for (const [id, serie] of porId) {
+      const mostrar = deveMostrarMarcadores(temposPorSerie.get(id) ?? [], {
+        from: range.from,
+        to: range.to,
+        largura,
+      });
+      if (mostrar === comMarcadores.get(id)) continue;
+      serie.applyOptions(
+        mostrar
+          ? { pointMarkersVisible: true, pointMarkersRadius: 2.5 }
+          : { pointMarkersVisible: false },
+      );
+      comMarcadores.set(id, mostrar);
+    }
+  }
+
   /** Cria, atualiza ou REUSA uma LineSeries por id. Série que sai do store é removida do gráfico.
    * `atribuicao` vem do `axesStore` (fatia 05) — o ADAPTER não decide eixo, só obedece (§8.1). */
   function definirSeries(itens, atribuicao = {}) {
@@ -187,7 +245,13 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
     const janelaAntes = usuarioAssumiu ? chart.timeScale().getVisibleRange() : null;
     const vivos = new Set(itens.map((i) => i.id));
     for (const [id, serie] of porId) {
-      if (!vivos.has(id)) { chart.removeSeries(serie); porId.delete(id); ocultas.delete(id); }
+      if (!vivos.has(id)) {
+        chart.removeSeries(serie);
+        porId.delete(id);
+        ocultas.delete(id);
+        temposPorSerie.delete(id);
+        comMarcadores.delete(id);
+      }
     }
     // O horizonte é do EIXO, não da série: as âncoras valem mesmo com zero série carregada.
     const ancoras = ancorasDoHorizonte(dataEmSaoPaulo());
@@ -240,6 +304,12 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
         if (oculta) ocultas.add(item.id); else ocultas.delete(item.id);
       }
       serie.setData(paraPontosDaBiblioteca(item.series?.dados ?? []));
+      // A régua das bolinhas precisa dos tempos em segundos; guardar agora evita pedir
+      // `serie.data()` (cópia do array inteiro) a cada frame de zoom.
+      temposPorSerie.set(
+        item.id,
+        (item.series?.dados ?? []).map((p) => emSegundos(p.data)),
+      );
     }
     // §5 (2026-10-30) — a escala da ESQUERDA existe só quando alguma série está nela. Vem DEPOIS
     // da atribuição de `priceScaleId` acima e ANTES de qualquer saída antecipada: esconder uma
@@ -251,11 +321,11 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
     // A grade de tempo do gráfico é a UNIÃO das séries + as âncoras do horizonte (é dela que a
     // lib monta a escala, e é ela que a primitiva das faixas usa para posicionar as datas).
     const tempos = new Set();
-    for (const item of itens) {
-      for (const p of item.series?.dados ?? []) tempos.add(emSegundos(p.data));
-    }
+    for (const lista of temposPorSerie.values()) for (const t of lista) tempos.add(t);
     for (const iso of ancoras) tempos.add(emSegundos(iso));
     temposDoDado = [...tempos].sort((a, b) => a - b);
+    // O espaçamento dos pontos pode ter mudado com os dados NOVOS (série trocada, zoom mantido).
+    atualizarMarcadores();
     // O fit enquadra o HORIZONTE (1995 → hoje), que é a união das séries com as âncoras do
     // eixo. Espera a rajada de carga assentar (debounce) e re-agenda a cada chamada, de modo que
     // só o ÚLTIMO `definirSeries` da rajada dispara o fit — com todas as séries já no gráfico.
@@ -275,6 +345,9 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
       fitNoFrame = requestAnimationFrame(() => {
         fitNoFrame = null;
         chart.timeScale().fitContent();
+        // `fitContent` muda a janela sem passar pela assinatura de range em toda situação;
+        // reavaliar aqui garante o estado certo logo no primeiro enquadramento.
+        atualizarMarcadores();
       });
     }, 150);   // a rajada de carga assenta; o último enquadra a UNIÃO de todas
   }

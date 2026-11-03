@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { valorNaUnidade, valorCompacto } from './format.js';
+import { valorNaUnidade, valorCompacto, rotuloDaCruz } from './format.js';
 
 describe('valorNaUnidade', () => {
   it('usa as casas decimais e o símbolo da unidade', () => {
@@ -36,5 +36,25 @@ describe('valorCompacto', () => {
       'R$ 320.000',
     );
     expect(valorCompacto(9.6222, { tipo: 'percentual', simbolo: '%', casas: 2 })).toBe('9,62%');
+  });
+});
+
+describe('rotuloDaCruz', () => {
+  const emSegundos = (ano, mes, dia) => Date.UTC(ano, mes - 1, dia) / 1000;
+
+  it('escreve o mês em PORTUGUÊS, no mesmo formato curto da lib', () => {
+    // O padrão da lib é `dd MMM 'yy` com o mês em inglês ("01 May '13"). O formato é o mesmo;
+    // o mês é que muda — é o que o produto exibe ao lado da caixa do cursor.
+    expect(rotuloDaCruz(emSegundos(2013, 5, 1))).toBe("01 mai '13");
+    expect(rotuloDaCruz(emSegundos(1995, 1, 1))).toBe("01 jan '95");
+  });
+
+  it('lê em UTC — fuso local deslocaria o dia', () => {
+    expect(rotuloDaCruz(emSegundos(2000, 12, 31))).toBe("31 dez '00");
+  });
+
+  it('entrada inválida devolve vazio, não "NaN"', () => {
+    expect(rotuloDaCruz(NaN)).toBe('');
+    expect(rotuloDaCruz(undefined)).toBe('');
   });
 });

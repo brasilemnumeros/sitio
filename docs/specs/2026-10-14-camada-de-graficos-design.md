@@ -122,6 +122,23 @@ Por que a cascata, e não uma lista plana agrupada ou um master-detail de duas c
 
 **Zoom é gesto separado e explícito:** arrastar, scroll e duplo-clique. Um clique, um efeito.
 
+**Emenda 2026-11-03 — arrastar é PAN, não zoom.** A frase acima listava "arrastar" junto com o
+zoom, mas na prática o arrasto virava o MESMO zoom da roda — e o usuário não pediu dois gestos
+iguais. O eixo x é fixo (1995 → hoje): sem as pontas presas ao dado, arrastar para fora do
+intervalo fazia a lib encolher a janela para "caber" o pedido (medido num harness isolado:
+31,9 anos → 25,9 num arrasto de 200px); somado a isso, o eco da janela voltava do store para o
+gráfico e reenquadrava o desenho no meio do gesto (medido no app: 10,00 → 11,50 anos). Agora:
+
+- **Arrastar** = pan. `timeScale.fixLeftEdge`/`fixRightEdge` prendem a janela ao dado; no "Tudo"
+  o gesto não anda (não há horizonte fora de 1995→hoje) e **nunca** muda o zoom.
+- **Roda e duplo-clique** = zoom (os dois gestos de zoom que restam).
+- **O eco da janela não volta para o gráfico** (`chart/adapter.js` → `ultimoEco`). A única
+  reação automática que sobra é reenquadrar quando a LARGURA da plotagem muda e a janela ainda
+  é do modo automático (o rótulo do último valor alarga a escala em ~8px depois do fit, e com as
+  pontas presas isso comeria uma borda do horizonte).
+- **Guarda:** `e2e/gestos.spec.js` prova as duas metades — no "Tudo" a janela fica idêntica; com
+  o "10a" o arrasto desloca o intervalo sem mudar a duração além de 5%.
+
 Justificativa: se o clique desse zoom, o mandato selecionado sairia de contexto no exato momento em que o usuário quer compará-lo. Além disso, zoom e filtro competiriam pelo mesmo estado do viewport — e essa disputa é a origem do emaranhado atual.
 
 ### Rejeitado

@@ -161,9 +161,10 @@ test('clicar numa faixa do minimapa filtra pelo mandato, e arrastar continua mov
   await carregarExemplo(page);
   await expect(page.getByTestId('grafico')).toBeVisible();
 
-  // As FAIXAS do minimapa terminam no mandato atual — 2025. Com o exemplo o `fitContent` começa
-  // em ~2009, então as faixas à ESQUERDA do mapa são as de FHC/Lula I: escolher uma delas muda a
-  // janela de verdade (a não ser que já estivesse em cena, e então não haveria o que mover).
+  // As FAIXAS do minimapa terminam no mandato atual — 2025. A janela inicial é o HORIZONTE
+  // inteiro (1995 → hoje, desde 2026-10-29), então a faixa mais à ESQUERDA é a do FHC I: o
+  // `from` dela também é 1995-01-01. Por isso a prova é o PAR `{from,to}` — o `from` sozinho
+  // não distingue "não mudou nada" de "foi para o primeiro mandato".
   const mini = page.locator('div[data-testid="minimapa"]');
   await mini.scrollIntoViewIfNeeded();
   const caixa = await mini.boundingBox();
@@ -206,8 +207,14 @@ test('clicar numa faixa do minimapa filtra pelo mandato, e arrastar continua mov
 
   // o clique ESCOLHE um mandato — e a janela vai para ele
   await expect
-    .poll(async () => (await janela(page)).from, { message: 'o clique na faixa tem de mudar a janela', timeout: 20000 })
-    .not.toBe(antes.from);
+    .poll(
+      async () => {
+        const j = await janela(page);
+        return { from: j.from, to: j.to };
+      },
+      { message: 'o clique na faixa tem de mudar a janela', timeout: 20000 },
+    )
+    .not.toEqual({ from: antes.from, to: antes.to });
 
   // Arrastar NÃO escolhe (o gesto manda): a janela muda pelo gesto e a seleção fica VAZIA.
   // Sem o limiar de movimento, o arrasto viraria "escolher o mandato" e a cada passo a janela

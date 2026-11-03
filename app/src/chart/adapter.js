@@ -59,7 +59,17 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
     // escala invisível (`largurasDasEscalas`), então o minimapa se alinha sozinho nos dois estados.
     leftPriceScale: { visible: false, borderVisible: false },
     rightPriceScale: { visible: true, borderColor: 'rgba(255,255,255,0.10)' },
-    timeScale: { borderColor: 'rgba(255,255,255,0.10)' },
+    // 🔴 ARRASTAR É PAN, NUNCA ZOOM (2026-11-03). Sem estas duas opções, arrastar para a
+    //    esquerda no enquadramento "Tudo" pedia tempo ANTES de 1995; a lib não rola para fora do
+    //    dado e, para caber o pedido, ENCOLHIA o espaçamento — o intervalo diminuía a cada passo
+    //    (medido num harness isolado: 31,9 anos → 25,9 num arrasto de 200px). O gesto virava o
+    //    MESMO zoom da roda, que já existe. Prender as pontas ao dado deixa o arrasto ser só pan;
+    //    no "Tudo" ele simplesmente não anda, porque não há horizonte fora de 1995→hoje.
+    timeScale: {
+      borderColor: 'rgba(255,255,255,0.10)',
+      fixLeftEdge: true,
+      fixRightEdge: true,
+    },
     // 📌 O CURSOR GRUDA NO PONTO, NÃO NA GRADE DO EIXO (2026-11-03). As âncoras mensais do
     //    horizonte existem para o eixo x ter calendário, mas entravam também na grade de snap da
     //    lib: com série ANUAL o cursor reportava um mês qualquer (mai/2008, set/2011…) e a caixa
@@ -101,6 +111,10 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
    *  achar as pontas quando o mandato começa no dia 1º e a série carimba no fim do mês — ver
    *  `indicesDaFaixa`. Recalculada só quando o DADO muda, não a cada desenho. */
   let temposDoDado = [];
+  /** Última janela que o gráfico PUBLICOU (ISO, como vai para a store). Serve para não devolver
+   *  o próprio eco: `setVisibleRange` com a janela que a lib acabou de reportar reenquadra o
+   *  desenho no meio do gesto, e o arrasto vira zoom (medido em 2026-11-03). */
+  let ultimoEco = null;
 
   // 🔴 O app abre no TODO, não no default da lib (≈ últimos 150 pontos).
   // Duas armadilhas medidas, e a segunda só apareceu na revisão:
@@ -167,8 +181,12 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
     // As bolinhas dependem do ESPAÇAMENTO na janela: dar zoom numa série mensal as liga, e o
     // caminho de volta as desliga (regra em `domain/marcadores`).
     atualizarMarcadores(range);
-    if (!range) return aoMudarJanela?.({ from: null, to: null });
-    aoMudarJanela?.({ from: paraISO(range.from), to: paraISO(range.to) });
+    if (!range) {
+      ultimoEco = null;
+      return aoMudarJanela?.({ from: null, to: null });
+    }
+    ultimoEco = { from: paraISO(range.from), to: paraISO(range.to) };
+    aoMudarJanela?.(ultimoEco);
   });
 
   // O CURSOR (§2026-11-01, "valor no ponto"): a lib entrega o `time` da barra sob o cursor em
@@ -208,6 +226,18 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
       chart.timeScale().setVisibleRange(antes);
     });
   }
+
+  // 📏 A LARGURA DA PLOTAGEM MUDA DEPOIS DO FIT (medido em 2026-11-03: 1192 → 1184px, 8px, quando
+  //    o rótulo do último valor aparece). Com as pontas presas ao dado (`timeScale`), esse
+  //    estreitamento come uma borda — e o eixo deixaria de chegar a hoje. Enquanto a janela é
+  //    AUTOMÁTICA (o usuário não tomou o zoom), reenquadrar é o comportamento certo.
+  const aoMudarTamanho = () => {
+    if (usuarioAssumiu || !temDado) return;
+    requestAnimationFrame(() => {
+      if (!usuarioAssumiu && temDado) chart.timeScale().fitContent();
+    });
+  };
+  chart.timeScale().subscribeSizeChange(aoMudarTamanho);
 
   /** Liga/desliga as bolinhas de cada série conforme o espaçamento NA JANELA VISÍVEL.
    *  Regra pura em `domain/marcadores.js`; aqui só a ponte com a lib (ADR 0001).
@@ -420,6 +450,10 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
     destacarMandato,
     /** Direção store → adapter: o adapter NÃO devolve nada por aqui (§8.1). */
     definirJanela({ from, to } = {}) {
+      // Eco do PRÓPRIO gráfico não volta para ele: reaplicar a janela que a lib acabou de
+      // reportar reenquadra o desenho no meio do gesto, e o arrasto vira zoom (medido em
+      // 2026-11-03: 10,00 → 11,50 anos num arrasto de 200px, mesmo com as pontas presas ao dado).
+      if (ultimoEco && from === ultimoEco.from && to === ultimoEco.to) return;
       if (!temDado) return;                  // sem barra na tela, a lib lança — ver `temDado`
       const t = janelaEmTempo(from, to);
       if (t.from == null && t.to == null) return chart.timeScale().fitContent();
@@ -457,6 +491,7 @@ export function criarAdapter(container, { aoMudarJanela, aoMoverCursor } = {}) {
       // A assinatura de geometria morre com o gráfico — quem observava não pode ser chamado depois.
       if (aoMudarPlotagemCb) chart.timeScale().unsubscribeSizeChange(aoMudarPlotagemCb);
       aoMudarPlotagemCb = null;
+      chart.timeScale().unsubscribeSizeChange(aoMudarTamanho);
       container.removeEventListener('pointerdown', assumir);
       container.removeEventListener('wheel', assumir);
       if (primitivaDeFaixas) chart.panes()[0].detachPrimitive(primitivaDeFaixas);

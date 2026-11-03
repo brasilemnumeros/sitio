@@ -110,6 +110,12 @@ mais na coluna 1 (não é grupo do catálogo), lista o catálogo inteiro na colu
 desktop ao celular, que já abria em "Todos" pela fileira de chips. Escolher uma categoria continua
 filtrando; nada mais mudou.
 
+**Na mesma data, a contagem em cada categoria.** A coluna 1 mostra quantos indicadores a categoria
+tem antes de abri-la ("Todos" mostra o tamanho do catálogo) — é o número que os chips do celular já
+traziam, vindo do mesmo `contagens`. Número puro, sem pílula: a coluna mede 240px e o pior nome
+("Crescimento Econômico", 175px) quebraria a linha com fundo e `px`. Por isso a coluna 1 passou de
+224 para 240 — 16px tirados da coluna elástica, que a 768 ainda fica com 222 (piso 200).
+
 A **busca por digitação está disponível em todas as três** — filtra e colapsa a cascata numa lista. Isso é o que torna os três cliques do pior caso aceitáveis: a cascata é para **navegar** quem não sabe o que quer; a digitação é para **achar** quem já sabe.
 
 Por que a cascata, e não uma lista plana agrupada ou um master-detail de duas colunas:
@@ -911,7 +917,7 @@ Ordem sugerida de ataque:
    |---|---|---|---|
    | 199px mortos à direita da ficha | 800 de conteúdo em 1000 de modal | colunas fixas sem coluna elástica | a coluna 2 vira `flex-1` (piso 200px) e absorve a sobra |
    | nome longo cortado | 247px para nomes de até 48 caracteres (360px com o selo "no gráfico") | `truncate` numa coluna de largura fixa | `line-clamp-2`: o nome quebra em duas linhas em vez de sumir |
-   | a 768 de janela a ficha era **cortada** em 94px | modal 707 contra 800 de colunas | mesmo motivo, na largura em que o `md` (768) entra | modal em `100vw - 1rem` (752) + coluna 2 elástica com piso 200 → cabem 224 + 238 + 288 |
+   | a 768 de janela a ficha era **cortada** em 94px | modal 707 contra 800 de colunas | mesmo motivo, na largura em que o `md` (768) entra | modal em `100vw - 1rem` (752) + coluna 2 elástica com piso 200 → cabem 240 + 222 + 288 |
 
    **Quem cede é a coluna 2, não a ficha.** O conteúdo dela é o de largura variável (o nome), e
    nome que quebra linha continua legível; ficha cortada, não. Consequência assumida: a 768, uma

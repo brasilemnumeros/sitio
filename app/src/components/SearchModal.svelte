@@ -546,7 +546,7 @@
         <ul
           data-coluna="1"
           aria-label="Grupos"
-          class="hidden min-h-0 w-56 shrink-0 overflow-y-auto border-r border-slate-200 p-2 md:block dark:border-slate-700"
+          class="hidden min-h-0 w-60 shrink-0 overflow-y-auto border-r border-slate-200 p-2 md:block dark:border-slate-700"
         >
           {#each opcoesGrupo as g, i (g.id ?? 'todos')}
             <li>
@@ -558,7 +558,15 @@
                 onkeydown={aoTeclado}
                 class={classeLinha(colunaAtiva === 1 && focoGrupo === i)}
               >
-                {g.nome}
+                <!-- A contagem (2026-11-03, a pedido do usuário): quantos indicadores a categoria
+                     tem ANTES de abrir. Sai da mesma `contagens` dos chips do celular; "Todos" é o
+                     tamanho do catálogo. Número puro, sem pílula: a coluna tem 240px e o pior nome
+                     ("Crescimento Econômico") ocupa 175 — com fundo e `px`, ele quebraria a linha. -->
+                <span class="min-w-0 flex-1">{g.nome}</span>
+                <span
+                  class="shrink-0 text-[11px] font-medium tabular-nums text-slate-500 dark:text-slate-400"
+                  >{g.id === null ? $catalogStore.indicadores.length : (contagens[g.id] ?? 0)}</span
+                >
               </button>
             </li>
           {/each}
@@ -571,7 +579,8 @@
              direita, e o nome mais longo ainda truncava em 247px.
              Por isso ela também é a que CEDE primeiro quando a janela encolhe: o nome quebra em
              duas linhas, a ficha cortada não tem conserto. Piso de 200px (a 768 de janela ela fica
-             com 238) — o piso antigo de 288 estourava a modal em 94px nessa largura. -->
+             com 222, já descontados os 240 da coluna 1) — o piso antigo de 288 estourava a modal
+             em 94px nessa largura. -->
         <ul
           data-coluna="2"
           aria-label={grupoAtivo ? 'Indicadores do grupo' : 'Todos os indicadores'}
@@ -605,7 +614,12 @@
                 type="button"
                 onclick={() => escolherGrupoMobile(null)}
                 onkeydown={aoTeclado}
-                class={chipClasse(filtroMobile === null)}>Todos</button
+                class={chipClasse(filtroMobile === null)}
+                >Todos<span
+                  class="ml-1.5 rounded-full bg-black/10 px-1.5 text-[10px] leading-4 tabular-nums dark:bg-white/15"
+                  aria-label="{$catalogStore.indicadores.length} indicadores"
+                  >{$catalogStore.indicadores.length}</span
+                ></button
               >
               {#each grupos as [id, g] (id)}
                 <button

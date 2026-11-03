@@ -74,6 +74,9 @@ test('abrir · filtrar · escolher · chip aparece · ESC fecha', async ({ page 
  * categoria acesa — o índice `focoGrupo` nascia em 0, então a escolha era acidente de índice — e a
  * coluna do meio mostrava só os indicadores dela. Agora abre em "Todos", que é o que o celular já
  * fazia (a fileira de chips), e a coluna do meio lista o catálogo inteiro.
+ *
+ * Na mesma data cada categoria ganhou a CONTAGEM à direita (em "Todos", o tamanho do catálogo). O
+ * teste não fixa o número: compara com o tamanho da lista que a categoria abre — o catálogo cresce.
  */
 test('abre em "Todos", sem categoria acesa, com o catálogo inteiro na coluna do meio', async ({
   page,
@@ -87,7 +90,7 @@ test('abre em "Todos", sem categoria acesa, com o catálogo inteiro na coluna do
   // "Todos" é a PRIMEIRA linha da coluna 1 e é ela que está acesa
   const grupos = page.getByRole('list', { name: 'Grupos' });
   await expect(grupos.getByRole('listitem').first()).toContainText('Todos');
-  await expect(botao('Todos')).toHaveClass(ACESO);
+  await expect(botao(/^Todos/)).toHaveClass(ACESO);
 
   // nenhuma categoria nasce acesa: a seleção é da pessoa, não do índice zero
   const categorias = grupos.getByRole('button').filter({ hasNotText: 'Todos' });
@@ -102,11 +105,18 @@ test('abre em "Todos", sem categoria acesa, com o catálogo inteiro na coluna do
   await expect(lista).toContainText('Proporção de Homicídios por Armas de Fogo (%)');
   await expect(lista).not.toContainText('Escolha um grupo');
 
+  // a contagem de "Todos" é o tamanho da lista que ele abre (não um número fixo: o catálogo cresce)
+  const total = await lista.getByRole('listitem').count();
+  await expect(botao(/^Todos/)).toContainText(String(total));
+
   // e escolher uma categoria continua filtrando (o resto do comportamento não mudou)
   await botao(/📈 Inflação/).click();
   await expect(lista).toHaveAttribute('aria-label', 'Indicadores do grupo');
   await expect(lista).not.toContainText('Taxa Selic Meta (%)');
   await expect(lista).toContainText('IPCA (%)');
+  // …e a contagem da categoria é o tamanho da lista dela
+  const daCategoria = await lista.getByRole('listitem').count();
+  await expect(botao(/📈 Inflação/)).toContainText(String(daCategoria));
 });
 
 test('busca sem resultado diz por quê (§9 — nada vazio em silêncio)', async ({ page }) => {
@@ -243,7 +253,7 @@ test('as setas andam nas categorias, → entra nos itens e a ficha acompanha', a
   const botao = (nome) => page.getByRole('button', { name: nome, exact: true });
 
   // a modal abre em "Todos" (2026-11-03), então a primeira categoria NÃO nasce acesa.
-  await expect(botao('Todos')).toHaveClass(ACESO);
+  await expect(botao(/^Todos/)).toHaveClass(ACESO);
   // ␣↓ anda nas CATEGORIAS (não entra nos itens) e a ficha continua vazia.
   await campo.press('ArrowDown');
   await expect(botao(/🏦 Política Monetária/)).toHaveClass(ACESO);

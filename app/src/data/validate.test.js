@@ -73,7 +73,7 @@ describe('validateSeries', () => {
         ...serieValida,
         dados: [
           { data: '1999-03-01', valor: 1 },
-          { data: '1999-03-15', valor: 2 },
+          { data: '1999-03-01', valor: 2 },
         ],
       }),
     ).toThrow(/C11/);
@@ -92,7 +92,7 @@ describe('validateSeries', () => {
     expect(() => validateSeries({ ...serieValida, eixo: 'reais' })).toThrow(/C4/);
   });
 
-  it('aceita unidade com idioma e recusa idioma fora de BCP 47 (C3.1)', () => {
+  it('aceita unidade com idioma e recusa idioma fora do formato xx/xx-XX (C3.1)', () => {
     const moeda = {
       ...serieValida,
       unidade: { tipo: 'moeda', simbolo: 'R$', casas: 0, idioma: 'pt-BR' },

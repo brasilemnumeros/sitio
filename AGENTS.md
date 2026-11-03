@@ -18,7 +18,7 @@ migração (ADR 0002).
 - Catálogo de indicadores: mora no repo `dados/`, em `indicadores/catalogo.json`, e o app o
   busca em runtime (`${__BASE_DADOS__}/catalogo.json`) — **não** está no bundle. Chaves em
   português (`versao`, `grupos`, `indicadores`, `nome`, `grupo`, `descricao`, `escala`,
-  `arquivo`); 13 indicadores hoje. Indicador novo = arquivo da série + entrada no catálogo, no
+  `arquivo`). Indicador novo = arquivo da série + entrada no catálogo, no
   mesmo PR do `dados`.
 - Conteúdo editorial: `src/content/posts/*.md` (10 posts).
 
@@ -42,7 +42,7 @@ migração (ADR 0002).
 | `app/e2e/` | Playwright (10 specs + `apoio.js`) | comportamento/geometria no navegador |
 | `scripts/` | guardas do build publicado | `npm run build` falhar em voz alta |
 | `docs/specs/` | desenhos aprovados (o que o produto deve ser) | ler antes de mudar produto |
-| `docs/contrato-de-indicadores.md` | **contrato normativo** das séries (`versao: 1`, `C1…C14`) e do catálogo (`K1…K8`) | qualquer mudança em `validate.js`, `catalog.js`, no corpus ou nos dados |
+| `docs/contrato-de-indicadores.md` | **contrato normativo** das séries (`versao: 1`, `C1…C15`) e do catálogo (`K1…K8`) | qualquer mudança em `validate.js`, `catalog.js`, no corpus ou nos dados |
 | `docs/adr/0001-...app-isolado.md` | ADR 0001: app de gráficos isolado, Svelte + Lightweight Charts, contrato de dados | antes de mexer na fronteira do app ou nos dados |
 | `docs/adr/0002-...astro.md` | ADR 0002: migração Jekyll → Astro, contrato de URL, feed/sitemap | antes de mexer em build, rotas ou deploy |
 | `docs/plans/` | planos por fatia — **histórico**, pode estar defasado | referência, não verdade |
@@ -125,6 +125,12 @@ quando o defeito aparecer — e provar isso.
   Como o "Aprovar" recarrega, o `permalink-init` grava `sessionStorage['series-do-app']` ao escrever
   o preset, e o `main.js` só trata `?series=` como link compartilhado quando o marcador não existe;
   sem isso o reload fazia o preset parecer link de terceiro e o tour nunca abria.
+- **O cursor lê PONTOS, não a grade do eixo** (2026-11-03): as âncoras mensais do horizonte
+  entravam no snap da lib e, em série anual, a caixa ficava em "—" fora de janeiro.
+  `crosshair.doNotSnapToHiddenSeriesIndices` prende a cruz ao ponto real; ponto fora da janela
+  não vira leitura (a cruz e a caixa somem). Bolinha nos pontos é por **densidade na janela
+  visível** (`domain/marcadores.js`, passo ≥ 16px), nunca por série escolhida à mão. O rótulo da
+  cruz usa `rotuloDaCruz` (pt-BR): a lib não localiza o mês dele pelo `locale`.
 - **Os stores são a fonte da verdade** (`viewport`, `mandate`, `axes`, `series`,
   `catalog`). O gráfico é espelho: `app/src/chart/` assina stores, nunca o
   contrário. Não chamar a lib do gráfico de um componente de UI.
@@ -137,7 +143,7 @@ quando o defeito aparecer — e provar isso.
   no bundle — não há `fetch`). Em dev, o middleware `app/vite-plugins/dados-locais.js` serve
   `/dados/**` para as séries **e** o catálogo; em produção a base aponta para
   `https://brasilemnumeros.github.io/dados/indicadores`.
-- **Contrato das séries: `versao: 1` (versão única)** (`docs/contrato-de-indicadores.md`, regras `C1…C14`).
+- **Contrato das séries: `versao: 1` (versão única)** (`docs/contrato-de-indicadores.md`, regras `C1…C15`).
   Cada série traz `unidade`, `eixo` (comparabilidade declarada), `medida` (o que o número é),
   `granularidade`, `fonte` e `dados` com `{data, valor}` — chaves e valores em português, sem
   `rate`, ordem ascendente, um ponto por período. O corpus em `dados/tests/contrato/` é rodado pelos DOIS validadores

@@ -75,7 +75,7 @@ export function validateUnit(unidade, onde = 'unidade') {
     erro('C3', `${onde}.casas deve ser inteiro ≥ 0`);
   }
   if (unidade.idioma !== undefined && (typeof unidade.idioma !== 'string' || !IDIOMA.test(unidade.idioma))) {
-    erro('C3.1', `${onde}.idioma deve ser tag BCP 47 (ex.: pt-BR)`);
+    erro('C3.1', `${onde}.idioma deve ser tag no formato xx ou xx-XX (ex.: pt-BR)`);
   }
   return unidade.idioma === undefined
     ? { tipo: unidade.tipo, simbolo: unidade.simbolo, casas: unidade.casas }
@@ -89,8 +89,15 @@ const chaveDoPeriodo = (data, granularidade) => {
   return data;
 };
 
+/** C15 — a data é o primeiro dia do período (mensal: dia 01; anual: 01-01). */
+const inicioDoPeriodo = (data, granularidade) => {
+  if (granularidade === 'anual') return data.slice(5) === '01-01';
+  if (granularidade === 'mensal') return data.slice(8) === '01';
+  return true;
+};
+
 /**
- * Valida e normaliza uma série — o contrato inteiro (C1…C14).
+ * Valida e normaliza uma série — o contrato inteiro (C1…C15).
  * @param {unknown} bruto
  * @param {{expectedId?: string}} [options]
  */
@@ -155,6 +162,13 @@ export function validateSeries(bruto, { expectedId } = {}) {
     }
     if (typeof ponto.valor !== 'number' || !Number.isFinite(ponto.valor)) {
       erro('C10', `dados[${i}]: "valor" deve ser número finito, veio ${JSON.stringify(ponto.valor)}`);
+    }
+    if (!inicioDoPeriodo(ponto.data, bruto.granularidade)) {
+      const esperado = bruto.granularidade === 'anual' ? 'YYYY-01-01' : 'YYYY-MM-01';
+      erro(
+        'C15',
+        `dados[${i}]: "${ponto.data}" não é o início do período ${bruto.granularidade} (esperado ${esperado})`,
+      );
     }
     const chave = chaveDoPeriodo(ponto.data, bruto.granularidade);
     if (vistos.has(chave)) {

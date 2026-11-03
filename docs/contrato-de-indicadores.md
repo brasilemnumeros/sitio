@@ -4,10 +4,11 @@
 **Consumidor:** app da home (`sitio/app/src/data/validate.js` para a série, `catalog.js` para o catálogo)
 **Produtor:** repo `dados` — os notebooks escrevem as séries e `dados/scripts/validar.py` confere; o catálogo (`indicadores/catalogo.json`) é editado à mão, no mesmo PR
 
-Este documento é a **fonte de verdade** do formato dos arquivos de série (`C1…C14`) e do
-catálogo (`K1…K8`). Cada regra tem um código, citado nos validadores e nos testes que a
-executam. Quando a prosa e o código divergirem, **este documento vale** — e a divergência é
-defeito a corrigir no mesmo commit, não interpretação.
+Este documento é a **fonte de verdade** do formato dos arquivos de série (`C1…C15`) e do
+catálogo (`K1…K8`). Cada regra de rejeição tem um código, citado nos validadores e nos testes
+que a executam; as de aceitação (`C13`/`C14`) têm caso válido ou permissão explícita. Quando a
+prosa e o código divergirem, **este documento vale** — e a divergência é defeito a corrigir no
+mesmo commit, não interpretação.
 
 **Chaves e valores são em português.** O arquivo é lido e publicado nessa forma, sem camada de
 tradução: `unidade`, `granularidade`, `fonte`, `dados`, `data`, `valor`.
@@ -61,8 +62,14 @@ dados/indicadores/<familia>/<id>.json
   - `tipo` ∈ `percentual` | `numero` | `moeda`.
   - `simbolo` é texto não vazio. `''` é erro: a unidade tem de aparecer na tela.
   - `casas` é inteiro ≥ 0 (quantas casas o produto exibe/arredonda).
-- **C3.1 — idioma.** Opcional; quando presente, é uma tag BCP 47 (`pt-BR`). Existe para
-  formatação de moeda/número; não altera o valor.
+- **C3.1 — idioma.** Opcional; quando presente, é uma tag de idioma no formato `xx` ou `xx-XX`
+  (subconjunto de BCP 47; ex.: `pt-BR`). Existe para formatação de moeda/número; não altera o
+  valor.
+
+**Nota — inteiros em JSON.** `versao` e `casas` são inteiros. Como JSON tem um único tipo
+numérico, `1.0` e `2.0` são aceitos e valem como `1` e `2`; valor com parte fracionária
+diferente de zero reprova. O `validar.py` e o `validate.js` fazem a mesma coisa — é o que
+`test_aceita_casas_float_integral` e `test_aceita_versao_float_integral` provam no `dados`.
 
 ### Significado do número
 
@@ -105,11 +112,11 @@ dados/indicadores/<familia>/<id>.json
 ### Pontos
 
 - **C8 — dados.** Lista **não vazia**. Cada item tem exatamente `data` e `valor`.
-- **C8.1 — sem campos extras.** Campo desconhecido no ponto ou na raiz (fora de `idioma`) é
-  erro.
+- **C8.1 — sem campos extras.** Campo desconhecido na raiz, no ponto ou na unidade é erro. Na
+  unidade, só `tipo`, `simbolo`, `casas` e o opcional `idioma` são aceitos (C3).
 - **C9 — data.** Texto `YYYY-MM-DD`, dígitos ASCII, data de calendário válida.
-  - A convenção de dia é **uma por série** (hoje: dia 01 em todas) e não muda sem revisão de
-    dados: mudar o dia gera diff falso em toda a série.
+  - A convenção de dia é **uma por série**; C15 fixa o primeiro dia do período para mensal
+    e anual. Mudar o dia gera diff falso em toda a série.
   - A data é o **início** do período de referência.
 - **C10 — valor.** Número finito (`int` ou `float`, nunca booleano, nunca `null`, nunca texto).
 - **C11 — um ponto por período.** Não há dois pontos no mesmo período, onde período é `data`
@@ -128,6 +135,16 @@ dados/indicadores/<familia>/<id>.json
 - **C14 — período em aberto.** A última data pode ser um período ainda não encerrado. O
   contrato não exige período fechado nem exige que a série vá até "hoje"; **consumidor nenhum
   extrapola** além da última data.
+
+### Início do período
+
+- **C15 — início do período.** A data é o primeiro dia do período de referência:
+  - `mensal`: dia `01`, em qualquer mês (`AAAA-MM-01`);
+  - `anual`: `01-01` (`AAAA-01-01`);
+  - `diaria`: a data do próprio dia, sem restrição além de C9.
+
+  É a consequência executável da convenção de dia de C9: série mensal e anual têm sempre o
+  mesmo dia; na diária, o dia é o próprio dado.
 
 ## Catálogo × série
 
@@ -194,7 +211,7 @@ pintar o distintivo sem baixar as séries, e por isso ela é **conferida**, não
 
 ### K1…K8 — o catálogo contra o disco
 
-`python3 scripts/validar.py` sem argumentos confere as séries (`C1…C14`) **e** o catálogo. Com
+`python3 scripts/validar.py` sem argumentos confere as séries (`C1…C15`) **e** o catálogo. Com
 caminhos avulsos o catálogo fica de fora: conferir a raiz a partir de um recorte produziria K2
 falso.
 
@@ -236,15 +253,19 @@ Pages). Renomear `id` **não** é mudança de apresentação: quebra link `?seri
 
 Os dois conjuntos de regras são provados por **mecanismos diferentes**:
 
-- **Séries (`C1…C14`) — corpus:** `dados/tests/contrato/` — pares de arquivo + veredito esperado
-  (válido/inválido, com o código da regra violada). É a fonte executável: `validar.py` (Python) e
-  `validate.test.js` (JS) têm de concordar com **todos** os casos.
+- **Séries (`C1…C15`) — corpus:** `dados/tests/contrato/` — casos de arquivo + veredito
+  esperado. As regras de rejeição (`C1…C12` e `C15`) têm um caso inválido com o código no
+  nome; `C13` tem um caso **válido** com lacuna (`canonica-com-lacuna.json`), porque lacuna é
+  ausência de ponto, não erro; `C14` é permissão (a última data pode ser período aberto) e não
+  tem caso inválido — o que se prova é que nenhum validador exige período fechado. É a fonte
+  executável: `validar.py` (Python) e `validate.test.js` (JS) têm de concordar com **todos** os
+  casos.
 - **Catálogo (`K1…K8`) — fixtures de diretório:** `dados/tests/test_validar.py` monta uma raiz
   temporária (`tmp_path`) com o catálogo e a série que ele deveria descrever, estraga uma peça
   por teste e cobra o código da regra. **Não há caso `K` no corpus**, e um arquivo de corpus não
   serviria: `validar.py` com caminhos avulsos não confere o catálogo (conferir a raiz a partir de
   um recorte produziria K2 falso) — o catálogo só é validado na raiz, sem argumentos.
-- **Dado real:** os 13 arquivos de série de `dados/indicadores/` passam em `python3 scripts/validar.py`
+- **Dado real:** todos os arquivos de série de `dados/indicadores/` passam em `python3 scripts/validar.py`
   e em `npm --prefix app test` (o teste de integração lê o repo `dados`).
 - **Catálogo × série:** `validar.py` confere o catálogo contra o disco com `K1…K8` (seção
   "Catálogo × série"), e o teste de integração do `sitio` repete a conferência cruzada — o
@@ -255,7 +276,7 @@ Os dois conjuntos de regras são provados por **mecanismos diferentes**:
 - Existe **uma** versão do formato da série: `versao: 1`. Não há convivência entre versões — o
   projeto não carrega compatibilidade retroativa (decisão de 2026-11-01). O catálogo tem a
   `versao` própria (`1`, K6), independente da série; ver "Compatibilidade".
-- Mudança de forma ou de semântica **migra os 13 arquivos de série** no mesmo conjunto de commits, com
+- Mudança de forma ou de semântica **migra todas as séries publicadas** no mesmo conjunto de commits, com
   os dois validadores, o corpus e este documento. Se um dia houver uma geração nova do
   formato, ela substitui a atual: `versao: 2` só existe se `1` deixar de existir.
 - O app entende a `versao` que declara em `validate.js` (`SCHEMA_VERSION`); arquivo com outro

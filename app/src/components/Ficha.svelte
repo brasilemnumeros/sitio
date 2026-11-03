@@ -142,7 +142,7 @@
         </div>
         <div class="flex justify-between gap-3">
           <dt class="shrink-0 text-slate-500 dark:text-slate-400">Fonte</dt>
-          <dd class="text-right text-slate-700 dark:text-slate-200">{estado.series.source}</dd>
+          <dd class="text-right text-slate-700 dark:text-slate-200">{estado.series.fonte}</dd>
         </div>
       </dl>
 

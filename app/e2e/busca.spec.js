@@ -36,6 +36,9 @@ test('abrir · filtrar · escolher · chip aparece · ESC fecha', async ({ page 
   await campo.press('Enter');
   const ficha = page.locator('[data-bloco="ficha"]');
   await expect(ficha).toContainText(/IPCA/);
+  // a ficha mostra a atribuição da série (`fonte`, não `source`)
+  await expect(ficha).toContainText('Fonte');
+  await expect(ficha).toContainText('IBGE');
   const adicionar = ficha.getByRole('button', { name: 'Adicionar' });
   await expect(adicionar).toBeVisible();
 

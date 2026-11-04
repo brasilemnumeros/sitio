@@ -25,7 +25,9 @@ export const PRESETS = Object.freeze([
   // O rótulo diz o que o gráfico desenha (PIB real × população). O id segue `atividade`:
   // é ele que a rotação do dia e o permalink carregam, e renomeá-lo quebraria links salvos.
   preset('atividade', 'PIB e população', ['pib-real-anual', 'populacao-variacao-anual']),
-  preset('trabalho', 'Trabalho', ['caged-total-mensal']),
+  // As três taxas da PNAD dividem a mesma unidade (%). O estoque do Caged continua no
+  // catálogo, mas fora do preset: é contagem e forçaria um segundo eixo.
+  preset('trabalho', 'Trabalho', ['pnad-desocupacao', 'pnad-participacao', 'pnad-nivel-ocupacao']),
 ]);
 
 // Um único formatador por módulo: `en-CA` nasce no formato AAAA-MM-DD que o

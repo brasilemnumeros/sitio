@@ -76,7 +76,15 @@ for (const [nome, width, height] of [
     await page.getByRole('button', { name: 'Fechar séries' }).click();
     await expect(page.getByTestId('gaveta-config')).toBeHidden();
     await abrirGavetaInferior(page);
-    await expect(page.getByTestId('barra-inferior')).toBeVisible();
+    if (width < 768) {
+      // 2026-11-05: no celular a gaveta aberta é a própria folha (grabber + título no topo) e a
+      // barra de 32px sai de cena. O que importa é a folha ocupar o rodapé sem transbordar.
+      await expect(page.getByTestId('gaveta-inferior')).toBeVisible();
+      await expect(page.getByTestId('grabber-comparacao')).toBeVisible();
+      await expect(page.getByTestId('barra-inferior')).toBeHidden();
+    } else {
+      await expect(page.getByTestId('barra-inferior')).toBeVisible();
+    }
     await semTransbordo(page);
     await page.screenshot({ path: `e2e/.artefatos/visual-${nome}-gaveta-inferior.png` });
   });

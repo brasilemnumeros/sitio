@@ -147,7 +147,11 @@ test('o link com ?gaveta=fundo abre a gaveta de comparação, e Esc fecha', asyn
   await page.goto('/?gaveta=fundo');
   await expect(page.getByTestId('grafico')).toBeVisible();
   const gaveta = page.getByTestId('gaveta-inferior');
-  const alca = page.getByRole('button', { name: /Comparação por mandato/ });
+  // No celular a barra sai de cena aberta; o estado continua no mesmo botão, então a leitura é
+  // por CSS — papel só acha o que está visível.
+  const alca = page.locator(
+    '[data-testid="barra-inferior"] button[aria-controls="gaveta-inferior"]',
+  );
   await expect(gaveta).toBeVisible();
   await expect(alca).toHaveAttribute('aria-expanded', 'true');
   // só a geometria mudou: sem mandato escolhido

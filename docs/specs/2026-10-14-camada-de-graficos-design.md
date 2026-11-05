@@ -271,6 +271,11 @@ Por que Δ absoluto e não Δ percentual: o Δ percentual põe tudo na mesma ré
 
 A matriz é **comparável na horizontal** (mesmo indicador entre mandatos — dá um ranking real) e **não na vertical** (14 p.p. de juros e 0,3% de PIB são coisas incomparáveis). Isso é uma limitação assumida, não um defeito a esconder.
 
+> **Emenda de 2026-11-05:** no celular a matriz dá lugar a uma **lista por indicador** — um cartão
+> por série, com uma linha por mandato em ordem cronológica. A comparação continua a mesma (mesmo
+> indicador entre governos); some a rolagem horizontal, que não cabia em 390px. A matriz com
+> cabeçalho fixo vale só no desktop. Ver `2026-11-05-comparacao-mobile-design.md`.
+
 Consequência que economiza trabalho: **nenhum indicador precisa declarar direção/sentido** no registro. Era o custo da alternativa (heatmap por linha) e ele sai da conta.
 
 ---
@@ -665,7 +670,7 @@ Medido na seção 7.3: dos 104 cruzamentos, **4 não têm cobertura** e **1 é i
 
 Ao atingir o teto, o botão de adicionar na modal fica **visível e desabilitado**, dizendo o motivo — e o motivo é a **paleta**, não o layout (seção 1). **Nada é removido automaticamente**: destruir uma escolha do usuário para abrir espaço é o pior comportamento possível ali.
 
-A obrigação de layout que sobra: **a matriz rola com o cabeçalho dos mandatos fixo**, para que o usuário não perca a referência de qual coluna está lendo com 10 linhas.
+A obrigação de layout que sobra: **a matriz rola com o cabeçalho dos mandatos fixo**, para que o usuário não perca a referência de qual coluna está lendo com 10 linhas. *(Só no desktop desde 2026-11-05: no celular a comparação é uma lista por indicador; ver §4 e `2026-11-05-comparacao-mobile-design.md`.)*
 
 ---
 

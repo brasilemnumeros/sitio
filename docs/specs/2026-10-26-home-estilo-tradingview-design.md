@@ -215,8 +215,10 @@ com `replaceState` preservando o resto.
 - Topo 30px: marca, busca (ícone + campo curto), chip da janela de tempo.
 - Gráfico `flex-1`; minimapa 40px.
 - Gaveta direita vira folha lateral de tela cheia (ou 88% da largura), com overlay.
-- Gaveta inferior vira bottom sheet com alça; arrastar para baixo ou tocar no overlay fecha.
-  A matriz mostra 3 governos por vez e rola na horizontal.
+- Gaveta inferior vira bottom sheet com grabber; arrastar para baixo, tocar no overlay ou no "×"
+  fecha. A comparação é uma **lista por indicador** (um cartão por série, uma linha por mandato),
+  **sem rolagem horizontal** — a matriz com cabeçalho fixo é do desktop. Emenda de 2026-11-05; ver
+  `2026-11-05-comparacao-mobile-design.md`.
 - Sem hover: todo controle tem estado visível e alvo ≥ 44×44px.
 
 ### Estados

@@ -292,7 +292,7 @@
       <div class="shrink-0 md:hidden">
         <div
           data-testid="grabber-comparacao"
-          class="flex h-5 touch-none items-center justify-center"
+          class="flex h-11 touch-none items-center justify-center"
           use:arrastarParaFechar={{ aoFechar: fechar }}
         >
           <span class="h-1 w-10 rounded-full bg-slate-600" aria-hidden="true"></span>
@@ -307,12 +307,15 @@
           <button
             bind:this={botaoFecharMobile}
             type="button"
-            class="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-800 text-base leading-none text-slate-300 hover:bg-slate-700 hover:text-slate-100"
+            class="group ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
             aria-label="Fechar comparação"
             title="Fechar comparação"
             onclick={fechar}
           >
-            ×
+            <span
+              class="flex h-7 w-7 items-center justify-center rounded-full bg-slate-800 text-base leading-none text-slate-300 group-hover:bg-slate-700 group-hover:text-slate-100"
+              >×</span
+            >
           </button>
         </div>
       </div>

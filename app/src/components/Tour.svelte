@@ -37,7 +37,7 @@
       popover: {
         title: 'Comparar governos',
         description:
-          'A matriz abaixo mostra a variação de cada indicador em cada mandato: uma linha por série, uma coluna por governo.',
+          'A comparação abaixo mostra a variação de cada indicador em cada mandato: um indicador por vez, com os governos em ordem.',
       },
     },
     {

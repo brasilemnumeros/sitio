@@ -186,6 +186,11 @@ cheia), que **não** abrem a gaveta nem trocam de painel.
 Uma seção só: `ComparisonPanel` como matriz de largura total. Em telas estreitas, rolagem
 horizontal **dentro** da gaveta; a primeira coluna (indicador) fica fixa (`position: sticky`).
 
+> **Emenda de 2026-11-05:** a matriz com coluna fixa e rolagem horizontal é **só do desktop**. No
+> celular a gaveta é uma **lista por indicador** (um cartão por série, uma linha por mandato), sem
+> rolagem horizontal; o título e o "×" passam para o cabeçalho da folha, abaixo do grabber, e a
+> barra de 32px some enquanto ela está aberta. Ver `2026-11-05-comparacao-mobile-design.md`.
+
 **Decisão de 2026-10-30 (a pedido do usuário):** o `MandateRail` saiu desta gaveta. Ele era o
 terceiro caminho para o mesmo estado (chip + minimapa) e vivia numa gaveta que nasce recolhida.
 Consequências: a gaveta é **leitura**, não controle; o título é **um só** — o da barra de 36px

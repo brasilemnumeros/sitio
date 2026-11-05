@@ -268,10 +268,21 @@ test('a lista cabe em 320px com o nome longo, sem rolagem horizontal', async ({
   await page.goto('/?series=mvgr-nominal,mvgr-real');
   await abrirGavetaInferior(page);
 
+  const lista = page.locator('[data-bloco="comparacao-lista"]');
+  const nome = lista.locator('[data-cartao-indicador] h3').first();
+  await expect(nome).toContainText(/MVG-R — valor mediano de garantia/);
+
+  // O documento é só a primeira barreira: a lista vive num `overflow-y:auto` e um filho largo
+  // nunca chegaria ao `documentElement`. O `scrollWidth` da própria lista e o do nome (que pode
+  // ser clipado pelo cartão) são as medidas que denunciam `nowrap` ou token sem quebra.
   const transbordo = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
-  expect(transbordo).toBeLessThanOrEqual(1);
+  expect(transbordo, 'a página rola na horizontal').toBeLessThanOrEqual(1);
+  const sobraLista = await lista.evaluate((el) => el.scrollWidth - el.clientWidth);
+  expect(sobraLista, 'a lista rola na horizontal').toBeLessThanOrEqual(1);
+  const sobraNome = await nome.evaluate((el) => el.scrollWidth - el.clientWidth);
+  expect(sobraNome, 'o nome longo não quebrou linha').toBeLessThanOrEqual(1);
 });
 
 /**
@@ -402,6 +413,25 @@ test('arrastar a alça para baixo fecha a gaveta, devolve o foco e não engole o
 
   await alca.click();
   await expect(alcaAberta).toHaveAttribute('aria-expanded', 'true');
+});
+
+/**
+ * §Mobile — todo controle tem alvo ≥ 44×44px. O "×" e o grabber são os dois caminhos de fechar a
+ * folha; o alvo do gesto não pode ser uma tira de 20px.
+ */
+test('os alvos de fechar a gaveta têm 44px no celular', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'geometria de celular');
+  await page.goto('/');
+  await abrirGavetaInferior(page);
+
+  for (const alvo of [
+    page.getByRole('button', { name: 'Fechar comparação' }),
+    page.getByTestId('grabber-comparacao'),
+  ]) {
+    const caixa = await alvo.boundingBox();
+    expect(caixa.width, 'alvo de toque estreito').toBeGreaterThanOrEqual(44);
+    expect(caixa.height, 'alvo de toque baixo').toBeGreaterThanOrEqual(44);
+  }
 });
 
 /**

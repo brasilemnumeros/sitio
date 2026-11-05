@@ -98,8 +98,9 @@ os nove mandatos. Nada de barra, cor de julgamento ou ranking por "melhor".
   parcial/sem cobertura). O teste de arrasto usa o grabber no celular e a alça no desktop.
 - `app/e2e/busca.spec.js`: novo teste de swipe down no grabber da ficha fecha a ficha (volta para
   "Escolha um indicador").
-- `app/e2e/mobile.spec.js`: abrir/fechar a gaveta continua; a página não ganha transbordo
-  horizontal com a lista.
+- `app/e2e/mobile.spec.js`: abrir/fechar a gaveta continua sem transbordo na página.
+- `app/e2e/mandato-janela.spec.js`: a lista aberta em 320px não rola na horizontal (mede a lista,
+  o nome longo e o documento), e os alvos de fechar têm 44×44px.
 - Unitário: o limiar (`80px`) e a decisão de fechar ganham teste no domínio.
 
 ## Não-objetivos

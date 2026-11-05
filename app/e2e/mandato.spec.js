@@ -1,4 +1,4 @@
-import { test, expect, abrirVazio, carregarExemplo, escolherMandato, mandatoEmCena } from './apoio.js';
+import { test, expect, abrirVazio, carregarExemplo, mandatoEmCena } from './apoio.js';
 
 /**
  * O CHIP DE MANDATO na barra superior (decisão de 2026-10-28, a pedido do usuário).
@@ -33,6 +33,15 @@ const janela = (page) =>
  * falharia por motivo que não é o dele. Os quatro cobrem 1995→2025.
  */
 const SERIES = 'selic-meta,ipca-acum-12m,mvgr-nominal,caged-total-mensal';
+
+/** Tira a SELEÇÃO sem mexer na JANELA. `aplicarMandato(null)`/`escolherMandato(page, id)` fazem as
+ *  duas coisas — e o "Tudo" deixa o minimapa sem região fora da janela, que é justamente a
+ *  condição do arrasto abaixo (com a janela inteira, o gesto só encolhe a borda no limite). */
+const limparSelecaoMantendoJanela = (page) =>
+  page.evaluate(async () => {
+    const { limparSelecao } = await import('/src/stores/mandate.js');
+    limparSelecao();
+  });
 
 /** O chip traz o rótulo do mandato em cena; sem mandato, ele diz o que abre. */
 test('o chip de mandato fica na barra superior e nasce sem mandato', async ({ page }, testInfo) => {
@@ -221,30 +230,30 @@ test('clicar numa faixa do minimapa filtra pelo mandato, e arrastar continua mov
   // saltaria para o governo clicado — o defeito que o limiar existe para impedir.
   const escolhido = await mandatoEmCena(page);
   expect(escolhido, 'o clique na faixa tem de deixar UM mandato em cena').not.toBeNull();
-  await escolherMandato(page, escolhido); // alterna o MESMO id: limpa — o arrasto parte de "Todos"
+  await limparSelecaoMantendoJanela(page);
   expect(await mandatoEmCena(page)).toBeNull();
 
-  // Arrastar NÃO escolhe. O arrasto começa numa faixa FORA da janela (é lá que o cursor é
-  // `pointer` — a faixa visível ganha a janela por cima), e ali o `pointerdown` faz o que sempre
-  // fez: CENTRA a janela no ponto. É o gesto de sempre (`minimapa.spec.js`); a prova DESTE teste
-  // é que a soltura, depois de 120px de movimento, não escolheu o mandato.
-  let inicio = null;
-  for (let x = caixa.x + 6; x < caixa.x + Math.min(larguraVisivel, caixa.width) - 6; x += 4) {
-    if ((await cursorEm(x)) === 'pointer') {
-      inicio = x;
-      break;
-    }
-  }
-  await expect(inicio, 'o teste precisa de uma faixa FORA da janela para arrastar').not.toBeNull();
+  // Arrastar NÃO escolhe. O arrasto começa FORA da janela (o mandato recém-escolhido está numa das
+  // pontas) e ANDA PARA DENTRO do minimapa: 80% da largura deixa 120px de folga à esquerda. Fora
+  // do elemento o navegador CANCELA o ponteiro (`pointercancel`) e o gesto morre sem mover nada —
+  // era o que tornava este teste intermitente no CI, arrastando a partir de 10px da borda. Fora
+  // da janela o `pointerdown` faz o que sempre fez: CENTRA a janela no ponto. É o gesto de sempre
+  // (`minimapa.spec.js`); a prova DESTE teste é que a soltura, depois de 120px de movimento, não
+  // escolheu o mandato.
+  const inicio = caixa.x + Math.round(larguraVisivel * 0.8);
   const b = await janela(page);
   await page.mouse.move(inicio, y);
   await page.mouse.down();
   await page.mouse.move(inicio - 120, y, { steps: 8 });
   await page.mouse.up();
-  const c = await janela(page);
-  expect(
-    { from: c.from, to: c.to },
-    'o arrasto tem de mover a janela',
-  ).not.toEqual({ from: b.from, to: b.to });
+  await expect
+    .poll(
+      async () => {
+        const j = await janela(page);
+        return { from: j.from, to: j.to };
+      },
+      { message: 'o arrasto tem de mover a janela', timeout: 20000 },
+    )
+    .not.toEqual({ from: b.from, to: b.to });
   expect(await mandatoEmCena(page), 'o arrasto não pode escolher mandato').toBeNull();
 });

@@ -411,3 +411,30 @@ test('no teto de 10 séries a troca continua habilitada e funciona', async ({ pa
   await trocar.click();
   await expect(chips.locator('li')).toHaveCount(1);
 });
+
+/**
+ * O SWIPE DOWN da ficha (2026-11-05) — o grabber existia só como desenho: não havia
+ * `pointerdown`/`pointerup`. O gesto tem de fechar pelo MESMO caminho do "×" (`fecharFicha`), e
+ * um toque curto não pode fechar. O limiar é o mesmo da alça da gaveta inferior.
+ */
+test('swipe down no grabber da ficha fecha a ficha', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'gesto de celular');
+  await abrirApp(page);
+  await abrirBusca(page);
+  const campo = page.getByRole('searchbox');
+  await campo.fill('IPCA');
+  await campo.press('Enter');
+  const ficha = page.locator('[data-bloco="ficha"]');
+  await expect(ficha).toContainText(/IPCA/);
+
+  const grabber = page.getByTestId('grabber-ficha');
+  // 40px não fecha: é toque/hesitação
+  await grabber.dispatchEvent('pointerdown', { clientY: 100, pointerId: 1 });
+  await grabber.dispatchEvent('pointerup', { clientY: 140, pointerId: 1 });
+  await expect(ficha).toContainText(/IPCA/);
+
+  // 100px fecha pelo mesmo caminho do "×"
+  await grabber.dispatchEvent('pointerdown', { clientY: 100, pointerId: 1 });
+  await grabber.dispatchEvent('pointerup', { clientY: 200, pointerId: 1 });
+  await expect(ficha).toContainText(/Escolha um indicador/);
+});

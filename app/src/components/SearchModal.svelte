@@ -26,6 +26,7 @@
   } from '../stores/series.js';
   import Ficha from './Ficha.svelte';
   import ErroTotal from './ErroTotal.svelte';
+  import { arrastarParaFechar } from '../arrastar-para-fechar.js';
 
   /** `aoFechar` — chamada ao fechar por ESC ou clique fora (§1.1). `aoTentarCatalogo` — o
    *  "Tentar de novo" do catálogo, que vive na `App` (é ela que retoma o permalink depois do
@@ -684,8 +685,13 @@
           ? 'translate-y-0'
           : 'translate-y-full'}"
       >
-        <!-- alça + fechar: só na folha do celular -->
-        <div class="relative flex justify-center pt-2 md:hidden">
+        <!-- alça + fechar: só na folha do celular. A alça não é decorativa desde 2026-11-05:
+             arrastar para baixo (> 80px) fecha pelo mesmo `fecharFicha` do "×". -->
+        <div
+          data-testid="grabber-ficha"
+          class="relative flex touch-none justify-center pt-2 md:hidden"
+          use:arrastarParaFechar={{ aoFechar: fecharFicha }}
+        >
           <span class="h-1 w-10 rounded-full bg-slate-300 dark:bg-slate-600" aria-hidden="true"
           ></span>
           <button

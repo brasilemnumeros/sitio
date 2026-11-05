@@ -83,6 +83,7 @@ diferente de zero reprova. O `validar.py` e o `validate.js` fazem a mesma coisa 
   | `reais` | `moeda` | MVG-R |
   | `contagem` | `numero` | CAGED, população |
   | `por-100-mil` | `numero` | homicídios |
+  | `por-mil` | `numero` | mortalidade infantil |
 
 - **C5 — medida.** `medida` diz **o que o número é**:
 
@@ -99,8 +100,10 @@ diferente de zero reprova. O `validar.py` e o `validate.js` fazem a mesma coisa 
 
 ### Periodicidade
 
-- **C6 — granularidade.** ∈ `diaria` | `mensal` | `anual`. É o espaçamento das datas, não o
-  intervalo de publicação.
+- **C6 — granularidade.** ∈ `diaria` | `mensal` | `anual` | `bienal`. É o espaçamento das
+  datas, não o intervalo de publicação. Na `bienal`, todos os pontos caem no mesmo ano par ou
+  no mesmo ano ímpar, **ancorado no primeiro ponto**: 2005 e 2006 reprovam, 2005 e 2009 passam
+  (lacuna de 4 anos é ausência de ponto, não erro).
 
 ### Proveniência
 
@@ -115,12 +118,12 @@ diferente de zero reprova. O `validar.py` e o `validate.js` fazem a mesma coisa 
 - **C8.1 — sem campos extras.** Campo desconhecido na raiz, no ponto ou na unidade é erro. Na
   unidade, só `tipo`, `simbolo`, `casas` e o opcional `idioma` são aceitos (C3).
 - **C9 — data.** Texto `YYYY-MM-DD`, dígitos ASCII, data de calendário válida.
-  - A convenção de dia é **uma por série**; C15 fixa o primeiro dia do período para mensal
-    e anual. Mudar o dia gera diff falso em toda a série.
+  - A convenção de dia é **uma por série**; C15 fixa o primeiro dia do período para mensal,
+    anual e bienal. Mudar o dia gera diff falso em toda a série.
   - A data é o **início** do período de referência.
 - **C10 — valor.** Número finito (`int` ou `float`, nunca booleano, nunca `null`, nunca texto).
 - **C11 — um ponto por período.** Não há dois pontos no mesmo período, onde período é `data`
-  (diaria), `AAAA-MM` (mensal) ou `AAAA` (anual).
+  (diaria), `AAAA-MM` (mensal) ou `AAAA` (anual e bienal).
 - **C12 — ordem.** Datas **estritamente ascendentes**. Consumidores podem assumir isso e fazer
   busca binária; produtor que publicar fora de ordem reprova.
 
@@ -140,11 +143,11 @@ diferente de zero reprova. O `validar.py` e o `validate.js` fazem a mesma coisa 
 
 - **C15 — início do período.** A data é o primeiro dia do período de referência:
   - `mensal`: dia `01`, em qualquer mês (`AAAA-MM-01`);
-  - `anual`: `01-01` (`AAAA-01-01`);
+  - `anual` e `bienal`: `01-01` (`AAAA-01-01`);
   - `diaria`: a data do próprio dia, sem restrição além de C9.
 
-  É a consequência executável da convenção de dia de C9: série mensal e anual têm sempre o
-  mesmo dia; na diária, o dia é o próprio dado.
+  É a consequência executável da convenção de dia de C9: série mensal, anual e bienal têm
+  sempre o mesmo dia; na diária, o dia é o próprio dado.
 
 ## Catálogo × série
 

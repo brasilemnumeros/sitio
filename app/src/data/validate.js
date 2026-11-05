@@ -19,15 +19,16 @@ export class SchemaError extends Error {
 export const SCHEMA_VERSION = 1;
 
 export const TIPOS_DE_UNIDADE = new Set(['percentual', 'numero', 'moeda']);
-export const GRANULARIDADES = new Set(['diaria', 'mensal', 'anual']);
+export const GRANULARIDADES = new Set(['diaria', 'mensal', 'anual', 'bienal']);
 /** C4 — comparabilidade declarada: duas séries só dividem eixo y se o `eixo` for igual. */
-export const EIXOS = new Set(['percentual', 'reais', 'contagem', 'por-100-mil']);
+export const EIXOS = new Set(['percentual', 'reais', 'contagem', 'por-100-mil', 'por-mil']);
 /** O `unidade.tipo` que cada eixo obriga (C4). */
 export const TIPO_DO_EIXO = {
   percentual: 'percentual',
   reais: 'moeda',
   contagem: 'numero',
   'por-100-mil': 'numero',
+  'por-mil': 'numero',
 };
 /** C5 — o que o número É (≠ `granularidade`, que diz de quanto em quanto tempo há ponto). */
 export const MEDIDAS = new Set(['nivel', 'acumulado-12m', 'variacao-anual', 'estoque', 'participacao']);
@@ -84,17 +85,20 @@ export function validateUnit(unidade, onde = 'unidade') {
 
 /** Chave de unicidade do período (C11): dia, mês ou ano conforme a granularidade. */
 const chaveDoPeriodo = (data, granularidade) => {
-  if (granularidade === 'anual') return data.slice(0, 4);
+  if (granularidade === 'anual' || granularidade === 'bienal') return data.slice(0, 4);
   if (granularidade === 'mensal') return data.slice(0, 7);
   return data;
 };
 
-/** C15 — a data é o primeiro dia do período (mensal: dia 01; anual: 01-01). */
+/** C15 — a data é o primeiro dia do período (mensal: dia 01; anual/bienal: 01-01). */
 const inicioDoPeriodo = (data, granularidade) => {
-  if (granularidade === 'anual') return data.slice(5) === '01-01';
+  if (granularidade === 'anual' || granularidade === 'bienal') return data.slice(5) === '01-01';
   if (granularidade === 'mensal') return data.slice(8) === '01';
   return true;
 };
+
+/** C6 — na granularidade bienal, todos os anos têm a MESMA paridade. */
+const paridadeDoAno = (data) => Number(data.slice(0, 4)) % 2;
 
 /**
  * Valida e normaliza uma série — o contrato inteiro (C1…C15).
@@ -150,6 +154,7 @@ export function validateSeries(bruto, { expectedId } = {}) {
 
   const vistos = new Map();
   let anterior = null;
+  let paridadeBienal = null;
   const dados = bruto.dados.map((ponto, i) => {
     if (ponto === null || typeof ponto !== 'object' || Array.isArray(ponto)) {
       erro('C8', `dados[${i}] não é um objeto`);
@@ -164,11 +169,24 @@ export function validateSeries(bruto, { expectedId } = {}) {
       erro('C10', `dados[${i}]: "valor" deve ser número finito, veio ${JSON.stringify(ponto.valor)}`);
     }
     if (!inicioDoPeriodo(ponto.data, bruto.granularidade)) {
-      const esperado = bruto.granularidade === 'anual' ? 'YYYY-01-01' : 'YYYY-MM-01';
+      const esperado =
+        bruto.granularidade === 'anual' || bruto.granularidade === 'bienal'
+          ? 'YYYY-01-01'
+          : 'YYYY-MM-01';
       erro(
         'C15',
         `dados[${i}]: "${ponto.data}" não é o início do período ${bruto.granularidade} (esperado ${esperado})`,
       );
+    }
+    if (bruto.granularidade === 'bienal') {
+      const paridade = paridadeDoAno(ponto.data);
+      if (paridadeBienal === null) paridadeBienal = paridade;
+      else if (paridade !== paridadeBienal) {
+        erro(
+          'C6',
+          `dados[${i}]: ano "${ponto.data.slice(0, 4)}" quebra a paridade bienal (esperado ano ${paridadeBienal === 0 ? 'par' : 'ímpar'})`,
+        );
+      }
     }
     const chave = chaveDoPeriodo(ponto.data, bruto.granularidade);
     if (vistos.has(chave)) {

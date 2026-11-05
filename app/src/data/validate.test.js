@@ -19,6 +19,20 @@ const serieValida = {
   ],
 };
 
+// Série bienal realista: pontos a cada 2 anos, com uma lacuna de 4 (C6/C15).
+const serieBienal = {
+  ...serieValida,
+  unidade: { tipo: 'numero', simbolo: 'índice', casas: 1 },
+  eixo: 'contagem',
+  medida: 'nivel',
+  granularidade: 'bienal',
+  dados: [
+    { data: '2005-01-01', valor: 3.8 },
+    { data: '2007-01-01', valor: 4.6 },
+    { data: '2011-01-01', valor: 5.2 },
+  ],
+};
+
 describe('validateSeries', () => {
   it('aceita uma série canônica e normaliza os pontos', () => {
     const s = validateSeries(serieValida, { expectedId: 'selic-meta' });
@@ -59,6 +73,33 @@ describe('validateSeries', () => {
     expect(() => validateSeries({ ...serieValida, granularidade: 'semanal' })).toThrow(/C6/);
   });
 
+  it('aceita bienal com lacuna entre pontos (C6)', () => {
+    const s = validateSeries(serieBienal);
+    expect(s.granularidade).toBe('bienal');
+    expect(s.dados).toHaveLength(3);
+  });
+
+  it('recusa bienal com anos consecutivos — a paridade do primeiro ano manda (C6)', () => {
+    expect(() =>
+      validateSeries({
+        ...serieBienal,
+        dados: [
+          { data: '2005-01-01', valor: 3.8 },
+          { data: '2006-01-01', valor: 4.2 },
+        ],
+      }),
+    ).toThrow(/^C6: .*quebra a paridade bienal/);
+  });
+
+  it('recusa bienal com data fora de 01-01 (C15)', () => {
+    expect(() =>
+      validateSeries({
+        ...serieBienal,
+        dados: [{ data: '2006-02-01', valor: 4.2 }],
+      }),
+    ).toThrow(/^C15:/);
+  });
+
   it('recusa campo extra no ponto: ele tem exatamente data e valor (C8.1)', () => {
     const comExtra = {
       ...serieValida,
@@ -90,6 +131,21 @@ describe('validateSeries', () => {
 
   it('recusa eixo incompatível com a unidade (C4)', () => {
     expect(() => validateSeries({ ...serieValida, eixo: 'reais' })).toThrow(/C4/);
+  });
+
+  it('aceita eixo por-mil com unidade numérica (C4)', () => {
+    const porMil = {
+      ...serieValida,
+      unidade: { tipo: 'numero', simbolo: 'por mil', casas: 1 },
+      eixo: 'por-mil',
+    };
+    expect(validateSeries(porMil).eixo).toBe('por-mil');
+  });
+
+  it('recusa por-mil declarado com unidade percentual (C4)', () => {
+    expect(() => validateSeries({ ...serieValida, eixo: 'por-mil' })).toThrow(
+      /^C4: .*exige unidade\.tipo "numero"/,
+    );
   });
 
   it('aceita unidade com idioma e recusa idioma fora do formato xx/xx-XX (C3.1)', () => {

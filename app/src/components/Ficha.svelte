@@ -15,6 +15,7 @@
   // limite chega PRONTO da store (`motivoDoLimite()`), via prop.
   import { loadSeries } from '../data/series.js';
   import { seriesStore } from '../stores/series.js';
+  import { rotuloDaGranularidade, rotuloDaUnidade } from '../domain/format.js';
 
   /** `aoTeclado` é a regra única de teclado da modal (§12.1) — repassada para o Adicionar não
    *  perder `Esc`/setas quando ele está focado. */
@@ -67,8 +68,9 @@
    *  (com ele já lá, o botão da ficha é "Remover"). */
   let podeTrocar = $derived(!jaNoGrafico && $seriesStore.itens.length > 0);
 
-  const TIPO = { percentual: 'percentual', numero: 'contagem', moeda: 'moeda' };
-  const GRANULARIDADE = { diaria: 'diária', mensal: 'mensal', anual: 'anual' };
+  // Unidade e granularidade NÃO têm mapa local: os rótulos moram em `domain/format.js`, com
+  // teste. O eixo (C4) é o que separa "contagem" de "taxa por mil"/"taxa por 100 mil" — pelo
+  // `unidade.tipo` sozinho, as três seriam "numero".
   /** C5 do contrato — o que o número É. `granularidade` diz de quanto em quanto tempo há ponto. */
   const MEDIDA = {
     nivel: 'valor no período',
@@ -135,13 +137,15 @@
           <dt class="text-slate-500 dark:text-slate-400">Unidade</dt>
           <dd class="text-right text-slate-700 dark:text-slate-200">
             {estado.series.unidade.simbolo}
-            <span class="text-slate-400 dark:text-slate-500">({TIPO[estado.series.unidade.tipo]})</span>
+            <span class="text-slate-400 dark:text-slate-500"
+              >({rotuloDaUnidade(estado.series.eixo, estado.series.unidade.tipo)})</span
+            >
           </dd>
         </div>
         <div class="flex justify-between gap-3">
           <dt class="text-slate-500 dark:text-slate-400">Granularidade</dt>
           <dd class="text-right text-slate-700 dark:text-slate-200">
-            {GRANULARIDADE[estado.series.granularidade]}
+            {rotuloDaGranularidade(estado.series.granularidade)}
           </dd>
         </div>
         <div class="flex justify-between gap-3">

@@ -28,11 +28,27 @@ export function pontosNoMandato(series, mandato) {
  * Quantos pontos a série DEVERIA ter dentro do mandato, na granularidade dela.
  * É a régua da cobertura (§7.3.5): "abaixo do esperado para a própria granularidade".
  * `null` para mandato em curso — não há período fechado para comparar.
+ *
+ * `fase` é o ANO DO PRIMEIRO PONTO e só é usado por `bienal` (C6): a grade de 2 em 2 anos
+ * começa na série, não no mandato. Sem `fase` não há como saber a paridade e a régua não
+ * existe (`null`) — quem chama `deltaNoMandato` sempre passa.
  */
-export function pontosEsperados(granularidade, mandato) {
+export function pontosEsperados(granularidade, mandato, fase = null) {
   if (mandato.emCurso || mandato.fim === null) return null;
+  const primeiroAno = Number(mandato.inicio.slice(0, 4));
+  const ultimoAno = Number(mandato.fim.slice(0, 4));
   if (granularidade === 'anual') {
-    return Number(mandato.fim.slice(0, 4)) - Number(mandato.inicio.slice(0, 4)) + 1;
+    return ultimoAno - primeiroAno + 1;
+  }
+  if (granularidade === 'bienal') {
+    if (!Number.isInteger(fase)) return null;
+    // A contagem começa em `max(início, fase)`: anos ANTES do primeiro ponto não têm medição
+    // a esperar (Lula I começa em 2003, a série do IDEB em 2005 → espera 1, não 2).
+    let esperados = 0;
+    for (let ano = Math.max(primeiroAno, fase); ano <= ultimoAno; ano++) {
+      if ((ano - fase) % 2 === 0) esperados++;
+    }
+    return esperados;
   }
   if (granularidade === 'mensal') {
     const meses = (d) => Number(d.slice(0, 4)) * 12 + Number(d.slice(5, 7));
@@ -71,7 +87,9 @@ export function deltaNoMandato(series, mandato) {
   }
   const periodo = { inicio: pontos[0].data, fim: pontos[pontos.length - 1].data };
   const delta = pontos[pontos.length - 1].valor - pontos[0].valor;
-  const esperados = pontosEsperados(series.granularidade, mandato);
+  // A fase da grade bienal é o ano do primeiro ponto DA SÉRIE — `dados` vem ascendente do contrato.
+  const fase = Number(series.dados[0].data.slice(0, 4));
+  const esperados = pontosEsperados(series.granularidade, mandato, fase);
   const completa = esperados !== null && pontos.length >= esperados;
   return {
     estado: completa ? COBERTURA.CALCULAVEL : COBERTURA.PARCIAL,
@@ -90,6 +108,10 @@ function motivoDaAusencia(series, mandato) {
   const inicio = ymd(mandato.inicio);
   const fim = mandato.fim ? ymd(mandato.fim) : null;
   if (fim !== null && ymd(primeira) > fim) return `série começa em ${primeira.slice(0, 7)}`;
+  // Há medição ANTES e DEPOIS da janela, e nenhuma DENTRO — o caso da série bienal num mandato
+  // de 2 anos (IDEB: 2007 e 2019 cercam o Temer). "série termina em" seria falso: a série não
+  // terminou, ela pula o período.
+  if (fim !== null && ymd(ultima) > fim) return 'sem medição no período';
   return `série termina em ${ultima.slice(0, 7)}`;
 }
 

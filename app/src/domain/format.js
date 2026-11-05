@@ -46,6 +46,36 @@ export function valorCompacto(valor, unidade) {
   return simbolo === '%' ? `${numero}${simbolo}` : `${numero} ${simbolo}`;
 }
 
+/** O que o eixo diz sobre a unidade, em uma palavra — a ficha escreve isto entre parênteses. */
+const UNIDADE_POR_EIXO = {
+  percentual: 'percentual',
+  reais: 'moeda',
+  contagem: 'contagem',
+  'por-100-mil': 'taxa por 100 mil',
+  'por-mil': 'taxa por mil',
+};
+
+/**
+ * Rótulo da UNIDADE na ficha (2026-11-04). Mapeia pelo `eixo` — a comparabilidade declarada
+ * (C4) —, e não só pelo `unidade.tipo`: `numero` cobre contagem E taxa por mil E taxa por 100
+ * mil, então é o eixo que diz qual das três a ficha deve escrever. Sem eixo conhecido, cai no
+ * `tipo` (é o que a ficha exibia antes, quando só olhava o tipo).
+ *
+ * @param {string|undefined} eixo
+ * @param {string|undefined} tipo
+ * @returns {string}
+ */
+export function rotuloDaUnidade(eixo, tipo) {
+  return UNIDADE_POR_EIXO[eixo] ?? tipo ?? '';
+}
+
+/** Rótulo da granularidade (`bienal` entrou com o IDEB, 2026-11-04). Desconhecida volta como veio. */
+const GRANULARIDADE = { diaria: 'diária', mensal: 'mensal', anual: 'anual', bienal: 'bienal' };
+
+export function rotuloDaGranularidade(granularidade) {
+  return GRANULARIDADE[granularidade] ?? granularidade ?? '';
+}
+
 /**
  * Rótulo de data do eixo do tempo sob o cursor (2026-11-03).
  *

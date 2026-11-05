@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { valorNaUnidade, valorCompacto, rotuloDaCruz } from './format.js';
+import {
+  valorNaUnidade,
+  valorCompacto,
+  rotuloDaCruz,
+  rotuloDaGranularidade,
+  rotuloDaUnidade,
+} from './format.js';
 
 describe('valorNaUnidade', () => {
   it('usa as casas decimais e o símbolo da unidade', () => {
@@ -36,6 +42,39 @@ describe('valorCompacto', () => {
       'R$ 320.000',
     );
     expect(valorCompacto(9.6222, { tipo: 'percentual', simbolo: '%', casas: 2 })).toBe('9,62%');
+  });
+});
+
+describe('rotuloDaUnidade — a ficha lê o EIXO, não só o tipo', () => {
+  // O eixo é a comparabilidade declarada (C4); é ele que distingue duas séries de `tipo: numero`.
+  // Sem isso, IDEB e homicídios apareciam os dois como "contagem" na ficha.
+  it('traduz os eixos de taxa', () => {
+    expect(rotuloDaUnidade('por-mil', 'numero')).toBe('taxa por mil');
+    expect(rotuloDaUnidade('por-100-mil', 'numero')).toBe('taxa por 100 mil');
+  });
+
+  it('mantém os rótulos que já existiam', () => {
+    expect(rotuloDaUnidade('contagem', 'numero')).toBe('contagem');
+    expect(rotuloDaUnidade('percentual', 'percentual')).toBe('percentual');
+    expect(rotuloDaUnidade('reais', 'moeda')).toBe('moeda');
+  });
+
+  it('sem eixo conhecido, cai no tipo da unidade (nunca em "undefined")', () => {
+    expect(rotuloDaUnidade(undefined, 'numero')).toBe('numero');
+    expect(rotuloDaUnidade('desconhecido', 'percentual')).toBe('percentual');
+  });
+});
+
+describe('rotuloDaGranularidade', () => {
+  it('cobre as quatro granularidades do contrato, incluindo a bienal', () => {
+    expect(rotuloDaGranularidade('diaria')).toBe('diária');
+    expect(rotuloDaGranularidade('mensal')).toBe('mensal');
+    expect(rotuloDaGranularidade('anual')).toBe('anual');
+    expect(rotuloDaGranularidade('bienal')).toBe('bienal');
+  });
+
+  it('valor desconhecido volta como veio, não como "undefined"', () => {
+    expect(rotuloDaGranularidade('trimestral')).toBe('trimestral');
   });
 });
 

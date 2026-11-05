@@ -64,6 +64,47 @@ describe('deltaNoMandato (§4, §7.3.5)', () => {
   });
 });
 
+// Bienal (IDEB, C6 do contrato): um ponto a cada DOIS anos, e a paridade é a do
+// PRIMEIRO ponto da série — 2005, 2007, ... 2019, 2021. O mandato não redefine a grade.
+const IDEB = {
+  id: 'ideb-anos-iniciais',
+  granularidade: 'bienal',
+  dados: [
+    { data: '2005-01-01', valor: 3.8 },
+    { data: '2007-01-01', valor: 4.2 },
+    { data: '2019-01-01', valor: 5.9 },
+    { data: '2021-01-01', valor: 5.8 },
+  ],
+};
+const BOLSONARO = { id: 'federal-2019-bolsonaro', inicio: '2019-01-01', fim: '2022-12-31' };
+const TEMER = { id: 'federal-2016-temer', inicio: '2016-05-12', fim: '2018-12-31' };
+
+describe('deltaNoMandato numa série bienal (IDEB)', () => {
+  it('bienal espera 2 pontos num mandato de 4 anos e 1 num de 2', () => {
+    expect(pontosEsperados('bienal', BOLSONARO, 2005)).toBe(2);
+    expect(pontosEsperados('bienal', TEMER, 2005)).toBe(1);
+    // Lula I começa ANTES do primeiro ponto: 2003 e 2005 têm a paridade certa, mas a grade
+    // da série só existe a partir de 2005 — não há medição a esperar em 2003.
+    expect(pontosEsperados('bienal', LULA_I, 2005)).toBe(1);
+  });
+
+  it('sem a fase (ano do primeiro ponto) não há régua: devolve null', () => {
+    expect(pontosEsperados('bienal', BOLSONARO)).toBeNull();
+  });
+
+  it('bienal completo é calculável e o delta é último − primeiro', () => {
+    const c = deltaNoMandato(IDEB, BOLSONARO);
+    expect(c.estado).toBe(COBERTURA.CALCULAVEL);
+    expect(c.delta).toBeCloseTo(5.8 - 5.9, 6);
+  });
+
+  it('janela entre duas medições diz que não há medição no período', () => {
+    const c = deltaNoMandato(IDEB, TEMER);
+    expect(c.estado).toBe(COBERTURA.SEM);
+    expect(c.motivo).toMatch(/sem medição no período/);
+  });
+});
+
 describe('formatarPeriodo', () => {
   it('usa MM/AAAA encurtado', () => {
     expect(formatarPeriodo({ inicio: '2004-03-31', fim: '2006-12-31' })).toBe('03/2004–12/2006');

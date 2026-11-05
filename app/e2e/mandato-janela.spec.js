@@ -184,10 +184,12 @@ test('a janela invertida não chega à lib (onde a produção não tem asserçã
  * série, com os estados de célula EM TEXTO (§9.4): nada de símbolo — "—" faria concluir que falta
  * dado que existe.
  *
- * O cabeçalho da matriz é, desde 2026-10-30, o ÚNICO lugar (nos dois viewports) onde os nove
- * rótulos de governo aparecem como DOM — por isso a ordem cronológica é afirmada aqui, literal.
+ * No celular (2026-11-05) a matriz dá lugar a uma lista por indicador: o nome do governo continua
+ * sendo o lugar onde a ordem cronológica é afirmada, agora numa linha por mandato.
  */
-test('a matriz aparece com série e traz os estados de célula por texto', async ({ page }) => {
+test('a comparação aparece com série e traz os estados de célula por texto', async ({
+  page,
+}, testInfo) => {
   await abrirVazio(page);
 
   // §9.1 — sem série o painel não existe (divulgação progressiva): não fica mudo porque não está lá.
@@ -198,32 +200,92 @@ test('a matriz aparece com série e traz os estados de célula por texto', async
 
   const painel = page.locator('[data-bloco="comparacao"]');
 
-  // cabeçalho: a coluna do indicador + uma por mandato (9), na ordem cronológica (§7.3.6)
-  const tabela = painel.getByRole('table');
-  await expect(tabela).toBeVisible();
-  const cabecalhos = painel.getByRole('columnheader');
-  await expect(cabecalhos).toHaveCount(ROTULOS.length + 1);
-  await expect(cabecalhos.first()).toHaveText('Indicador');
-  for (let i = 0; i < ROTULOS.length; i++) {
-    await expect(cabecalhos.nth(i + 1)).toHaveText(ROTULOS[i]);
+  if (testInfo.project.name === 'mobile') {
+    const lista = painel.locator('[data-bloco="comparacao-lista"]');
+    await expect(lista).toBeVisible();
+
+    const cartoes = lista.locator('[data-cartao-indicador]');
+    await expect(cartoes).toHaveCount(2);
+
+    // uma linha por mandato, na ordem cronológica (§7.3.6)
+    const linhas = cartoes.first().locator('[data-linha-mandato]');
+    await expect(linhas).toHaveCount(ROTULOS.length);
+    for (let i = 0; i < ROTULOS.length; i++) {
+      await expect(linhas.nth(i)).toContainText(ROTULOS[i]);
+    }
+
+    // o mandato em curso é o último, está parcial e leva o marcador de hachura
+    await expect(linhas.last()).toHaveAttribute('data-em-curso', 'true');
+    await expect(linhas.last()).toHaveAttribute('data-estado', 'parcial');
+    await expect(linhas.last()).toContainText(/parcial \d{2}\/\d{4}–\d{2}\/\d{4}/);
+
+    // os outros estados continuam em TEXTO, não em símbolo
+    const semCobertura = lista.locator('[data-estado="sem-cobertura"]');
+    expect(await semCobertura.count()).toBeGreaterThan(0);
+    await expect(semCobertura.first()).toContainText(/série começa em \d{4}-\d{2}/);
+    const parciais = lista.locator('[data-estado="parcial"]');
+    expect(await parciais.count()).toBeGreaterThan(0);
+    await expect(parciais.first()).toContainText(/parcial \d{2}\/\d{4}–\d{2}\/\d{4}/);
+  } else {
+    // cabeçalho: a coluna do indicador + uma por mandato (9), na ordem cronológica (§7.3.6)
+    const tabela = painel.getByRole('table');
+    await expect(tabela).toBeVisible();
+    const cabecalhos = painel.getByRole('columnheader');
+    await expect(cabecalhos).toHaveCount(ROTULOS.length + 1);
+    await expect(cabecalhos.first()).toHaveText('Indicador');
+    for (let i = 0; i < ROTULOS.length; i++) {
+      await expect(cabecalhos.nth(i + 1)).toHaveText(ROTULOS[i]);
+    }
+
+    // duas linhas de dados (Selic e IPCA)
+    await expect(tabela.locator('tbody tr')).toHaveCount(2);
+
+    // ao menos uma célula SEM cobertura diz POR QUÊ, com a data real (a Selic começa em 1999-03,
+    // depois do FHC I) — texto, não símbolo
+    const semCobertura = painel.locator('[data-estado="sem-cobertura"]');
+    expect(await semCobertura.count()).toBeGreaterThan(0);
+    await expect(semCobertura.first()).toContainText(/série começa em \d{4}-\d{2}/);
+
+    // ao menos uma célula PARCIAL — o mandato em curso (fim null) nunca é "completo" (§7.3.5), e o
+    // período real usado é verboso de propósito
+    const parciais = painel.locator('[data-estado="parcial"]');
+    expect(await parciais.count()).toBeGreaterThan(0);
+    await expect(parciais.first()).toContainText(/parcial \d{2}\/\d{4}–\d{2}\/\d{4}/);
   }
 
-  // duas linhas de dados (Selic e IPCA)
-  await expect(tabela.locator('tbody tr')).toHaveCount(2);
-
-  // ao menos uma célula SEM cobertura diz POR QUÊ, com a data real (a Selic começa em 1999-03,
-  // depois do FHC I) — texto, não símbolo
-  const semCobertura = painel.locator('[data-estado="sem-cobertura"]');
-  expect(await semCobertura.count()).toBeGreaterThan(0);
-  await expect(semCobertura.first()).toContainText(/série começa em \d{4}-\d{2}/);
-
-  // ao menos uma célula PARCIAL — o mandato em curso (fim null) nunca é "completo" (§7.3.5), e o
-  // período real usado é verboso de propósito
-  const parciais = painel.locator('[data-estado="parcial"]');
-  expect(await parciais.count()).toBeGreaterThan(0);
-  await expect(parciais.first()).toContainText(/parcial \d{2}\/\d{4}–\d{2}\/\d{4}/);
-
   await page.screenshot({ path: 'e2e/.artefatos/comparacao-matriz.png', fullPage: true });
+});
+
+/**
+ * A lista não pode trocar a rolagem horizontal da matriz por uma rolagem horizontal do cartão: o
+ * nome mais longo do catálogo e uma tela de 320px são o pior caso.
+ */
+test('a lista cabe em 320px com o nome longo, sem rolagem horizontal', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'geometria de celular');
+  await page.setViewportSize({ width: 320, height: 720 });
+  await page.goto('/?series=mvgr-nominal,mvgr-real');
+  await abrirGavetaInferior(page);
+
+  const transbordo = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(transbordo).toBeLessThanOrEqual(1);
+});
+
+/**
+ * Cada cartão é uma série: a unidade exibida tem de ser a dela, não a do vizinho. O caso misto
+ * (%, R$) é o que pega um cabeçalho que leia a unidade "da comparação" em vez da linha.
+ */
+test('cada cartão mostra a unidade da própria série', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'lista de celular');
+  await page.goto('/?series=selic-meta,mvgr-nominal');
+  await abrirGavetaInferior(page);
+
+  const cartoes = page.locator('[data-bloco="comparacao-lista"] [data-cartao-indicador]');
+  await expect(cartoes.nth(0).locator('header')).toContainText('%');
+  await expect(cartoes.nth(1).locator('header')).toContainText('R$');
 });
 
 /**

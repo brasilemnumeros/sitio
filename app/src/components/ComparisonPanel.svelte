@@ -18,6 +18,7 @@
   import { mandateStore } from '../stores/mandate.js';
   import { deltaNoMandato, ordenarMandatos } from '../domain/mandates.js';
   import Celula from './Celula.svelte';
+  import ComparisonList from './ComparisonList.svelte';
 
   let itens = $derived($seriesStore.itens);
   // A store já entrega ordenado (§7.3.6); reordenar é barato e mantém a regra verdadeira.
@@ -45,8 +46,11 @@
   {:else}
     <!-- §9.5 — a matriz ROLA com o cabeçalho dos mandatos FIXO (`sticky`), para o usuário não
          perder a referência de qual coluna lê com 10 linhas. O rótulo do indicador também fica
-         preso à esquerda, pelo mesmo motivo simétrico. -->
-    <div class="max-h-[70vh] overflow-auto rounded border border-slate-200 dark:border-slate-700">
+         preso à esquerda, pelo mesmo motivo simétrico. No celular ela dá lugar à lista: a matriz
+         não cabe em 390px e a rolagem horizontal escondia as colunas atrás da coluna fixa. -->
+    <div
+      class="hidden max-h-[70vh] overflow-auto rounded border border-slate-200 md:block dark:border-slate-700"
+    >
       <table class="w-full border-collapse text-sm">
         <thead>
           <tr>
@@ -102,6 +106,8 @@
         </tbody>
       </table>
     </div>
+
+    <ComparisonList {itens} {mandatos} />
   {/if}
 </section>
 

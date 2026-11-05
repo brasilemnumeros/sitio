@@ -13,8 +13,8 @@
   //
   // §8 — runes, nunca `$:`; nenhum import de `chart/` nem nada em `window`. O Δ é calculado no
   // domínio e chega PRONTO aqui; esta peça só o apresenta.
-  import { COBERTURA, formatarPeriodo } from '../domain/mandates.js';
-  import { valorNaUnidade } from '../domain/format.js';
+  import { COBERTURA } from '../domain/mandates.js';
+  import ConteudoCelula from './ConteudoCelula.svelte';
 
   /** @type {{ celula: {estado:string, delta:number|null, pontos:number,
    *                     periodo:{inicio:string,fim:string}|null, motivo:string|null},
@@ -37,20 +37,5 @@
   class="{CLASSE_BASE} {CLASSE_POR_ESTADO[celula.estado] ?? CLASSE_POR_ESTADO[COBERTURA.CALCULAVEL]}"
   data-estado={celula.estado}
 >
-  {#if celula.estado === COBERTURA.CALCULAVEL}
-    <span class="tabular-nums text-slate-800 dark:text-slate-100">
-      {valorNaUnidade(celula.delta, unidade)}
-    </span>
-  {:else if celula.estado === COBERTURA.PARCIAL}
-    <span class="tabular-nums text-slate-800 dark:text-slate-100">
-      {valorNaUnidade(celula.delta, unidade)}
-    </span>
-    <em class="block text-[10px] text-slate-500 dark:text-slate-400">
-      parcial {formatarPeriodo(celula.periodo)}
-    </em>
-  {:else if celula.estado === COBERTURA.SEM}
-    <span class="text-xs text-slate-400 dark:text-slate-500">{celula.motivo}</span>
-  {:else if celula.estado === COBERTURA.PONTO_UNICO}
-    <span class="text-xs text-amber-600 dark:text-amber-400">ponto único — sem Δ</span>
-  {/if}
+  <ConteudoCelula {celula} {unidade} />
 </td>

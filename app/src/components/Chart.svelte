@@ -176,5 +176,10 @@
       aria-hidden="true"
     ></div>
   </div>
-  <div bind:this={containerMini} class="h-10 md:h-12 shrink-0" data-testid="minimapa"></div>
+  <!--
+    `touch-none` (2026-11-05): sem isto o navegador trata o arrasto do dedo como rolagem e CANCELA
+    o ponteiro no meio do gesto (medido com toque sintético no Pixel 7: `pointercancel` depois de
+    ~20px). O minimapa inteiro é gesto nosso — mover a janela e puxar as bordas.
+  -->
+  <div bind:this={containerMini} class="h-10 md:h-12 shrink-0 touch-none" data-testid="minimapa"></div>
 </div>

@@ -57,7 +57,16 @@ export function criarNavigator(container, { aoMudarJanela, aoEscolherMandato } =
    *
    * Agora o gesto é RELATIVO: guarda-se ONDE o ponteiro agarrou e aplica-se a DIFERENÇA.
    */
-  const PEGA = 6; // px de tolerância em cada borda, para pegar a ponta
+  const PEGA = 6; // px de tolerância em cada borda, para pegar a ponta com o CURSOR
+  /**
+   * 🔴 A ALÇA DO DEDO NÃO PODE SER A DO MOUSE (2026-11-05, relato do usuário: "no celular não
+   * consigo redimensionar pelas bordas"). A borda é uma linha de 1px e a tolerância era de 6px
+   * para cada lado — um alvo de 12px contra os ~25px de contato de um dedo. Na prática a alça só
+   * existia para quem mira com o cursor exato. Aqui o toque ganha 20px de cada lado (~40px de
+   * alvo), sem engolir o miolo: `ladoPegavel` limita o alcance a um TERÇO da largura da janela,
+   * então o centro continua sendo "mover" mesmo numa janela estreita.
+   */
+  const PEGA_TOQUE = 20;
 
   /** Quanto o ponteiro tem de andar para o gesto deixar de ser CLIQUE (ver `aoPressionar`). 4px é
    *  o limiar clássico de "arrasto acidental" — abaixo disso o toque/mouse oscila, acima o
@@ -104,12 +113,18 @@ export function criarNavigator(container, { aoMudarJanela, aoEscolherMandato } =
     return { from: paraISO(t1), to: paraISO(t2) };
   }
 
-  /** Espera `x` no espaço do GRÁFICO (o do pane), não no do container — ver `deslocamentoDoPane`. */
-  function ladoPegavel(x) {
+  /** Onde `x` (espaço do GRÁFICO, o do pane) pega uma ponta da janela — ver `deslocamentoDoPane`.
+   *  `pega` vem do TIPO de ponteiro (`aoPressionar`); o `hitTest` do cursor usa o padrão. */
+  function ladoPegavel(x, pega = PEGA) {
     const { from, to } = janela;
     if (from == null || to == null) return null;
-    if (Math.abs(x - from) <= PEGA) return 'esquerda';
-    if (Math.abs(x - to) <= PEGA) return 'direita';
+    // Um terço por lado: com a janela estreita as duas alças se encontrariam no meio e o miolo
+    // deixaria de existir (não daria para MOVER). Preservar o centro é o que mantém os dois gestos.
+    const alcance = Math.min(pega, Math.max(0, to - from) / 3);
+    const esquerda = Math.abs(x - from);
+    const direita = Math.abs(x - to);
+    if (esquerda <= alcance && esquerda <= direita) return 'esquerda';
+    if (direita <= alcance) return 'direita';
     return null;
   }
 
@@ -131,7 +146,8 @@ export function criarNavigator(container, { aoMudarJanela, aoEscolherMandato } =
     const r = container.getBoundingClientRect();
     // Tudo daqui para baixo é ESPAÇO DO GRÁFICO — a conversão acontece uma vez, aqui.
     const x = ev.clientX - r.left - deslocamentoDoPane();
-    const lado = ladoPegavel(x);
+    // O dedo não mira o pixel: no toque (e na caneta) a alça é maior (ver PEGA_TOQUE).
+    const lado = ladoPegavel(x, ev.pointerType === 'mouse' ? PEGA : PEGA_TOQUE);
     if (lado) {
       gesto = { modo: 'redimensionar', lado };
     } else if (x >= (janela.from ?? 0) && x <= (janela.to ?? Infinity)) {

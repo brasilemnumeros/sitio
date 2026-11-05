@@ -98,6 +98,20 @@ export async function substituirSeries(entries, { fetchImpl } = {}) {
   }));
 }
 
+/** "TROCAR O GRÁFICO POR ESTA SÉRIE" (2026-11-04) — o par de `substituirSeries` para UMA série,
+ *  chamado pela ficha da busca. Uma emissão só: o gráfico nunca passa pelo vazio nem mostra a
+ *  mistura dos dois conjuntos. `expectedId` aqui existe porque o id é conhecido (o caminho do add
+ *  o passa); o `substituirSeries` do preset não pode, porque o `datafile` dele vem curado e o id
+ *  interno do JSON pode divergir do id do preset sem que seja troca de arquivo. */
+export async function substituirPorSerie(entry, { fetchImpl } = {}) {
+  seriesStore.set({ itens: reindexarCores([paraItem(entry)]) });
+  try {
+    await carregarItem(entry, { fetchImpl, expectedId: entry.id });
+  } catch (error) {
+    registrarFalha(entry.id, error);
+  }
+}
+
 export function removerSerie(id) {
   escrever((itens) => reindexarCores(itens.filter((i) => i.id !== id)));
 }

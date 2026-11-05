@@ -3,7 +3,7 @@ import { get } from 'svelte/store';
 import {
   LIMITE_SERIES, seriesStore, dataMaximaStore, adicionarSerie, removerSerie, tentarNovamente,
   atingiuLimite, motivoDoLimite, corDe, definirCor, restaurarCor, limparSeries, substituirSeries,
-  alternarVisibilidade,
+  substituirPorSerie, alternarVisibilidade,
 } from './series.js';
 import { clearSeriesCache } from '../data/series.js';
 import { PALETA_PADRAO } from '../domain/color.js';
@@ -179,4 +179,51 @@ it('alternarVisibilidade esconde e reexibe sem apagar o item', async () => {
   expect(get(seriesStore).itens[0].oculta).toBe(true);
   alternarVisibilidade('escondida');
   expect(get(seriesStore).itens[0].oculta).toBe(false);
+});
+
+// ─── TROCAR O GRÁFICO POR ESTA SÉRIE (2026-11-04) ─── a ação secundária da ficha: o par de
+// `substituirSeries` para UMA série. O que os testes protegem é a TROCA, não o add: uma emissão
+// só (nunca gráfico vazio, nunca a mistura dos dois conjuntos) e a série certa desenhada.
+describe('substituirPorSerie — "trocar o gráfico por esta série" (2026-11-04)', () => {
+  it('deixa UMA série, na cor 0, sem passar por estado vazio', async () => {
+    await adicionarSerie(entrada('a'), { fetchImpl: okSerie('a') });
+    await adicionarSerie(entrada('b'), { fetchImpl: okSerie('b') });
+
+    const vistos = [];
+    const desinscrever = seriesStore.subscribe((s) => vistos.push(s.itens.map((i) => i.id)));
+    vistos.length = 0;
+    await substituirPorSerie(entrada('c'), { fetchImpl: okSerie('c') });
+    desinscrever();
+
+    expect(vistos.every((ids) => ids.length <= 1)).toBe(true); // nunca vazio, nunca a mistura
+    expect(vistos.at(-1)).toEqual(['c']);
+    const itens = get(seriesStore).itens;
+    expect(itens).toHaveLength(1);
+    expect(itens[0].id).toBe('c');
+    expect(itens[0].cor).toBe(PALETA_PADRAO[0]);
+    expect(itens[0].status).toBe('ok');
+  });
+
+  it('respeita o expectedId: arquivo com outro id vira erro, não a série errada', async () => {
+    await substituirPorSerie(entrada('c'), {
+      // `okSerie` devolve uma Promise de resposta — o `json` está no objeto resolvido.
+      fetchImpl: async () => {
+        const resposta = await okSerie('outro')();
+        return { ok: true, status: 200, json: resposta.json };
+      },
+    });
+    const item = get(seriesStore).itens[0];
+    expect(item.status).toBe('erro');
+    expect(item.error).toContain('veio o id "outro" mas o arquivo se chama "c"');
+  });
+
+  it('falha de rede na troca vira chip de erro (não existe gráfico vazio silencioso)', async () => {
+    await substituirPorSerie(entrada('c'), {
+      fetchImpl: async () => ({ ok: false, status: 500, json: async () => ({}) }),
+    });
+    const itens = get(seriesStore).itens;
+    expect(itens).toHaveLength(1);
+    expect(itens[0].status).toBe('erro');
+    expect(itens[0].error).toContain('HTTP 500');
+  });
 });

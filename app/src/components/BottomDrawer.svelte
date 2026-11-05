@@ -33,6 +33,7 @@
   import ComparisonPanel from './ComparisonPanel.svelte';
   import { seriesStore } from '../stores/series.js';
   import { axesStore } from '../stores/axes.js';
+  import { deveFecharAoArrastar } from '../domain/gesto.js';
 
   let { aberta = false, aoAlternar = () => {}, mostrarCasca = false, inativa = false } = $props();
 
@@ -109,8 +110,9 @@
     } catch {
       /* idem acima */
     }
-    // 80px é o limiar da spec mobile: menos que isso é toque/hesitação, não intenção de fechar.
-    if (deslocamento > 80) {
+    // 80px é o limiar da spec mobile (uma regra só, em `domain/gesto.js`): menos que isso é
+    // toque/hesitação, não intenção de fechar.
+    if (deveFecharAoArrastar(deslocamento)) {
       arrasteFechou = true;
       // Mesmo caminho de fechar do `×`/`Esc`: o foco volta para a alça. Sem isto, quem fechou
       // arrastando fica com o foco no vazio (no celular o foco sai do painel que acabou de

@@ -117,22 +117,27 @@ test('com série carregando o shell ainda não existe; ele aparece quando o dado
   await page.unroute('**/dados/indicadores/*/*.json');
 });
 
-test('o dado local carrega: o catálogo traz os 7 grupos', async ({ page }, testInfo) => {
+test('o dado local carrega: o catálogo traz todos os grupos', async ({ page }, testInfo) => {
   await abrirApp(page);
   // O catálogo é buscado na base de dados desde 2026-11-01 (`/dados/indicadores/catalogo.json`).
-  // Se ele não carregasse, a cascata da busca viria sem grupos.
+  // Se ele não carregasse, a cascata da busca viria sem grupos. A contagem NÃO é fixa: o catálogo
+  // cresce (eram 7 grupos quando isto foi escrito; hoje são 9) — o teste compara com o catálogo
+  // que a própria app consome, e a pergunta continua sendo "os grupos chegaram?".
+  const catalogo = await (await page.request.get('/dados/indicadores/catalogo.json')).json();
+  const gruposNoCatalogo = Object.keys(catalogo.grupos).length;
   await page.getByRole('button', { name: 'Buscar indicador…' }).first().click();
   // O controle dos grupos tem DUAS realizações (§12.1): a coluna 1 da cascata (desktop, uma
   // lista) e a fileira de chips (celular, um `role="group"` — a coluna está `md:block`, logo
-  // fora da árvore de acessibilidade no celular). A pergunta é a mesma — os 7 grupos do
-  // catálogo chegaram —, só muda de onde se lê.
+  // fora da árvore de acessibilidade no celular). A pergunta é a mesma — os grupos do catálogo
+  // chegaram —, só muda de onde se lê. Nos dois casos é "Todos" + um por grupo.
   if (testInfo.project.name === 'mobile') {
-    // chips: "Todos" + um por grupo
-    await expect(page.getByRole('group', { name: 'Grupos' }).getByRole('button')).toHaveCount(8);
+    await expect(page.getByRole('group', { name: 'Grupos' }).getByRole('button')).toHaveCount(
+      gruposNoCatalogo + 1,
+    );
   } else {
     // coluna 1: "Todos" + um por grupo (o "Todos" entrou em 2026-11-03, na abertura da modal)
     const grupos = page.getByRole('list', { name: 'Grupos' });
-    await expect(grupos.getByRole('listitem')).toHaveCount(8);
+    await expect(grupos.getByRole('listitem')).toHaveCount(gruposNoCatalogo + 1);
   }
 });
 

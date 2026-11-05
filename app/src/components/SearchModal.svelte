@@ -350,7 +350,7 @@
       e.preventDefault();
       const dir = e.key === 'ArrowRight' ? 1 : -1;
       if (mobile) {
-        // celular: os chips são "Todos" + os 7 grupos, nesta ordem.
+        // celular: os chips são "Todos" + um por grupo do catálogo, nesta ordem.
         const n = grupos.length + 1;
         const atual = filtroMobile === null ? 0 : grupos.findIndex(([id]) => id === filtroMobile) + 1;
         const proximo = prender(atual + dir, n);

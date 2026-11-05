@@ -20,6 +20,7 @@
     seriesStore,
     adicionarSerie,
     removerSerie,
+    substituirPorSerie,
     motivoDoLimite,
     LIMITE_SERIES,
   } from '../stores/series.js';
@@ -700,6 +701,7 @@
           motivo={motivoLimite}
           aoAdicionar={(ind) => adicionarSerie(ind)}
           aoRemover={(ind) => removerSerie(ind.id)}
+          aoSubstituir={(ind) => substituirPorSerie(ind)}
           {aoTeclado}
         />
       </div>

@@ -24,6 +24,7 @@
     motivo = null,
     aoAdicionar,
     aoRemover,
+    aoSubstituir,
     aoTeclado = undefined,
   } = $props();
 
@@ -61,6 +62,10 @@
   //    docs/specs/2026-11-01-aviso-de-escala-design.md).
 
   let jaNoGrafico = $derived($seriesStore.itens.some((i) => i.id === indicador?.id));
+
+  /** A troca só faz sentido quando há o QUE trocar e o indicador ainda não está no gráfico
+   *  (com ele já lá, o botão da ficha é "Remover"). */
+  let podeTrocar = $derived(!jaNoGrafico && $seriesStore.itens.length > 0);
 
   const TIPO = { percentual: 'percentual', numero: 'contagem', moeda: 'moeda' };
   const GRANULARIDADE = { diaria: 'diária', mensal: 'mensal', anual: 'anual' };
@@ -202,6 +207,29 @@
         {#if noLimite && motivo}
           <!-- A frase vem PRONTA de `motivoDoLimite()` (o motivo é a PALETA, não o layout). -->
           <p class="mt-2 text-xs text-amber-700 dark:text-amber-400">{motivo}</p>
+        {/if}
+
+        {#if podeTrocar}
+          <!-- AÇÃO SECUNDÁRIA (2026-11-04): "o gráfico está cheio do preset do dia e eu queria só
+               esta". Explícita e destrutiva — o rótulo diz que o resto sai. Sem diálogo, sem
+               "não perguntar mais" (ver docs/specs/2026-11-04-trocar-o-grafico-design.md).
+               Habilitada mesmo no teto: é a saída do limite sem remover uma a uma. O rótulo NÃO
+               começa com "Adicionar" para não colidir com o locator do E2E. -->
+          <button
+            type="button"
+            onclick={() => aoSubstituir?.(indicador)}
+            onkeydown={(e) => {
+              // Só o Esc passa: reusar `aoTeclado` faria ⏎ aqui chamar `confirmarAcao()` —
+              // adicionar em vez de trocar. ⏎ neste botão é a ativação nativa.
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                aoTeclado?.(e);
+              }
+            }}
+            class="mt-2 w-full rounded px-3 py-1 text-xs font-medium text-slate-500 underline decoration-slate-400 underline-offset-2 hover:text-slate-800 dark:text-slate-400 dark:decoration-slate-500 dark:hover:text-slate-100"
+          >
+            Trocar o gráfico por esta série
+          </button>
         {/if}
       {/if}
     </div>

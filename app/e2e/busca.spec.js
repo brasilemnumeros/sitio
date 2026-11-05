@@ -47,7 +47,7 @@ test('abrir · filtrar · escolher · chip aparece · ESC fecha', async ({ page 
     'https://github.com/brasilemnumeros/dados/blob/main/indicadores/ipca/IPCA.ipynb',
   );
   await expect(notebook).toHaveAttribute('target', '_blank');
-  const adicionar = ficha.getByRole('button', { name: 'Adicionar' });
+  const adicionar = ficha.getByRole('button', { name: 'Adicionar ao gráfico', exact: true });
   await expect(adicionar).toBeVisible();
 
   // ⏎ de novo, com a ficha aberta, CONFIRMA o Adicionar. O chip aparece na faixa de séries.
@@ -92,10 +92,13 @@ test('abre em "Todos", sem categoria acesa, com o catálogo inteiro na coluna do
   await expect(grupos.getByRole('listitem').first()).toContainText('Todos');
   await expect(botao(/^Todos/)).toHaveClass(ACESO);
 
-  // nenhuma categoria nasce acesa: a seleção é da pessoa, não do índice zero
+  // nenhuma categoria nasce acesa: a seleção é da pessoa, não do índice zero. O número NÃO é
+  // fixo no teste: o catálogo cresce (eram 7 quando isto foi escrito; hoje são 9), e a asserção
+  // é "a coluna mostra todos os grupos do catálogo", não "o catálogo tem 7".
+  const catalogo = await (await page.request.get('/dados/indicadores/catalogo.json')).json();
   const categorias = grupos.getByRole('button').filter({ hasNotText: 'Todos' });
   const n = await categorias.count();
-  expect(n).toBe(7);
+  expect(n).toBe(Object.keys(catalogo.grupos).length);
   for (let i = 0; i < n; i++) await expect(categorias.nth(i)).not.toHaveClass(ACESO);
 
   // a coluna do meio lista o catálogo inteiro — um indicador do primeiro grupo e um do último
@@ -324,4 +327,87 @@ test('em 768 a ficha cabe inteira e a cascata não estoura a modal', async ({ pa
   );
   expect(medida.estouro, 'a cascata rola na horizontal dentro da modal').toBeLessThanOrEqual(1);
   expect(medida.larguraLista, 'a coluna do meio não cabe mais').toBeGreaterThanOrEqual(200);
+});
+
+/**
+ * TROCAR O GRÁFICO POR ESTA SÉRIE (2026-11-04). A home nunca abre vazia (preset do dia), então o
+ * primeiro "Adicionar" sempre cai num gráfico com conteúdo. A ação secundária da ficha resolve
+ * isso sem diálogo e sem preferência: o rótulo diz que o resto sai.
+ */
+test('trocar o gráfico por esta série: sobra um chip, uma linha e a URL só com ela', async ({ page }) => {
+  // duas séries conhecidas por permalink (o preset do dia varia com a data)
+  await page.goto('/?series=selic-meta,ipca-acum-12m');
+  const chips = page.locator('[data-bloco="chips"]');
+  await expect(chips.locator('li')).toHaveCount(2);
+
+  await abrirBusca(page);
+  const campo = page.getByRole('searchbox');
+  await campo.fill('IGP-M');
+  await campo.press('Enter'); // abre a ficha do primeiro resultado
+
+  const ficha = page.locator('[data-bloco="ficha"]');
+  await expect(ficha).toContainText(/IGP-M/);
+  const trocar = ficha.getByRole('button', { name: 'Trocar o gráfico por esta série', exact: true });
+  await expect(trocar).toBeVisible();
+  await trocar.click();
+
+  // uma série só: o chip, a legenda e a URL concordam
+  await expect(chips.locator('li')).toHaveCount(1);
+  await expect(chips.locator('li')).toContainText(/igp-m/i);
+  await expect(page.getByTestId('legenda-series').locator('li')).toHaveCount(1);
+  await expect(page).toHaveURL(/series=igpm-acum-12m/);
+
+  // e a ficha agora só oferece "Remover" (o indicador já está no gráfico)
+  await expect(ficha.getByRole('button', { name: 'Trocar o gráfico por esta série' })).toHaveCount(0);
+  await expect(ficha.getByRole('button', { name: 'Remover do gráfico' })).toBeVisible();
+});
+
+test('Esc fecha a ficha com o foco na ação secundária', async ({ page }) => {
+  // A troca NÃO pode herdar `aoTeclado`: o handler trata ⏎ como a ação principal, então ⏎ no
+  // botão de troca adicionaria em vez de trocar. O botão recebe só o Esc.
+  await page.goto('/?series=selic-meta,ipca-acum-12m');
+  await abrirBusca(page);
+  const campo = page.getByRole('searchbox');
+  await campo.fill('IGP-M');
+  await campo.press('Enter');
+  const ficha = page.locator('[data-bloco="ficha"]');
+  const trocar = ficha.getByRole('button', { name: 'Trocar o gráfico por esta série', exact: true });
+  await trocar.focus();
+  await page.keyboard.press('Escape');
+  await expect(ficha).toContainText(/Escolha um indicador/);
+  await expect(page.locator('[data-bloco="chips"] li')).toHaveCount(2); // nada foi trocado
+});
+
+test('sem o que trocar, a ação não aparece', async ({ page }) => {
+  await abrirVazio(page); // gráfico sem série
+  await abrirBusca(page);
+  const campo = page.getByRole('searchbox');
+  await campo.fill('IPCA');
+  await campo.press('Enter');
+  const ficha = page.locator('[data-bloco="ficha"]');
+  await expect(ficha.getByRole('button', { name: 'Adicionar ao gráfico' })).toBeVisible();
+  await expect(ficha.getByRole('button', { name: 'Trocar o gráfico por esta série' })).toHaveCount(0);
+});
+
+test('no teto de 10 séries a troca continua habilitada e funciona', async ({ page }) => {
+  // os 10 ids vêm dos presets (conferidos contra o catálogo pelo teste de integração)
+  const dez = [
+    'selic-meta', 'selic-over-acum-12m', 'ipca-acum-12m', 'igpm-acum-12m',
+    'mvgr-nominal', 'mvgr-real', 'homicidios-anual', 'homicidios-armas-fogo-anual',
+    'pib-real-anual', 'populacao-variacao-anual',
+  ].join(',');
+  await page.goto(`/?series=${dez}`);
+  const chips = page.locator('[data-bloco="chips"]');
+  await expect(chips.locator('li')).toHaveCount(10);
+
+  await abrirBusca(page);
+  const campo = page.getByRole('searchbox');
+  await campo.fill('PNAD');
+  await campo.press('Enter');
+  const ficha = page.locator('[data-bloco="ficha"]');
+  await expect(ficha.getByRole('button', { name: 'Adicionar ao gráfico', exact: true })).toBeDisabled();
+  const trocar = ficha.getByRole('button', { name: 'Trocar o gráfico por esta série', exact: true });
+  await expect(trocar).toBeEnabled();
+  await trocar.click();
+  await expect(chips.locator('li')).toHaveCount(1);
 });

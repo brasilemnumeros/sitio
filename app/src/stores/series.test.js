@@ -195,8 +195,11 @@ describe('substituirPorSerie — "trocar o gráfico por esta série" (2026-11-04
     await substituirPorSerie(entrada('c'), { fetchImpl: okSerie('c') });
     desinscrever();
 
-    expect(vistos.every((ids) => ids.length <= 1)).toBe(true); // nunca vazio, nunca a mistura
-    expect(vistos.at(-1)).toEqual(['c']);
+    // 🔴 A asserção é "TODA emissão já é ['c']", não "nenhuma tem mais de 1": a versão frouxa
+    // aceitava `[]` e deixava passar exatamente a implementação proibida (`limparSeries()` +
+    // `adicionarSerie()`), que pisca o gráfico vazio no meio do caminho.
+    expect(vistos.length).toBeGreaterThan(0);
+    expect(vistos.every((ids) => ids.length === 1 && ids[0] === 'c')).toBe(true);
     const itens = get(seriesStore).itens;
     expect(itens).toHaveLength(1);
     expect(itens[0].id).toBe('c');

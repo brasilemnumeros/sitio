@@ -296,7 +296,9 @@ test('cada cartão mostra a unidade da própria série', async ({ page }, testIn
  * casca existe e a alça nasce habilitada. O teste NÃO afirma o conteúdo do preset — só a forma
  * da barra —, então o dia que muda não apodrece o teste.
  */
-test('a gaveta inferior abre com a matriz, e a alça diz o que abre', async ({ page }) => {
+test('a gaveta inferior abre com a comparação, e a alça diz o que abre', async ({
+  page,
+}, testInfo) => {
   await page.goto('/');
   const alca = page.getByRole('button', { name: /Comparação por mandato/ });
   await expect(alca).toHaveAttribute('aria-expanded', 'false');
@@ -313,10 +315,17 @@ test('a gaveta inferior abre com a matriz, e a alça diz o que abre', async ({ p
   await expect(gaveta.locator('[data-bloco="comparacao"]')).toBeVisible();
   // §7.3.4 / decisão de 2026-10-30 — a gaveta é LEITURA: nenhum seletor de mandato dentro dela.
   await expect(gaveta.locator('[data-bloco="trilho"]')).toHaveCount(0);
-  await expect(alca).toHaveAttribute('aria-expanded', 'true');
+  if (testInfo.project.name === 'mobile') {
+    // A barra sai de cena aberta (2026-11-05): o controle visível é o cabeçalho da folha.
+    await expect(page.getByTestId('grabber-comparacao')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Comparação por mandato' })).toBeVisible();
+  } else {
+    await expect(alca).toHaveAttribute('aria-expanded', 'true');
+  }
 
   await page.keyboard.press('Escape');
   await expect(gaveta).toBeHidden();
+  await expect(alca).toHaveAttribute('aria-expanded', 'false');
 });
 
 /**
@@ -370,18 +379,49 @@ test('o limpar filtros é fixo no trilho, desabilita sem filtro e devolve o esta
  */
 test('arrastar a alça para baixo fecha a gaveta, devolve o foco e não engole o toque seguinte', async ({
   page,
-}) => {
+}, testInfo) => {
   await page.goto('/');
   const alca = page.getByRole('button', { name: /Comparação por mandato/ });
   await alca.click();
-  await expect(alca).toHaveAttribute('aria-expanded', 'true');
+  // No mobile a barra (e a alça) sai de cena aberta; o `aria-expanded` continua no mesmo botão,
+  // então a leitura é por CSS e não por papel — papel só acha o que está visível.
+  const alcaAberta = page.locator(
+    '[data-testid="barra-inferior"] button[aria-controls="gaveta-inferior"]',
+  );
+  await expect(alcaAberta).toHaveAttribute('aria-expanded', 'true');
 
-  await alca.dispatchEvent('pointerdown', { clientY: 100, pointerId: 1 });
-  await alca.dispatchEvent('pointerup', { clientY: 260, pointerId: 1 });
-  await expect(alca).toHaveAttribute('aria-expanded', 'false');
+  // No celular a barra sai de cena aberta; quem carrega o gesto é o grabber do topo. No desktop
+  // a alça continua sendo o alvo (a barra permanece).
+  const alvo =
+    testInfo.project.name === 'mobile' ? page.getByTestId('grabber-comparacao') : alca;
+  await alvo.dispatchEvent('pointerdown', { clientY: 100, pointerId: 1 });
+  await alvo.dispatchEvent('pointerup', { clientY: 260, pointerId: 1 });
+  await expect(alcaAberta).toHaveAttribute('aria-expanded', 'false');
   // O foco volta para a alça, que é o gatilho — mesmo caminho de `Esc`/`×`.
   await expect(alca).toBeFocused();
 
   await alca.click();
-  await expect(alca).toHaveAttribute('aria-expanded', 'true');
+  await expect(alcaAberta).toHaveAttribute('aria-expanded', 'true');
+});
+
+/**
+ * Dois riscos da gaveta mobile: o arrasto dentro da lista não pode fechar (só o grabber fecha), e
+ * a troca de largura tem de trocar a forma sem deixar as duas visíveis ao mesmo tempo.
+ */
+test('arrasto na lista não fecha, e ao alargar a tela a matriz aparece', async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== 'mobile', 'geometria de celular');
+  await page.goto('/');
+  const gaveta = page.getByTestId('gaveta-inferior');
+  await abrirGavetaInferior(page);
+
+  const linha = page.locator('[data-bloco="comparacao-lista"] [data-linha-mandato]').first();
+  await linha.dispatchEvent('pointerdown', { clientY: 100, pointerId: 1 });
+  await linha.dispatchEvent('pointerup', { clientY: 260, pointerId: 1 });
+  await expect(gaveta).toBeVisible();
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expect(page.locator('[data-bloco="comparacao"] table')).toBeVisible();
+  await expect(page.getByTestId('grabber-comparacao')).toBeHidden();
 });

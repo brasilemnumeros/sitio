@@ -34,6 +34,7 @@
   import { seriesStore } from '../stores/series.js';
   import { axesStore } from '../stores/axes.js';
   import { deveFecharAoArrastar } from '../domain/gesto.js';
+  import { arrastarParaFechar } from '../arrastar-para-fechar.js';
 
   let { aberta = false, aoAlternar = () => {}, mostrarCasca = false, inativa = false } = $props();
 
@@ -135,11 +136,15 @@
    */
   let jaExpandida = false;
   let botaoFechar = $state(null);
+  /** O "×" do cabeçalho mobile — a barra que o hospedava sai de cena quando a gaveta abre. */
+  let botaoFecharMobile = $state(null);
   $effect(() => {
     if (expandida === jaExpandida) return;
     jaExpandida = expandida;
-    if (expandida) botaoFechar?.focus();
-    else alca?.focus();
+    if (expandida) {
+      const visivel = (el) => !!el && el.getClientRects().length > 0;
+      (visivel(botaoFecharMobile) ? botaoFecharMobile : botaoFechar)?.focus();
+    } else alca?.focus();
   });
 
   // 🔴 `$derived` — não `const`. Uma `const` que lê `expandida` congela no primeiro render
@@ -149,9 +154,9 @@
       ? // Aberta: a altura ACOMPANHA O CONTEÚDO (2026-10-30, a pedido do usuário). Antes era
         // `h-[45dvh]` fixo e, como a matriz raramente enche isso, sobrava uma área cinza morta
         // embaixo dela. O teto continua em 360px / 45dvh — passando disso, a matriz rola por
-        // dentro (`CLASSE_PAINEL`). No celular a barra FICA em 32px: o painel é uma folha fixa
-        // acima dela, e a moldura não pode pular entre os dois layouts.
-        'max-h-[min(360px,45dvh)] max-md:h-8 max-md:max-h-none'
+        // dentro (`CLASSE_PAINEL`). No celular a barra SOME (2026-11-05): o painel vira a própria
+        // folha, com grabber e título no topo, e não sobra faixa vazia embaixo.
+        'max-h-[min(360px,45dvh)] max-md:h-0 max-md:max-h-none'
       : // Fechada: a barra de sempre. `36px` (32px no celular) é a medida da SPEC (T5/T11),
         // revista em 2026-10-28 para dar respiro à fonte de 13px.
         'h-9 max-md:h-8',
@@ -159,7 +164,7 @@
 
   const CLASSE_PAINEL =
     'flex min-h-0 flex-1 flex-col border-t border-slate-800 bg-slate-900 ' +
-    'max-md:fixed max-md:inset-x-0 max-md:bottom-8 max-md:z-40 ' +
+    'max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-40 ' +
     'max-md:max-h-[70dvh] max-md:rounded-t-xl max-md:border-t max-md:border-slate-700 ' +
     'max-md:shadow-2xl';
 </script>
@@ -191,8 +196,11 @@
        usuário): aquela faixa era uma linha inteira só com o "×" — altura de gráfico gastada
        para nada —, e o painel ficava com DOIS títulos iguais ("Comparação por mandato" aqui na
        barra e de novo no topo da matriz). Agora o título é UM: o da barra, que já está sempre à
-       vista; a matriz fica sem `h2` e mantém o nome pela `aria-label` da seção. -->
-  <div class="flex h-8 shrink-0 items-stretch border-t border-slate-800 md:h-9">
+       vista; a matriz fica sem `h2` e mantém o nome pela `aria-label` da seção.
+       No celular aberto (2026-11-05) a barra sai de cena: o título e o "×" vão para o cabeçalho
+       da folha, abaixo do grabber. Fechada, ela continua sendo a alça — e o único caminho de
+       abrir. -->
+  <div class="flex h-8 shrink-0 items-stretch border-t border-slate-800 md:h-9 {expandida ? 'max-md:hidden' : ''}">
     <!-- A ALÇA. É um `<button>` de verdade (não um `<div>` com `onclick`) porque ela carrega
          ESTADO (`aria-expanded`) e a gaveta que ela controla (`aria-controls`).
          DESABILITADA — nunca escondida — quando não há série: a moldura não pula (§9.1). -->
@@ -278,10 +286,55 @@
       hidden={!expandida}
       class={expandida ? CLASSE_PAINEL : ''}
     >
-      <!-- A vista é única e rola AQUI: só a matriz, sem título (o título é o da barra).
-           `min-h-0` é o que permite o filho rolar em vez de esticar o painel. -->
+      <!-- GRABBER + CABEÇALHO (2026-11-05) — no celular o título vem para a janela, abaixo do
+           grabber, e a barra de 32px sai de cena. O gesto mora aqui: o conteúdo rola, e só o
+           grabber fecha. No desktop nada disto existe (a barra continua com o título). -->
+      <div class="shrink-0 md:hidden">
+        <div
+          data-testid="grabber-comparacao"
+          class="flex h-5 touch-none items-center justify-center"
+          use:arrastarParaFechar={{ aoFechar: fechar }}
+        >
+          <span class="h-1 w-10 rounded-full bg-slate-600" aria-hidden="true"></span>
+        </div>
+        <div class="flex items-start gap-2 border-b border-slate-800 px-3 pb-2">
+          <div class="min-w-0">
+            <h2 class="text-[13px] font-semibold tracking-wide text-slate-100">
+              Comparação por mandato
+            </h2>
+            <p class="text-[10.5px] text-slate-500">{resumo}</p>
+          </div>
+          <button
+            bind:this={botaoFecharMobile}
+            type="button"
+            class="ml-auto flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-800 text-base leading-none text-slate-300 hover:bg-slate-700 hover:text-slate-100"
+            aria-label="Fechar comparação"
+            title="Fechar comparação"
+            onclick={fechar}
+          >
+            ×
+          </button>
+        </div>
+      </div>
+
+      <!-- A vista é única e rola AQUI: só a comparação, sem título duplicado (no mobile o título
+           é o do cabeçalho; no desktop, o da barra). `min-h-0` é o que permite o filho rolar em
+           vez de esticar o painel. -->
       <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-2">
         <ComparisonPanel />
+      </div>
+
+      <!-- O aviso de dados da barra também sai de cena no celular aberto; ele reaparece aqui, no
+           rodapé da folha, para a `/` não ficar sem nenhuma menção a termos. -->
+      <div
+        class="flex h-7 shrink-0 items-center border-t border-slate-800 px-3 text-[10px] text-slate-500 md:hidden"
+      >
+        <span>Dados públicos</span>
+        <a
+          href="/termos-de-uso.html"
+          class="ml-auto underline decoration-slate-500 underline-offset-2 hover:text-slate-300"
+          >Termos</a
+        >
       </div>
     </div>
   {/if}

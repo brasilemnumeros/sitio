@@ -284,6 +284,18 @@ migração; não os use como validação principal.
 
 ## Analytics (GA4)
 
+### Toda fatia declara os eventos antes de virar plano
+
+Analytics é parte do desenho, não etapa de depois. Ao desenhar qualquer funcionalidade
+nova, a pergunta obrigatória é: **quais eventos esta fatia captura?** A resposta vai no
+spec (`docs/specs/`) e no plano (`docs/plans/`) com nome, gatilho e parâmetros — ou a
+frase explícita "esta fatia não instrumenta nada", com o motivo. Sem essa decisão o
+desenho não está pronto.
+
+Evento novo entra junto com o teste que o prova: Vitest para o helper
+(`app/src/analytics.js`), E2E para o gatilho e a ampliação de
+`scripts/testar-analytics.mjs`. Evento sem teste e sem gate não entra.
+
 ### Estado atual (não presumir outro)
 
 - GA4 `G-N4CFQ7CL1S` via **gtag.js direto**, inline em
@@ -333,6 +345,8 @@ migração; não os use como validação principal.
 3. Leitura de post: 50%/90% de scroll por slug — `post_read`.
 4. Compartilhamento/CTA quando existirem — `share_clicked`, `cta_clicked`.
 5. Busca interna (se houver) — `search_performed` (sem o termo digitado).
+6. Reporte de erro de dado no app — `report_opened` e `report_issue_opened` (ver
+   `docs/specs/2026-11-06-reportar-problema-nos-dados-design.md`).
 
 ### Validação obrigatória (evidência, não afirmação)
 

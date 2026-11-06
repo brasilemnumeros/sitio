@@ -49,6 +49,18 @@ async function cenario(rotulo, { dnt = false, consentiu = false }, esperaTerceir
   // Sem consentimento o banner TEM de estar visível: o gate também pode falhar
   // escondendo a UI de consentimento (o gtag fica verde sob o cookie semeado).
   if (!consentiu) conferir(await pagina.isVisible('#cookie-notice'), `${rotulo}: #cookie-notice nao esta visivel`);
+  // Sem consentimento não pode existir nem a FUNÇÃO que emite evento: o app descarta o evento
+  // quando `gtag` não existe, e o script do Google não criou `dataLayer` nenhum (2026-11-06).
+  if (!esperaTerceiro) {
+    conferir(
+      await pagina.evaluate(() => typeof window.gtag === 'undefined'),
+      `${rotulo}: window.gtag existe sem consentimento`,
+    );
+    conferir(
+      await pagina.evaluate(() => typeof window.dataLayer === 'undefined'),
+      `${rotulo}: window.dataLayer enfileirado sem consentimento`,
+    );
+  }
   await navegador.close();
 }
 

@@ -13,6 +13,7 @@
   // issue vazia.
   import { untrack } from 'svelte';
   import { montarRelato } from '../domain/relato.js';
+  import { registrarEvento } from '../analytics.js';
   import { seriesStore } from '../stores/series.js';
   import { catalogStore } from '../stores/catalog.js';
   import { viewportStore } from '../stores/viewport.js';
@@ -87,6 +88,9 @@
       valorEsperado = '';
       fonte = '';
       resumoAberto = false;
+      // Analytics: a abertura é o evento, não cada mudança de campo. Dentro do `untrack` para
+      // não reemitir quando o gráfico mudar com o diálogo aberto.
+      registrarEvento('report_opened', { series_count: okItens.length });
     });
   });
 </script>
@@ -277,7 +281,18 @@
           aria-disabled={!pode}
           tabindex={pode ? 0 : -1}
           onclick={(e) => {
-            if (!pode) e.preventDefault();
+            if (!pode) {
+              e.preventDefault();
+              return;
+            }
+            // Analytics: a conversão da fatia. Só o id (público, está na URL) e os booleanos do
+            // que foi preenchido — o TEXTO digitado nunca sai.
+            registrarEvento('report_issue_opened', {
+              series_id: serieAtual?.id ?? '',
+              series_count: ids.length,
+              has_period: periodo.trim() !== '',
+              has_source: fonte.trim() !== '',
+            });
           }}
           class="rounded border px-3 py-1.5 text-xs font-semibold {pode
             ? 'border-blue-600 bg-blue-600 text-white hover:bg-blue-500'

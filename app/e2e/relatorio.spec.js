@@ -83,3 +83,36 @@ test('no celular o diálogo cabe na tela', async ({ page }, testInfo) => {
   expect(caixa.y).toBeGreaterThanOrEqual(0);
   expect(caixa.y + caixa.height).toBeLessThanOrEqual(vp.height);
 });
+
+/**
+ * O `gtag` só existe DEPOIS do consentimento (o `Analytics.astro` o cria ali). Aqui ele é
+ * semeado antes da app carregar, que é o estado de quem já aprovou — e o array prova o que
+ * saiu, sem rede.
+ */
+const semearGtag = (page) =>
+  page.addInitScript(() => {
+    window.__eventos = [];
+    window.gtag = (...args) => window.__eventos.push(args);
+  });
+
+test('os eventos saem pelo gtag quando há consentimento', async ({ page }) => {
+  await semearGtag(page);
+  await page.goto(`/?series=${SELIC}`);
+  await page.getByTestId('botao-reportar').click();
+  await expect
+    .poll(() => page.evaluate(() => window.__eventos))
+    .toEqual([['event', 'report_opened', { series_count: 1 }]]);
+
+  await page.getByTestId('relato-texto').fill('Conferir.');
+  await page.getByTestId('relato-periodo').fill('mai/2026');
+  await page.route('https://github.com/**', (r) => r.fulfill({ status: 200, body: 'ok' }));
+  await page.getByTestId('relato-abrir').dispatchEvent('click');
+
+  const eventos = await page.evaluate(() => window.__eventos);
+  expect(eventos).toHaveLength(2);
+  expect(eventos[1]).toEqual([
+    'event',
+    'report_issue_opened',
+    { series_id: SELIC, series_count: 1, has_period: true, has_source: false },
+  ]);
+});

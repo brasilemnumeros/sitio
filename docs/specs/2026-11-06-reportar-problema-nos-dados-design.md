@@ -106,8 +106,10 @@ Com várias séries o seletor **já vem na primeira** (a mesma do topo da legend
 único portão é o texto. O campo e o título da issue nomeiam a série, e o corpo é revisado no GitHub
 antes de virar issue.
 
-Rodapé: `Destino: brasilemnumeros/dados` à esquerda; `Cancelar` e `Abrir issue no GitHub ↗` à
-direita.
+Rodapé: `Cancelar` e `Abrir issue no GitHub ↗` à direita. O destino — `brasilemnumeros/dados` —
+fica no **subtítulo**, junto do aviso de que abre uma issue: no rodapé ele truncava
+(`brasilemnumeros/dad…`, medido em 2026-11-06) porque disputava largura com os dois botões. O
+rótulo do botão e a seta não quebram (`whitespace-nowrap`).
 
 **A ação só habilita com "O que está errado" preenchido.** É um `<a>` com `href` calculado
 (`undefined` quando vazio), `aria-disabled`, `tabindex="-1"` e guarda no `click`. Sem o relato, o

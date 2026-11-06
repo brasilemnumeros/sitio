@@ -110,7 +110,9 @@
             Reportar problema nos dados
           </h2>
           <p class="mt-1 text-xs leading-snug text-slate-400">
-            Abre uma issue no GitHub com o contexto já preenchido. Você revisa antes de enviar.
+            Abre uma issue em
+            <b class="font-medium text-slate-300">brasilemnumeros/dados</b> com o contexto já
+            preenchido. Você revisa antes de enviar.
           </p>
         </div>
         <button
@@ -263,47 +265,42 @@
          rodapé do site contando `footer` fora da barra inferior — e um `<footer>` aqui, mesmo
          dentro de um diálogo fechado, quebraria a prova por um motivo falso. -->
     <div
-      class="flex shrink-0 items-center justify-between gap-3 border-t border-slate-700 bg-[#12161d] px-4 py-2.5"
+      class="flex shrink-0 items-center justify-end gap-2 border-t border-slate-700 bg-[#12161d] px-4 py-2.5"
     >
-      <span class="text-[11px] text-slate-500">
-        Destino: <b class="font-medium text-slate-300">brasilemnumeros/dados</b>
-      </span>
-      <div class="flex items-center gap-2">
-        <button
-          type="button"
-          onclick={aoFechar}
-          class="rounded border border-slate-600 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800"
-        >
-          Cancelar
-        </button>
-        <a
-          data-testid="relato-abrir"
-          target="_blank"
-          rel="noopener noreferrer"
-          href={pode && relato ? relato.url : undefined}
-          aria-disabled={!pode}
-          tabindex={pode ? 0 : -1}
-          onclick={(e) => {
-            if (!pode) {
-              e.preventDefault();
-              return;
-            }
-            // Analytics: a conversão da fatia. Só o id (público, está na URL) e os booleanos do
-            // que foi preenchido — o TEXTO digitado nunca sai.
-            registrarEvento('report_issue_opened', {
-              series_id: serieAtual?.id ?? '',
-              series_count: ids.length,
-              has_period: periodo.trim() !== '',
-              has_source: fonte.trim() !== '',
-            });
-          }}
-          class="rounded border px-3 py-1.5 text-xs font-semibold {pode
-            ? 'border-blue-600 bg-blue-600 text-white hover:bg-blue-500'
-            : 'cursor-not-allowed border-slate-700 bg-slate-800 text-slate-500'}"
-        >
-          Abrir issue no GitHub <span aria-hidden="true">↗</span>
-        </a>
-      </div>
+      <button
+        type="button"
+        onclick={aoFechar}
+        class="whitespace-nowrap rounded border border-slate-600 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800"
+      >
+        Cancelar
+      </button>
+      <a
+        data-testid="relato-abrir"
+        target="_blank"
+        rel="noopener noreferrer"
+        href={pode && relato ? relato.url : undefined}
+        aria-disabled={!pode}
+        tabindex={pode ? 0 : -1}
+        onclick={(e) => {
+          if (!pode) {
+            e.preventDefault();
+            return;
+          }
+          // Analytics: a conversão da fatia. Só o id (público, está na URL) e os booleanos do
+          // que foi preenchido — o TEXTO digitado nunca sai.
+          registrarEvento('report_issue_opened', {
+            series_id: serieAtual?.id ?? '',
+            series_count: ids.length,
+            has_period: periodo.trim() !== '',
+            has_source: fonte.trim() !== '',
+          });
+        }}
+        class="whitespace-nowrap rounded border px-3 py-1.5 text-xs font-semibold {pode
+          ? 'border-blue-600 bg-blue-600 text-white hover:bg-blue-500'
+          : 'cursor-not-allowed border-slate-700 bg-slate-800 text-slate-500'}"
+      >
+        Abrir issue no GitHub <span aria-hidden="true">↗</span>
+      </a>
     </div>
   </div>
 </dialog>

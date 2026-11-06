@@ -237,7 +237,9 @@ test('o link só habilita com o relato e leva o contexto todo', async ({ page })
   expect(url.searchParams.get('title')).toContain('IPCA');
   const body = url.searchParams.get('body');
   expect(body).toContain(`\`${IPCA}\``);
-  expect(body).toContain(`?series=${SELIC},${IPCA}`);
+  // ⚠ A forma canônica do produto é `%2C` (o `escreverSearch` do permalink codifica a vírgula).
+  // O teste real usa `%2C`; não "conserte" para vírgula literal.
+  expect(body).toContain(`?series=${SELIC}%2C${IPCA}`);
   expect(body).toContain('Aparece no site: 4,72%');
   expect(body).not.toContain('utm_source');
 });
@@ -248,7 +250,7 @@ test('série escondida continua no link', async ({ page }) => {
   await abrirRelato(page);
   await page.getByTestId('relato-texto').fill('Conferir.');
   const body = new URL(await page.getByTestId('relato-abrir').getAttribute('href')).searchParams.get('body');
-  expect(body).toContain(`?series=${SELIC},${IPCA}`);
+  expect(body).toContain(`?series=${SELIC}%2C${IPCA}`);
 });
 
 test('Esc fecha e devolve o foco ao trilho', async ({ page }) => {

@@ -1,4 +1,4 @@
-import { test, expect } from './apoio.js';
+import { test, expect, abrirGavetaConfig } from './apoio.js';
 
 /**
  * O RELATO DE ERRO DE DADO — o caminho que termina numa issue do repositório `dados`.
@@ -62,16 +62,42 @@ test('série escondida continua no link', async ({ page }) => {
   expect(body).toContain(`?series=${SELIC}%2C${IPCA}`);
 });
 
-test('Esc fecha e devolve o foco ao trilho', async ({ page }) => {
+test('a janela visível vai no corpo da issue', async ({ page }) => {
   await page.goto(`/?series=${SELIC}`);
+  await page.getByRole('button', { name: 'Janela de 5 anos' }).click();
+  await abrirRelato(page);
+  await page.getByTestId('relato-texto').fill('Conferir.');
+  const body = new URL(await page.getByTestId('relato-abrir').getAttribute('href')).searchParams.get(
+    'body'
+  );
+  expect(body).toMatch(/janela visível: 20\d\d-\d\d a 20\d\d-\d\d/);
+  expect(body).not.toContain('janela visível: não informada');
+});
+
+test('Esc fecha o relato e não a gaveta aberta atrás', async ({ page }, testInfo) => {
+  // No celular a gaveta é folha FIXA e cobre o trilho: não há como abrir o relato com ela aberta.
+  // A guarda vale nos dois, mas o cenário só existe no desktop.
+  test.skip(testInfo.project.name !== 'desktop', 'no celular a gaveta cobre o trilho');
+  await page.goto(`/?series=${SELIC}`);
+  // A gaveta de configurações ABERTA é o que dá sentido à guarda de `Esc` na `App`: sem ela,
+  // fechar o diálogo fecharia a gaveta no mesmo gesto (o teste antigo passava sem provar nada).
+  await abrirGavetaConfig(page);
   const botao = page.getByTestId('botao-reportar');
   await botao.click();
   await expect(page.getByTestId('dialogo-relatar')).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByTestId('dialogo-relatar')).toBeHidden();
+  await expect(page.getByTestId('gaveta-config')).toBeVisible();
   await expect(botao).toBeFocused();
-  // a gaveta ATRÁS não pode fechar no mesmo Esc
-  await expect(page.getByTestId('gaveta-config')).toBeHidden();
+});
+
+test('relato longo avisa que será encurtado', async ({ page }) => {
+  await page.goto(`/?series=${SELIC}`);
+  await abrirRelato(page);
+  await page.getByTestId('relato-texto').fill('ç'.repeat(2000));
+  await expect(page.getByTestId('relato-cortado')).toBeVisible();
+  const href = await page.getByTestId('relato-abrir').getAttribute('href');
+  expect(href.length).toBeLessThanOrEqual(6000);
 });
 
 test('no celular o diálogo cabe na tela', async ({ page }, testInfo) => {

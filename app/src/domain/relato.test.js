@@ -89,4 +89,20 @@ describe('montarRelato', () => {
     const r = montarRelato({ ...base, texto: 'a'.repeat(2000) });
     expect(r.url.length).toBeLessThan(8000);
   });
+
+  it('corta o relato para caber no link, mesmo com acentos (6 bytes cada)', () => {
+    const r = montarRelato({ ...base, texto: 'ç'.repeat(2000) });
+    expect(r.url.length).toBeLessThanOrEqual(6000);
+    expect(r.cortado).toBe(true);
+  });
+
+  it('não marca como cortado o relato que cabe', () => {
+    expect(montarRelato(base).cortado).toBe(false);
+  });
+
+  it('não parte um caractere fora do BMP ao cortar', () => {
+    const r = montarRelato({ ...base, texto: 'a'.repeat(1999) + '😀' + 'x'.repeat(100) });
+    expect(corpo(r)).not.toContain('\uFFFD');
+    expect(corpo(r)).toContain('😀');
+  });
 });

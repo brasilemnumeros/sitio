@@ -60,7 +60,7 @@
           fonte,
           ids,
           urlBase: location.origin + location.pathname,
-          janela: janela.de && janela.ate ? janela : null,
+          janela: janela.from && janela.to ? { de: janela.from, ate: janela.to } : null,
           mandato: mandatoAtual?.rotulo ?? null,
           data: dataEmSaoPaulo() ?? '',
         })
@@ -213,6 +213,14 @@
             placeholder="ex.: o valor de mai/2026 aparece como 4,72%, mas no SIDRA é 4,84%."
             class="mt-1 w-full resize-none rounded border border-slate-600 bg-[#0d1117] px-2 py-1.5 text-sm text-slate-100 placeholder:text-slate-600"
           ></textarea>
+          {#if relato?.cortado}
+            <!-- O limite do GitHub é da URL codificada (~6 KB): o texto é cortado para o link
+                 abrir, e avisamos — cortar em silêncio faria a pessoa perder o que escreveu sem
+                 entender por quê. -->
+            <p class="mt-1 text-[11px] text-amber-400" data-testid="relato-cortado">
+              O relato é longo e será encurtado para caber no link. Complete o restante na issue.
+            </p>
+          {/if}
         </div>
 
         <div class="flex gap-2">

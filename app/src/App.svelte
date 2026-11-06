@@ -213,7 +213,8 @@
     // que está por baixo dele no mesmo gesto.
     if (tourAberto) return;
     // O diálogo de relato é `<dialog>` nativo: ele trata o próprio `Esc` e devolve o foco. Aqui
-    // só se evita fechar a gaveta que está atrás no mesmo gesto.
+    // só se evita fechar a gaveta que está atrás no mesmo gesto — e `preventDefault` aqui
+    // impediria o `Esc` nativo de fechar o diálogo (medido em 2026-11-06).
     if (relatoAberto) return;
     if (configAberta) {
       evento.preventDefault();

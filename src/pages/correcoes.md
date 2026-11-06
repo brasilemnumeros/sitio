@@ -13,13 +13,18 @@ foi encontrado.
 
 ## Como apontar um erro
 
-Abra uma _issue_ em [github.com/brasilemnumeros](https://github.com/brasilemnumeros)
+Abra uma _issue_ no
+[repositório de dados](https://github.com/brasilemnumeros/dados/issues/new?labels=erro-de-dado)
 informando:
 
 - **qual indicador** e **qual período** (mês e ano bastam);
 - **qual valor** aparece no site e **qual valor** você espera;
 - se possível, o **link do dado na fonte oficial** (IBGE, Banco Central, Ipea, FGV,
   MTE). É o que permite confirmar rápido.
+
+No gráfico, a **bandeira do trilho** já abre a issue com a série, a janela visível e o link do
+estado preenchidos — basta descrever o que está errado; o período e os valores você completa ali
+mesmo, antes de enviar.
 
 Não é necessário se identificar, e **não envie dados pessoais** na _issue_.
 

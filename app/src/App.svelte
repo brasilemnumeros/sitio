@@ -12,6 +12,7 @@
   import SeriesDrawer from './components/SeriesDrawer.svelte';
   import BottomDrawer from './components/BottomDrawer.svelte';
   import Tour from './components/Tour.svelte';
+  import DialogoRelatar from './components/DialogoRelatar.svelte';
   import { deveMostrarTour, CHAVE_TOUR } from './domain/tour.js';
   import { EXEMPLO_IDS, exemploDisponivel } from './data/exemplo.js';
   import { retomarPermalink } from './permalink-init.js';
@@ -33,6 +34,9 @@
    *  prioridade do `Esc` entre camadas é daqui (T9). `mostrarCasca` é a regra §9.1 — sem série
    *  a alça existe DESABILITADA (a moldura não pula), e o conteúdo nem é montado. */
   let fundoAberto = $state(false);
+  /** O diálogo de relato de erro de dado. Estado aqui porque a `Esc` dele é resolvida pelo
+   *  próprio `<dialog>` nativo — a `App` só precisa NÃO fechar a gaveta que está atrás. */
+  let relatoAberto = $state(false);
   let itens = $derived($seriesStore.itens);
 
   /** `true` quando a URL CHEGOU com `?series=` — lido no `main.js`, antes de qualquer escrita
@@ -208,6 +212,9 @@
     // O tour se fecha sozinho (`driver.js` escuta o `Esc`); aqui só se evita fechar a gaveta
     // que está por baixo dele no mesmo gesto.
     if (tourAberto) return;
+    // O diálogo de relato é `<dialog>` nativo: ele trata o próprio `Esc` e devolve o foco. Aqui
+    // só se evita fechar a gaveta que está atrás no mesmo gesto.
+    if (relatoAberto) return;
     if (configAberta) {
       evento.preventDefault();
       configAberta = false;
@@ -261,6 +268,7 @@
       aoFechar={() => (configAberta = false)}
       aoAbrirBusca={() => (buscaAberta = true)}
       aoAbrirTour={() => (tourAberto = true)}
+      aoReportar={() => (relatoAberto = true)}
       inativa={fundoAberto && !configAberta}
     />
 
@@ -331,6 +339,10 @@
       aoTentarCatalogo={tentarCatalogoNovamente}
     />
   {/if}
+
+  <!-- RELATO DE ERRO DE DADO — `<dialog>` nativo: camada superior, foco preso e `Esc` de graça.
+       Fica FORA das gavetas (irmão delas) para o `overflow-hidden` da moldura não ter voz. -->
+  <DialogoRelatar aberto={relatoAberto} aoFechar={() => (relatoAberto = false)} />
 </main>
 
 <style>

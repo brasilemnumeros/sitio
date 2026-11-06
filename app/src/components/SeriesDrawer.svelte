@@ -38,6 +38,7 @@
     aoFechar = () => {},
     aoAbrirBusca = () => {},
     aoAbrirTour = () => {},
+    aoReportar = () => {},
     inativa = false,
   } = $props();
 
@@ -54,6 +55,10 @@
   let painel = $state(null);
 
   const itens = $derived($seriesStore.itens);
+
+  /** "Há série para reportar?" — só quem CARREGOU: o relato precisa de um valor para confrontar.
+   *  Mesma regra do diálogo (`DialogoRelatar`), escrita aqui só para o estado do botão. */
+  const podeReportar = $derived(itens.some((i) => i.status === 'ok'));
 
   /** "Há filtro em cena?" (janela recortada ou mandato escolhido) — é o que faz o botão de
    *  limpar existir no trilho. A regra mora em `stores/filtros.js`, não aqui. */
@@ -384,6 +389,36 @@
       {@render balao('Tela cheia')}
     </div>
   {/if}
+
+  <!-- REPORTAR (2026-11-06) — o canal de correção que a `/correcoes` prometia e não existia.
+       Fica DEPOIS de "Tela cheia" e antes do tour: é ação do gráfico, não ajuda. Desabilitada
+       (não escondida) sem série carregada — a mesma língua do "limpar filtros": o lugar é
+       estável e o estado se lê. A bandeira é de TRAÇO, não emoji: a coluna inteira é Lucide. -->
+  <div class="group relative flex w-full justify-center">
+    <button
+      type="button"
+      data-testid="botao-reportar"
+      aria-label={podeReportar ? 'Reportar problema nos dados' : 'Nenhuma série no gráfico'}
+      disabled={!podeReportar}
+      onclick={aoReportar}
+      class="flex min-h-11 w-full items-center justify-center rounded px-1 py-2.5 text-amber-400 hover:bg-slate-800 hover:text-amber-300 disabled:cursor-not-allowed disabled:text-slate-600 disabled:hover:bg-transparent md:min-h-0"
+    >
+      <svg
+        class="h-4 w-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+        <path d="M4 22v-7"></path>
+      </svg>
+    </button>
+    {@render balao(podeReportar ? 'Reportar problema nos dados' : 'Nenhuma série no gráfico')}
+  </div>
 
   <!-- TOUR. `hidden lg:flex` porque abaixo de 1024px o tour não roda (ver `domain/tour.js`):
        um botão que não faz nada é pior que um botão ausente. Fica na MESMA coluna dos outros

@@ -50,6 +50,7 @@
             <li><b>seta de retorno</b> — esquece os filtros de tempo e de mandato;</li>
             <li><b>elo</b> — copia o link com o estado atual do gráfico;</li>
             <li><b>cantos</b> — tela cheia;</li>
+            <li><b>bandeira</b> — reporta um problema nos dados;</li>
             <li><b>?</b> — revê este tour.</li>
           </ul>`,
         side: 'right',

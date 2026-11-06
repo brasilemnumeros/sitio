@@ -60,7 +60,13 @@ test.describe('tour', () => {
     await expect(page.locator('.driver-popover-progress-text')).toHaveText('1 de 7');
     const titulos = [];
     for (let i = 0; i < 7; i++) {
-      titulos.push(await page.locator('.driver-popover-title').innerText());
+      const titulo = await page.locator('.driver-popover-title').innerText();
+      titulos.push(titulo);
+      // A bandeira do relato de dado não é um passo próprio: ela entra na MESMA lista de ícones
+      // do trilho. Sem esta linha, tirar a menção não falha nada — e o botão fica sem descoberta.
+      if (titulo === 'Controles do gráfico') {
+        expect(await page.locator('.driver-popover-description').innerText()).toMatch(/bandeira/);
+      }
       const proximo = page.getByRole('button', { name: 'Próximo' });
       if ((await proximo.count()) > 0) await proximo.click();
     }

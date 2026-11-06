@@ -330,6 +330,94 @@ test('em 768 a ficha cabe inteira e a cascata não estoura a modal', async ({ pa
 });
 
 /**
+ * A AÇÃO DA FICHA NÃO FICA ATRÁS DO TEXTO (2026-11-06, a pedido do usuário).
+ *
+ * 🔴 A regressão que este teste existe para pegar: a ficha era UM `overflow-y-auto`, então a
+ * descrição longa empurrava o "Adicionar ao gráfico" para fora da coluna. Medido no pior caso do
+ * catálogo (680 caracteres): 765px de conteúdo contra 700px de coluna útil a 900 de janela, 615px
+ * a 800 e **547px a 720** — a 720 o botão ficava 170px abaixo da dobra e a pessoa precisava rolar
+ * para descobrir como agir. Nenhum teste de COMPORTAMENTO pega isso: o botão existe, responde a
+ * clique e é encontrado pelo locator; só a GEOMETRIA mostra que ele não está na tela.
+ *
+ * A ficha agora são duas caixas: o miolo rola e a ação vive num rodapé fixo. O teste afirma as
+ * duas promessas: a ação está dentro da ficha e da janela SEM rolar, e o "Ler mais" existe e
+ * expande sem tirar o rodapé do lugar.
+ */
+test('descrição longa não esconde a ação: rodapé fixo e "Ler mais"', async ({ page }, testInfo) => {
+  await abrirVazio(page);
+  await abrirBusca(page);
+  const campo = page.getByRole('searchbox');
+  await campo.fill('esgoto');
+  await campo.press('Enter'); // ⏎ abre a ficha do primeiro resultado
+
+  const ficha = page.locator('[data-bloco="ficha"]');
+  await expect(ficha).toContainText(/Esgoto — população atendida/);
+
+  // No celular a ficha é uma FOLHA que sobe em 200ms: medir antes disso pegaria a posição de
+  // partida (fora da tela) e acusaria um defeito que não existe. `toBeInViewport` repete até
+  // a transição terminar — é a espera certa aqui, porque a posição final É a afirmação.
+  const acao = ficha.getByRole('button', { name: 'Adicionar ao gráfico', exact: true });
+  await expect(acao).toBeInViewport();
+
+  const medir = () =>
+    page.evaluate(() => {
+      const fichaEl = document.querySelector('[data-bloco="ficha"]');
+      const acao = [...fichaEl.querySelectorAll('button')].find((b) =>
+        /^(Adicionar ao gráfico|Remover do gráfico)$/.test(b.textContent.trim()),
+      );
+      const descricao = document.querySelector('#ficha-descricao');
+      const caixa = fichaEl.getBoundingClientRect();
+      const alvo = acao.getBoundingClientRect();
+      return {
+        dentroDaFicha: alvo.top >= caixa.top - 0.5 && alvo.bottom <= caixa.bottom + 0.5,
+        dentroDaJanela: alvo.top >= -0.5 && alvo.bottom <= window.innerHeight + 0.5,
+        clamp: getComputedStyle(descricao).webkitLineClamp,
+        // recolhida, a caixa é MENOR que o texto: é o que dá sentido ao "Ler mais"
+        escondido: descricao.scrollHeight > descricao.clientHeight + 1,
+      };
+    });
+
+  const recolhida = await medir();
+  expect(recolhida.dentroDaFicha, 'a ação está fora da ficha').toBe(true);
+  expect(recolhida.dentroDaJanela, 'a ação está abaixo da janela').toBe(true);
+  expect(recolhida.clamp, 'a descrição não está recolhida em 4 linhas').toBe('4');
+  expect(recolhida.escondido, 'o "Ler mais" apareceria sem haver o que revelar').toBe(true);
+
+  const lerMais = ficha.getByRole('button', { name: 'Ler mais', exact: true });
+  await expect(lerMais).toBeVisible();
+  await lerMais.click();
+  await expect(ficha.getByRole('button', { name: 'Ler menos', exact: true })).toBeVisible();
+  await expect(acao).toBeInViewport();
+
+  const aberta = await medir();
+  expect(aberta.clamp, 'a descrição não expandiu').toBe('none');
+  expect(aberta.dentroDaFicha, 'a ação saiu da ficha ao expandir').toBe(true);
+  expect(aberta.dentroDaJanela, 'a ação saiu da janela ao expandir').toBe(true);
+
+  if (testInfo.project.name === 'desktop') {
+    // Expandida, o texto não cabe mais na coluna: quem rola é o MIOLO, nunca o rodapé.
+    const sobra = await page.evaluate(() => {
+      const miolo = document.querySelector('[data-bloco="ficha"] > div');
+      return miolo.scrollHeight - miolo.clientHeight;
+    });
+    expect(sobra, 'o miolo deveria rolar com a descrição inteira aberta').toBeGreaterThan(0);
+  }
+});
+
+/** O outro lado da promessa: sem texto escondido, não há "Ler mais" para clicar à toa. */
+test('descrição que cabe não ganha "Ler mais"', async ({ page }) => {
+  await abrirVazio(page);
+  await abrirBusca(page);
+  const campo = page.getByRole('searchbox');
+  await campo.fill('IPCA');
+  await campo.press('Enter');
+
+  const ficha = page.locator('[data-bloco="ficha"]');
+  await expect(ficha).toContainText(/IPCA \(%\)/);
+  await expect(ficha.getByRole('button', { name: /^Ler (mais|menos)$/ })).toHaveCount(0);
+});
+
+/**
  * TROCAR O GRÁFICO POR ESTA SÉRIE (2026-11-04). A home nunca abre vazia (preset do dia), então o
  * primeiro "Adicionar" sempre cai num gráfico com conteúdo. A ação secundária da ficha resolve
  * isso sem diálogo e sem preferência: o rótulo diz que o resto sai.

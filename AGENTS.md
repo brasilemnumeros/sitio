@@ -133,6 +133,12 @@ quando o defeito aparecer — e provar isso.
   não vira leitura (a cruz e a caixa somem). Bolinha nos pontos é por **densidade na janela
   visível** (`domain/marcadores.js`, passo ≥ 16px), nunca por série escolhida à mão. O rótulo da
   cruz usa `rotuloDaCruz` (pt-BR): a lib não localiza o mês dele pelo `locale`.
+- **A ação da ficha não rola** (2026-11-06): a ficha é **miolo rolável + rodapé fixo**
+  (Adicionar/Remover/Trocar). Descrição longa abria o botão para fora da coluna (medido: 170px
+  abaixo a 720 de janela) e a pessoa precisava rolar para descobrir a ação. A descrição abre em
+  4 linhas com "Ler mais" — e o botão só existe quando há texto escondido, **medido no DOM**
+  (`scrollHeight > clientHeight`), nunca por contagem de caracteres. Ver
+  `docs/specs/2026-11-06-ficha-acao-sempre-visivel-design.md`.
 - **Os stores são a fonte da verdade** (`viewport`, `mandate`, `axes`, `series`,
   `catalog`). O gráfico é espelho: `app/src/chart/` assina stores, nunca o
   contrário. Não chamar a lib do gráfico de um componente de UI.

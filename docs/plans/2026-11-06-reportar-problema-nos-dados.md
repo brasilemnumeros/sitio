@@ -318,15 +318,32 @@ Expected: FAIL — `botao-reportar` não encontrado.
   ao `SeriesDrawer`; renderizar `<DialogoRelatar aberto={relatoAberto} aoFechar={() => (relatoAberto = false)} />`
   junto das gavetas; em `aoTeclar`, depois das guardas de busca e tour: `if (relatoAberto) return;`.
 
-- [ ] **Step 5: Rodar o E2E e ver passar**
+- [ ] **Step 5: Mencionar a ação no tour**
 
-Run: `cd app && NODE_ENV=development npm run test:e2e -- relatorio.spec.js`
-Expected: PASS nos dois projetos (desktop e mobile).
+Em `app/src/components/Tour.svelte`, no passo `Controles do gráfico`, acrescentar a bandeira entre
+"cantos" e "?" — a lista segue a ordem real do trilho:
 
-- [ ] **Step 6: Commit**
+```html
+<li><b>bandeira</b> — reporta um problema nos dados;</li>
+```
+
+O passo continua sendo um só (sete no total): o alvo é o trilho inteiro, não o botão. Para a
+menção não sumir em silêncio, em `app/e2e/tour.spec.js`, no teste que percorre o roteiro, depois
+de chegar em "Controles do gráfico":
+
+```js
+expect(await page.locator('.driver-popover-description').innerText()).toMatch(/bandeira/);
+```
+
+- [ ] **Step 6: Rodar o E2E e ver passar**
+
+Run: `cd app && NODE_ENV=development npm run test:e2e -- relatorio.spec.js tour.spec.js`
+Expected: PASS nos dois projetos (desktop e mobile) — o tour só roda no desktop.
+
+- [ ] **Step 7: Commit**
 
 ```bash
-git add app/src/components/DialogoRelatar.svelte app/src/components/SeriesDrawer.svelte app/src/App.svelte app/e2e/relatorio.spec.js
+git add app/src/components/DialogoRelatar.svelte app/src/components/SeriesDrawer.svelte app/src/App.svelte app/src/components/Tour.svelte app/e2e/relatorio.spec.js app/e2e/tour.spec.js
 git commit -m "feat(app): reportar problema nos dados a partir do trilho"
 ```
 

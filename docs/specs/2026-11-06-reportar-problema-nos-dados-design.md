@@ -61,6 +61,10 @@ No trilho, **depois de "Tela cheia" e antes do "Ver o tour"** — a mesma coluna
   estável e o estado se lê (§9.1). Balão de hover: `Reportar problema nos dados` quando
   habilitada, `Nenhuma série no gráfico` quando não.
 - `aria-label` = o texto do balão; `data-testid="botao-reportar"`.
+- **O tour de primeira visita menciona a bandeira**: o passo "Controles do gráfico" já lista os
+  ícones do trilho em ordem, e ganha o item "bandeira — reporta um problema nos dados". Não vira um
+  8º passo: o alvo do tour é o trilho inteiro, e um balão apontado para um ícone de 34px dentro
+  dele não se lê no celular (o tour nem roda abaixo de 1024px).
 
 ### 2. O diálogo
 

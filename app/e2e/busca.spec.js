@@ -354,10 +354,12 @@ test('descrição longa não esconde a ação: rodapé fixo e "Ler mais"', async
   await expect(ficha).toContainText(/Esgoto — população atendida/);
 
   // No celular a ficha é uma FOLHA que sobe em 200ms: medir antes disso pegaria a posição de
-  // partida (fora da tela) e acusaria um defeito que não existe. `toBeInViewport` repete até
-  // a transição terminar — é a espera certa aqui, porque a posição final É a afirmação.
+  // partida (fora da tela) e acusaria um defeito que não existe. `ratio: 1` é obrigatório:
+  // sem ele o `toBeInViewport` aceita INTERSECÇÃO PARCIAL, passa com a folha ainda entrando
+  // pela borda e a medição seguinte encontra a ação abaixo da janela (falhou no CI em
+  // 2026-11-06, com o teste passando local — a corrida depende da velocidade da máquina).
   const acao = ficha.getByRole('button', { name: 'Adicionar ao gráfico', exact: true });
-  await expect(acao).toBeInViewport();
+  await expect(acao).toBeInViewport({ ratio: 1 });
 
   const medir = () =>
     page.evaluate(() => {
@@ -387,7 +389,7 @@ test('descrição longa não esconde a ação: rodapé fixo e "Ler mais"', async
   await expect(lerMais).toBeVisible();
   await lerMais.click();
   await expect(ficha.getByRole('button', { name: 'Ler menos', exact: true })).toBeVisible();
-  await expect(acao).toBeInViewport();
+  await expect(acao).toBeInViewport({ ratio: 1 });
 
   const aberta = await medir();
   expect(aberta.clamp, 'a descrição não expandiu').toBe('none');

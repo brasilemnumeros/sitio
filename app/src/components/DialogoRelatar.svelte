@@ -259,7 +259,10 @@
       </div>
     </div>
 
-    <footer
+    <!-- `<div>`, não `<footer>`: o guarda de casca (`casca.spec.js`) prova que a `/` não tem o
+         rodapé do site contando `footer` fora da barra inferior — e um `<footer>` aqui, mesmo
+         dentro de um diálogo fechado, quebraria a prova por um motivo falso. -->
+    <div
       class="flex shrink-0 items-center justify-between gap-3 border-t border-slate-700 bg-[#12161d] px-4 py-2.5"
     >
       <span class="text-[11px] text-slate-500">
@@ -301,6 +304,6 @@
           Abrir issue no GitHub <span aria-hidden="true">↗</span>
         </a>
       </div>
-    </footer>
+    </div>
   </div>
 </dialog>
